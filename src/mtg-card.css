@@ -1,0 +1,397 @@
+/* Reset */
+/* http://meyerweb.com/eric/tools/css/reset/ 
+   v2.0 | 20110126
+   License: none (public domain)
+*/
+
+.outer-card-container > *,  h1 {
+  margin: 0;
+}
+
+.outer-card-container > *, p {
+  margin: 0;
+}
+
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+  display: block;
+}
+body {
+  line-height: 1;
+}
+ol, ul {
+  list-style: none;
+}
+blockquote, q {
+  quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+  content: '';
+  content: none;
+}
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+/* End of reset */
+body* > {
+  box-sizing: border-box;
+}
+.card-container {
+    border: 1px solid black;
+    width: 480px;
+    height: 700px;
+    margin: 0 auto;
+    margin-top: 56px;
+    border-radius: 25px;
+    box-sizing: border-box;
+    box-shadow: -8px 9px 16px -3px gray;
+    background: #171314;  
+}
+ .card-background {
+    height: 600px;
+    margin: 20px 20px 0 20px;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-bottom-left-radius: 8%;
+    border-bottom-right-radius: 8%;
+    /*background-image: url(https://image.ibb.co/e1XKAS/green_background.jpg);*/
+    background-repeat: no-repeat;
+    background-size: cover;
+    display: flex;
+    /*background-color: #bbb;*/
+    z-index: 0;
+}
+
+/* Single color backgrounds. */
+.card-background-g {
+    background-image: url(https://image.ibb.co/e1XKAS/green_background.jpg);
+}
+
+.card-background-u {
+    background: linear-gradient(1deg, #143ee8, #a2b4ff), url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
+}
+
+.card-background-w {
+    background: linear-gradient(1deg, rgba(243, 245, 243, 0.826), rgb(236, 236, 236)), url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
+}
+
+.card-background-b {
+    background: linear-gradient(1deg, rgba(24, 24, 24, 0.897), rgb(0 0 0 / 30%)), url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
+}
+
+.card-background-r {
+    background: linear-gradient(1deg, rgba(200, 55, 48, 0.793), rgba(230, 9, 9, 0.701)), url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
+}
+
+/* Two color backgrounds. */
+.card-background-uw {
+    background: linear-gradient(1deg, rgba(254, 254, 254, 0.881), rgba(64, 10, 227, 0.908)), url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
+}
+
+.card-background-ub {
+    background: linear-gradient(1deg, rgba(17, 17, 17, 0.3), rgba(64, 10, 227, 0.908)), url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
+}
+
+.card-background-br {
+    background: linear-gradient(1deg, rgba(230, 9, 9, 0.701), rgba(17, 17, 17, 0.3)), url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
+}
+
+.card-background-rg {
+    background: linear-gradient(1deg, rgba(230, 9, 9, 0.701), rgba(27, 161, 27, 0.852)), url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
+}
+
+.card-background-wg {
+    background: linear-gradient(1deg, rgb(241, 241, 241), rgba(27, 161, 27, 0.852)), url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
+}
+
+.card-background-wb {
+    background: linear-gradient(1deg, rgb(241, 241, 241), rgba(17, 17, 17, 0.3)), url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
+}
+
+.card-background-ur {
+    background: linear-gradient(1deg, rgba(64, 10, 227, 0.908), rgba(230, 9, 9, 0.701)), url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
+}
+
+.card-background-bg {
+    background: linear-gradient(1deg, rgb(0 0 0), rgba(27, 161, 27, 0.852)), url(https://image.ibb.co/jKByZn/tile_bg_1.jpg)
+}
+
+.card-background-rw {
+    background: linear-gradient(1deg, rgba(230, 9, 9, 0.701), rgba(255, 255, 255, 0.951)), url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
+}
+
+.card-background-gu {
+    background: linear-gradient(1deg, rgba(27, 161, 27, 0.852), rgba(64, 10, 227, 0.908)), url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
+}
+
+/* Colorless background. */
+.card-background-c {
+    background: grey;
+}
+
+/* Three plus color background. */
+.card-background-mc {
+    background: grey;
+}
+
+/*
+    -------------------------
+    -------------------------
+            BORDERS
+    -------------------------
+    -------------------------
+*/
+.frame-header,
+.frame-type-line {
+    border-bottom: 4px solid #a9a9a9;
+    border-left: 2px solid #a9a9a9;
+    border-top: 1px solid #fff;
+    border-right: 1px solid #fff;
+}
+
+.frame-header,
+.frame-art,
+.frame-type-line {
+    /*box-shadow: 
+        0 0 0 2px #171314,
+        0 0 0 5px #26714A,
+        -3px 3px 2px 5px #171314;*/
+    box-shadow: 0 0 0 2px #999999, 0 0 0 5px #151414, -3px 3px 2px 5px #2f2e2e;
+    margin-bottom: 7px;
+}
+
+.frame-text-box {
+    /*
+    box-shadow: 
+        0 0 0 5px #26714A,
+        -3px 3px 2px 5px #171314;
+        */
+    box-shadow: 0 0 0 2px #999999, 0 0 0 5px #151414, -3px 3px 2px 5px #2f2e2e;
+}
+
+/*
+    ----------------------
+    ----------------------
+            OVERFLOW
+    ----------------------
+    ----------------------
+*/
+.frame-header,
+.frame-type-line,
+.frame-text-box {
+    overflow: hidden;
+}
+
+
+/*
+  ----------------------------------------
+  ----------------------------------------
+            CARD FRAME
+  ----------------------------------------
+  ----------------------------------------
+*/
+.card-frame {
+    z-index: 1;
+    position: relative;
+    height: 108%;
+    max-width: 97%;
+    left: 1%;
+    top: 0.5%;
+    left: 1.2%;
+    display: flex;
+    flex-direction: column;
+}
+
+.frame-header,
+.frame-type-line {
+    background: 
+        linear-gradient(0deg, rgba(201, 216, 201, .3), rgba(201, 216, 209, .3)), 
+        url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
+    display: flex;
+    margin-top: 10px;
+    margin-left: 5px;
+    margin-right: 5px;
+    padding: 8px 0;
+    display: flex;
+    justify-content: space-between;
+    border-radius: 18px/40px;
+}
+
+.name,
+.type {
+    font-size: 1.2em;
+    margin-left: 10px;
+    align-self: baseline;
+    font-weight: 600;
+}
+
+.mana-symbols {
+    margin-bottom: 14px
+}
+
+.power-and-toughness-frame {
+    justify-content: right;
+    display: flex;
+}
+
+.power-and-toughness  {
+    border: unset;
+    border-style: inset;
+    border-radius: 18px/40px;
+    padding-right: 20px;
+    padding-left: 20px;
+}
+
+#mana-icon {
+    font-size: 1.2em;
+    /*background: #ADD3AC;*/
+    border-radius: 50%;
+    /*box-sizing: border-box;*/
+    /*box-shadow: -0.05em 0.12em 0px 0 black;*/
+    margin-right: 5px;
+    height: 20px;
+    align-self: center;
+}
+
+.ms-1, .ms-2, .ms-3, .ms-4, .ms-5, .ms-6, .ms-7, .ms-8, .ms-9 {
+    background-color: #adaaaae6;
+    border-radius: 50%;
+    padding: 2px; 
+}
+
+.ms-b {
+    background-color: #adaaaa3a;
+    border-radius: 50%;
+    padding: 2px;
+}
+
+.ms-u {
+    background-color: #a2b4ff;
+    border-radius: 50%;
+    padding: 2px;
+}
+
+.ms-r {
+    background-color: #ec3c3c9f;
+    border-radius: 50%;
+    padding: 2px;
+}
+
+.ms-w {
+    background-color: #fcf9f9;
+    border-radius: 50%;
+    padding: 2px;
+}
+
+.ms-g {
+    background-color: #63d282;
+    border-radius: 50%;
+    padding: 2px;
+}
+
+/* Override from mana.min.css and remove font-size so mana symbols show up better in card text. */
+.ms {
+  display: inline-block;
+  font: normal normal normal 14px/1 Mana;
+  /*font-size: inherit;*/
+  line-height: 1em;
+  text-rendering: auto;
+  transform: translate(0,0);
+  speak: none;
+  text-transform: none;
+  vertical-align: middle;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale
+}
+
+.frame-art {
+    height: 45%;
+    margin: 0 10px; 
+}
+
+#set-icon {
+    /*height: 9%; Was causing set icon to not show up. */
+    width: 6%;
+    overflow: hidden;
+    margin-right: 10px;
+    align-self: center;
+} 
+.frame-type-line {
+    margin-top: 0;
+} 
+
+.frame-text-box {
+    margin: 0 10px;
+    background: #d3ded6;
+    background-image: url(https://image.ibb.co/dFcNx7/tile_bg_2.jpg);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    padding: 50px 6px;
+    font-size: 1.0em;
+}
+
+.flavour-text {
+    font-style: italic;
+    padding: 10px 0;
+}
+
+p {
+    margin-bottom: 5px;
+}
+
+.ftb-inner-margin {
+    margin: 5px 1px;
+}
+
+
+
+
+
+.frame-bottom-info {
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    margin: 5px 15px 0 15px; 
+}
+
+fbi-left {
+    flex: 1;
+} 
+.fbi-left p:first-of-type {
+    margin-bottom: 1px;
+}
+.fbi-left,
+.fbi-right {
+    font-size: 10px;
+    position: relative;
+    top: 6px;
+}
+
+.fbi-center {
+    border-radius: 60%;
+    flex-basis: 41px;
+    height: 21px;
+    position: relative;
+    bottom: 11px;
+    z-index: 2;
+    background: lightgray;
+    background-image: url(https://image.ibb.co/jyq34n/holofoil_texture_2.jpg);
+    box-shadow: 
+        0 0 0 4px #171314;
+}
+.inner-margins {
+    margin: 0 10px;
+} */  
+
+.fbi-right {
+    flex: 1;
+    text-align: right;
+}
+ .frame-bottom-info img {
+    overflow: hidden;
+    max-width: 10px;
+}

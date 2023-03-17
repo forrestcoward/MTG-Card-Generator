@@ -1,0 +1,47 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Launch Chrome against localhost",
+            "url": "http://localhost:8080",
+            "webRoot": "${workspaceFolder}",
+            "trace": true,
+            "disableNetworkCache": true,
+            "sourceMaps": true,
+        },
+        {
+            "type": "msedge",
+            "request": "launch",
+            "name": "Launch Edge against localhost",
+            "url": "http://localhost:8080",
+            "webRoot": "${workspaceFolder}",
+            "trace": true,
+            "disableNetworkCache": true,
+            "sourceMaps": true,
+        },
+        {
+            "type": "chrome",
+            "request": "attach",
+            "name": "Attach Chrome against localhost",
+            "url": "http://localhost:8080",
+            "webRoot": "${workspaceFolder}",
+            "trace": true,
+            "disableNetworkCache": true,
+            "sourceMaps": true,
+            "port": 8080
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Webpack",
+            "program": "${workspaceFolder}/node_modules/webpack/bin/webpack.js",
+            "autoAttachChildProcesses": true,
+            "stopOnEntry": true
+        }
+    ]
+}
