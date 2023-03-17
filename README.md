@@ -2,7 +2,8 @@
 
 An experimental project to generate realistic Magic: The Gathering cards using OpenAI. Generated cards are rendered using only CSS.
 
-<img src="img\QuickfireChallenge.png">
+<img src="img\QuickfireChallenge.png" width="600px" height="875px">
+<img src="img\GaeasTendrils.png"  width="600px" height="875px">
 
 ## Build & Run
 
