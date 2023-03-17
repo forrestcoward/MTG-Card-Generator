@@ -4,8 +4,6 @@ An experimental project to generate realistic Magic: The Gathering cards using O
 
 <img src="img\QuickfireChallenge.png">
 
-<br/>
-
 ## Build & Run
 
 First, create a file named `config.json` at the root of the repository with this structure:
