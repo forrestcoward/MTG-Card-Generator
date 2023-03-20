@@ -11,8 +11,6 @@
             "url": "http://localhost:8080",
             "webRoot": "${workspaceFolder}",
             "trace": true,
-            "disableNetworkCache": true,
-            "sourceMaps": true,
         },
         {
             "type": "msedge",
@@ -21,27 +19,6 @@
             "url": "http://localhost:8080",
             "webRoot": "${workspaceFolder}",
             "trace": true,
-            "disableNetworkCache": true,
-            "sourceMaps": true,
         },
-        {
-            "type": "chrome",
-            "request": "attach",
-            "name": "Attach Chrome against localhost",
-            "url": "http://localhost:8080",
-            "webRoot": "${workspaceFolder}",
-            "trace": true,
-            "disableNetworkCache": true,
-            "sourceMaps": true,
-            "port": 8080
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Launch Webpack",
-            "program": "${workspaceFolder}/node_modules/webpack/bin/webpack.js",
-            "autoAttachChildProcesses": true,
-            "stopOnEntry": true
-        }
     ]
 }

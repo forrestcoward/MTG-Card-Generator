@@ -5,13 +5,13 @@ export async function MakeOpenAIChatComletionRequest(apiKey:string, userPrompt:s
       apiKey: apiKey,
     });
     const openai = new OpenAIApi(configuration);
-    
+
     const response = await openai.createChatCompletion({
       model: model,
       messages: [{role: "user", content: userPrompt},
                  {role:"system", content: systemPrompt}],
     });
-    
+
     if (response.data && response.data.choices && response.data.choices[0] && response.data.choices[0].message) {
         return response.data.choices[0].message.content;
     } else {
@@ -19,16 +19,16 @@ export async function MakeOpenAIChatComletionRequest(apiKey:string, userPrompt:s
         throw "Error: Invalid response from OpenAI.crateChatComletion. See console.log for more details."
     }
   }
-  
+
   export async function MakeOpenAIImageCreateRequest(apiKey:string, imagePrompt:string) : Promise<string> {
     const configuration = new Configuration({
       apiKey: apiKey,
     });
     const openai = new OpenAIApi(configuration);
-  
+
     let response = await openai.createImage({
-      prompt: imagePrompt, 
-      n: 1, 
+      prompt: imagePrompt,
+      n: 1,
       size: CreateImageRequestSizeEnum._256x256,
     });
 

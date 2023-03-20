@@ -18,7 +18,9 @@ export interface Card {
   rarity: string,
   reason: string,
   funnyReason: string,
-  imageUrl: string
+  imageUrl: string,
+  upgradedCard: Card,
+  updateExplanation: string,
 }
 
 enum ColorIdentity {
