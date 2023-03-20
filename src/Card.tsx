@@ -40,7 +40,8 @@ enum ColorIdentity {
   Golgari,
   Boros,
   Simic,
-  ThreePlusColored
+  ThreePlusColored,
+  Unknown
 }
 
 function getCardColorIdentity(card: Card) {
@@ -49,6 +50,10 @@ function getCardColorIdentity(card: Card) {
   var black = false;
   var red = false;
   var green = false;
+
+  if (!card.manaCostTokens) {
+    return ColorIdentity.Unknown
+  }
 
   if (card.manaCostTokens.includes("{W}")) { white = true }
   if (card.manaCostTokens.includes("{U}")) { blue = true }
