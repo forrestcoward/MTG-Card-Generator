@@ -49,17 +49,6 @@
       "funnyReason": "We wanted to create a spell that doesn't only deal damage, but also deals with the past in a fun and flashy way."
     },
     {
-      "name": "Undying Profanity", [Not a bad card.]
-      "manaCost": "{2}{B}{G}",
-      "type": "Sorcery",
-      "text": "Destroy target creature. If this spell was cast from a graveyard, also destroy an artifact or enchantment. Flashback {4}{B}{G}",
-      "flavorText": "The necromancer invoked ancient spells of profanity, his hatred as immortal as his undead army.",
-      "pt": "",
-      "rarity": "Rare",
-      "reason": "Black and green are known for their resurrection and graveyard manipulation effects, but also for their hatred for artifacts and enchantments. Flashback is a perfect fit for a spell that can be used in multiple situations.",
-      "funnyReason": "We were feeling a bit mischievous and wanted to give players the possibility to destroy as much as possible, in as many ways as possible." 
-    },
-    {
       "name": "Frostbite Phoenix",
       "manaCost": "{2}{R}{R}",
       "type": "Creature — Phoenix",

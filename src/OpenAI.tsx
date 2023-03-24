@@ -1,6 +1,6 @@
 import { Configuration, CreateImageRequestSizeEnum, OpenAIApi } from "openai";
 
-export async function MakeOpenAIChatComletionRequest(apiKey:string, userPrompt:string, systemPrompt:string, model:string = "gpt-3.5-turbo") : Promise<string> {
+export async function MakeOpenAIChatComletionRequest(apiKey:string, userPrompt:string, systemPrompt:string, temperature:number = 1, model:string = "gpt-3.5-turbo") : Promise<string> {
     const configuration = new Configuration({
       apiKey: apiKey,
     });
@@ -10,6 +10,7 @@ export async function MakeOpenAIChatComletionRequest(apiKey:string, userPrompt:s
       model: model,
       messages: [{role: "user", content: userPrompt},
                  {role:"system", content: systemPrompt}],
+      temperature: temperature
     });
 
     if (response.data && response.data.choices && response.data.choices[0] && response.data.choices[0].message) {

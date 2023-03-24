@@ -7,22 +7,6 @@ declare module 'react' {
   }
 }
 
-export interface Card {
-  name: string,
-  manaCost: string,
-  manaCostTokens: string[],
-  type: string,
-  text: string,
-  flavorText: string,
-  pt: string,
-  rarity: string,
-  reason: string,
-  funnyReason: string,
-  imageUrl: string,
-  upgradedCard: Card,
-  updateExplanation: string,
-}
-
 enum ColorIdentity {
   White,
   Blue,
@@ -44,58 +28,328 @@ enum ColorIdentity {
   Unknown
 }
 
-function getCardColorIdentity(card: Card) {
-  var white = false;
-  var blue = false;
-  var black = false;
-  var red = false;
-  var green = false;
-
-  if (!card.manaCostTokens) {
-    return ColorIdentity.Unknown
-  }
-
-  if (card.manaCostTokens.includes("{W}")) { white = true }
-  if (card.manaCostTokens.includes("{U}")) { blue = true }
-  if (card.manaCostTokens.includes("{B}")) { black = true }
-  if (card.manaCostTokens.includes("{R}")) { red = true }
-  if (card.manaCostTokens.includes("{G}")) { green = true }
-
-  if (white && !blue && !black && !red && !green) { return ColorIdentity.White }
-  if (!white && blue && !black && !red && !green) { return ColorIdentity.Blue }
-  if (!white && !blue && black && !red && !green) { return ColorIdentity.Black }
-  if (!white && !blue && !black && red && !green) { return ColorIdentity.Red }
-  if (!white && !blue && !black && !red && green) { return ColorIdentity.Green }
-  if (!white && !blue && !black && !red && !green) { return ColorIdentity.Colorless }
-
-  if (white && blue && !black && !red && !green) { return ColorIdentity.Azorius }
-  if (!white && blue && black && !red && !green) { return ColorIdentity.Dimir }
-  if (!white && !blue && black && red && !green) { return ColorIdentity.Rakdos }
-  if (!white && !blue && !black && red && green) { return ColorIdentity.Gruul }
-  if (white && !blue && !black && !red && green) { return ColorIdentity.Selesnya }
-  if (white && !blue && black && !red && !green) { return ColorIdentity.Orzhov }
-  if (!white && blue && !black && red && !green) { return ColorIdentity.Izzet }
-  if (!white && !blue && black && !red && green) { return ColorIdentity.Golgari }
-  if (white && !blue && !black && red && !green) { return ColorIdentity.Boros }
-  if (!white && blue && !black && !red && green) { return ColorIdentity.Simic }
-
-  return ColorIdentity.ThreePlusColored;
+enum CardType {
+  Creature,
+  Instant,
+  Sorcery,
+  Enchantment,
+  Artifact,
+  Land,
+  Unknown
 }
 
-function getCardRarityDisplay(card: Card) {
-  var token = ""
-  switch (card.rarity.toLowerCase()) {
-    case "common": token = "C"; break;
-    case "uncommon": token = "U"; break;
-    case "rare": token = "R"; break;
-    case "mythic": token = "M"; break;
-    case "mythic rare": token = "M"; break;
-  }
-  return token;
+enum CardMechanics {
+  Flashback,
+  Kicker
 }
 
-function getCardSetNumberDisplay(max: number = 451) {
-  return getRandomInt(0, max) + "/" + max
+export class MagicCard {
+  name: string;
+  manaCost: string;
+  type: string;
+  text: string;
+  flavorText: string;
+  pt: string;
+  rarity: string;
+  imageUrl: string;
+
+  constructor(card: BasicCard) {
+    this.name = card.name
+    this.manaCost = card.manaCost;
+    this.type = card.type;
+    this.text = card.text;
+    this.flavorText = card.flavorText;
+    this.pt = card.pt;
+    this.rarity = card.rarity;
+    this.imageUrl = "";
+  }
+
+  get manaCostTokens(): string[] {
+    return this.getManaCostTokens(this.manaCost);
+  }
+
+  private getManaCostTokens(tokensToParse: string): string[] {
+    var r: RegExp = /\{(.*?)\}/g
+    var match = tokensToParse.match(r)
+    var manaCostTokens:string[] = []
+    if (match) {
+      match?.forEach(m => manaCostTokens.push(m))
+    }
+    return manaCostTokens;
+  }
+
+  get colorIdentity(): ColorIdentity {
+    var white = false;
+    var blue = false;
+    var black = false;
+    var red = false;
+    var green = false;
+  
+    var manaCostTokens = this.manaCostTokens;
+    if (!this.manaCostTokens) {
+      return ColorIdentity.Unknown
+    }
+  
+    if (manaCostTokens.includes("{W}")) { white = true }
+    if (manaCostTokens.includes("{U}")) { blue = true }
+    if (manaCostTokens.includes("{B}")) { black = true }
+    if (manaCostTokens.includes("{R}")) { red = true }
+    if (manaCostTokens.includes("{G}")) { green = true }
+  
+    if (white && !blue && !black && !red && !green) { return ColorIdentity.White }
+    if (!white && blue && !black && !red && !green) { return ColorIdentity.Blue }
+    if (!white && !blue && black && !red && !green) { return ColorIdentity.Black }
+    if (!white && !blue && !black && red && !green) { return ColorIdentity.Red }
+    if (!white && !blue && !black && !red && green) { return ColorIdentity.Green }
+    if (!white && !blue && !black && !red && !green) { return ColorIdentity.Colorless }
+  
+    if (white && blue && !black && !red && !green) { return ColorIdentity.Azorius }
+    if (!white && blue && black && !red && !green) { return ColorIdentity.Dimir }
+    if (!white && !blue && black && red && !green) { return ColorIdentity.Rakdos }
+    if (!white && !blue && !black && red && green) { return ColorIdentity.Gruul }
+    if (white && !blue && !black && !red && green) { return ColorIdentity.Selesnya }
+    if (white && !blue && black && !red && !green) { return ColorIdentity.Orzhov }
+    if (!white && blue && !black && red && !green) { return ColorIdentity.Izzet }
+    if (!white && !blue && black && !red && green) { return ColorIdentity.Golgari }
+    if (white && !blue && !black && red && !green) { return ColorIdentity.Boros }
+    if (!white && blue && !black && !red && green) { return ColorIdentity.Simic }
+  
+    return ColorIdentity.ThreePlusColored;
+  }
+  
+  get cardDivClassName() {
+    return "card-background card-background-" + this.manaCssClassPostfix
+  }
+  
+  get rarityDisplay() {
+    var token = ""
+    switch (this.rarity.toLowerCase()) {
+      case "common": token = "C"; break;
+      case "uncommon": token = "U"; break;
+      case "rare": token = "R"; break;
+      case "mythic": token = "M"; break;
+      case "mythic rare": token = "M"; break;
+    }
+    return token;
+  }
+
+  get cardType(): CardType {
+    var type = this.type.toLocaleLowerCase();
+
+    if (type.includes("legendary creature") || type.includes("creature")) {
+      return CardType.Creature
+    }
+
+    if (type == "instant") {
+      return CardType.Instant;
+    }
+
+    if (type == "sorcery") {
+      return CardType.Sorcery;
+    }
+
+    if (type.includes("artifact")) {
+      return CardType.Artifact;
+    }
+
+    if (type.includes("enchantment")) {
+      return CardType.Enchantment;
+    }
+
+    if (type.includes("land")) {
+      return CardType.Land;
+    }
+
+    return CardType.Unknown;
+  }
+
+  get setNumberDisplay() {
+    return getRandomInt(0, 451) + "/" + 451
+  }
+
+  get openAIImagePrompt() {
+    var prompt = this.name + ": " + this.flavorText
+  
+    if (this.cardType == CardType.Creature) {
+      prompt = "An image of '" + this.name + "', a " + this.type + " ,  Greg Kutkowski style, digital art";
+      //prompt = "An image of '" + card.name + "' within a fantasy world with some action in the same style as the painting Starry Night."
+    }
+  
+    if (this.cardType == CardType.Instant || this.cardType == CardType.Sorcery) {
+      prompt = "An image of '" + this.name + "' that illustrates the following: " + this.flavorText + ". Greg Rutkowski style, digital art"
+    }
+  
+    if (this.cardType == CardType.Enchantment || this.cardType == CardType.Artifact) {
+      prompt = "An image of '" + this.name + "' that illustrates the following: " + this.flavorText + ". Greg Rutkowski style, digital art"
+    }
+  
+    return prompt;
+  }
+
+  get textDisplay() {
+    var lines = this.getModifiedCardText();
+    for (var i = 0; i < lines.length; i++) {
+      lines[i] = this.addManaHtmlToCardTextLine(lines[i])
+    }
+  
+    return lines;
+  }
+
+  private getModifiedCardText(): string[] {
+    var lines = this.text.split('\n')
+
+    // Add Flashback to cards that gain an effect when cast from the graveyard if the card does not have Flashback already.
+    if (!this.hasFlashback && this.cardGainsEffectWhenCastFromGraveyard) {
+      lines.push("Flashback " + this.manaCost + " (You may cast this card from your graveyard for its flashback cost. Then exile it.)")
+    }
+
+    if ((this.cardType == CardType.Creature || this.cardType == CardType.Artifact) && this.hasFlashback) {
+      lines = this.removeLineThatMatchesRegex(lines, this.flashbackRegex)
+      lines.push("Unearth " + this.manaCost)
+    }
+
+    if ((this.cardType == CardType.Land || this.cardType == CardType.Enchantment) && this.hasFlashback) {
+      lines = this.removeLineThatMatchesRegex(lines, this.flashbackRegex)
+    }
+
+    return lines;
+  }
+
+  private removeLineThatMatchesRegex(lines: string[], regex: RegExp): string[] {
+    var newLines:string[] = []
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i]
+      var match = line.match(regex)
+      if (!match) {
+        newLines.push(line)
+      }
+    }
+
+    return newLines;
+  }
+
+  private cardTextMatchesRegex(regex: RegExp): boolean {
+    var lines = this.text.split('\n')
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i]
+      var match = line.match(regex)
+      if (match) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  flashbackRegex: RegExp = /flashback (.*})/ig
+
+  get hasFlashback():boolean {
+    return this.cardTextMatchesRegex(this.flashbackRegex)
+  }
+
+  get cardGainsEffectWhenCastFromGraveyard():boolean {
+    return this.cardTextMatchesRegex(/.*If you cast this spell from your graveyard.*/ig) ||
+    this.cardTextMatchesRegex(/.*If this spell was cast from your graveyard.*/ig)
+  }
+
+  // Gets the CSS postfix to create class names that are differentiated by color identity.
+  private get manaCssClassPostfix() {
+    var identity = this.colorIdentity
+    var token = ""
+    switch (identity) {
+      case ColorIdentity.White: token = "w"; break;
+      case ColorIdentity.Blue: token = "u"; break;
+      case ColorIdentity.Black: token = "b"; break;
+      case ColorIdentity.Red: token = "r"; break;
+      case ColorIdentity.Green: token = "g"; break;
+      case ColorIdentity.Azorius: token = "uw"; break;
+      case ColorIdentity.Dimir: token = "ub"; break;
+      case ColorIdentity.Rakdos: token = "br"; break;
+      case ColorIdentity.Gruul: token = "rg"; break;
+      case ColorIdentity.Selesnya: token = "wg"; break;
+      case ColorIdentity.Orzhov: token = "wb"; break;
+      case ColorIdentity.Izzet: token = "ur"; break;
+      case ColorIdentity.Golgari: token = "bg"; break;
+      case ColorIdentity.Boros: token = "rw"; break;
+      case ColorIdentity.Simic: token = "gu"; break;
+      case ColorIdentity.Colorless: token = "c"; break;
+      case ColorIdentity.ThreePlusColored: token = "mc"; break;
+    }
+  
+    return token;
+  }
+
+  // Transforms text representations of mana symbols from OpenAI into HTML that can render those mana symbols using the mana project (https://github.com/andrewgioia/mana).
+  private addManaHtmlToCardTextLine(line: string) {
+    line = line.replaceAll("{G}", `<i class=\"${MagicCard.getManaClassName("{G}")}\"></i>`)
+    line = line.replaceAll("{W}", `<i class=\"${MagicCard.getManaClassName("{W}")}\"></i>`)
+    line = line.replaceAll("{U}", `<i class=\"${MagicCard.getManaClassName("{U}")}\"></i>`)
+    line = line.replaceAll("{B}", `<i class=\"${MagicCard.getManaClassName("{B}")}\"></i>`)
+    line = line.replaceAll("{R}", `<i class=\"${MagicCard.getManaClassName("{R}")}\"></i>`)
+    line = line.replaceAll("{0}", `<i class=\"${MagicCard.getManaClassName("{0}")}\"></i>`)
+    line = line.replaceAll("{1}", `<i class=\"${MagicCard.getManaClassName("{1}")}\"></i>`)
+    line = line.replaceAll("{2}", `<i class=\"${MagicCard.getManaClassName("{2}")}\"></i>`)
+    line = line.replaceAll("{3}", `<i class=\"${MagicCard.getManaClassName("{3}")}\"></i>`)
+    line = line.replaceAll("{4}", `<i class=\"${MagicCard.getManaClassName("{4}")}\"></i>`)
+    line = line.replaceAll("{5}", `<i class=\"${MagicCard.getManaClassName("{5}")}\"></i>`)
+    line = line.replaceAll("{6}", `<i class=\"${MagicCard.getManaClassName("{6}")}\"></i>`)
+    line = line.replaceAll("{7}", `<i class=\"${MagicCard.getManaClassName("{7}")}\"></i>`)
+    line = line.replaceAll("{8}", `<i class=\"${MagicCard.getManaClassName("{8}")}\"></i>`)
+    line = line.replaceAll("{9}", `<i class=\"${MagicCard.getManaClassName("{9}")}\"></i>`)
+    line = line.replaceAll("{10}", `<i class=\"${MagicCard.getManaClassName("{10}")}\"></i>`)
+    line = line.replaceAll("{C}", `<i class=\"${MagicCard.getManaClassName("{C}")}\"></i>`)
+    line = line.replaceAll("{T}", `<i class=\"${MagicCard.getManaClassName("{T}")}\"></i>`)
+    return line
+  }
+
+  // Gets the matching mana project (https://github.com/andrewgioia/mana) CSS token for <i></i> based on the mana token string.
+  static getManaClassName(manaToken: string) {
+    if (manaToken == "{G}") { return "ms ms-g" }
+    if (manaToken == "{W}") { return "ms ms-w" }
+    if (manaToken == "{U}") { return "ms ms-u" }
+    if (manaToken == "{B}") { return "ms ms-b" }
+    if (manaToken == "{R}") { return "ms ms-r" }
+    if (manaToken == "{0}") { return "ms ms-0" }
+    if (manaToken == "{1}") { return "ms ms-1" }
+    if (manaToken == "{2}") { return "ms ms-2" }
+    if (manaToken == "{3}") { return "ms ms-3" }
+    if (manaToken == "{4}") { return "ms ms-4" }
+    if (manaToken == "{5}") { return "ms ms-5" }
+    if (manaToken == "{6}") { return "ms ms-6" }
+    if (manaToken == "{7}") { return "ms ms-7" }
+    if (manaToken == "{8}") { return "ms ms-8" }
+    if (manaToken == "{9}") { return "ms ms-9" }
+    if (manaToken == "{10}") { return "ms ms-10" }
+    if (manaToken == "{11}") { return "ms ms-11" }
+    if (manaToken == "{12}") { return "ms ms-12" }
+    if (manaToken == "{C}") { return "ms ms-c" }
+    if (manaToken == "{T}") { return "ms ms-tap" }
+    return ""
+  }
+}
+
+export interface BasicCard {
+  name: string,
+  manaCost: string,
+  type: string,
+  text: string,
+  pt: string,
+  flavorText: string,
+  rarity: string,
+  updateExplanation: string,
+}
+
+export function CardToBasicCard(card: MagicCard) : BasicCard {
+  return {
+    name: card.name,
+    manaCost: card.manaCost,
+    type: card.type,
+    text: card.text,
+    pt: card.pt,
+    updateExplanation: '',
+    flavorText: '', // Do not need this.
+    rarity: card.rarity,
+  }
 }
 
 function getRandomInt(min: number, max: number) {
@@ -104,123 +358,8 @@ function getRandomInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min) + min); // The maximum is exclusive and the minimum is inclusive
 }
 
-function splitCardText(card: Card) {
-  var lines = card.text.split('\n')
-  for (var i = 0; i < lines.length; i++) {
-    lines[i] = manaCostTokenToManaSymbolHtml(lines[i]);
-  }
-
-  return lines;
-}
-
-function getCardManaToken(card: Card) {
-  var identity = getCardColorIdentity(card);
-  var token = ""
-  switch (identity) {
-    case ColorIdentity.White: token = "w"; break;
-    case ColorIdentity.Blue: token = "u"; break;
-    case ColorIdentity.Black: token = "b"; break;
-    case ColorIdentity.Red: token = "r"; break;
-    case ColorIdentity.Green: token = "g"; break;
-    case ColorIdentity.Azorius: token = "uw"; break;
-    case ColorIdentity.Dimir: token = "ub"; break;
-    case ColorIdentity.Rakdos: token = "br"; break;
-    case ColorIdentity.Gruul: token = "rg"; break;
-    case ColorIdentity.Selesnya: token = "wg"; break;
-    case ColorIdentity.Orzhov: token = "wb"; break;
-    case ColorIdentity.Izzet: token = "ur"; break;
-    case ColorIdentity.Golgari: token = "bg"; break;
-    case ColorIdentity.Boros: token = "rw"; break;
-    case ColorIdentity.Simic: token = "gu"; break;
-    case ColorIdentity.Colorless: token = "c"; break;
-    case ColorIdentity.ThreePlusColored: token = "mc"; break;
-  }
-
-  return token;
-}
-
-function manaCostTokenToManaSymbolHtml(line: string) {
-  line = line.replaceAll("{G}", "<i class=\"ms ms-g\"></i>")
-  line = line.replaceAll("{W}", "<i class=\"ms ms-w\"></i>")
-  line = line.replaceAll("{U}", "<i class=\"ms ms-u\"></i>")
-  line = line.replaceAll("{B}", "<i class=\"ms ms-b\"></i>")
-  line = line.replaceAll("{R}", "<i class=\"ms ms-r\"></i>")
-  line = line.replaceAll("{0}", "<i class=\"ms ms-0\"></i>")
-  line = line.replaceAll("{1}", "<i class=\"ms ms-1\"></i>")
-  line = line.replaceAll("{2}", "<i class=\"ms ms-2\"></i>")
-  line = line.replaceAll("{3}", "<i class=\"ms ms-3\"></i>")
-  line = line.replaceAll("{4}", "<i class=\"ms ms-4\"></i>")
-  line = line.replaceAll("{5}", "<i class=\"ms ms-5\"></i>")
-  line = line.replaceAll("{6}", "<i class=\"ms ms-6\"></i>")
-  line = line.replaceAll("{7}", "<i class=\"ms ms-7\"></i>")
-  line = line.replaceAll("{8}", "<i class=\"ms ms-8\"></i>")
-  line = line.replaceAll("{9}", "<i class=\"ms ms-9\"></i>")
-  line = line.replaceAll("{10}", "<i class=\"ms ms-10\"></i>")
-  line = line.replaceAll("{C}", "<i class=\"ms ms-c\"></i>")
-  line = line.replaceAll("{T}", "<i class=\"ms ms-tap\"></i>")
-  return line
-}
-
-function manaCostTokenToManaSymbolClass(manaToken: string) {
-  if (manaToken == "{G}") { return "ms ms-g" }
-  if (manaToken == "{W}") { return "ms ms-w" }
-  if (manaToken == "{U}") { return "ms ms-u" }
-  if (manaToken == "{B}") { return "ms ms-b" }
-  if (manaToken == "{R}") { return "ms ms-r" }
-  if (manaToken == "{0}") { return "ms ms-0" }
-  if (manaToken == "{1}") { return "ms ms-1" }
-  if (manaToken == "{2}") { return "ms ms-2" }
-  if (manaToken == "{3}") { return "ms ms-3" }
-  if (manaToken == "{4}") { return "ms ms-4" }
-  if (manaToken == "{5}") { return "ms ms-5" }
-  if (manaToken == "{6}") { return "ms ms-6" }
-  if (manaToken == "{7}") { return "ms ms-7" }
-  if (manaToken == "{8}") { return "ms ms-8" }
-  if (manaToken == "{9}") { return "ms ms-9" }
-  if (manaToken == "{10}") { return "ms ms-10" }
-  if (manaToken == "{11}") { return "ms ms-11" }
-  if (manaToken == "{12}") { return "ms ms-12" }
-  return ""
-}
-
-export function getCardImagePrompt(card: Card) {
-  var prompt = card.name + ": " + card.flavorText
-
-  if (card.type.toLowerCase().includes("legendary creature") || card.type.toLowerCase().includes("creature")) {
-    prompt = "An image of '" + card.name + "', a " + card.type + " ,  Greg Kutkowski style, digital art";
-    //prompt = "An image of '" + card.name + "' within a fantasy world with some action in the same style as the painting Starry Night."
-  }
-
-  if (card.type.toLowerCase().includes("instant") || card.type.toLowerCase().includes("sorcery")) {
-    prompt = "An image of '" + card.name + "' that illustrates the following: " + card.flavorText + ". Greg Rutkowski style, digital art"
-  }
-
-  if (card.type.toLowerCase().includes("enchantment") || card.type.toLowerCase().includes("artifact")) {
-    prompt = "An image of '" + card.name + "' that illustrates the following: " + card.flavorText + ". Greg Rutkowski style, digital art"
-  }
-
-  return prompt;
-}
-
-export function setCardManaCostTokens(card: Card) {
-  // Bug: sometimes GPT returns just "1G" or "2RR" for mana cost and not "{1}{G}" or "{2}{R}{R}".
-  // if (!card.manaCost.startsWith("{") && !card.manaCost.endsWith("}")) {
-  //   card.manaCost = "{" + card.manaCost + "}"
-  // }
-  var r: RegExp = /\{(.*?)\}/g
-  var match = card.manaCost.match(r)
-  card.manaCostTokens = []
-  match?.forEach(m => card.manaCostTokens.push(m))
-}
-
-function getCardBackgroundClassName(card: Card) {
-  var className = "card-background card-background-";
-  var token = getCardManaToken(card);
-  return className + token;
-}
-
 interface CardDisplayProps {
-  card: Card;
+  card: MagicCard;
 }
 
 export class CardDisplay extends React.Component<CardDisplayProps> {
@@ -233,13 +372,13 @@ export class CardDisplay extends React.Component<CardDisplayProps> {
     return (
       <div>
         <div className="card-container">
-          <div className={getCardBackgroundClassName(card)}>
+          <div className={card.cardDivClassName}>
             <div className="card-frame">
               <div className="frame-header">
                 <h1 className="name">{card.name}</h1>
                 <div className="mana-symbols">
-                  {card.manaCostTokens.map(manaCostToken => (
-                    <i className={manaCostTokenToManaSymbolClass(manaCostToken)} id="mana-icon"></i>
+                  {card.manaCostTokens.map((manaCostToken, i) => (
+                    <i key={card.name + "-manaToken-"+ i} className={MagicCard.getManaClassName(manaCostToken)} id="mana-icon"></i>
                   ))}
                 </div>
               </div>
@@ -251,12 +390,12 @@ export class CardDisplay extends React.Component<CardDisplayProps> {
                 </div>
               </div>
               <div className="frame-text-box">
-                <p className="description ftb-inner-margin">
-                  {splitCardText(card).map(line => (
-                    <p dangerouslySetInnerHTML={{ __html: line }}>
+                <div className="description ftb-inner-margin">
+                  {card.textDisplay.map((line, i) => (
+                    <p key={card.name + "-text-" + i} dangerouslySetInnerHTML={{ __html: line }}>
                     </p>
                   ))}
-                </p>
+                </div>
                 <p className="description">
                 </p>
                 <p className="flavour-text">
@@ -270,7 +409,7 @@ export class CardDisplay extends React.Component<CardDisplayProps> {
               </div>
               <div className="frame-bottom-info inner-margin">
                 <div className="fbi-left">
-                  <p>{getCardSetNumberDisplay()} {getCardRarityDisplay(card)}</p>
+                  <p>{card.setNumberDisplay} {card.rarityDisplay}</p>
                   <p>OpenAI &#x2022; <img className="paintbrush" src="https://image.ibb.co/e2VxAS/paintbrush_white.png" alt="paintbrush icon" />Custom Magic</p>
                 </div>
                 <div className="fbi-center"></div>
