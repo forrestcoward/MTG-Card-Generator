@@ -10,8 +10,9 @@ using OpenAI_API.Models;
 using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace MTG.CardGenerator
 {
@@ -21,10 +22,12 @@ namespace MTG.CardGenerator
         public string Name { get; set; }
         public string ManaCost { get; set; }
         public string Type { get; set; }
-        public string Text { get; set; }
+        [JsonProperty("text")]
+        public string OracleText { get; set; }
         public string FlavorText { get; set; }
         public string Rarity { get; set; }
-        public string PT { get; set; }
+        [JsonProperty("pt")]
+        public string PowerAndToughness { get; set; }
         // Sometimes OpenAI returns power separately, despite being told to return "pt" as one field.
         public int Power { get; set; }
         // Sometimes OpenAI returns toughness separately, despite being told to return "pt" as one field.
@@ -36,6 +39,12 @@ namespace MTG.CardGenerator
         public OpenAIMagicCard[] Cards { get; set; }
     }
 
+    public class GenerateMagicCardFunctionResponse
+    {
+        [JsonProperty("cards")]
+        public MagicCard[] Cards { get; set; }
+    }
+
     public static class GenerateMagicCardFunction
     {
         const string GenerateCardSystemPrompt = $@"
@@ -44,7 +53,7 @@ You should return a JSON array named 'cards' where each entry represents a card 
 Do not explain the cards or explain your reasoning. Only return valid JSON to the user.";
 
         [FunctionName("GenerateMagicCard")]
-        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req, ILogger log)
+        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "GET", Route = null)] HttpRequest req, ILogger log)
         {
             try
             {
@@ -66,7 +75,7 @@ Do not explain the cards or explain your reasoning. Only return valid JSON to th
                     Model = Model.ChatGPTTurbo,
                 });
                 stopwatch.Stop();
-                log.LogMetric("OpenAI Response Time", stopwatch.Elapsed.TotalSeconds);
+                log.LogMetric("CreateChatCompletionsAsync_DurationSeconds", stopwatch.Elapsed.TotalSeconds);
 
                 var reply = response.Choices[0].Message.Content;
                 log?.LogInformation(reply);
@@ -77,14 +86,23 @@ Do not explain the cards or explain your reasoning. Only return valid JSON to th
                     var deserialized = JsonConvert.DeserializeObject<OpenAIMagicCardResponse>(reply);
                     openAICards = deserialized.Cards;
                 } 
-                catch (Newtonsoft.Json.JsonReaderException)
+                catch (JsonReaderException)
                 {
-                    log?.LogWarning($"Initial response was not valid JSON. Now attempt to extract JSON from other known output patterns...");
+                    // Sometimes the response does not obey the prompt and includes text at the beginning or end of the JSON.
+                    // Try to extract JSON from regex instead.
+                    log?.LogWarning($"The initial response was not valid JSON.");
+                    var captures = new Regex(@"(?<json>\{(.*)\})", RegexOptions.Singleline).GetNamedGroupsMatches(reply);
+                    if (captures.ContainsKey("json"))
+                    {
+                        var deserialized = JsonConvert.DeserializeObject<OpenAIMagicCardResponse>(reply);
+                        openAICards = deserialized.Cards;
+                    }
                 }
 
-                var cards = openAICards.Select(x => new MagicCard(x)).ToList();
+                var cards = openAICards.Select(x => new MagicCard(x)).ToArray();
 
-                return new OkObjectResult(cards);
+                var json = JsonConvert.SerializeObject(new GenerateMagicCardFunctionResponse() { Cards = cards });
+                return new OkObjectResult(json);
             }
             catch (Exception exception)
             {

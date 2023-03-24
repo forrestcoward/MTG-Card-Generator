@@ -1,8 +1,9 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
 namespace MTG.CardGenerator
@@ -145,15 +146,19 @@ namespace MTG.CardGenerator
     {
         public string Name { get; }
         public string ManaCost { get; set; }
+        public string TypeLine { get; }
+        [JsonConverter(typeof(StringEnumConverter))]
         public CardType Type { get; set; }
         public string RawOracleText { get; }
         public string ModifiedOracleText { get; set; }
         public string FlavorText { get; }
         public string Rarity { get; }
-        [JsonPropertyName("pt")]
+        [JsonProperty("pt")]
         public string PowerAndToughness { get; set; }
         public int Power { get; set; }
         public int Toughness { get; set; }
+
+        [JsonConverter(typeof(StringEnumConverter))]
         public ColorIdentity ColorIdentity { get; set; }
 
         [JsonIgnore]
@@ -177,11 +182,12 @@ namespace MTG.CardGenerator
             {
                 ManaCost = string.Empty;
             }
-            RawOracleText = card.Text;
+            RawOracleText = card.OracleText;
             FlavorText = card.FlavorText;
             Rarity = card.Rarity;
             ColorIdentity = GetColorIdentity(card.ManaCost);
-            PowerAndToughness = card.PT;
+            PowerAndToughness = card.PowerAndToughness;
+            TypeLine = card.Type;
 
             ParsedOracleTextLines = RawOracleText.Split('\n').Select(oracleTextLine => new ParsedOracleTextLine(oracleTextLine, this)).ToArray();
 

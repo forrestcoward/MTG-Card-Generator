@@ -11,7 +11,7 @@ namespace MTG.CardGenerator.Tests
             {
                 Name = "TestCard",
                 ManaCost = "{1}",
-                Text = "Discard two cards: Create a 2/2 black Zombie creature token.\nFlashback {1}{B}{B}"
+                OracleText = "Discard two cards: Create a 2/2 black Zombie creature token.\nFlashback {1}{B}{B}"
             };
 
             var card = new MagicCard(_card);
@@ -25,7 +25,7 @@ namespace MTG.CardGenerator.Tests
             {
                 Name = "Fireball",
                 ManaCost = "{1}{R}",
-                Text = "Deal 2 damage to target creature or player. If Fireball was cast from your graveyard, it deals 2 additional damage."
+                OracleText = "Deal 2 damage to target creature or player. If Fireball was cast from your graveyard, it deals 2 additional damage."
             };
 
             var card = new MagicCard(_card);
