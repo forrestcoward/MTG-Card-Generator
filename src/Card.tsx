@@ -38,26 +38,50 @@ enum CardType {
   Unknown
 }
 
-enum CardMechanics {
-  Flashback,
-  Kicker
+export interface BasicCard {
+  name: string,
+  manaCost: string,
+  typeLine: string,
+  type: string,
+  text: string,
+  rawOracleText: string,
+  modifiedOracleText: string,
+  power: number,
+  toughness: number,
+  colorIdentity: string
+  pt: string,
+  flavorText: string,
+  rarity: string,
+  imageUrl: string,
 }
 
 export class MagicCard {
-  name: string;
-  manaCost: string;
-  type: string;
-  text: string;
-  flavorText: string;
-  pt: string;
-  rarity: string;
-  imageUrl: string;
+  name: string
+  manaCost: string
+  typeLine: string
+  type: string
+  text: string
+  rawOracleText: string
+  modifiedOracleText: string
+  power: number
+  toughness: number
+  _colorIdentity: string
+  pt: string
+  flavorText: string
+  rarity: string
+  imageUrl: string
 
   constructor(card: BasicCard) {
     this.name = card.name
     this.manaCost = card.manaCost;
     this.type = card.type;
+    this.typeLine = card.typeLine;
     this.text = card.text;
+    this.rawOracleText = card.rawOracleText;
+    this.modifiedOracleText = card.modifiedOracleText;
+    this.power = 0;
+    this.toughness = 0;
+    this._colorIdentity = "";
     this.flavorText = card.flavorText;
     this.pt = card.pt;
     this.rarity = card.rarity;
@@ -187,69 +211,12 @@ export class MagicCard {
   }
 
   get textDisplay() {
-    var lines = this.getModifiedCardText();
+    var lines = this.rawOracleText.split('\n')
     for (var i = 0; i < lines.length; i++) {
       lines[i] = this.addManaHtmlToCardTextLine(lines[i])
     }
   
     return lines;
-  }
-
-  private getModifiedCardText(): string[] {
-    var lines = this.text.split('\n')
-
-    // Add Flashback to cards that gain an effect when cast from the graveyard if the card does not have Flashback already.
-    if (!this.hasFlashback && this.cardGainsEffectWhenCastFromGraveyard) {
-      lines.push("Flashback " + this.manaCost + " (You may cast this card from your graveyard for its flashback cost. Then exile it.)")
-    }
-
-    if ((this.cardType == CardType.Creature || this.cardType == CardType.Artifact) && this.hasFlashback) {
-      lines = this.removeLineThatMatchesRegex(lines, this.flashbackRegex)
-      lines.push("Unearth " + this.manaCost)
-    }
-
-    if ((this.cardType == CardType.Land || this.cardType == CardType.Enchantment) && this.hasFlashback) {
-      lines = this.removeLineThatMatchesRegex(lines, this.flashbackRegex)
-    }
-
-    return lines;
-  }
-
-  private removeLineThatMatchesRegex(lines: string[], regex: RegExp): string[] {
-    var newLines:string[] = []
-    for (var i = 0; i < lines.length; i++) {
-      var line = lines[i]
-      var match = line.match(regex)
-      if (!match) {
-        newLines.push(line)
-      }
-    }
-
-    return newLines;
-  }
-
-  private cardTextMatchesRegex(regex: RegExp): boolean {
-    var lines = this.text.split('\n')
-    for (var i = 0; i < lines.length; i++) {
-      var line = lines[i]
-      var match = line.match(regex)
-      if (match) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  flashbackRegex: RegExp = /flashback (.*})/ig
-
-  get hasFlashback():boolean {
-    return this.cardTextMatchesRegex(this.flashbackRegex)
-  }
-
-  get cardGainsEffectWhenCastFromGraveyard():boolean {
-    return this.cardTextMatchesRegex(/.*If you cast this spell from your graveyard.*/ig) ||
-    this.cardTextMatchesRegex(/.*If this spell was cast from your graveyard.*/ig)
   }
 
   // Gets the CSS postfix to create class names that are differentiated by color identity.
@@ -327,31 +294,6 @@ export class MagicCard {
     return ""
   }
 }
-
-export interface BasicCard {
-  name: string,
-  manaCost: string,
-  type: string,
-  text: string,
-  pt: string,
-  flavorText: string,
-  rarity: string,
-  updateExplanation: string,
-}
-
-export function CardToBasicCard(card: MagicCard) : BasicCard {
-  return {
-    name: card.name,
-    manaCost: card.manaCost,
-    type: card.type,
-    text: card.text,
-    pt: card.pt,
-    updateExplanation: '',
-    flavorText: '', // Do not need this.
-    rarity: card.rarity,
-  }
-}
-
 function getRandomInt(min: number, max: number) {
   min = Math.ceil(min);
   max = Math.floor(max);
@@ -384,7 +326,7 @@ export class CardDisplay extends React.Component<CardDisplayProps> {
               </div>
               <img className="frame-art" src={card.imageUrl} />
               <div className="frame-type-line">
-                <h1 className="type">{card.type}</h1>
+                <h1 className="type">{card.typeLine}</h1>
                 <div className="mana-symbols">
                   <i className="ms ms-dfc-ignite" id="mana-icon"></i>
                 </div>

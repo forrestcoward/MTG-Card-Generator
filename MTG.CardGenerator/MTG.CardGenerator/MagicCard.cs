@@ -144,20 +144,31 @@ namespace MTG.CardGenerator
     /// </summary>
     public class MagicCard
     {
+        [JsonProperty("name")]
         public string Name { get; }
+        [JsonProperty("manaCost")]
         public string ManaCost { get; set; }
+        [JsonProperty("typeLine")]
         public string TypeLine { get; }
         [JsonConverter(typeof(StringEnumConverter))]
+        [JsonProperty("type")]
         public CardType Type { get; set; }
+        [JsonProperty("rawOracleText")]
         public string RawOracleText { get; }
+        [JsonProperty("modifiedOracleText")]
         public string ModifiedOracleText { get; set; }
+        [JsonProperty("flavorText")]
         public string FlavorText { get; }
+        [JsonProperty("rarity")]
         public string Rarity { get; }
         [JsonProperty("pt")]
         public string PowerAndToughness { get; set; }
-        public int Power { get; set; }
-        public int Toughness { get; set; }
+        [JsonProperty("power")]
+        public string Power { get; set; }
+        [JsonProperty("toughness")]
+        public string Toughness { get; set; }
 
+        [JsonProperty("colorIdentity")]
         [JsonConverter(typeof(StringEnumConverter))]
         public ColorIdentity ColorIdentity { get; set; }
 
@@ -174,20 +185,33 @@ namespace MTG.CardGenerator
         public MagicCard(OpenAIMagicCard card)
         {
             Name = card.Name;
-            if (!string.IsNullOrWhiteSpace(card.ManaCost))
-            {
-                ManaCost = card.ManaCost;
-            }
-            else
-            {
-                ManaCost = string.Empty;
-            }
+            ManaCost = !string.IsNullOrWhiteSpace(card.ManaCost) ? card.ManaCost : string.Empty;
             RawOracleText = card.OracleText;
             FlavorText = card.FlavorText;
             Rarity = card.Rarity;
             ColorIdentity = GetColorIdentity(card.ManaCost);
-            PowerAndToughness = card.PowerAndToughness;
             TypeLine = card.Type;
+            Type = GetCardType(TypeLine);
+
+            if (string.IsNullOrWhiteSpace(card.PowerAndToughness) &&
+                (!string.IsNullOrWhiteSpace(card.Power) && !string.IsNullOrWhiteSpace(card.Toughness)))
+            {
+                PowerAndToughness = $"{card.Power}/{card.Toughness}";
+            }
+            else if (!string.IsNullOrWhiteSpace(card.PowerAndToughness))
+            {
+                PowerAndToughness = card.PowerAndToughness;
+            }
+
+            if (!string.IsNullOrWhiteSpace(card.Power))
+            {
+                Power = card.Power;
+            }
+
+            if (!string.IsNullOrWhiteSpace(card.Toughness))
+            {
+                Toughness = card.Toughness;
+            }
 
             ParsedOracleTextLines = RawOracleText.Split('\n').Select(oracleTextLine => new ParsedOracleTextLine(oracleTextLine, this)).ToArray();
 
@@ -213,6 +237,43 @@ namespace MTG.CardGenerator
                     }
                 }
             }
+        }
+
+        private static CardType GetCardType(string typeLine)
+        {
+            var type = typeLine.ToLower();
+
+            if (type.Contains("legendary creature") || type.Contains("creature"))
+            {
+                return CardType.Creature;
+            }
+
+            if (type == "instant")
+            {
+                return CardType.Instant;
+            }
+
+            if (type == "sorcery")
+            {
+                return CardType.Sorcery;
+            }
+
+            if (type.Contains("artifact"))
+            {
+                return CardType.Artifact;
+            }
+
+            if (type.Contains("enchantment"))
+            {
+                return CardType.Enchantment;
+            }
+
+            if (type.Contains("land"))
+            {
+                return CardType.Land;
+            }
+
+            return CardType.Unknown;
         }
 
         private static ColorIdentity GetColorIdentity(string manaCostTokens) {

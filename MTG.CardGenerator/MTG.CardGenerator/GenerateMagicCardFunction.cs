@@ -13,6 +13,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json.Linq;
 
 namespace MTG.CardGenerator
 {
@@ -29,9 +30,9 @@ namespace MTG.CardGenerator
         [JsonProperty("pt")]
         public string PowerAndToughness { get; set; }
         // Sometimes OpenAI returns power separately, despite being told to return "pt" as one field.
-        public int Power { get; set; }
+        public string Power { get; set; }
         // Sometimes OpenAI returns toughness separately, despite being told to return "pt" as one field.
-        public int Toughness { get; set; }
+        public string Toughness { get; set; }
     }
 
     public class OpenAIMagicCardResponse
@@ -62,46 +63,66 @@ Do not explain the cards or explain your reasoning. Only return valid JSON to th
 
                 var apiKey = Environment.GetEnvironmentVariable("OpenAIApiKey");
                 OpenAIAPI api = new OpenAIAPI(new APIAuthentication(apiKey));
-
-                var stopwatch = Stopwatch.StartNew();
-                var response = await api.Chat.CreateChatCompletionAsync(new ChatRequest()
-                {
-                    Messages = new ChatMessage[]
-                    {
-                        new ChatMessage(ChatMessageRole.User, userPrompt),
-                        new ChatMessage(ChatMessageRole.System, GenerateCardSystemPrompt)
-                    },
-                    Temperature = 1,
-                    Model = Model.ChatGPTTurbo,
-                });
-                stopwatch.Stop();
-                log.LogMetric("CreateChatCompletionsAsync_DurationSeconds", stopwatch.Elapsed.TotalSeconds);
-
-                var reply = response.Choices[0].Message.Content;
-                log?.LogInformation(reply);
-
                 var openAICards = Array.Empty<OpenAIMagicCard>();
-                try
+
+                for (var attempt = 0; attempt < 10; attempt++)
                 {
-                    var deserialized = JsonConvert.DeserializeObject<OpenAIMagicCardResponse>(reply);
-                    openAICards = deserialized.Cards;
-                } 
-                catch (JsonReaderException)
-                {
-                    // Sometimes the response does not obey the prompt and includes text at the beginning or end of the JSON.
-                    // Try to extract JSON from regex instead.
-                    log?.LogWarning($"The initial response was not valid JSON.");
-                    var captures = new Regex(@"(?<json>\{(.*)\})", RegexOptions.Singleline).GetNamedGroupsMatches(reply);
-                    if (captures.ContainsKey("json"))
+                    var stopwatch = Stopwatch.StartNew();
+                    var response = await api.Chat.CreateChatCompletionAsync(new ChatRequest()
+                    {
+                        Messages = new ChatMessage[]
+                        {
+                            new ChatMessage(ChatMessageRole.User, userPrompt),
+                            new ChatMessage(ChatMessageRole.System, GenerateCardSystemPrompt)
+                        },
+                        Temperature = 1,
+                        Model = Model.ChatGPTTurbo,
+                    });
+                    stopwatch.Stop();
+                    log.LogMetric("CreateChatCompletionsAsync_DurationSeconds", stopwatch.Elapsed.TotalSeconds);
+
+                    var reply = response.Choices[0].Message.Content;
+                    log?.LogInformation($"OpenAI response:{Environment.NewLine}{reply}");
+
+                    try
                     {
                         var deserialized = JsonConvert.DeserializeObject<OpenAIMagicCardResponse>(reply);
                         openAICards = deserialized.Cards;
+                    }
+                    catch (JsonReaderException)
+                    {
+                        // Sometimes the response does not obey the prompt and includes text at the beginning or end of the JSON.
+                        // Try to extract JSON from regex instead.
+                        log?.LogWarning($"The initial response was not valid JSON.");
+                        var captures = new Regex(@"(?<json>\{(.*)\})", RegexOptions.Singleline).GetNamedGroupsMatches(reply);
+                        if (captures.ContainsKey("json"))
+                        {
+                            try
+                            {
+                                var deserialized = JsonConvert.DeserializeObject<OpenAIMagicCardResponse>(captures["json"]);
+                                if (deserialized != null && deserialized.Cards != null)
+                                {
+                                    openAICards = deserialized.Cards;
+                                }
+                            }
+                            catch (JsonReaderException) { }
+                        }
+                    }
+
+                    if (openAICards.Length > 0)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        log?.LogError($"[Attempt {attempt+1}] Unable to parse OpenAI response.");
                     }
                 }
 
                 var cards = openAICards.Select(x => new MagicCard(x)).ToArray();
 
                 var json = JsonConvert.SerializeObject(new GenerateMagicCardFunctionResponse() { Cards = cards });
+                log?.LogInformation($"API JSON response:{Environment.NewLine}{JToken.Parse(json)}");
                 return new OkObjectResult(json);
             }
             catch (Exception exception)
