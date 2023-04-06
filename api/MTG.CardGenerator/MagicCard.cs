@@ -189,7 +189,7 @@ namespace MTG.CardGenerator
 
                 if (Type == CardType.Instant || Type == CardType.Sorcery || Type == CardType.Enchantment || Type == CardType.Artifact)
                 {
-                    prompt = $"An image of '{Name}', a powerful magic spell, that illustrates the following description: {FlavorText}. The image should be Greg Rutkowski style, digital art.";
+                    prompt = $"An image of '{Name}', that illustrates the following description: {FlavorText}. The image should be Greg Rutkowski style, digital art.";
                 }
 
                 if (Type == CardType.Enchantment || Type == CardType.Artifact)

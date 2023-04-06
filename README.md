@@ -18,9 +18,9 @@ There are two components to this project:
 
 ## Build & Run the Backend
 
-1. Open `MTG.CardGenerator\MTG.CardGenerator.sln` in Visual Studio 2022 and build the solution. 
+1. Open `api\MTG.CardGenerator.sln` in Visual Studio 2022 and build the solution. 
 
-2. Add a `local.settings.json` inside the `MTG.CardGenerator`:
+2. Add a `local.settings.json` inside the `MTG.CardGenerator` project:
 
 ```
 {
@@ -30,8 +30,6 @@ There are two components to this project:
     "CORSCredentials": true
   },
   "Values": {
-    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-    "FUNCTIONS_WORKER_RUNTIME": "dotnet",
     "OPEN_API_KEY": "<YOUR OPEN AI KEY GOES HERE>"
   }
 }

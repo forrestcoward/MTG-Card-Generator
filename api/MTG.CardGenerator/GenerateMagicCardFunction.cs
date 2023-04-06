@@ -154,7 +154,8 @@ Do not explain the cards or explain your reasoning. Only return valid JSON to th
                         properties: new Dictionary<string, object>()
                         {
                             { "imagePrompt", card.OpenAIImagePrompt },
-                            { "imageUrl", card.ImageUrl }
+                            { "imageUrl", card.ImageUrl },
+                            { "requestId", response.RequestId }
                         });
                 }
 

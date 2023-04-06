@@ -43,8 +43,11 @@ async function MakeOpenAIImageCreateRequest(apiKey:string, imagePrompt:string) :
 }
 
 export async function GenerateMagicCardRequest(userPrompt: string): Promise<MagicCard[]> {
-  const url: string = 'https://ambitious-meadow-0e2e9ce0f.3.azurestaticapps.net/api/GenerateMagicCard'
-  //const url: string = 'http://localhost:7071/api/GenerateMagicCard';
+  // TODO: Do this in a better config fashion.
+  let url: string = 'https://ambitious-meadow-0e2e9ce0f.3.azurestaticapps.net/api/GenerateMagicCard'
+  if (location.hostname === "localhost") {
+    url = 'http://localhost:7071/api/GenerateMagicCard';
+  }
 
   const params: Record<string, string> = {
     userPrompt: userPrompt
@@ -63,6 +66,7 @@ export async function GenerateMagicCardRequest(userPrompt: string): Promise<Magi
     return cards.map(card => new MagicCard(card));
 }
 
+// TODO: This code kind of sucks, error handling especially.
 async function httpGet(url: string, params?: Record<string, string>): Promise<any> {
   const sanitizedParams: Record<string, string> = {};
   if (params) {

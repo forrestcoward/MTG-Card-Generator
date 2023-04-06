@@ -1,13 +1,4 @@
 {
-  "rules": [
-    "A turn cannot have an upkeep but a player can.",
-    "If a card has a mana cost that is variable by paying {X}, or an ability where the player can pay a variable amount by paying {X}, the effect gained by paying {X} should scale based on the amount of mana paid for X.",
-    "If a card references its flashback cost, it should explicitly state the amount of mana that flashback costs. The flashback cost usually costs more than the mana cost of the card.",
-    "Making the card become an artifact should cost at most 1 colorless mana."
-  ]
-}
-
-{
   "cards": [
     {
       "name": "Flameblast Phoenix",
@@ -30,13 +21,7 @@
       "rarity": "Uncommon",
       "reason": "An efficient and flavorful design that utilizes the flashback mechanic to create an endless army of zombies.",
       "funnyReason": "We could have called this card \"Cardboard Box Forts\" because of all the trash you'll be filling your graveyard with."
-    }
-  ]
-}
-
-
-{
-  "cards": [
+    },
     {
       "name": "Temporal Retaliation",
       "manaCost": "{2}{R}{U}",
@@ -58,12 +43,7 @@
       "rarity": "Rare",
       "reason": "I thought it would be interesting to have flashback on a creature, and a phoenix seemed like a great fit for the Dominaria plane.",
       "funnyReason": "Because this phoenix just can't seem to stay dead. It keeps coming back, even when you thought you'd seen the last of it (thanks to flashback, of course)." 
-    }
-  ]
-}
-
-{
-  "cards": [
+    },
     {
       "name": "Temporal Echoes",
       "manaCost": "{3}{U}",

@@ -37,7 +37,7 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
   handleSubmit() {
     this.setState({ generateButtonDisabled: true, currentError: "" })
 
-    var userPrompt = this.state.openAIPrompt + "\n Only return JSON. Do not explain yourself."
+    var userPrompt = this.state.openAIPrompt
 
     GenerateMagicCardRequest(userPrompt).then(cards => {
 
