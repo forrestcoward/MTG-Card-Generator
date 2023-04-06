@@ -1,7 +1,7 @@
 import { Configuration, CreateImageRequestSizeEnum, OpenAIApi } from "openai";
 import { BasicCard, MagicCard } from "./Card";
 
-export async function MakeOpenAIChatComletionRequest(apiKey:string, userPrompt:string, systemPrompt:string, temperature:number = 1, model:string = "gpt-3.5-turbo") : Promise<string> {
+async function MakeOpenAIChatComletionRequest(apiKey:string, userPrompt:string, systemPrompt:string, temperature:number = 1, model:string = "gpt-3.5-turbo") : Promise<string> {
   const configuration = new Configuration({
     apiKey: apiKey,
   });
@@ -22,7 +22,7 @@ export async function MakeOpenAIChatComletionRequest(apiKey:string, userPrompt:s
   }
 }
 
-export async function MakeOpenAIImageCreateRequest(apiKey:string, imagePrompt:string) : Promise<string> {
+async function MakeOpenAIImageCreateRequest(apiKey:string, imagePrompt:string) : Promise<string> {
   const configuration = new Configuration({
     apiKey: apiKey,
   });
@@ -43,7 +43,8 @@ export async function MakeOpenAIImageCreateRequest(apiKey:string, imagePrompt:st
 }
 
 export async function GenerateMagicCardRequest(userPrompt: string): Promise<MagicCard[]> {
-  const url: string = 'http://localhost:7071/api/GenerateMagicCard';
+  const url: string = 'https://ambitious-meadow-0e2e9ce0f.3.azurestaticapps.net/api/GenerateMagicCard'
+  //const url: string = 'http://localhost:7071/api/GenerateMagicCard';
 
   const params: Record<string, string> = {
     userPrompt: userPrompt

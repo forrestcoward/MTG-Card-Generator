@@ -63,7 +63,7 @@ Do not explain the cards or explain your reasoning. Only return valid JSON to th
                 var userPrompt = (string) req.Query["userPrompt"];
                 log?.LogInformation($"User prompt: {userPrompt.Replace("\n", "")}");
 
-                var apiKey = Environment.GetEnvironmentVariable("OPEN_API_KEY");
+                var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
                 OpenAIAPI api = new OpenAIAPI(new APIAuthentication(apiKey));
                 var openAICards = Array.Empty<OpenAIMagicCard>();
 
