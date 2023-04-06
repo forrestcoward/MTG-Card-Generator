@@ -20,7 +20,7 @@
   },
   "scripts": {
     "dev": "webpack serve",
-    "build": "webpack --mode production --progress --hide-modules",
+    "build": "webpack --mode production --progress",
     "tscheck": "tsc -w"
   },
   "dependencies": {

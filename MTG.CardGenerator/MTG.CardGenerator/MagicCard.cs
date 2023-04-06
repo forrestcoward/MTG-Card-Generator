@@ -172,6 +172,35 @@ namespace MTG.CardGenerator
         [JsonConverter(typeof(StringEnumConverter))]
         public ColorIdentity ColorIdentity { get; set; }
 
+        [JsonProperty("imageUrl")]
+        public string ImageUrl { get; set; }
+
+        [JsonIgnore]
+        public string OpenAIImagePrompt
+        {
+            get
+            {
+                var prompt = $"{Name}: {FlavorText}";
+
+                if (Type == CardType.Creature)
+                {
+                    prompt = $"An image of '{Name}', a '{Type}', Greg Kutkowski style, digital art";
+                }
+
+                if (Type == CardType.Instant || Type == CardType.Sorcery || Type == CardType.Enchantment || Type == CardType.Artifact)
+                {
+                    prompt = $"An image of '{Name}', a powerful magic spell, that illustrates the following description: {FlavorText}. The image should be Greg Rutkowski style, digital art.";
+                }
+
+                if (Type == CardType.Enchantment || Type == CardType.Artifact)
+                {
+                    prompt = $"An image of '{Name}' that illustrates the following description: {FlavorText}. The image should be Greg Rutkowski style, digital art.";
+                }
+
+                return prompt;
+            }
+        }
+
         [JsonIgnore]
         public ParsedOracleTextLine[] ParsedOracleTextLines { get; }
 
@@ -192,6 +221,7 @@ namespace MTG.CardGenerator
             ColorIdentity = GetColorIdentity(card.ManaCost);
             TypeLine = card.Type;
             Type = GetCardType(TypeLine);
+            ImageUrl = string.Empty;
 
             if (string.IsNullOrWhiteSpace(card.PowerAndToughness) &&
                 (!string.IsNullOrWhiteSpace(card.Power) && !string.IsNullOrWhiteSpace(card.Toughness)))

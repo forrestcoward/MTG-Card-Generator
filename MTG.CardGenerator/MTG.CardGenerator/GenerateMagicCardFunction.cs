@@ -14,6 +14,8 @@ using System.Threading.Tasks;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json.Linq;
+using OpenAI_API.Images;
+using System.Collections.Generic;
 
 namespace MTG.CardGenerator
 {
@@ -61,11 +63,11 @@ Do not explain the cards or explain your reasoning. Only return valid JSON to th
                 var userPrompt = (string) req.Query["userPrompt"];
                 log?.LogInformation($"User prompt: {userPrompt.Replace("\n", "")}");
 
-                var apiKey = Environment.GetEnvironmentVariable("OpenAIApiKey");
+                var apiKey = Environment.GetEnvironmentVariable("OPEN_API_KEY");
                 OpenAIAPI api = new OpenAIAPI(new APIAuthentication(apiKey));
                 var openAICards = Array.Empty<OpenAIMagicCard>();
 
-                for (var attempt = 0; attempt < 10; attempt++)
+                for (var attempt = 0; attempt < 5; attempt++)
                 {
                     var stopwatch = Stopwatch.StartNew();
                     var response = await api.Chat.CreateChatCompletionAsync(new ChatRequest()
@@ -78,10 +80,21 @@ Do not explain the cards or explain your reasoning. Only return valid JSON to th
                         Temperature = 1,
                         Model = Model.ChatGPTTurbo,
                     });
-                    stopwatch.Stop();
-                    log.LogMetric("CreateChatCompletionsAsync_DurationSeconds", stopwatch.Elapsed.TotalSeconds);
 
                     var reply = response.Choices[0].Message.Content;
+
+                    stopwatch.Stop();
+                    log?.LogMetric("CreateChatCompletionsAsync_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
+                        properties: new Dictionary<string, object>()
+                        {
+                            { "response", response },
+                            { "systemPrompt", GenerateCardSystemPrompt },
+                            { "userPrompt", userPrompt },
+                            { "temperature", 1 },
+                            { "model", Model.ChatGPTTurbo },
+                            { "requestId", response.RequestId }
+                        });
+
                     log?.LogInformation($"OpenAI response:{Environment.NewLine}{reply}");
 
                     try
@@ -121,13 +134,37 @@ Do not explain the cards or explain your reasoning. Only return valid JSON to th
 
                 var cards = openAICards.Select(x => new MagicCard(x)).ToArray();
 
+                // Generate an image for each card.
+                foreach (var card in cards)
+                {
+                    var stopwatch = Stopwatch.StartNew();
+                    var response = await api.ImageGenerations.CreateImageAsync(new ImageGenerationRequest()
+                    {
+                        NumOfImages = 1,
+                        ResponseFormat = ImageResponseFormat.Url,
+                        Size = ImageSize._1024,
+                        Prompt = card.OpenAIImagePrompt,
+                    });
+
+                    card.ImageUrl = response.Data[0].Url;
+                    log.LogInformation($"Card image url: {card.ImageUrl}");
+
+                    stopwatch.Stop();
+                    log.LogMetric("CreateImageAsync_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
+                        properties: new Dictionary<string, object>()
+                        {
+                            { "imagePrompt", card.OpenAIImagePrompt },
+                            { "imageUrl", card.ImageUrl }
+                        });
+                }
+
                 var json = JsonConvert.SerializeObject(new GenerateMagicCardFunctionResponse() { Cards = cards });
                 log?.LogInformation($"API JSON response:{Environment.NewLine}{JToken.Parse(json)}");
                 return new OkObjectResult(json);
             }
             catch (Exception exception)
             {
-                var errorMessage = $"Unexpected exception in GenerateMagicCard: {exception}";
+                var errorMessage = $"Unexpected exception: {exception}";
                 log?.LogError(exception, errorMessage);
                 return new ContentResult
                 {

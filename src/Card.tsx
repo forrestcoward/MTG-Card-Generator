@@ -85,7 +85,7 @@ export class MagicCard {
     this.flavorText = card.flavorText;
     this.pt = card.pt;
     this.rarity = card.rarity;
-    this.imageUrl = "";
+    this.imageUrl = card.imageUrl;
   }
 
   get manaCostTokens(): string[] {
@@ -144,7 +144,22 @@ export class MagicCard {
   get cardDivClassName() {
     return "card-background card-background-" + this.manaCssClassPostfix
   }
+  get cardFrameTypeLineClassName()  {
+    return "frame-type-line frame-" + this.manaCssClassPostfix + " frame-type-line-" + this.manaCssClassPostfix
+  }
+
+  get cardFrameHeaderClassName() {
+    return "frame-header frame-" + this.manaCssClassPostfix + " frame-header-" + this.manaCssClassPostfix
+  }
+
+  get cardFrameTextBoxClassName() {
+    return "frame-text-box frame-text-box-" + this.manaCssClassPostfix
+  }
   
+  get cardFrameArtClassName() {
+    return "frame-art frame-art-" + this.manaCssClassPostfix
+  }
+
   get rarityDisplay() {
     var token = ""
     switch (this.rarity.toLowerCase()) {
@@ -189,25 +204,6 @@ export class MagicCard {
 
   get setNumberDisplay() {
     return getRandomInt(0, 451) + "/" + 451
-  }
-
-  get openAIImagePrompt() {
-    var prompt = this.name + ": " + this.flavorText
-  
-    if (this.cardType == CardType.Creature) {
-      prompt = "An image of '" + this.name + "', a " + this.type + " ,  Greg Kutkowski style, digital art";
-      //prompt = "An image of '" + card.name + "' within a fantasy world with some action in the same style as the painting Starry Night."
-    }
-  
-    if (this.cardType == CardType.Instant || this.cardType == CardType.Sorcery) {
-      prompt = "An image of '" + this.name + "' that illustrates the following: " + this.flavorText + ". Greg Rutkowski style, digital art"
-    }
-  
-    if (this.cardType == CardType.Enchantment || this.cardType == CardType.Artifact) {
-      prompt = "An image of '" + this.name + "' that illustrates the following: " + this.flavorText + ". Greg Rutkowski style, digital art"
-    }
-  
-    return prompt;
   }
 
   get textDisplay() {
@@ -316,7 +312,7 @@ export class CardDisplay extends React.Component<CardDisplayProps> {
         <div className="card-container">
           <div className={card.cardDivClassName}>
             <div className="card-frame">
-              <div className="frame-header">
+              <div className={card.cardFrameHeaderClassName}>
                 <h1 className="name">{card.name}</h1>
                 <div className="mana-symbols">
                   {card.manaCostTokens.map((manaCostToken, i) => (
@@ -324,14 +320,14 @@ export class CardDisplay extends React.Component<CardDisplayProps> {
                   ))}
                 </div>
               </div>
-              <img className="frame-art" src={card.imageUrl} />
-              <div className="frame-type-line">
+              <img className={card.cardFrameArtClassName} src={card.imageUrl} />
+              <div className={card.cardFrameTypeLineClassName}>
                 <h1 className="type">{card.typeLine}</h1>
                 <div className="mana-symbols">
                   <i className="ms ms-dfc-ignite" id="mana-icon"></i>
                 </div>
               </div>
-              <div className="frame-text-box">
+              <div className={card.cardFrameTextBoxClassName}>
                 <div className="description ftb-inner-margin">
                   {card.textDisplay.map((line, i) => (
                     <p key={card.name + "-text-" + i} dangerouslySetInnerHTML={{ __html: line }}>
