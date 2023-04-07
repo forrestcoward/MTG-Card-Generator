@@ -9,7 +9,7 @@
 }
 
 .wizardStaffLoading {
-
+  animation: rotate 2s infinite linear;
 }
 
 .generateButton {
@@ -27,6 +27,21 @@
   border-top: solid black;
   box-shadow: 0px 0px 5px 5px rgba(0,0,0,.15);
   padding-bottom:40px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding-left:130px;
+  padding-right:130px;
+}
+
+table {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cardContainer {
+  padding-left: 30px;
+  padding-right: 30px;
 }
 
 .container {

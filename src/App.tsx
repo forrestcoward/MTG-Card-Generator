@@ -3,7 +3,10 @@ import { BasicCard, CardDisplay, MagicCard  } from './Card';
 import { GenerateMagicCardRequest } from './OpenAI';
 import "./mtg-card.css";
 import "./app.css";
+// @ts-ignore
 import wizardImage from './card-backgrounds/wizard.png'
+// @ts-ignore
+import staffIcon from './card-backgrounds/staff.png'
 
 export interface MTGCardGeneratorProps { }
 
@@ -12,7 +15,7 @@ export interface MTGCardGeneratorState {
   openAIResponse: string,
   generateButtonDisabled: boolean,
   cards: MagicCard[],
-  currentError: string
+  currentError: string,
 }
 
 const defaultPrompt:string = "Generate me one Magic: The Gathering card from the Dominaria plane."
@@ -22,13 +25,13 @@ const _tutorialCard:BasicCard = {
   manaCost: "{6}",
   typeLine: "Legendary Creature — Artificer God",
   type: "Artifact",
-  text: "",
   rawOracleText: "Haste, Hexproof\n{T}: Enter a prompt above and hit \"Generate!\" to generate a unique Magic: The Gathering card into my spell book",
+  text: "",
   modifiedOracleText: "",
-  power: 0,
-  toughness: 0,
-  colorIdentity: "Blue",
+  colorIdentity: "Colorless",
   pt: "6/6",
+  power: 6,
+  toughness: 6,
   flavorText: "\"I recall the huge design teams employed to devise even the simplest cards. Even the most intelligent of designers will never hope to match again the execution and creativity of modern machines.\"\n - The Creator",
   rarity: "Mythic",
   imageUrl: wizardImage,
@@ -50,6 +53,14 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleChangeInput = this.handleChangeInput.bind(this);
+  }
+
+  getLoadingClassName() : string{
+    if (this.state.generateButtonDisabled) {
+      return "wizardStaffLoading"
+    } else {
+      return ""
+    }
   }
 
   handleChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
@@ -102,23 +113,26 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
         <div className="container">
         <p>Generate me a Magic: The Gathering card that...</p>
         <label>
-          {/*<textarea value={this.state.openAIPrompt} onChange={this.handleChange} rows={10} cols={120} />*/}
           <input type="text" className="userPrompt" onChange={this.handleChangeInput} value={this.state.openAIPrompt} height={"100px"} />
         </label>
         <p></p>
-        <button className="generateButton" type="submit" onClick={() => this.handleSubmit()} disabled={this.state.generateButtonDisabled}>Generate!</button>
+        <table>
+          <tr>
+            <td>
+              <button className="generateButton" type="submit" onClick={() => this.handleSubmit()} disabled={this.state.generateButtonDisabled}>Generate!</button>
+            </td>
+            <td>
+              <img className={this.getLoadingClassName()} src={staffIcon} width={"50px"} height={"50px"} />
+            </td>
+          </tr>
+        </table>
         <h2 style={{ color: 'red' }}>{this.state.currentError}</h2>
         <textarea value={this.state.openAIResponse} readOnly={true} rows={30} cols={120} hidden={true} />
         </div>
         <div className="cardsContainer">
-          {/*
-          <div>
-            <img src=".\card-backgrounds\staff.png" className="wizardStaffLoading"></img>
-          </div>
-    */}
         {
           this.state.cards.map(card => (
-            <div key={card.name + -"display"}>
+            <div className="cardContainer" key={card.name + -"display"}>
               <CardDisplay key={card.name} card={card} />
             </div>
           ))
