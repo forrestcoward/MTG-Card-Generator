@@ -1,0 +1,64 @@
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.wizardStaffLoading {
+
+}
+
+.generateButton {
+  width:200px;
+  height:50px;
+}
+
+.outerContainer {
+  background: linear-gradient(180deg, white, rgba(128, 128, 128, 0.344));
+}
+
+.cardsContainer {
+  background: url(./card-backgrounds/binder.png);
+  background-repeat: repeat-y;
+  border-top: solid black;
+  box-shadow: 0px 0px 5px 5px rgba(0,0,0,.15);
+  padding-bottom:40px;
+}
+
+.container {
+  color:rgb(243, 241, 241);
+  border-bottom: solid black;
+  font-style: bold;
+  text-align: center;
+  padding-top: 50px;
+  padding-bottom:40px;
+  align-content: center;
+  font-size: larger;
+  align-content: center;
+  background-color: grey;
+  background: url(./card-backgrounds/hydra.jpg);
+  background-position: center;
+}
+
+.appContainer {
+}
+
+.userPrompt:focus {
+  outline: none !important;
+  border:1px solid rgb(10, 10, 10);
+  box-shadow: 0 0 10px #719ECE;
+  background-color: #5a5370;
+}
+
+.userPrompt {
+  border: 1px solid rgba(255,255,255,0.25);
+  background-color: #242031;
+  color: #D7D7D7;
+  height: 40px;
+  width: 500px;
+  padding: 12px 14px 12px 12px;
+}

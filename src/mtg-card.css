@@ -44,7 +44,7 @@ body* > {
     width: 480px;
     height: 700px;
     margin: 0 auto;
-    margin-top: 56px;
+    margin-top: 30px;
     border-radius: 25px;
     box-sizing: border-box;
     box-shadow: -8px 9px 16px -3px gray;
@@ -128,7 +128,7 @@ body* > {
 
 /* Colorless background. */
 .card-background-c {
-    background: grey;
+  background-image: url(./card-backgrounds/c.png);
 }
 
 /* Three plus color background. */
