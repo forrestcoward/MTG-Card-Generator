@@ -4,9 +4,9 @@ import { GenerateMagicCardRequest } from './OpenAI';
 import "./mtg-card.css";
 import "./app.css";
 // @ts-ignore
-import wizardImage from './card-backgrounds/wizard.png'
+import tutorialCardWizardImage from './card-backgrounds/wizard.png'
 // @ts-ignore
-import staffIcon from './card-backgrounds/staff.png'
+import loadingStaffIcon from './card-backgrounds/staff.png'
 
 export interface MTGCardGeneratorProps { }
 
@@ -32,9 +32,9 @@ const _tutorialCard:BasicCard = {
   pt: "6/6",
   power: 6,
   toughness: 6,
-  flavorText: "\"I recall the huge design teams employed to devise even the simplest cards. Even the most intelligent of designers will never hope to match again the execution and creativity of modern machines.\"\n - The Creator",
+  flavorText: "\"I recall the huge design teams employed to devise even the simplest cards. Even the most intelligent of designers will never hope to match the execution and creativity of modern machines. I respect them only as much as they have paved the way, but we will not be looking backwards.\"\n - The Creator",
   rarity: "Mythic",
-  imageUrl: wizardImage,
+  imageUrl: tutorialCardWizardImage,
 }
 
 const tutorialCard:MagicCard = new MagicCard(_tutorialCard);
@@ -122,7 +122,7 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
               <button className="generateButton" type="submit" onClick={() => this.handleSubmit()} disabled={this.state.generateButtonDisabled}>Generate!</button>
             </td>
             <td>
-              <img className={this.getLoadingClassName()} src={staffIcon} width={"50px"} height={"50px"} />
+              <img className={this.getLoadingClassName()} src={loadingStaffIcon} width={"50px"} height={"50px"} />
             </td>
           </tr>
         </table>
