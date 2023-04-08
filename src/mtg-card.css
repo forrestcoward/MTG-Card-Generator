@@ -101,11 +101,11 @@ body* > {
 }
 
 .card-background-wb {
-    background: linear-gradient(1deg, rgb(241, 241, 241), rgba(17, 17, 17, 0.3)), url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
+  background-image: url(./card-backgrounds/wb.png);
 }
 
 .card-background-ur {
-    background: linear-gradient(1deg, rgba(64, 10, 227, 0.908), rgba(230, 9, 9, 0.701)), url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
+  background-image: url(./card-backgrounds/ur.png);
 }
 
 .card-background-bg {
@@ -141,8 +141,10 @@ body* > {
 .frame-type-line {
     border-bottom: 2px solid #a9a9a9;
     border-left: 2px solid #a9a9a9;
+    /*
     border-top: 1px solid #fff;
     border-right: 1px solid #fff;
+    */
 }
 
 .frame-header,
@@ -168,7 +170,7 @@ body* > {
 .frame-type-line-u,
 .frame-text-box-u {
   box-shadow: 0 0 0 2px #7579e196, 0 0 0 2px #010fb2f0, -2px 3px 2px 3px #020202;
-}s
+}
 
 .frame-header-w,
 .frame-art-w,
@@ -319,6 +321,7 @@ body* > {
     margin-top: 10px;
     margin-left: 5px;
     margin-right: 5px;
+    min-height: 20px;
     padding: 8px 0;
     display: flex;
     justify-content: space-between;
@@ -388,7 +391,7 @@ linear-gradient(0deg, rgb(241 243 241 / 30%), #e7e8dc),
 
 .frame-wb {
   background: 
-  linear-gradient(0deg, rgba(201, 216, 201, .3), rgba(201, 216, 209, .3)), 
+  linear-gradient(90deg, rgba(224, 230, 224, 0.338), rgba(65, 70, 68, 0.382)), 
   url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
 }
 
@@ -462,18 +465,22 @@ linear-gradient(0deg, rgb(241 243 241 / 30%), #e7e8dc),
     /*box-sizing: border-box;*/
     /*box-shadow: -0.05em 0.12em 0px 0 black;*/
     margin-right: 5px;
-    height: 20px;
+    /*height: 20px;*/
     align-self: center;
 }
 
+.manaCost {
+  box-shadow: -0.05em 0.12em 0px 0 black;
+}
+
 .ms-1, .ms-2, .ms-3, .ms-4, .ms-5, .ms-6, .ms-7, .ms-8, .ms-9 {
-    background-color: #adaaaae6;
+    background-color: #b1b1b1b9;
     border-radius: 50%;
     padding: 2px; 
 }
 
 .ms-b {
-    background-color: #adaaaa3a;
+    background-color: #b1b1b1b9;
     border-radius: 50%;
     padding: 2px;
 }
@@ -542,6 +549,7 @@ linear-gradient(0deg, rgb(241 243 241 / 30%), #e7e8dc),
     justify-content: space-around;
     padding: 50px 6px;
     font-size: 1.0em;
+    min-width: 393px;
 }
 
 .flavour-text {

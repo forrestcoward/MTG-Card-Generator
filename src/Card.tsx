@@ -311,7 +311,7 @@ export class CardDisplay extends React.Component<CardDisplayProps> {
                 <h1 className="name">{card.name}</h1>
                 <div className="mana-symbols">
                   {card.manaCostTokens.map((manaCostToken, i) => (
-                    <i key={card.name + "-manaToken-"+ i} className={MagicCard.getManaClassName(manaCostToken)} id="mana-icon"></i>
+                    <i key={card.name + "-manaToken-"+ i} className={MagicCard.getManaClassName(manaCostToken) + " manaCost"} id="mana-icon"></i>
                   ))}
                 </div>
               </div>
