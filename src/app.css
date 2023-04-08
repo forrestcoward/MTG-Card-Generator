@@ -1,49 +1,9 @@
-@keyframes rotate {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.wizardStaffLoading {
-  animation: rotate 2s infinite linear;
-}
-
-.generateButton {
-  width:200px;
-  height:50px;
-}
-
+/* Outermost div. */
 .outerContainer {
   background: linear-gradient(180deg, white, rgba(128, 128, 128, 0.344));
 }
 
-.cardsContainer {
-  background: url(./card-backgrounds/binder.png);
-  background-repeat: repeat-y;
-  border-top: solid black;
-  box-shadow: 0px 0px 5px 5px rgba(0,0,0,.15);
-  padding-bottom:40px;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  padding-left:130px;
-  padding-right:130px;
-}
-
-table {
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.cardContainer {
-  padding-left: 30px;
-  padding-right: 30px;
-}
-
+/* Fist inner div for handling user input. */
 .container {
   color:rgb(243, 241, 241);
   border-bottom: solid black;
@@ -59,21 +19,69 @@ table {
   background-position: center;
 }
 
-.appContainer {
+/* Second inner div: holds all cards. */
+.cardsContainer {
+  background: url(./card-backgrounds/binder.png);
+  background-repeat: repeat-y;
+  border-top: solid black;
+  box-shadow: 0px 0px 5px 5px rgba(0,0,0,.15);
+  padding-bottom:40px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding-left:130px;
+  padding-right:130px;
 }
 
-.userPrompt:focus {
+/* Holds a card. */
+.cardContainer {
+  padding-left: 30px;
+  padding-right: 30px;
+}
+
+
+table {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+
+.userInputPrompt:focus {
   outline: none !important;
   border:1px solid rgb(10, 10, 10);
   box-shadow: 0 0 10px #719ECE;
   background-color: #5a5370;
 }
 
-.userPrompt {
+.userInputPrompt {
   border: 1px solid rgba(255,255,255,0.25);
   background-color: #242031;
   color: #D7D7D7;
-  height: 40px;
+  height: 30px;
   width: 500px;
   padding: 12px 14px 12px 12px;
+}
+
+.loadingIcon {
+  width:50px;
+  height:50px;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loadingAnimation {
+  animation: rotate 2s infinite linear;
+}
+
+.generateButton {
+  width:200px;
+  height:50px;
 }
