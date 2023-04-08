@@ -215,10 +215,11 @@ namespace MTG.CardGenerator
         {
             Name = card.Name;
             ManaCost = !string.IsNullOrWhiteSpace(card.ManaCost) ? card.ManaCost : string.Empty;
+            ManaCost = FixManaCost(ManaCost);
             RawOracleText = card.OracleText;
             FlavorText = card.FlavorText;
             Rarity = card.Rarity;
-            ColorIdentity = GetColorIdentity(card.ManaCost);
+            ColorIdentity = GetColorIdentity(ManaCost);
             TypeLine = card.Type;
             Type = GetCardType(TypeLine);
             ImageUrl = string.Empty;
@@ -271,6 +272,11 @@ namespace MTG.CardGenerator
 
         private static CardType GetCardType(string typeLine)
         {
+            if (string.IsNullOrWhiteSpace(typeLine))
+            {
+                return CardType.Unknown;
+            }
+
             var type = typeLine.ToLower();
 
             if (type.Contains("legendary creature") || type.Contains("creature"))
@@ -338,6 +344,24 @@ namespace MTG.CardGenerator
             if (!white && blue && !black && !red && green) return ColorIdentity.Simic;
 
             return ColorIdentity.ThreePlusColored;
+        }
+
+        private static string FixManaCost(string manaCost)
+        {
+            // Generated mana costs often have no brackets at all. If so, just add brackets around each character.
+            if (!manaCost.Contains('{') && !manaCost.Contains('}'))
+            {
+                return manaCost.AddBracketsAroundCharacters();
+            }
+
+            if (!manaCost.IsBracketed())
+            {
+                manaCost = manaCost.Replace("}", "");
+                manaCost = manaCost.Replace("{", "");
+                return manaCost.AddBracketsAroundCharacters();
+            }
+
+            return manaCost;
         }
     }
 }

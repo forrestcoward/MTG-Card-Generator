@@ -60,6 +60,7 @@ table {
   height: 30px;
   width: 500px;
   padding: 12px 14px 12px 12px;
+  text-align: center;
 }
 
 .loadingIcon {

@@ -255,6 +255,7 @@ export class MagicCard {
     line = line.replaceAll("{10}", `<i class=\"${MagicCard.getManaClassName("{10}")}\"></i>`)
     line = line.replaceAll("{C}", `<i class=\"${MagicCard.getManaClassName("{C}")}\"></i>`)
     line = line.replaceAll("{T}", `<i class=\"${MagicCard.getManaClassName("{T}")}\"></i>`)
+    line = line.replaceAll("{X}", `<i class=\"${MagicCard.getManaClassName("{X}")}\"></i>`)
     return line
   }
 
@@ -280,6 +281,7 @@ export class MagicCard {
     if (manaToken == "{12}") { return "ms ms-12" }
     if (manaToken == "{C}") { return "ms ms-c" }
     if (manaToken == "{T}") { return "ms ms-tap" }
+    if (manaToken == "{X}") { return "ms ms-x" }
     return ""
   }
 }

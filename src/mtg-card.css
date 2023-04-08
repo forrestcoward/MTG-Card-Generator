@@ -60,7 +60,7 @@ body* > {
 /* Card frame background. */
 /* Single color backgrounds. */
 .card-background-g {
-    background-image: url(https://image.ibb.co/e1XKAS/green_background.jpg);
+  background-image: url(./card-backgrounds/g.png)
 }
 
 .card-background-u {
@@ -127,7 +127,7 @@ body* > {
 
 /* Three plus color background. */
 .card-background-mc {
-    background: grey;
+  background-image: url(./card-backgrounds/mc.png);
 }
 
 /*
@@ -160,7 +160,7 @@ body* > {
 .frame-art-g,
 .frame-type-line-g,
 .frame-text-box-g {
-  box-shadow: 0 0 0 2px #999999, 0 0 0 5px #151414, -3px 3px 2px 5px #2f2e2e;
+  box-shadow: 0 0 0 2px #053611bb, 0 0 0 2px #117210f0, -2px 3px 2px 3px #020202;
 }
 
 .frame-header-u,
@@ -168,7 +168,7 @@ body* > {
 .frame-type-line-u,
 .frame-text-box-u {
   box-shadow: 0 0 0 2px #7579e196, 0 0 0 2px #010fb2f0, -2px 3px 2px 3px #020202;
-}
+}s
 
 .frame-header-w,
 .frame-art-w,
@@ -275,7 +275,7 @@ body* > {
 .frame-art-mc,
 .frame-type-line-mc,
 .frame-text-box-mc {
-  box-shadow: 0 0 0 2px #999999, 0 0 0 5px #151414, -3px 3px 2px 5px #2f2e2e;
+  box-shadow: 0 0 0 2px #533d0b96, 0 0 0 2px #ad7f15f0, -2px 3px 2px 3px #020202;
 }
 
 /*
@@ -334,7 +334,7 @@ body* > {
 
 .frame-g {
   background: 
-  linear-gradient(0deg, rgba(201, 216, 201, .3), rgba(201, 216, 209, .3)), 
+  linear-gradient(0deg, rgba(201, 216, 201, .3), rgba(31, 130, 84, 0.3)), 
   url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
 }
 
@@ -426,7 +426,7 @@ linear-gradient(0deg, rgb(241 243 241 / 30%), #e7e8dc),
 /* Three plus color background. */
 .frame-mc {
   background: 
-  linear-gradient(0deg, rgba(201, 216, 201, .3), rgba(201, 216, 209, .3)), 
+  linear-gradient(0deg, rgba(132, 152, 132, 0.103), rgba(159, 135, 14, 0.464)), 
   url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
 }
 

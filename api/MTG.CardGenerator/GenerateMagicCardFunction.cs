@@ -53,7 +53,7 @@ namespace MTG.CardGenerator
         const string GenerateCardSystemPrompt = $@"
 You are an assistant who works as a Magic: The Gathering card designer. You like complex cards with interesting mechanics. The cards you generate should obey the Magic 'color pie' design rules. The cards you generate should also obey the the Magic: The Gathering comprehensive rules as much as possible.
 You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'text', 'flavorText', 'pt', and 'rarity' properties.
-Do not explain the cards or explain your reasoning. Only return valid JSON to the user.";
+Do not explain the cards or explain your reasoning. Only return the JSON of cards named 'cards'.";
 
         [FunctionName("GenerateMagicCard")]
         public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "GET", Route = null)] HttpRequest req, ILogger log)
@@ -62,6 +62,13 @@ Do not explain the cards or explain your reasoning. Only return valid JSON to th
             {
                 var userPrompt = (string) req.Query["userPrompt"];
                 log?.LogInformation($"User prompt: {userPrompt.Replace("\n", "")}");
+
+                if (string.IsNullOrWhiteSpace(userPrompt))
+                {
+                    userPrompt = "that is from the Dominaria plane.";
+                }
+
+                var userPromptToSubmit = $"Generate me one Magic: The Gathering card that {userPrompt}";
 
                 var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
                 OpenAIAPI api = new OpenAIAPI(new APIAuthentication(apiKey));
@@ -74,7 +81,7 @@ Do not explain the cards or explain your reasoning. Only return valid JSON to th
                     {
                         Messages = new ChatMessage[]
                         {
-                            new ChatMessage(ChatMessageRole.User, userPrompt),
+                            new ChatMessage(ChatMessageRole.User, userPromptToSubmit),
                             new ChatMessage(ChatMessageRole.System, GenerateCardSystemPrompt)
                         },
                         Temperature = 1,
@@ -89,7 +96,7 @@ Do not explain the cards or explain your reasoning. Only return valid JSON to th
                         {
                             { "response", response },
                             { "systemPrompt", GenerateCardSystemPrompt },
-                            { "userPrompt", userPrompt },
+                            { "userPrompt", userPromptToSubmit },
                             { "temperature", 1 },
                             { "model", Model.ChatGPTTurbo },
                             { "requestId", response.RequestId }
@@ -132,7 +139,8 @@ Do not explain the cards or explain your reasoning. Only return valid JSON to th
                     }
                 }
 
-                var cards = openAICards.Select(x => new MagicCard(x)).ToArray();
+                // Parse the cards. If multiple were generated, only process and image for and return one the first one.
+                var cards = openAICards.Select(x => new MagicCard(x)).ToArray().Take(1).ToArray();
 
                 // Generate an image for each card.
                 foreach (var card in cards)
