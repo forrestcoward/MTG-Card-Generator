@@ -26,16 +26,6 @@ module.exports = {
         exclude: /node_modules/,
         use: ["style-loader", "css-loader"],
       },
-      /*
-      No longer using a config.json, but keeping just in case one is used in the future.
-      {
-        test: /\.config.json$/,
-        exclude: /node_modules/,
-        use: {
-          loader: 'json-loader'
-        }
-      },
-      */
       {
         test: /\.png/,
         type: 'asset/resource'

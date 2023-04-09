@@ -66,7 +66,7 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
         <div className="container">
         <p>Generate me a Magic: The Gathering card that...</p>
         <label>
-          <input type="text" className="userInputPrompt" placeholder='is from the Dominaria plane' onChange={this.handleChangeInput} value={this.state.openAIPrompt} />
+          <input type="text" className="userInputPrompt" placeholder='is from the Dominaria plane.' onChange={this.handleChangeInput} value={this.state.openAIPrompt} />
         </label>
         <p></p>
         <table>
