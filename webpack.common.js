@@ -1,13 +1,11 @@
 const path = require('path')
 module.exports = {
   entry: './src/Index.tsx',
-  mode: 'development',
   output: {
     path: path.resolve(__dirname, './dist'),
     filename: 'bundle.js',
     assetModuleFilename: 'images/[hash][ext][query]'
   },
-  devtool: 'inline-source-map',
   devServer: {
     hot: false,
     client: {
@@ -46,10 +44,5 @@ module.exports = {
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.jsx', '.js', '.css'],
-  },
-  devServer: {
-    static: {
-      directory: path.resolve(__dirname, './dist')
-    }
   }
 }
