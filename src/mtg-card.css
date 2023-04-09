@@ -85,15 +85,15 @@ body* > {
 }
 
 .card-background-ub {
-    background: linear-gradient(1deg, rgba(17, 17, 17, 0.3), rgba(64, 10, 227, 0.908)), url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
+  background-image: url(./card-backgrounds/ub.png);
 }
 
 .card-background-br {
-    background: linear-gradient(1deg, rgba(230, 9, 9, 0.701), rgba(17, 17, 17, 0.3)), url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
+  background-image: url(./card-backgrounds/br.png);
 }
 
 .card-background-rg {
-    background: linear-gradient(1deg, rgba(230, 9, 9, 0.701), rgba(27, 161, 27, 0.852)), url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
+  background-image: url(./card-backgrounds/rg.png);
 }
 
 .card-background-wg {
@@ -153,9 +153,6 @@ body* > {
     margin-bottom: 7px;
 }
 
-.frame-text-box {
-}
-
 /* Box shadows for the card's header, type line, art, and text box. /*
 /* Single color backgrounds. */
 .frame-header-g,
@@ -169,7 +166,7 @@ body* > {
 .frame-art-u,
 .frame-type-line-u,
 .frame-text-box-u {
-  box-shadow: 0 0 0 2px #7579e196, 0 0 0 2px #010fb2f0, -2px 3px 2px 3px #020202;
+  box-shadow: 0 0 0 2px #3b40da83, 0 0 0 2px #0110b2b4, -2px 3px 2px 3px #020202;
 }
 
 .frame-header-w,
@@ -205,21 +202,21 @@ body* > {
 .frame-art-ub,
 .frame-type-line-ub,
 .frame-text-box-ub {
-  box-shadow: 0 0 0 2px #999999, 0 0 0 5px #151414, -3px 3px 2px 5px #2f2e2e;
+  box-shadow: 0 0 0 2px #3b40da2f, 0 0 0 2px #010c7b39, -2px 3px 2px 3px #020202;
 }
 
 .frame-header-br,
 .frame-art-br,
 .frame-type-line-br,
 .frame-text-box-br {
-  box-shadow: 0 0 0 2px #999999, 0 0 0 5px #151414, -3px 3px 2px 5px #2f2e2e;
+  box-shadow: 0 0 0 3px #3030302d, 0 0 0 2px #b3b3b334, -2px 3px 2px 3px #020202;
 }
 
 .frame-header-rg,
 .frame-art-rg,
 .frame-type-line-rg,
 .frame-text-box-rg {
-  box-shadow: 0 0 0 2px #999999, 0 0 0 5px #151414, -3px 3px 2px 5px #2f2e2e;
+  box-shadow: 0 0 0 3px #3030302d, 0 0 0 2px #b3b3b334, -2px 3px 2px 3px #020202;
 }
 
 .frame-header-wg,
@@ -240,28 +237,28 @@ body* > {
 .frame-art-ur,
 .frame-type-line-ur,
 .frame-text-box-ur {
-  box-shadow: 0 0 0 2px #999999, 0 0 0 5px #151414, -3px 3px 2px 5px #2f2e2e;
+  box-shadow: 0 0 0 2px #7579e148, 0 0 0 2px #130403f0, -2px 3px 2px 3px #020202;
 }
 
 .frame-header-bg,
 .frame-art-bg,
 .frame-type-line-bg,
 .frame-text-box-bg {
-  box-shadow: 0 0 0 2px #999999, 0 0 0 5px #151414, -3px 3px 2px 5px #2f2e2e;
+  box-shadow: 0 0 0 3px #3030302d, 0 0 0 2px #b3b3b334, -2px 3px 2px 3px #020202;
 }
 
 .frame-header-rw,
 .frame-art-rw,
 .frame-type-line-rw,
 .frame-text-box-rw {
-  box-shadow: 0 0 0 2px #999999, 0 0 0 5px #151414, -3px 3px 2px 5px #2f2e2e;
+  box-shadow: 0 0 0 3px #3030302d, 0 0 0 2px #b3b3b334, -2px 3px 2px 3px #020202;
 }
 
 .frame-header-gu,
 .frame-art-gu,
 .frame-type-line-gu,
 .frame-text-box-gu {
-  box-shadow: 0 0 0 2px #999999, 0 0 0 5px #151414, -3px 3px 2px 5px #2f2e2e;
+  box-shadow: 0 0 0 3px #3030302d, 0 0 0 2px #b3b3b334, -2px 3px 2px 3px #020202;
 }
 
 /* Colorless background. */
@@ -277,7 +274,7 @@ body* > {
 .frame-art-mc,
 .frame-type-line-mc,
 .frame-text-box-mc {
-  box-shadow: 0 0 0 2px #533d0b96, 0 0 0 2px #ad7f15f0, -2px 3px 2px 3px #020202;
+  box-shadow: 0 0 0 2px #533d0b96, 0 0 0 2px #ad7f157a, -2px 3px 2px 3px #020202;
 }
 
 /*
@@ -366,20 +363,19 @@ body* > {
 }
 
 .frame-ub {
-  background: 
-  linear-gradient(0deg, rgba(201, 216, 201, .3), rgba(201, 216, 209, .3)), 
-  url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
+  background: linear-gradient(90deg, rgba(18, 139, 238, 0.286), rgba(110, 108, 108, 0.4)), 
+  url(https://image.ibb.co/jKByZn/tile_bg_1.jpg)
 }
 
 .frame-br {
   background: 
-  linear-gradient(0deg, rgba(201, 216, 201, .3), rgba(201, 216, 209, .3)), 
+  linear-gradient(90deg, rgba(20, 20, 20, 0.199),  rgba(208, 37, 11, 0.226)), 
   url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
 }
 
 .frame-rg {
   background: 
-  linear-gradient(0deg, rgba(201, 216, 201, .3), rgba(201, 216, 209, .3)), 
+  linear-gradient(90deg, rgba(208, 37, 11, 0.226),  rgba(17, 114, 61, 0.226)), 
   url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
 }
 
@@ -397,7 +393,7 @@ linear-gradient(0deg, rgb(241 243 241 / 30%), #e7e8dc),
 
 .frame-ur {
   background: 
-  linear-gradient(0deg, rgba(201, 216, 201, .3), rgba(201, 216, 209, .3)), 
+  linear-gradient(90deg, rgba(22, 178, 240, 0.3), rgba(187, 51, 2, 0.5)), 
   url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
 }
 
