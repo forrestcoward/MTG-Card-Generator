@@ -54,9 +54,13 @@ namespace MTG.CardGenerator
         public CardProperty CardProperty { get; set; }
         public string[] IncludesRules { get; set; } = Array.Empty<string>();
         public string MechanicMatchRule { get; set; } = string.Empty;
+        public string[] ReminderText { get; set; } = Array.Empty<string>();
 
-        Action<MagicCard> AddMechanicToCard = null;
-        public Action<MagicCard> FixViolation = null;
+        // Adds a mechanic to the card, with a rule and line as context to the violation.
+        Action<MagicCard, CardRule, CardTextLine> AddMechanicToCard = null;
+        
+        // Fixes a card, given the rule it violated and line the violation occured.
+        public Action<MagicCard, CardRule, CardTextLine> FixViolation = null;
 
         // The legal card types for this rule e.g. A card with flashback cannot be a creature.
         public CardType[] LegalTypes { get; set; } = Array.Empty<CardType>();
@@ -65,7 +69,7 @@ namespace MTG.CardGenerator
         public CardProperty[] MustHaveProperties { get; set; } = Array.Empty<CardProperty>();
 
         // Tests if the rule applies to the line of oracle text.
-        public static bool Applies(ParsedOracleTextLine cardTextLine, CardRule rule)
+        public static bool Applies(CardTextLine cardTextLine, CardRule rule)
         {
             foreach (var stringMatch in rule.IncludesRules)
             {
@@ -96,23 +100,29 @@ namespace MTG.CardGenerator
                 {
                     "If you cast this spell from your graveyard",
                     "If you cast this spell a graveyard",
+                    "If you cast this card from your graveyard",
+                    "If you cast this card a graveyard",
                     "If this spell was cast from your graveyard",
                     "If this spell was cast from a graveyard",
+                    "If this card was cast from your graveyard",
+                    "If this card was cast from a graveyard",
                     "If {name} was cast from your graveyard",
                     "If {name} was cast from a graveyard",
                     "If {name} is cast from your graveyard",
                     "If {name} is cast from a graveyard",
                     "You may cast this spell from your graveyard by paying its flashback cost",
-                    "You may cast {name} from your graveyard by paying its flashback cost"
+                    "You may cast this card from your graveyard by paying its flashback cost",
+                    "You may cast {name} from your graveyard by paying its flashback cost",
+                    "You may cast it for its flashback cost"
                 },
                 MustHaveProperties = new[] { CardProperty.Flashback },
-                FixViolation = (card) =>
+                FixViolation = (card, rule, line) =>
                 {
                     // Cards which gain an effect when cast from the graveyard should have Flashback.
                     if (card.Type == CardType.Instant || card.Type == CardType.Sorcery)
                     {
                         // Add Flashback.
-                        CardRules.First(rule => rule.CardProperty == CardProperty.Flashback).AddMechanicToCard(card);
+                        CardRules.First(rule => rule.CardProperty == CardProperty.Flashback).AddMechanicToCard(card, rule, line);
                     }
                 }
             },
@@ -121,19 +131,24 @@ namespace MTG.CardGenerator
                 CardProperty = CardProperty.Flashback,
                 MechanicMatchRule = "Flashback",
                 LegalTypes = new[] { CardType.Instant, CardType.Sorcery },
-                AddMechanicToCard = (card) =>
+                ReminderText = new string[]
+                {
+                    "Exile this card from your graveyard: Cast it this turn for the its flashback cost",
+                    "(You may cast this card from your graveyard for its flashback cost. Then exile it.)"
+                },
+                AddMechanicToCard = (card, rule, line) =>
                 {
                     var newText = $"\nFlashback {card.ManaCost}";
                     card.RawOracleText += newText;
                 },
-                FixViolation = (card) =>
+                FixViolation = (card, rule, line) =>
                 {
                     // If this is a creature or artifact that has Flashback, give it Unearth instead.
                     if (card.Type == CardType.Creature || card.Type == CardType.Artifact)
                     {
                         var textLines = card.ParsedOracleTextLines.Where(x => !x.Properties.Contains(CardProperty.Flashback));
                         card.RawOracleText = string.Join('\n', textLines.Select(x => x.ToString()));
-                        CardRules.First(rule => rule.CardProperty == CardProperty.Unearth).AddMechanicToCard(card);
+                        CardRules.First(rule => rule.CardProperty == CardProperty.Unearth).AddMechanicToCard(card, rule, line);
                     }
                 }
             },
@@ -142,11 +157,26 @@ namespace MTG.CardGenerator
                 CardProperty = CardProperty.Unearth,
                 MechanicMatchRule = "Unearth",
                 LegalTypes= new[] { CardType.Artifact, CardType.Creature },
-                AddMechanicToCard = (card) =>
+                AddMechanicToCard = (card, rule, line) =>
                 {
-                    // var newText = $"\nUnearth {card.ManaCost} ({card.ManaCost}: Return the card to the battlefield. The creature gains haste. Exile it at the beginning of the next end step or if it would leave the battlefield. Unearth only as a sorcery.)";
-                    var newText = $"\nUnearth {card.ManaCost}";
-                    card.RawOracleText += newText;
+                    // Transform Flashback into Unearth.
+                    if (line.Properties.Contains(CardProperty.Flashback)) {
+                        if (rule.ReminderText.Any(reminder => line.CostAndEffectWithoutManaCost.Contains(reminder, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            var newText = $"\nUnearth {line.Cost}";
+                            card.RawOracleText += newText;
+                        }
+                        else if (!string.IsNullOrWhiteSpace(line.Effect) && !line.Effect.StartsWith($"When {card.Name} enters the battlefield", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var newText = $"\nUnearth {line.Cost}\nWhen {card.Name} enters the battlefield, {line.Effect.FirstCharToLowerCase()}";
+                            card.RawOracleText += newText;
+                        }
+                        else
+                        {
+                            var newText = $"\nUnearth {line.Cost}\n{line.Effect}";
+                            card.RawOracleText += newText;
+                        }
+                    }
                 }
             },
         };
@@ -155,8 +185,34 @@ namespace MTG.CardGenerator
     /// <summary>
     /// Represents a line of oracle text, including which properties CardProperties it was able to extract.
     /// </summary>
-    public class ParsedOracleTextLine
+    public class CardTextLine
     {
+        private class CardCost
+        {
+            public string[] Costs { get; }
+
+            public string ManaCost
+            {
+                get
+                {
+                    return Costs.FirstOrDefault(x => x.StartsWith("{") && x.EndsWith("}"));
+                }
+            }
+
+            public string[] CostsWithoutManaCost
+            {
+                get
+                {
+                    return Costs.Where(cost => cost != ManaCost).ToArray();
+                }
+            }
+
+            public CardCost(string costs)
+            {
+                Costs = costs.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            }
+        }
+
         public static Regex CardRulesRegex = new(@"(?<mechanicName>[a-zA-Z -.0-9/’']+)?[ ]?[—-]?(?<cost>((\{[0123456789UWGBRT]\}|[a-zA-Z 1-9]*)[,]?[ ]?)*)[:,.]?[ ]?(?<effect>.*)");
 
         public MagicCard ParentCard { get; }
@@ -164,10 +220,29 @@ namespace MTG.CardGenerator
         public string Mechanic { get; }
         public string Cost { get; }
         public string Effect { get; }
-        public CardRule[] CardPropertyRules { get; }
+
+        public string CostAndEffectWithoutManaCost
+        {
+            get
+            {
+                var costs = new CardCost(Cost);
+                if (costs.CostsWithoutManaCost.Any())
+                {
+                    return $"{string.Join(',', costs.CostsWithoutManaCost)}: {Effect}";
+                }
+                else
+                {
+                    return Effect;
+                }
+            }
+        }
+
+        // The rules that apply to this line of text.
+        public CardRule[] Rules { get; }
+        // The properties that apply to this line of text.
         public CardProperty[] Properties { get; }
 
-        public ParsedOracleTextLine(string oracleTextLine, MagicCard parentCard)
+        public CardTextLine(string oracleTextLine, MagicCard parentCard = null)
         {
             RawOracleText = oracleTextLine;
             ParentCard = parentCard;
@@ -176,8 +251,8 @@ namespace MTG.CardGenerator
             Cost = match["cost"].Trim();
             Effect = match["effect"].Trim();
 
-            CardPropertyRules = CardRule.CardRules.Where(rule => CardRule.Applies(this, rule)).ToArray();
-            Properties = CardPropertyRules.Select(criteria => criteria.CardProperty).ToArray();
+            Rules = CardRule.CardRules.Where(rule => CardRule.Applies(this, rule)).ToArray();
+            Properties = Rules.Select(criteria => criteria.CardProperty).ToArray();
         }
 
         public override string ToString()
@@ -249,7 +324,7 @@ namespace MTG.CardGenerator
         }
 
         [JsonIgnore]
-        public ParsedOracleTextLine[] ParsedOracleTextLines { get; }
+        public CardTextLine[] ParsedOracleTextLines { get; }
 
         [JsonIgnore]
         // A list of keywords that were parsed. This is not exhaustive.
@@ -291,16 +366,18 @@ namespace MTG.CardGenerator
                 Toughness = card.Toughness;
             }
 
-            ParsedOracleTextLines = RawOracleText.Split('\n').Select(oracleTextLine => new ParsedOracleTextLine(oracleTextLine, this)).ToArray();
+            ParsedOracleTextLines = RawOracleText.Split('\n').Select(oracleTextLine => new CardTextLine(oracleTextLine, this)).ToArray();
 
             Properties = ParsedOracleTextLines.SelectMany(x => x.Properties).Distinct().ToArray();
 
             ViolatedRules = new List<CardRule>();
 
+            var violationToTextLine = new Dictionary<CardRule, CardTextLine>();
+
             // Run the rules.
             foreach (var parsedOracleTextLine in ParsedOracleTextLines)
             {
-                foreach (var rule in parsedOracleTextLine.CardPropertyRules)
+                foreach (var rule in parsedOracleTextLine.Rules)
                 {
                     if (rule.LegalTypes.Any() &&
                         !rule.LegalTypes.Contains(Type))
@@ -308,6 +385,7 @@ namespace MTG.CardGenerator
                         // Card contains a property that is not allowed on its type.
                         // e.g. flashback is not allowed on creatures.
                         ViolatedRules.Add(rule);
+                        violationToTextLine[rule] = parsedOracleTextLine;
                     }
 
                     if (rule.MustHaveProperties.Any() && 
@@ -316,6 +394,7 @@ namespace MTG.CardGenerator
                         // This rule requires a property not present on the rest of the card.
                         // e.g. a card gains an additional effect when cast from the graveyard but does not have flashback or unearth.
                         ViolatedRules.Add(rule);
+                        violationToTextLine[rule] = parsedOracleTextLine;
                     }
                 }
             }
@@ -325,7 +404,7 @@ namespace MTG.CardGenerator
             {
                 if (rule.FixViolation != null)
                 {
-                    rule.FixViolation(this);
+                    rule.FixViolation(this, rule, violationToTextLine[rule]);
                 }
             }
         }
