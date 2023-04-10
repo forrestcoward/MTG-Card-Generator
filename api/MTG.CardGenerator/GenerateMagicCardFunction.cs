@@ -20,7 +20,7 @@ using System.Collections.Generic;
 namespace MTG.CardGenerator
 {
     // Represents a generated Magic: The Gathering card from OpenAI's LLM.
-    public class OpenAIMagicCard
+    public class BasicCard
     {
         public string Name { get; set; }
         public string ManaCost { get; set; }
@@ -39,7 +39,7 @@ namespace MTG.CardGenerator
 
     public class OpenAIMagicCardResponse
     {
-        public OpenAIMagicCard[] Cards { get; set; }
+        public BasicCard[] Cards { get; set; }
     }
 
     public class GenerateMagicCardFunctionResponse
@@ -72,7 +72,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
 
                 var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
                 OpenAIAPI api = new OpenAIAPI(new APIAuthentication(apiKey));
-                var openAICards = Array.Empty<OpenAIMagicCard>();
+                var openAICards = Array.Empty<BasicCard>();
 
                 for (var attempt = 0; attempt < 5; attempt++)
                 {

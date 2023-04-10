@@ -26,7 +26,7 @@ namespace MTG.CardGenerator
 
                 var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
                 OpenAIAPI api = new OpenAIAPI(new APIAuthentication(apiKey));
-                var openAICards = Array.Empty<OpenAIMagicCard>();
+                var openAICards = Array.Empty<BasicCard>();
 
                 // Generate an image for each card.
                 var stopwatch = Stopwatch.StartNew();
