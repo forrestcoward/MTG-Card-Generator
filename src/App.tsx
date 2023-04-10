@@ -11,9 +11,9 @@ import loadingIcon from './card-backgrounds/staff.png'
 export interface MTGCardGeneratorProps { }
 
 export interface MTGCardGeneratorState {
-  openAIPrompt: string,
-  openAIResponse: string,
-  generateButtonDisabled: boolean,
+  prompt: string,
+  response: string,
+  isLoading: boolean,
   cards: MagicCard[],
   currentError: string,
 }
@@ -24,9 +24,9 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
   constructor(props: MTGCardGeneratorProps) {
     super(props);
     this.state = {
-      openAIPrompt: '',
-      openAIResponse: '',
-      generateButtonDisabled: false,
+      prompt: '',
+      response: '',
+      isLoading: false,
       cards: [TutorialCard],
       currentError: '',
     };
@@ -36,27 +36,27 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
   }
 
   getLoadingClassName() : string{
-    return this.state.generateButtonDisabled ? "loadingAnimation loadingIcon" : "loadingIcon";
+    return this.state.isLoading ? "loadingAnimation loadingIcon" : "loadingIcon";
   }
 
   handleChangeInput(event: React.ChangeEvent<HTMLInputElement>) {
-    this.setState({ openAIPrompt: event.target.value });
+    this.setState({ prompt: event.target.value });
   }
 
   handleSubmit() {
-    this.setState({ generateButtonDisabled: true, currentError: "" })
+    this.setState({ isLoading: true, currentError: "" })
 
-    var userPrompt = this.state.openAIPrompt
+    var userPrompt = this.state.prompt
 
     GenerateMagicCardRequest(userPrompt).then(cards => {
       this.setState({
-        openAIResponse: JSON.stringify(cards),
+        response: JSON.stringify(cards),
         cards: [...cards, ...this.state.cards],
-        generateButtonDisabled: false
+        isLoading: false
       })
 
     }).catch((error: Error) => {
-      this.setState({ generateButtonDisabled: false, currentError: error.message + ": " + error.stack })
+      this.setState({ isLoading: false, currentError: error.message + ": " + error.stack })
     });
   }
 
@@ -66,13 +66,13 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
         <div className="container">
         <p>Generate me a Magic: The Gathering card that...</p>
         <label>
-          <input type="text" className="userInputPrompt" placeholder='is from the Dominaria plane.' onChange={this.handleChangeInput} value={this.state.openAIPrompt} />
+          <input type="text" className="userInputPrompt" placeholder='is from the Dominaria plane.' onChange={this.handleChangeInput} value={this.state.prompt} />
         </label>
         <p></p>
         <table>
           <tr>
             <td>
-              <button className="generateButton" type="submit" onClick={() => this.handleSubmit()} disabled={this.state.generateButtonDisabled}>Generate!</button>
+              <button className="generateButton" type="submit" onClick={() => this.handleSubmit()} disabled={this.state.isLoading}>Generate!</button>
             </td>
             <td>
               <img className={this.getLoadingClassName()} src={loadingIcon} />
@@ -80,7 +80,7 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
           </tr>
         </table>
         <h2 style={{ color: 'red' }}>{this.state.currentError}</h2>
-        <textarea value={this.state.openAIResponse} readOnly={true} rows={30} cols={120} hidden={true} />
+        <textarea value={this.state.response} readOnly={true} rows={30} cols={120} hidden={true} />
         </div>
         <div className="cardsContainer">
         {

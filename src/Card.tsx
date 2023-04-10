@@ -1,36 +1,5 @@
 import React from "react";
 
-enum ColorIdentity {
-  White,
-  Blue,
-  Black,
-  Green,
-  Red,
-  Colorless,
-  Azorius,
-  Dimir,
-  Rakdos,
-  Gruul,
-  Selesnya,
-  Orzhov,
-  Izzet,
-  Golgari,
-  Boros,
-  Simic,
-  ThreePlusColored,
-  Unknown
-}
-
-enum CardType {
-  Creature,
-  Instant,
-  Sorcery,
-  Enchantment,
-  Artifact,
-  Land,
-  Unknown
-}
-
 export interface BasicCard {
   name: string,
   manaCost: string,
@@ -48,6 +17,62 @@ export interface BasicCard {
   imageUrl: string,
 }
 
+enum ColorIdentity {
+  White = "w",
+  Blue = "u",
+  Black = "b",
+  Green = "g",
+  Red = "r",
+  Colorless = "c",
+  Azorius = "uw",
+  Dimir = "ub",
+  Rakdos = "br",
+  Gruul = "rg",
+  Selesnya = "wg",
+  Orzhov = "wb",
+  Izzet = "ur",
+  Golgari = "bg",
+  Boros = "rw",
+  Simic = "gu",
+  ThreePlusColored = "mc",
+  Unknown = "unknown",
+}
+
+enum CardType {
+  Creature,
+  Instant,
+  Sorcery,
+  Enchantment,
+  Artifact,
+  Land,
+  Unknown
+}
+
+const manaTokens : string[] = ["{G}", "{W}", "{U}", "{B}", "{R}", "{0}", "{1}", "{2}", "{3}", 
+"{4}", "{5}", "{6}", "{7}", "{8}", "{9}", "{10}", "{C}", "{T}", "{X}"]
+
+const manaTokenToCssCharacter : Record<string, string> = {
+  "{G}": "g",
+  "{W}": "w",
+  "{U}": "u",
+  "{B}": "b",
+  "{R}": "r",
+  "{0}": "0",
+  "{1}": "1",
+  "{2}": "2",
+  "{3}": "3",
+  "{4}": "4",
+  "{5}": "5",
+  "{6}": "6",
+  "{7}": "7",
+  "{8}": "8",
+  "{9}": "9",
+  "{10}": "10",
+  "{C}": "c",
+  "{T}": "tap",
+  "{X}": "x",
+}
+
 export class MagicCard {
   name: string
   manaCost: string
@@ -63,22 +88,24 @@ export class MagicCard {
   flavorText: string
   rarity: string
   imageUrl: string
+  setNumberDisplay: string
 
   constructor(card: BasicCard) {
     this.name = card.name
-    this.manaCost = card.manaCost;
-    this.type = card.type;
-    this.typeLine = card.typeLine;
-    this.text = card.text;
-    this.rawOracleText = card.rawOracleText;
-    this.modifiedOracleText = card.modifiedOracleText;
-    this.power = 0;
-    this.toughness = 0;
-    this._colorIdentity = "";
-    this.flavorText = card.flavorText;
-    this.pt = card.pt;
-    this.rarity = card.rarity;
-    this.imageUrl = card.imageUrl;
+    this.manaCost = card.manaCost
+    this.type = card.type
+    this.typeLine = card.typeLine
+    this.text = card.text
+    this.rawOracleText = card.rawOracleText
+    this.modifiedOracleText = card.modifiedOracleText
+    this.power = 0
+    this.toughness = 0
+    this._colorIdentity = ""
+    this.flavorText = card.flavorText
+    this.pt = card.pt
+    this.rarity = card.rarity
+    this.imageUrl = card.imageUrl
+    this.setNumberDisplay = getRandomInt(0, 451) + "/" + 451
   }
 
   get manaCostTokens(): string[] {
@@ -155,7 +182,7 @@ export class MagicCard {
 
   get rarityDisplay() {
     var token = ""
-    switch (this.rarity.toLowerCase()) {
+    switch (this.rarity.toLocaleLowerCase()) {
       case "common": token = "C"; break;
       case "uncommon": token = "U"; break;
       case "rare": token = "R"; break;
@@ -167,128 +194,43 @@ export class MagicCard {
 
   get cardType(): CardType {
     var type = this.type.toLocaleLowerCase();
-
-    if (type.includes("legendary creature") || type.includes("creature")) {
-      return CardType.Creature
-    }
-
-    if (type == "instant") {
-      return CardType.Instant;
-    }
-
-    if (type == "sorcery") {
-      return CardType.Sorcery;
-    }
-
-    if (type.includes("artifact")) {
-      return CardType.Artifact;
-    }
-
-    if (type.includes("enchantment")) {
-      return CardType.Enchantment;
-    }
-
-    if (type.includes("land")) {
-      return CardType.Land;
-    }
-
+    if (type.includes("legendary creature") || type.includes("creature")) return CardType.Creature
+    if (type == "instant") return CardType.Instant;
+    if (type == "sorcery") return CardType.Sorcery;
+    if (type.includes("artifact")) return CardType.Artifact;
+    if (type.includes("enchantment")) return CardType.Enchantment;
+    if (type.includes("land")) return CardType.Land;
     return CardType.Unknown;
   }
 
-  get setNumberDisplay() {
-    return getRandomInt(0, 451) + "/" + 451
-  }
-
   get textDisplay() {
-    var lines = this.rawOracleText.split('\n')
-    for (var i = 0; i < lines.length; i++) {
-      lines[i] = this.addManaHtmlToCardTextLine(lines[i])
-    }
-  
-    return lines;
+    return this.rawOracleText.split('\n').map(line => this.addManaHtmlToCardTextLine(line));
   }
 
   // Gets the CSS postfix to create class names that are differentiated by color identity.
   private get manaCssClassPostfix() {
-    var identity = this.colorIdentity
-    var token = ""
-    switch (identity) {
-      case ColorIdentity.White: token = "w"; break;
-      case ColorIdentity.Blue: token = "u"; break;
-      case ColorIdentity.Black: token = "b"; break;
-      case ColorIdentity.Red: token = "r"; break;
-      case ColorIdentity.Green: token = "g"; break;
-      case ColorIdentity.Azorius: token = "uw"; break;
-      case ColorIdentity.Dimir: token = "ub"; break;
-      case ColorIdentity.Rakdos: token = "br"; break;
-      case ColorIdentity.Gruul: token = "rg"; break;
-      case ColorIdentity.Selesnya: token = "wg"; break;
-      case ColorIdentity.Orzhov: token = "wb"; break;
-      case ColorIdentity.Izzet: token = "ur"; break;
-      case ColorIdentity.Golgari: token = "bg"; break;
-      case ColorIdentity.Boros: token = "rw"; break;
-      case ColorIdentity.Simic: token = "gu"; break;
-      case ColorIdentity.Colorless: token = "c"; break;
-      case ColorIdentity.ThreePlusColored: token = "mc"; break;
-    }
-  
-    return token;
+    return this.colorIdentity;
   }
 
   // Transforms text representations of mana symbols from OpenAI into HTML that can render those mana symbols using the mana project (https://github.com/andrewgioia/mana).
   private addManaHtmlToCardTextLine(line: string) {
-    line = line.replaceAll("{G}", `<i class=\"${MagicCard.getManaClassName("{G}")}\"></i>`)
-    line = line.replaceAll("{W}", `<i class=\"${MagicCard.getManaClassName("{W}")}\"></i>`)
-    line = line.replaceAll("{U}", `<i class=\"${MagicCard.getManaClassName("{U}")}\"></i>`)
-    line = line.replaceAll("{B}", `<i class=\"${MagicCard.getManaClassName("{B}")}\"></i>`)
-    line = line.replaceAll("{R}", `<i class=\"${MagicCard.getManaClassName("{R}")}\"></i>`)
-    line = line.replaceAll("{0}", `<i class=\"${MagicCard.getManaClassName("{0}")}\"></i>`)
-    line = line.replaceAll("{1}", `<i class=\"${MagicCard.getManaClassName("{1}")}\"></i>`)
-    line = line.replaceAll("{2}", `<i class=\"${MagicCard.getManaClassName("{2}")}\"></i>`)
-    line = line.replaceAll("{3}", `<i class=\"${MagicCard.getManaClassName("{3}")}\"></i>`)
-    line = line.replaceAll("{4}", `<i class=\"${MagicCard.getManaClassName("{4}")}\"></i>`)
-    line = line.replaceAll("{5}", `<i class=\"${MagicCard.getManaClassName("{5}")}\"></i>`)
-    line = line.replaceAll("{6}", `<i class=\"${MagicCard.getManaClassName("{6}")}\"></i>`)
-    line = line.replaceAll("{7}", `<i class=\"${MagicCard.getManaClassName("{7}")}\"></i>`)
-    line = line.replaceAll("{8}", `<i class=\"${MagicCard.getManaClassName("{8}")}\"></i>`)
-    line = line.replaceAll("{9}", `<i class=\"${MagicCard.getManaClassName("{9}")}\"></i>`)
-    line = line.replaceAll("{10}", `<i class=\"${MagicCard.getManaClassName("{10}")}\"></i>`)
-    line = line.replaceAll("{C}", `<i class=\"${MagicCard.getManaClassName("{C}")}\"></i>`)
-    line = line.replaceAll("{T}", `<i class=\"${MagicCard.getManaClassName("{T}")}\"></i>`)
-    line = line.replaceAll("{X}", `<i class=\"${MagicCard.getManaClassName("{X}")}\"></i>`)
+    manaTokens.forEach(token => {
+      line = line.replaceAll(token, `<i class=\"${MagicCard.getManaClassName(token)}\"></i>`)
+    })
+
     return line
   }
 
   // Gets the matching mana project (https://github.com/andrewgioia/mana) CSS token for <i></i> based on the mana token string.
   static getManaClassName(manaToken: string) {
-    if (manaToken == "{G}") { return "ms ms-g" }
-    if (manaToken == "{W}") { return "ms ms-w" }
-    if (manaToken == "{U}") { return "ms ms-u" }
-    if (manaToken == "{B}") { return "ms ms-b" }
-    if (manaToken == "{R}") { return "ms ms-r" }
-    if (manaToken == "{0}") { return "ms ms-0" }
-    if (manaToken == "{1}") { return "ms ms-1" }
-    if (manaToken == "{2}") { return "ms ms-2" }
-    if (manaToken == "{3}") { return "ms ms-3" }
-    if (manaToken == "{4}") { return "ms ms-4" }
-    if (manaToken == "{5}") { return "ms ms-5" }
-    if (manaToken == "{6}") { return "ms ms-6" }
-    if (manaToken == "{7}") { return "ms ms-7" }
-    if (manaToken == "{8}") { return "ms ms-8" }
-    if (manaToken == "{9}") { return "ms ms-9" }
-    if (manaToken == "{10}") { return "ms ms-10" }
-    if (manaToken == "{11}") { return "ms ms-11" }
-    if (manaToken == "{12}") { return "ms ms-12" }
-    if (manaToken == "{C}") { return "ms ms-c" }
-    if (manaToken == "{T}") { return "ms ms-tap" }
-    if (manaToken == "{X}") { return "ms ms-x" }
-    return ""
+    return `ms ms-${manaTokenToCssCharacter[manaToken]}`
   }
 }
+
 function getRandomInt(min: number, max: number) {
   min = Math.ceil(min);
   max = Math.floor(max);
-  return Math.floor(Math.random() * (max - min) + min); // The maximum is exclusive and the minimum is inclusive
+  return Math.floor(Math.random() * (max - min) + min);
 }
 
 interface CardDisplayProps {
