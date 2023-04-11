@@ -39,7 +39,6 @@ namespace MTG.CardGenerator
         Land,
         Unknown
     }
-
     public enum CardProperty
     {
         Flashback,
@@ -102,6 +101,8 @@ namespace MTG.CardGenerator
                     "If you cast this spell a graveyard",
                     "If you cast this card from your graveyard",
                     "If you cast this card a graveyard",
+                    "If you cast {name} from your graveyard",
+                    "If you cast {name} from a graveyard",
                     "If this spell was cast from your graveyard",
                     "If this spell was cast from a graveyard",
                     "If this card was cast from your graveyard",
@@ -490,7 +491,7 @@ namespace MTG.CardGenerator
             // Lands should have no cost.
             if (Type == CardType.Land)
             {
-                return "";
+                return string.Empty;
             }
 
             // Generated mana costs often have no brackets at all. If so, just add brackets around each character.

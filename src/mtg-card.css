@@ -34,27 +34,27 @@ body* > {
   box-sizing: border-box;
 }
 .card-container {
-    border: 1px solid black;
-    width: 480px;
-    height: 700px;
-    margin: 0 auto;
-    margin-top: 30px;
-    border-radius: 25px;
-    box-sizing: border-box;
-    box-shadow: -8px 9px 16px -3px gray;
-    background: #171314;  
+  border: 1px solid black;
+  width: 480px;
+  height: 700px;
+  margin: 0 auto;
+  margin-top: 30px;
+  border-radius: 25px;
+  box-sizing: border-box;
+  box-shadow: -8px 9px 16px -3px gray;
+  background: #171314;  
 }
- .card-background {
-    height: 600px;
-    margin: 20px 20px 0 20px;
-    border-top-left-radius: 6px;
-    border-top-right-radius: 6px;
-    border-bottom-left-radius: 8%;
-    border-bottom-right-radius: 8%;
-    background-repeat: no-repeat;
-    background-size: cover;
-    display: flex;
-    z-index: 0;
+.card-background {
+  height: 600px;
+  margin: 20px 20px 0 20px;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  border-bottom-left-radius: 8%;
+  border-bottom-right-radius: 8%;
+  background-repeat: no-repeat;
+  background-size: cover;
+  display: flex;
+  z-index: 0;
 }
 
 /* Card frame background. */
@@ -109,15 +109,15 @@ body* > {
 }
 
 .card-background-bg {
-    background: linear-gradient(1deg, rgb(0 0 0), rgba(27, 161, 27, 0.852)), url(https://image.ibb.co/jKByZn/tile_bg_1.jpg)
+  background-image: url(./card-backgrounds/bg.png);
 }
 
 .card-background-rw {
-    background: linear-gradient(1deg, rgba(230, 9, 9, 0.701), rgba(255, 255, 255, 0.951)), url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
+  background-image: url(./card-backgrounds/rw.png);
 }
 
-.card-background-gu {
-    background: linear-gradient(1deg, rgba(27, 161, 27, 0.852), rgba(64, 10, 227, 0.908)), url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
+.card-background-ug {
+  background-image: url(./card-backgrounds/ug.png);
 }
 
 /* Colorless background. */
@@ -244,21 +244,21 @@ body* > {
 .frame-art-bg,
 .frame-type-line-bg,
 .frame-text-box-bg {
-  box-shadow: 0 0 0 3px #3030302d, 0 0 0 2px #b3b3b334, -2px 3px 2px 3px #020202;
+  box-shadow: 0 0 0 2px #05050596, 0 0 0 1px #858484f0, -2px 3px 2px 3px #020202;
 }
 
 .frame-header-rw,
 .frame-art-rw,
 .frame-type-line-rw,
 .frame-text-box-rw {
-  box-shadow: 0 0 0 3px #3030302d, 0 0 0 2px #b3b3b334, -2px 3px 2px 3px #020202;
+  box-shadow: 0 0 0 2px #05050596, 0 0 0 1px #858484f0, -2px 3px 2px 3px #020202;
 }
 
-.frame-header-gu,
-.frame-art-gu,
-.frame-type-line-gu,
-.frame-text-box-gu {
-  box-shadow: 0 0 0 3px #3030302d, 0 0 0 2px #b3b3b334, -2px 3px 2px 3px #020202;
+.frame-header-ug,
+.frame-art-ug,
+.frame-type-line-ug,
+.frame-text-box-ug {
+  box-shadow: 0 0 0 2px #05050596, 0 0 0 1px #858484f0, -2px 3px 2px 3px #020202;
 }
 
 /* Colorless background. */
@@ -399,19 +399,19 @@ linear-gradient(90deg, rgba(11, 112, 56, 0.295), #fcfcfcaf),
 
 .frame-bg {
   background: 
-  linear-gradient(0deg, rgba(201, 216, 201, .3), rgba(201, 216, 209, .3)), 
+  linear-gradient(90deg, rgba(116, 116, 116, 0.3), rgba(24, 163, 87, 0.233)), 
   url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
 }
 
 .frame-rw {
   background: 
-  linear-gradient(0deg, rgba(201, 216, 201, .3), rgba(201, 216, 209, .3)), 
+  linear-gradient(90deg, rgba(208, 37, 11, 0.226), rgba(223, 223, 223, 0.3)), 
   url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
 }
 
-.frame-gu {
+.frame-ug {
   background: 
-  linear-gradient(0deg, rgba(201, 216, 201, .3), rgba(201, 216, 209, .3)), 
+  linear-gradient(90deg, rgba(65, 163, 109, 0.233), rgba(61, 72, 173, 0.363)), 
   url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
 }
 

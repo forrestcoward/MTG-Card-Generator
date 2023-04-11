@@ -33,7 +33,7 @@ enum ColorIdentity {
   Izzet = "ur",
   Golgari = "bg",
   Boros = "rw",
-  Simic = "gu",
+  Simic = "ug",
   ThreePlusColored = "mc",
   Unknown = "unknown",
 }
