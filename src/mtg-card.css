@@ -97,7 +97,7 @@ body* > {
 }
 
 .card-background-wg {
-    background: linear-gradient(1deg, rgb(241, 241, 241), rgba(27, 161, 27, 0.852)), url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
+  background-image: url(./card-backgrounds/wg.png);
 }
 
 .card-background-wb {
@@ -223,7 +223,7 @@ body* > {
 .frame-art-wg,
 .frame-type-line-wg,
 .frame-text-box-wg {
-  box-shadow: 0 0 0 2px #999999, 0 0 0 5px #151414, -3px 3px 2px 5px #2f2e2e;
+  box-shadow: 0 0 0 3px #3030302d, 0 0 0 2px #b3b3b334, -2px 3px 2px 4px #020202;
 }
 
 .frame-header-wb,
@@ -381,7 +381,7 @@ body* > {
 
 .frame-wg {
   background: 
-linear-gradient(0deg, rgb(241 243 241 / 30%), #e7e8dc), 
+linear-gradient(90deg, rgba(11, 112, 56, 0.295), #fcfcfcaf), 
   url(https://image.ibb.co/jKByZn/tile_bg_1.jpg)
 }
 

@@ -138,6 +138,7 @@ namespace MTG.CardGenerator.Tests
         }
 
         [Fact]
+        [Trait("Not Ideal", "Unearth cost makes no sense")]
         public void CreatureWithFlashbackGetsUnearth()
         {
             var card = new MagicCard(new BasicCard()
@@ -220,6 +221,7 @@ namespace MTG.CardGenerator.Tests
         }
 
         [Fact]
+        [Trait("Not Ideal", "Enter the battlefield effect makes on sense.")]
         public void CreatureWithFlashbackGetsUnearth4()
         {
             var card = new MagicCard(new BasicCard()

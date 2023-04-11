@@ -7,7 +7,7 @@ module.exports = {
     assetModuleFilename: 'images/[hash][ext][query]'
   },
   devServer: {
-    hot: false,
+    hot: true,
     client: {
       progress: true,
     },
