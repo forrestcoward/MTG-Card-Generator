@@ -13,7 +13,7 @@ Users can enter a prompt describing the type of Magic card they would like to ge
 ## Components
 
 There are two components to this project:
-1. A C# back end consisting of a single Azure function. The backend generates cards based on a prompt and an image based on the card text.
+1. A C# back end consisting of an Azure function application. The backend generates cards based on a prompt and an image based on the card text.
 2. A Typescript and React front end. The front end allows the user to enter a prompt and then renders the generated card on the page.
 
 ## Build & Run the Backend
@@ -47,6 +47,10 @@ npm run dev
 ```
 
 Navigate to `http://localhost:8080/` in your browser.
+
+## Deployment
+
+The application is deployed as an [Azure static application](https://azure.microsoft.com/en-us/products/app-service/static) in a personal Azure subscription. During deployment, the API is integrated and bundled with the application, so the backend does not need to be hosted separately. Currently, pushes into the `main` branch will automatically deploy a new version of the application using a GitHub Action. Deployment takes just a few minutes.
 
 # Links
 
