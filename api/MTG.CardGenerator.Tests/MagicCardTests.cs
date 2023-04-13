@@ -15,7 +15,7 @@ namespace MTG.CardGenerator.Tests
             };
 
             var card = new MagicCard(_card);
-            Assert.Contains(CardProperty.Flashback, card.Properties);
+            Assert.Contains(CardPropertyOrKeyword.Flashback, card.Properties);
         }
 
         [Fact]
@@ -29,9 +29,9 @@ namespace MTG.CardGenerator.Tests
             };
 
             var card = new MagicCard(_card);
-            Assert.Contains(CardProperty.GainsEffectWhenCastFromGraveyard, card.Properties);
+            Assert.Contains(CardPropertyOrKeyword.GainsEffectWhenCastFromGraveyard, card.Properties);
             Assert.Single(card.ViolatedRules);
-            Assert.Equal(CardProperty.GainsEffectWhenCastFromGraveyard, card.ViolatedRules[0].CardProperty);
+            Assert.Equal(CardPropertyOrKeyword.GainsEffectWhenCastFromGraveyard, card.ViolatedRules[0].CardProperty);
         }
 
         [Fact]
@@ -41,11 +41,11 @@ namespace MTG.CardGenerator.Tests
             {
                 Name = "Echoes of the Past",
                 ManaCost = "{4}{U}",
-                OracleText = "Exile target creature you control. Return that card to the battlefield under your control at the beginning of the next end step.\nFlashback 3U",
+                OracleText = "Exile target creature you control. Return that card to the battlefield under your control at the beginning of the next end step. You may pay U in addition to the casting cost, if you do, that creature returns to the battle with a +1/+1 counter on it.\\nFlashback 3U",
                 Type = "Instant"
             });
 
-            Assert.True(false);
+            Assert.Equal("Exile target creature you control. Return that card to the battlefield under your control at the beginning of the next end step. You may pay {U} in addition to the casting cost, if you do, that creature returns to the battle with a +1/+1 counter on it.\\nFlashback {3}{U}", card.RawOracleText);
         }
 
         [Fact]
@@ -53,13 +53,27 @@ namespace MTG.CardGenerator.Tests
         {
             var card = new MagicCard(new BasicCard()
             {
-                Name = "Echoes of the Past",
+                Name = "Powerful Sorcerer",
                 ManaCost = "{4}{U}",
-                OracleText = "Exile target creature you control. Return that card to the battlefield under your control at the beginning of the next end step.\nFlashback {3U}",
+                OracleText = "RR: Exile target creature you control. Return that card to the battlefield under your control at the beginning of the next end step.",
                 Type = "Instant"
             });
 
-            Assert.True(false);
+            Assert.Equal("{R}{R}: Exile target creature you control. Return that card to the battlefield under your control at the beginning of the next end step.", card.RawOracleText);
+        }
+
+        [Fact]
+        public void CorrectManaCostsInText3()
+        {
+            var card = new MagicCard(new BasicCard()
+            {
+                Name = "Powerful Sorcerer",
+                ManaCost = "{4}{U}",
+                OracleText = "RR: Exile target creature you control. Return that card to the battlefield under your control at the beginning of the next end step. Repeat this process 2 times.",
+                Type = "Instant"
+            });
+
+            Assert.Equal("{R}{R}: Exile target creature you control. Return that card to the battlefield under your control at the beginning of the next end step. Repeat this process 2 times.", card.RawOracleText);
         }
 
         [Fact]
@@ -120,7 +134,7 @@ namespace MTG.CardGenerator.Tests
 
             // Gain effect from graveyard is violated because it does not have Flashback.
             Assert.Single(card.ViolatedRules);
-            Assert.Equal(CardProperty.GainsEffectWhenCastFromGraveyard, card.ViolatedRules[0].CardProperty);
+            Assert.Equal(CardPropertyOrKeyword.GainsEffectWhenCastFromGraveyard, card.ViolatedRules[0].CardProperty);
 
             // Reparse the card.
             card = new MagicCard(new BasicCard()
@@ -133,8 +147,8 @@ namespace MTG.CardGenerator.Tests
 
             // It should now have Flashback..
             Assert.Empty(card.ViolatedRules);
-            Assert.Contains(CardProperty.Flashback, card.Properties);
-            Assert.Contains(CardProperty.GainsEffectWhenCastFromGraveyard, card.Properties);
+            Assert.Contains(CardPropertyOrKeyword.Flashback, card.Properties);
+            Assert.Contains(CardPropertyOrKeyword.GainsEffectWhenCastFromGraveyard, card.Properties);
         }
 
         [Fact]
@@ -151,7 +165,7 @@ namespace MTG.CardGenerator.Tests
 
             // Flashback property is violated.
             Assert.Single(card.ViolatedRules);
-            Assert.Equal(CardProperty.Flashback, card.ViolatedRules[0].CardProperty);
+            Assert.Equal(CardPropertyOrKeyword.Flashback, card.ViolatedRules[0].CardProperty);
 
             // Reparse the card.
             card = new MagicCard(new BasicCard()
@@ -164,7 +178,7 @@ namespace MTG.CardGenerator.Tests
 
             // It should now have Unearth.
             Assert.Empty(card.ViolatedRules);
-            Assert.Contains(CardProperty.Unearth, card.Properties);
+            Assert.Contains(CardPropertyOrKeyword.Unearth, card.Properties);
             Assert.Equal("\nUnearth {2}, Sacrifice Memory Amulet\nWhen Memory Amulet enters the battlefield, target player shuffles their graveyard into their library, then draws a card.", card.RawOracleText);
         }
 
@@ -190,7 +204,7 @@ namespace MTG.CardGenerator.Tests
 
             // It should now have Unearth.
             Assert.Empty(card.ViolatedRules);
-            Assert.Contains(CardProperty.Unearth, card.Properties);
+            Assert.Contains(CardPropertyOrKeyword.Unearth, card.Properties);
             Assert.Equal("\nUnearth {2}{U}\nWhen Temporal Alchemist enters the battlefield, tap or untap target permanent. Activate this ability only any time you could cast a sorcery.", card.RawOracleText);
         }
 
@@ -216,7 +230,7 @@ namespace MTG.CardGenerator.Tests
 
             // It should now have Unearth.
             Assert.Empty(card.ViolatedRules);
-            Assert.Contains(CardProperty.Unearth, card.Properties);
+            Assert.Contains(CardPropertyOrKeyword.Unearth, card.Properties);
             Assert.Equal("When Soulbound Keeper enters the battlefield, each player discards a card.\nUnearth {3}{B}{B}{B}", card.RawOracleText);
         }
 
@@ -243,7 +257,7 @@ namespace MTG.CardGenerator.Tests
 
             // It should now have Unearth.
             Assert.Empty(card.ViolatedRules);
-            Assert.Contains(CardProperty.Unearth, card.Properties);
+            Assert.Contains(CardPropertyOrKeyword.Unearth, card.Properties);
             Assert.Equal("\nUnearth {3}{U}, Sacrifice an artifact\nWhen Mindwrought Construct enters the battlefield, return Mindwrought Construct from your graveyard to the battlefield.", card.RawOracleText);
         }
 
@@ -269,7 +283,7 @@ namespace MTG.CardGenerator.Tests
 
             // It should now have Unearth.
             Assert.Empty(card.ViolatedRules);
-            Assert.Contains(CardProperty.Unearth, card.Properties);
+            Assert.Contains(CardPropertyOrKeyword.Unearth, card.Properties);
             Assert.Equal("\nUnearth {R}{R}\nWhen Goblin Schemer enters the battlefield, choose one - Goblin Schemer deals 2 damage to target creature; or Goblin Schemer gains haste and menace until end of turn.", card.RawOracleText);
         }
 
@@ -286,7 +300,7 @@ namespace MTG.CardGenerator.Tests
 
             // Flashback property is violated.
             Assert.Single(card.ViolatedRules);
-            Assert.Equal(CardProperty.Flashback, card.ViolatedRules[0].CardProperty);
+            Assert.Equal(CardPropertyOrKeyword.Flashback, card.ViolatedRules[0].CardProperty);
 
             // Reparse the card.
             card = new MagicCard(new BasicCard()
@@ -299,8 +313,8 @@ namespace MTG.CardGenerator.Tests
 
             // It should now have Unearth.
             Assert.Empty(card.ViolatedRules);
-            Assert.Contains(CardProperty.Unearth, card.Properties);
-            Assert.DoesNotContain(CardProperty.Flashback, card.Properties);
+            Assert.Contains(CardPropertyOrKeyword.Unearth, card.Properties);
+            Assert.DoesNotContain(CardPropertyOrKeyword.Flashback, card.Properties);
             Assert.Equal("When Dreadmaw Stalker enters the battlefield, you may discard a card. If you do, target creature gets -2/-2 until end of turn.\nUnearth {4}{B}{B}", card.RawOracleText);
         }
 
@@ -317,7 +331,7 @@ namespace MTG.CardGenerator.Tests
 
             // Flashback property is violated.
             Assert.Single(card.ViolatedRules);
-            Assert.Equal(CardProperty.Flashback, card.ViolatedRules[0].CardProperty);
+            Assert.Equal(CardPropertyOrKeyword.Flashback, card.ViolatedRules[0].CardProperty);
 
             // Reparse the card.
             card = new MagicCard(new BasicCard()
@@ -330,8 +344,8 @@ namespace MTG.CardGenerator.Tests
 
             // It should now have Unearth.
             Assert.Empty(card.ViolatedRules);
-            Assert.Contains(CardProperty.Unearth, card.Properties);
-            Assert.DoesNotContain(CardProperty.Flashback, card.Properties);
+            Assert.Contains(CardPropertyOrKeyword.Unearth, card.Properties);
+            Assert.DoesNotContain(CardPropertyOrKeyword.Flashback, card.Properties);
             Assert.Equal("When Unburied Champion enters the battlefield or attacks, you may exile target creature card from a graveyard. If a creature card is exiled this way, Unburied Champion gets +1/+1 until end of turn.\nUnearth {3}{B}{B}{B}\n", card.RawOracleText);
         }
 
@@ -348,7 +362,7 @@ namespace MTG.CardGenerator.Tests
 
             // Flashback property is violated.
             Assert.Single(card.ViolatedRules);
-            Assert.Equal(CardProperty.Flashback, card.ViolatedRules[0].CardProperty);
+            Assert.Equal(CardPropertyOrKeyword.Flashback, card.ViolatedRules[0].CardProperty);
 
             // Reparse the card.
             card = new MagicCard(new BasicCard()
@@ -361,8 +375,8 @@ namespace MTG.CardGenerator.Tests
 
             // It should now have Unearth.
             Assert.Empty(card.ViolatedRules);
-            Assert.Contains(CardProperty.Unearth, card.Properties);
-            Assert.DoesNotContain(CardProperty.Flashback, card.Properties);
+            Assert.Contains(CardPropertyOrKeyword.Unearth, card.Properties);
+            Assert.DoesNotContain(CardPropertyOrKeyword.Flashback, card.Properties);
             Assert.Equal("\nUnearth {4}{U}{U}{U}\nWhen Ethereal Sorceress enters the battlefield, you may return target instant or sorcery card from your graveyard to your hand. If you do, whenever you cast that card this turn, copy it. You may choose new targets for the copy.", card.RawOracleText);
         }
     }

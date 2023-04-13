@@ -39,7 +39,7 @@ namespace MTG.CardGenerator
         Land,
         Unknown
     }
-    public enum CardProperty
+    public enum CardPropertyOrKeyword
     {
         Flashback,
         Unearth,
@@ -50,7 +50,7 @@ namespace MTG.CardGenerator
     // Defines the rules needed for a CardProperty with respect to a MagicCard.
     public class CardRule
     {
-        public CardProperty CardProperty { get; set; }
+        public CardPropertyOrKeyword CardProperty { get; set; }
         public string[] IncludesRules { get; set; } = Array.Empty<string>();
         public string MechanicMatchRule { get; set; } = string.Empty;
         public string[] ReminderText { get; set; } = Array.Empty<string>();
@@ -65,7 +65,7 @@ namespace MTG.CardGenerator
         public CardType[] LegalTypes { get; set; } = Array.Empty<CardType>();
 
         // The set of properties a card must have if it is has this rule e.g. a card that gains an effect when cast from the graveyard should have a keyword, like flashback, that allows it to be cast from the graveyard.
-        public CardProperty[] MustHaveProperties { get; set; } = Array.Empty<CardProperty>();
+        public CardPropertyOrKeyword[] MustHaveProperties { get; set; } = Array.Empty<CardPropertyOrKeyword>();
 
         // Tests if the rule applies to the line of oracle text.
         public static bool Applies(CardTextLine cardTextLine, CardRule rule)
@@ -94,7 +94,7 @@ namespace MTG.CardGenerator
         {
             new CardRule()
             {
-                CardProperty = CardProperty.GainsEffectWhenCastFromGraveyard,
+                CardProperty = CardPropertyOrKeyword.GainsEffectWhenCastFromGraveyard,
                 IncludesRules = new string[]
                 {
                     "If you cast this spell from your graveyard",
@@ -116,20 +116,20 @@ namespace MTG.CardGenerator
                     "You may cast {name} from your graveyard by paying its flashback cost",
                     "You may cast it for its flashback cost"
                 },
-                MustHaveProperties = new[] { CardProperty.Flashback },
+                MustHaveProperties = new[] { CardPropertyOrKeyword.Flashback },
                 FixViolation = (card, rule, line) =>
                 {
                     // Cards which gain an effect when cast from the graveyard should have Flashback.
                     if (card.Type == CardType.Instant || card.Type == CardType.Sorcery)
                     {
                         // Add Flashback.
-                        CardRules.First(rule => rule.CardProperty == CardProperty.Flashback).AddMechanicToCard(card, rule, line);
+                        CardRules.First(rule => rule.CardProperty == CardPropertyOrKeyword.Flashback).AddMechanicToCard(card, rule, line);
                     }
                 }
             },
             new CardRule()
             {
-                CardProperty = CardProperty.Flashback,
+                CardProperty = CardPropertyOrKeyword.Flashback,
                 MechanicMatchRule = "Flashback",
                 LegalTypes = new[] { CardType.Instant, CardType.Sorcery },
                 ReminderText = new string[]
@@ -147,21 +147,21 @@ namespace MTG.CardGenerator
                     // If this is a creature or artifact that has Flashback, give it Unearth instead.
                     if (card.Type == CardType.Creature || card.Type == CardType.Artifact)
                     {
-                        var textLines = card.ParsedOracleTextLines.Where(x => !x.Properties.Contains(CardProperty.Flashback));
+                        var textLines = card.ParsedOracleTextLines.Where(x => !x.Properties.Contains(CardPropertyOrKeyword.Flashback));
                         card.RawOracleText = string.Join('\n', textLines.Select(x => x.ToString()));
-                        CardRules.First(rule => rule.CardProperty == CardProperty.Unearth).AddMechanicToCard(card, rule, line);
+                        CardRules.First(rule => rule.CardProperty == CardPropertyOrKeyword.Unearth).AddMechanicToCard(card, rule, line);
                     }
                 }
             },
             new CardRule()
             {
-                CardProperty = CardProperty.Unearth,
+                CardProperty = CardPropertyOrKeyword.Unearth,
                 MechanicMatchRule = "Unearth",
                 LegalTypes= new[] { CardType.Artifact, CardType.Creature },
                 AddMechanicToCard = (card, rule, line) =>
                 {
                     // Transform Flashback into Unearth.
-                    if (line.Properties.Contains(CardProperty.Flashback)) {
+                    if (line.Properties.Contains(CardPropertyOrKeyword.Flashback)) {
                         if (rule.ReminderText.Any(reminder => line.CostAndEffectWithoutManaCost.Contains(reminder, StringComparison.OrdinalIgnoreCase)))
                         {
                             var newText = $"\nUnearth {line.Cost}";
@@ -241,7 +241,7 @@ namespace MTG.CardGenerator
         // The rules that apply to this line of text.
         public CardRule[] Rules { get; }
         // The properties that apply to this line of text.
-        public CardProperty[] Properties { get; }
+        public CardPropertyOrKeyword[] Properties { get; }
 
         public CardTextLine(string oracleTextLine, MagicCard parentCard = null)
         {
@@ -329,22 +329,42 @@ namespace MTG.CardGenerator
 
         [JsonIgnore]
         // A list of keywords that were parsed. This is not exhaustive.
-        public CardProperty[] Properties { get; }
+        public CardPropertyOrKeyword[] Properties { get; }
 
         [JsonIgnore]
         public List<CardRule> ViolatedRules { get; }
 
+        public static Regex UnbracketedManaCostRegex = new(@"(?<cost>(\s|^)[123456789WUBRG]+(\s|$|:))");
+
+        public static string CorrectUnbracketedManaCosts(string oracleText)
+        {
+            var unbracketedManaCosts = UnbracketedManaCostRegex.GetAllMatches(oracleText);
+            foreach (var unbracketedManaCost in unbracketedManaCosts)
+            {
+                if (unbracketedManaCost.IsNumericOrWhitespace())
+                {
+                    // If the detected mana cost is only a number, so no ['W', 'U', 'B', 'R', 'G'], then we do not really know if it is just a number of a mana cost.
+                    continue;
+                }
+
+                // Otherwise bracket the mana symbols with '{' and '}'.
+                oracleText = oracleText.Replace(unbracketedManaCost, unbracketedManaCost.BracketManaSymbols());
+            }
+
+            return oracleText;
+        }
+
         public MagicCard(BasicCard card)
         {
             Name = card.Name;
+            TypeLine = card.Type;
+            Type = GetCardType(TypeLine);
             ManaCost = !string.IsNullOrWhiteSpace(card.ManaCost) ? card.ManaCost : string.Empty;
             ManaCost = FixManaCost(ManaCost);
-            RawOracleText = card.OracleText;
+            RawOracleText = CorrectUnbracketedManaCosts(card.OracleText);
             FlavorText = card.FlavorText;
             Rarity = card.Rarity;
             ColorIdentity = GetColorIdentity(ManaCost);
-            TypeLine = card.Type;
-            Type = GetCardType(TypeLine);
             ImageUrl = string.Empty;
 
             if (string.IsNullOrWhiteSpace(card.PowerAndToughness) &&
@@ -488,23 +508,23 @@ namespace MTG.CardGenerator
 
         private string FixManaCost(string manaCost)
         {
-            // Lands should have no cost.
+            // Lands should have no cost, and GPT frequently creates land cards with cost.
             if (Type == CardType.Land)
             {
                 return string.Empty;
             }
 
-            // Generated mana costs often have no brackets at all. If so, just add brackets around each character.
+            // Generated mana costs often have no brackets at all. If so, just add brackets around each mana character.
             if (!manaCost.Contains('{') && !manaCost.Contains('}'))
             {
-                return manaCost.AddBracketsAroundCharacters();
+                return manaCost.BracketManaSymbols();
             }
 
             if (!manaCost.IsBracketed())
             {
                 manaCost = manaCost.Replace("}", "");
                 manaCost = manaCost.Replace("{", "");
-                return manaCost.AddBracketsAroundCharacters();
+                return manaCost.BracketManaSymbols();
             }
 
             return manaCost;
