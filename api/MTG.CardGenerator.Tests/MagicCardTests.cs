@@ -31,7 +31,7 @@ namespace MTG.CardGenerator.Tests
             var card = new MagicCard(_card);
             Assert.Contains(CardPropertyOrKeyword.GainsEffectWhenCastFromGraveyard, card.Properties);
             Assert.Single(card.ViolatedRules);
-            Assert.Equal(CardPropertyOrKeyword.GainsEffectWhenCastFromGraveyard, card.ViolatedRules[0].CardProperty);
+            Assert.Equal(CardPropertyOrKeyword.GainsEffectWhenCastFromGraveyard, card.ViolatedRules[0].PropertyOrKeyword);
         }
 
         [Fact]
@@ -134,7 +134,7 @@ namespace MTG.CardGenerator.Tests
 
             // Gain effect from graveyard is violated because it does not have Flashback.
             Assert.Single(card.ViolatedRules);
-            Assert.Equal(CardPropertyOrKeyword.GainsEffectWhenCastFromGraveyard, card.ViolatedRules[0].CardProperty);
+            Assert.Equal(CardPropertyOrKeyword.GainsEffectWhenCastFromGraveyard, card.ViolatedRules[0].PropertyOrKeyword);
 
             // Reparse the card.
             card = new MagicCard(new BasicCard()
@@ -165,7 +165,7 @@ namespace MTG.CardGenerator.Tests
 
             // Flashback property is violated.
             Assert.Single(card.ViolatedRules);
-            Assert.Equal(CardPropertyOrKeyword.Flashback, card.ViolatedRules[0].CardProperty);
+            Assert.Equal(CardPropertyOrKeyword.Flashback, card.ViolatedRules[0].PropertyOrKeyword);
 
             // Reparse the card.
             card = new MagicCard(new BasicCard()
@@ -300,7 +300,7 @@ namespace MTG.CardGenerator.Tests
 
             // Flashback property is violated.
             Assert.Single(card.ViolatedRules);
-            Assert.Equal(CardPropertyOrKeyword.Flashback, card.ViolatedRules[0].CardProperty);
+            Assert.Equal(CardPropertyOrKeyword.Flashback, card.ViolatedRules[0].PropertyOrKeyword);
 
             // Reparse the card.
             card = new MagicCard(new BasicCard()
@@ -331,7 +331,7 @@ namespace MTG.CardGenerator.Tests
 
             // Flashback property is violated.
             Assert.Single(card.ViolatedRules);
-            Assert.Equal(CardPropertyOrKeyword.Flashback, card.ViolatedRules[0].CardProperty);
+            Assert.Equal(CardPropertyOrKeyword.Flashback, card.ViolatedRules[0].PropertyOrKeyword);
 
             // Reparse the card.
             card = new MagicCard(new BasicCard()
@@ -362,7 +362,7 @@ namespace MTG.CardGenerator.Tests
 
             // Flashback property is violated.
             Assert.Single(card.ViolatedRules);
-            Assert.Equal(CardPropertyOrKeyword.Flashback, card.ViolatedRules[0].CardProperty);
+            Assert.Equal(CardPropertyOrKeyword.Flashback, card.ViolatedRules[0].PropertyOrKeyword);
 
             // Reparse the card.
             card = new MagicCard(new BasicCard()
@@ -378,6 +378,68 @@ namespace MTG.CardGenerator.Tests
             Assert.Contains(CardPropertyOrKeyword.Unearth, card.Properties);
             Assert.DoesNotContain(CardPropertyOrKeyword.Flashback, card.Properties);
             Assert.Equal("\nUnearth {4}{U}{U}{U}\nWhen Ethereal Sorceress enters the battlefield, you may return target instant or sorcery card from your graveyard to your hand. If you do, whenever you cast that card this turn, copy it. You may choose new targets for the copy.", card.RawOracleText);
+        }
+
+        [Fact]
+        public void CardWithKickerEffectGetsKicker1()
+        {
+            var card = new MagicCard(new BasicCard()
+            {
+                Name = "Frostbite Bolt",
+                ManaCost = "{1}{R}",
+                OracleText = "Frostbite Bolt deals 2 damage to target creature or player. If Frostbite Bolt was kicked, it deals 3 damage instead.",
+                Type = "Instant"
+            });
+
+            // Missing Kicker cost.
+            Assert.Single(card.ViolatedRules);
+            Assert.Equal(CardPropertyOrKeyword.GainsEffectWhenKicked, card.ViolatedRules[0].PropertyOrKeyword);
+
+            // Reparse the card.
+            card = new MagicCard(new BasicCard()
+            {
+                Name = card.Name,
+                ManaCost = card.ManaCost,
+                OracleText = card.RawOracleText,
+                Type = card.TypeLine
+            });
+
+            // It should now have a Kicker cost.
+            Assert.Empty(card.ViolatedRules);
+            Assert.Contains(CardPropertyOrKeyword.Kicker, card.Properties);
+            Assert.Contains(CardPropertyOrKeyword.GainsEffectWhenKicked, card.Properties);
+            Assert.Equal("Kicker {1}{R}\nFrostbite Bolt deals 2 damage to target creature or player. If Frostbite Bolt was kicked, it deals 3 damage instead.", card.RawOracleText);
+        }
+
+        [Fact]
+        public void CardWithKickerEffectGetsKicker2()
+        {
+            var card = new MagicCard(new BasicCard()
+            {
+                Name = "Searing Blaze",
+                ManaCost = "{1}{R}",
+                OracleText = "Searing Blaze deals 1 damage to target player or planeswalker.\nKicker {R} (You may pay an additional {R} as you cast this spell.)\nIf Searing Blaze was kicked, it deals 3 damage to that player or planeswalker instead.",
+                Type = "Instant"
+            });
+
+            Assert.Empty(card.ViolatedRules);
+            Assert.Contains(CardPropertyOrKeyword.Kicker, card.Properties);
+            Assert.Contains(CardPropertyOrKeyword.GainsEffectWhenKicked, card.Properties);
+
+            // Reparse the card.
+            card = new MagicCard(new BasicCard()
+            {
+                Name = card.Name,
+                ManaCost = card.ManaCost,
+                OracleText = card.RawOracleText,
+                Type = card.TypeLine
+            });
+
+            // Card should be unchanged.
+            Assert.Empty(card.ViolatedRules);
+            Assert.Contains(CardPropertyOrKeyword.Kicker, card.Properties);
+            Assert.Contains(CardPropertyOrKeyword.GainsEffectWhenKicked, card.Properties);
+            Assert.Equal("Searing Blaze deals 1 damage to target player or planeswalker.\nKicker {R} (You may pay an additional {R} as you cast this spell.)\nIf Searing Blaze was kicked, it deals 3 damage to that player or planeswalker instead.", card.RawOracleText);
         }
     }
 }

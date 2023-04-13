@@ -43,6 +43,8 @@ namespace MTG.CardGenerator
     {
         Flashback,
         Unearth,
+        Kicker,
+        GainsEffectWhenKicked,
         GainsEffectWhenCastFromGraveyard,
         Unknown,
     }
@@ -50,7 +52,7 @@ namespace MTG.CardGenerator
     // Defines the rules needed for a CardProperty with respect to a MagicCard.
     public class CardRule
     {
-        public CardPropertyOrKeyword CardProperty { get; set; }
+        public CardPropertyOrKeyword PropertyOrKeyword { get; set; }
         public string[] IncludesRules { get; set; } = Array.Empty<string>();
         public string MechanicMatchRule { get; set; } = string.Empty;
         public string[] ReminderText { get; set; } = Array.Empty<string>();
@@ -94,7 +96,7 @@ namespace MTG.CardGenerator
         {
             new CardRule()
             {
-                CardProperty = CardPropertyOrKeyword.GainsEffectWhenCastFromGraveyard,
+                PropertyOrKeyword = CardPropertyOrKeyword.GainsEffectWhenCastFromGraveyard,
                 IncludesRules = new string[]
                 {
                     "If you cast this spell from your graveyard",
@@ -123,13 +125,47 @@ namespace MTG.CardGenerator
                     if (card.Type == CardType.Instant || card.Type == CardType.Sorcery)
                     {
                         // Add Flashback.
-                        CardRules.First(rule => rule.CardProperty == CardPropertyOrKeyword.Flashback).AddMechanicToCard(card, rule, line);
+                        CardRules.First(rule => rule.PropertyOrKeyword == CardPropertyOrKeyword.Flashback).AddMechanicToCard(card, rule, line);
                     }
                 }
             },
             new CardRule()
             {
-                CardProperty = CardPropertyOrKeyword.Flashback,
+                PropertyOrKeyword = CardPropertyOrKeyword.GainsEffectWhenKicked,
+                IncludesRules = new string[]
+                {
+                    "If {name} was kicked",
+                    "If {name} is kicked",
+                    "You may pay the kicker cost",
+                    "If you paid the kicker cost",
+                    "If this spell was kicked",
+                    "If it was kicked"
+                },
+                MustHaveProperties = new[] { CardPropertyOrKeyword.Kicker },
+                FixViolation = (card, rule, line) =>
+                {
+                    // Add Kicker.
+                    CardRules.First(rule => rule.PropertyOrKeyword == CardPropertyOrKeyword.Kicker).AddMechanicToCard(card, rule, line);
+                }
+            },
+            new CardRule()
+            {
+                PropertyOrKeyword = CardPropertyOrKeyword.Kicker,
+                MechanicMatchRule = "Kicker",
+                ReminderText = new string[]
+                {
+                    "(You may pay an additional {cost} as you cast this spell.)",
+                    "(You may {cost} in addition to any other costs as you cast this spell)"
+                },
+                AddMechanicToCard = (card, rule, line) =>
+                {
+                    var newText = $"Kicker {card.ManaCost}\n";
+                    card.RawOracleText = newText + card.RawOracleText;
+                },
+            },
+            new CardRule()
+            {
+                PropertyOrKeyword = CardPropertyOrKeyword.Flashback,
                 MechanicMatchRule = "Flashback",
                 LegalTypes = new[] { CardType.Instant, CardType.Sorcery },
                 ReminderText = new string[]
@@ -149,13 +185,13 @@ namespace MTG.CardGenerator
                     {
                         var textLines = card.ParsedOracleTextLines.Where(x => !x.Properties.Contains(CardPropertyOrKeyword.Flashback));
                         card.RawOracleText = string.Join('\n', textLines.Select(x => x.ToString()));
-                        CardRules.First(rule => rule.CardProperty == CardPropertyOrKeyword.Unearth).AddMechanicToCard(card, rule, line);
+                        CardRules.First(rule => rule.PropertyOrKeyword == CardPropertyOrKeyword.Unearth).AddMechanicToCard(card, rule, line);
                     }
                 }
             },
             new CardRule()
             {
-                CardProperty = CardPropertyOrKeyword.Unearth,
+                PropertyOrKeyword = CardPropertyOrKeyword.Unearth,
                 MechanicMatchRule = "Unearth",
                 LegalTypes= new[] { CardType.Artifact, CardType.Creature },
                 AddMechanicToCard = (card, rule, line) =>
@@ -253,7 +289,7 @@ namespace MTG.CardGenerator
             Effect = match["effect"].Trim();
 
             Rules = CardRule.CardRules.Where(rule => CardRule.Applies(this, rule)).ToArray();
-            Properties = Rules.Select(criteria => criteria.CardProperty).ToArray();
+            Properties = Rules.Select(criteria => criteria.PropertyOrKeyword).ToArray();
         }
 
         public override string ToString()
@@ -343,7 +379,7 @@ namespace MTG.CardGenerator
             {
                 if (unbracketedManaCost.IsNumericOrWhitespace())
                 {
-                    // If the detected mana cost is only a number, so no ['W', 'U', 'B', 'R', 'G'], then we do not really know if it is just a number of a mana cost.
+                    // If the detected mana cost is only a number, so no ['W', 'U', 'B', 'R', 'G'], then we do not really know if it is just a number or a mana cost.
                     continue;
                 }
 
