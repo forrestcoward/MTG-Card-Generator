@@ -290,7 +290,6 @@ body* > {
     overflow: hidden;
 }
 
-
 /*
   ----------------------------------------
   ----------------------------------------
@@ -456,12 +455,8 @@ linear-gradient(90deg, rgba(11, 112, 56, 0.295), #fcfcfcaf),
 
 #mana-icon {
     font-size: 1.2em;
-    /*background: #ADD3AC;*/
     border-radius: 50%;
-    /*box-sizing: border-box;*/
-    /*box-shadow: -0.05em 0.12em 0px 0 black;*/
     margin-right: 5px;
-    /*height: 20px;*/
     align-self: center;
 }
 
@@ -513,7 +508,6 @@ linear-gradient(90deg, rgba(11, 112, 56, 0.295), #fcfcfcaf),
   line-height: 1em;
   text-rendering: auto;
   transform: translate(0,0);
-  speak: none;
   text-transform: none;
   vertical-align: middle;
   -webkit-font-smoothing: antialiased;
@@ -561,10 +555,6 @@ p {
     margin: 5px 1px;
 }
 
-
-
-
-
 .frame-bottom-info {
     color: white;
     display: flex;
@@ -572,9 +562,6 @@ p {
     margin: 5px 15px 0 15px; 
 }
 
-fbi-left {
-    flex: 1;
-} 
 .fbi-left p:first-of-type {
     margin-bottom: 1px;
 }
@@ -597,15 +584,16 @@ fbi-left {
     box-shadow: 
         0 0 0 4px #171314;
 }
+
 .inner-margins {
     margin: 0 10px;
 } 
 
 .fbi-right {
-    flex: 1;
     text-align: right;
 }
- .frame-bottom-info img {
+
+.frame-bottom-info img {
     overflow: hidden;
     max-width: 10px;
 }
