@@ -237,6 +237,18 @@ interface CardDisplayProps {
   card: MagicCard;
 }
 
+function logCard(card: MagicCard) {
+  console.log(card)
+  console.log(JSON.stringify({
+    "name": card.name,
+    "pt": card.pt,
+    "type": card.typeLine,
+    "manaCost": card.manaCost,
+    "text": card.rawOracleText,
+    "rarity": card.rarity
+  }))
+}
+
 export class CardDisplay extends React.Component<CardDisplayProps> {
   constructor(props: CardDisplayProps) {
     super(props);
@@ -287,7 +299,7 @@ export class CardDisplay extends React.Component<CardDisplayProps> {
                   <p>{card.setNumberDisplay} {card.rarityDisplay}</p>
                   <p>OpenAI &#x2022; <img className="paintbrush" src="https://image.ibb.co/e2VxAS/paintbrush_white.png" alt="paintbrush icon" />Custom Magic</p>
                 </div>
-                <div className="fbi-center"></div>
+                <div className="fbi-center" onClick={(e) => logCard(card)}></div>
                 <div className="fbi-right">
                   &#x99; &amp; &#169; 2023 Chat GPT Turbo
                 </div>

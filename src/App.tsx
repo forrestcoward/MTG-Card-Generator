@@ -70,14 +70,16 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
         </label>
         <p></p>
         <table>
-          <tr>
-            <td>
-              <button className="generateButton" type="submit" onClick={() => this.handleSubmit()} disabled={this.state.isLoading}>Generate!</button>
-            </td>
-            <td>
-              <img className={this.getLoadingClassName()} src={loadingIcon} />
-            </td>
-          </tr>
+          <tbody>
+            <tr>
+              <td>
+                <button className="generateButton" type="submit" onClick={() => this.handleSubmit()} disabled={this.state.isLoading}>Generate!</button>
+              </td>
+              <td>
+                <img className={this.getLoadingClassName()} src={loadingIcon} />
+              </td>
+            </tr>
+          </tbody>
         </table>
         <h2 style={{ color: 'red' }}>{this.state.currentError}</h2>
         <textarea value={this.state.response} readOnly={true} rows={30} cols={120} hidden={true} />
