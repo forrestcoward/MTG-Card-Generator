@@ -68,7 +68,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     userPrompt = "that is from the Dominaria plane.";
                 }
 
-                var userPromptToSubmit = $"Generate me one Magic: The Gathering card that {userPrompt}";
+                var userPromptToSubmit = $"Generate me one 'Magic: The Gathering card' that has the following description: {userPrompt}";
 
                 var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
                 var api = new OpenAIAPI(new APIAuthentication(apiKey));
