@@ -11,28 +11,35 @@ article, aside, details, figcaption, figure,
 footer, header, hgroup, menu, nav, section {
   display: block;
 }
+
 body {
   line-height: 1;
 }
+
 ol, ul {
   list-style: none;
 }
+
 blockquote, q {
   quotes: none;
 }
+
 blockquote:before, blockquote:after,
 q:before, q:after {
   content: '';
   content: none;
 }
+
 table {
   border-collapse: collapse;
   border-spacing: 0;
 }
+
 /* End of reset */
 body* > {
   box-sizing: border-box;
 }
+
 .card-container {
   border: 1px solid black;
   width: 480px;
@@ -44,6 +51,7 @@ body* > {
   box-shadow: -8px 9px 16px -3px gray;
   background: #171314;  
 }
+
 .card-background {
   height: 600px;
   margin: 20px 20px 0 20px;
@@ -317,7 +325,8 @@ body* > {
     margin-top: 10px;
     margin-left: 5px;
     margin-right: 5px;
-    min-height: 20px;
+    min-height:3%;
+    max-height:3%;
     padding: 8px 0;
     display: flex;
     justify-content: space-between;
@@ -430,19 +439,25 @@ linear-gradient(90deg, rgba(11, 112, 56, 0.295), #fcfcfcaf),
 
 .name,
 .type {
-    font-size: 1.2em;
+    font-size: 1.3em;
     margin-left: 10px;
     align-self: baseline;
     font-weight: 600;
+    /* Have the card name take up the available space. */
+    width:-webkit-fill-available;
 }
 
 .mana-symbols {
-    margin-bottom: 5px
+    display: flex;
+    /* Push mana symbols to the left within flex scheme. */
+    margin-left:auto;
 }
 
 .power-and-toughness-frame {
     justify-content: right;
     display: flex;
+    margin-top: auto;
+    align-self: flex-end;
 }
 
 .power-and-toughness  {
@@ -451,10 +466,11 @@ linear-gradient(90deg, rgba(11, 112, 56, 0.295), #fcfcfcaf),
     border-radius: 18px/40px;
     padding-right: 20px;
     padding-left: 20px;
+    font-size: 1.3em;
 }
 
 #mana-icon {
-    font-size: 1.2em;
+    font-size: 1.1em;
     border-radius: 50%;
     margin-right: 5px;
     align-self: center;
@@ -467,37 +483,37 @@ linear-gradient(90deg, rgba(11, 112, 56, 0.295), #fcfcfcaf),
 .ms-1, .ms-2, .ms-3, .ms-4, .ms-5, .ms-6, .ms-7, .ms-8, .ms-9 {
     background-color: #b1b1b1b9;
     border-radius: 50%;
-    padding: 2px; 
+    padding: 3px; 
 }
 
 .ms-b {
     background-color: #b1b1b1b9;
     border-radius: 50%;
-    padding: 2px;
+    padding: 3px;
 }
 
 .ms-u {
     background-color: #a2b4ff;
     border-radius: 50%;
-    padding: 2px;
+    padding: 3px;
 }
 
 .ms-r {
     background-color: #ec3c3c9f;
     border-radius: 50%;
-    padding: 2px;
+    padding: 3px;
 }
 
 .ms-w {
     background-color: #fcf9f9;
     border-radius: 50%;
-    padding: 2px;
+    padding: 3px;
 }
 
 .ms-g {
     background-color: #63d282;
     border-radius: 50%;
-    padding: 2px;
+    padding: 3px;
 }
 
 /* Override from mana.min.css and remove font-size so mana symbols show up better in card text. */
@@ -520,7 +536,6 @@ linear-gradient(90deg, rgba(11, 112, 56, 0.295), #fcfcfcaf),
 }
 
 #set-icon {
-    /*height: 9%; Was causing set icon to not show up. */
     width: 6%;
     overflow: hidden;
     margin-right: 10px;
@@ -531,18 +546,27 @@ linear-gradient(90deg, rgba(11, 112, 56, 0.295), #fcfcfcaf),
 } 
 
 .frame-text-box {
+    display: flex;
     margin: 0 10px;
     background: #d3ded6;
     background-image: url(https://image.ibb.co/dFcNx7/tile_bg_2.jpg);
+    min-width: 393px;
+    padding: 7px 6px;
+    max-height:34%;
+    min-height:34%;
+}
+
+.frame-text-box-inner {
     display: flex;
     flex-direction: column;
-    justify-content: space-around;
-    padding: 50px 6px;
-    font-size: 1.0em;
-    min-width: 393px;
+}
+
+.description {
+    display: flex;
 }
 
 .flavour-text {
+    display: flex;
     font-style: italic;
     padding: 10px 0;
 }
@@ -560,6 +584,8 @@ p {
     display: flex;
     justify-content: space-between;
     margin: 5px 15px 0 15px; 
+    min-height: 5%;
+    max-height: 5%;
 }
 
 .fbi-left p:first-of-type {
@@ -582,12 +608,12 @@ p {
     background: lightgray;
     background-image: url(https://image.ibb.co/jyq34n/holofoil_texture_2.jpg);
     box-shadow: 
-        0 0 0 4px #171314;
+    0 0 0 4px #171314;
 }
 
 .inner-margins {
     margin: 0 10px;
-} 
+}
 
 .fbi-right {
     text-align: right;

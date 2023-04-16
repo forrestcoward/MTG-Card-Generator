@@ -89,6 +89,7 @@ export class MagicCard {
   rarity: string
   imageUrl: string
   setNumberDisplay: string
+  id: number
 
   constructor(card: BasicCard) {
     this.name = card.name
@@ -106,6 +107,14 @@ export class MagicCard {
     this.rarity = card.rarity
     this.imageUrl = card.imageUrl
     this.setNumberDisplay = getRandomInt(0, 451) + "/" + 451
+    this.id = getRandomInt(0, 1000000000)
+  }
+
+  static clone(card: MagicCard): MagicCard {
+    let newCard = new MagicCard(card)
+    newCard.setNumberDisplay = card.setNumberDisplay
+    newCard.id = card.id
+    return newCard
   }
 
   get manaCostTokens(): string[] {
@@ -160,24 +169,29 @@ export class MagicCard {
   
     return ColorIdentity.ThreePlusColored;
   }
-  
+
   get cardDivClassName() {
-    return "card-background card-background-" + this.manaCssClassPostfix
+    return `card-background card-background-${this.manaCssClassPostfix}`
   }
+
   get cardFrameTypeLineClassName()  {
-    return "frame-type-line frame-" + this.manaCssClassPostfix + " frame-type-line-" + this.manaCssClassPostfix
+    return `frame-type-line frame-${this.manaCssClassPostfix} frame-type-line-${this.manaCssClassPostfix}`
   }
 
   get cardFrameHeaderClassName() {
-    return "frame-header frame-" + this.manaCssClassPostfix + " frame-header-" + this.manaCssClassPostfix
+    return `frame-header frame-${this.manaCssClassPostfix} frame-header-${this.manaCssClassPostfix}`
   }
 
   get cardFrameTextBoxClassName() {
-    return "frame-text-box frame-text-box-" + this.manaCssClassPostfix
+    return `frame-text-box frame-text-box-${this.id} frame-text-box-${this.manaCssClassPostfix}`
+  }
+
+  get cardFrameContentClassName() {
+    return `frame-text-box-inner frame-text-box-inner-${this.id}`
   }
   
   get cardFrameArtClassName() {
-    return "frame-art frame-art-" + this.manaCssClassPostfix
+    return `frame-art frame-art-${this.manaCssClassPostfix}`
   }
 
   get rarityDisplay() {
@@ -225,16 +239,64 @@ export class MagicCard {
   static getManaClassName(manaToken: string) {
     return `ms ms-${manaTokenToCssCharacter[manaToken]}`
   }
+  
+  private getChildrenClientOffsetHeight(element: HTMLElement) {
+    let height = 0;
+    for (let i = 0; i < element.children.length; i++) {
+      height += (element.children[i] as HTMLElement).offsetHeight;
+    }
+    return height;
+  }
+
+  // Adjust the size of the card's text box until it fits within the card.
+  adjustFontSize() {
+    const container : HTMLElement | null = document.querySelector(".frame-text-box-" + this.id)
+    const innerContainer : HTMLElement | null = document.querySelector(".frame-text-box-inner-" + this.id)
+
+    if (!container || !innerContainer) {
+      return
+    }
+
+    // Increment or decrement the size of the text and flavor text containers until they fit within the card.
+    // We do not edit the font size of the power and toughness frame because it should be uniform.
+    let textContainer = innerContainer.children[0] as HTMLElement
+    let flavorTextContainer = innerContainer.children[2] as HTMLElement
+
+    const maxFontSize = 24
+    const minFontSize = 5
+    const heightOffset = 30
+    let fontSize = parseInt(window.getComputedStyle(textContainer).fontSize)
+
+    // Make the font size larger until it overflows the container.
+    // Make larger first so we can shrink it one notch after.
+    while (this.getChildrenClientOffsetHeight(innerContainer) < (container.clientHeight - heightOffset)) {
+
+      fontSize += .5
+      textContainer.style.fontSize = fontSize + 'px'
+      flavorTextContainer.style.fontSize = fontSize + 'px'
+
+      if (fontSize >= maxFontSize) {
+        break
+      }
+    }
+
+    // Make the font size smaller until it fits the container.
+    while (this.getChildrenClientOffsetHeight(innerContainer) > (container.clientHeight - heightOffset)) {
+      fontSize -= .5
+      textContainer.style.fontSize = fontSize + 'px'
+      flavorTextContainer.style.fontSize = fontSize + 'px'
+
+      if (fontSize <= minFontSize) {
+        break
+      }
+    }
+  }
 }
 
 function getRandomInt(min: number, max: number) {
   min = Math.ceil(min);
   max = Math.floor(max);
   return Math.floor(Math.random() * (max - min) + min);
-}
-
-interface CardDisplayProps {
-  card: MagicCard;
 }
 
 function logCard(card: MagicCard) {
@@ -245,61 +307,156 @@ function logCard(card: MagicCard) {
     "type": card.typeLine,
     "manaCost": card.manaCost,
     "text": card.rawOracleText,
-    "rarity": card.rarity
+    "rarity": card.rarity,
   }))
 }
 
-export class CardDisplay extends React.Component<CardDisplayProps> {
+interface CardDisplayProps {
+  card: MagicCard;
+}
+
+interface CardDisplayState {
+  card: MagicCard;
+  editMode: boolean;
+  rawOracleTextUpdate: string;
+  nameUpdate: string;
+  typeUpdate : string;
+  manaCostUpdate: string;
+  powerAndToughnessUpdate: string;
+}
+
+export class CardDisplay extends React.Component<CardDisplayProps, CardDisplayState> {
   constructor(props: CardDisplayProps) {
     super(props);
+    this.state = {
+      card: props.card,
+      editMode: false,
+      nameUpdate: props.card.name,
+      rawOracleTextUpdate: props.card.rawOracleText,
+      typeUpdate: props.card.typeLine,
+      manaCostUpdate: props.card.manaCost,
+      powerAndToughnessUpdate: props.card.pt,
+    };
+
+    this.handleCardNameUpdate = this.handleCardNameUpdate.bind(this);
+    this.handleCardOracleTextUpdate = this.handleCardOracleTextUpdate.bind(this);
+    this.handleCardTypeUpdate = this.handleCardTypeUpdate.bind(this);
+    this.handleCardManaCostUpdate = this.handleCardManaCostUpdate.bind(this);
+    this.handleCardPowerAndToughnessUpdate = this.handleCardPowerAndToughnessUpdate.bind(this);
+  }
+
+  componentDidUpdate(prevProps: Readonly<CardDisplayProps>, prevState: Readonly<CardDisplayState>, snapshot?: any): void {
+    if (this.state.card.rawOracleText != prevState.card.rawOracleText) {
+      this.state.card.adjustFontSize()
+    }
+  }
+
+  componentDidMount(): void {
+    this.state.card.adjustFontSize()
+  }
+
+  handleCardNameUpdate(event: React.ChangeEvent<HTMLInputElement>) {
+    this.setState({ nameUpdate: event.target.value });
+  }
+
+  handleCardTypeUpdate(event: React.ChangeEvent<HTMLInputElement>) {
+    this.setState({ typeUpdate: event.target.value });
+  }
+
+  handleCardOracleTextUpdate(event: React.ChangeEvent<HTMLTextAreaElement>) {
+    this.setState({ rawOracleTextUpdate: event.target.value });
+  }
+
+  handleCardManaCostUpdate(event: React.ChangeEvent<HTMLInputElement>) {
+    this.setState({ manaCostUpdate: event.target.value.trim() });
+  }
+
+  handleCardPowerAndToughnessUpdate(event: React.ChangeEvent<HTMLInputElement>) {
+    this.setState({ powerAndToughnessUpdate: event.target.value.trim() });
+  }
+
+  updateEditMode() {
+    var updatedCard = MagicCard.clone(this.state.card)
+    updatedCard.name = this.state.nameUpdate
+    updatedCard.rawOracleText = this.state.rawOracleTextUpdate
+    updatedCard.typeLine = this.state.typeUpdate
+    updatedCard.manaCost = this.state.manaCostUpdate
+    updatedCard.pt = this.state.powerAndToughnessUpdate
+    this.setState({ editMode: !this.state.editMode, card: updatedCard })
   }
 
   render() {
-    let card = this.props.card;
+    const card = this.state.card
+    const oracleEditTextAreaRows = card.textDisplay.length * 3
     return (
       <div>
         <div className="card-container">
           <div className={card.cardDivClassName}>
             <div className="card-frame">
               <div className={card.cardFrameHeaderClassName}>
-                <h1 className="name">{card.name}</h1>
-                <div className="mana-symbols">
-                  {card.manaCostTokens.map((manaCostToken, i) => (
-                    <i key={card.name + "-manaToken-"+ i} className={MagicCard.getManaClassName(manaCostToken) + " manaCost"} id="mana-icon"></i>
-                  ))}
+                <div className="name">
+                  {!this.state.editMode ?
+                    <p>{card.name}</p> :
+                    <input className="card-edit-name" type="text" value={this.state.nameUpdate} onChange={this.handleCardNameUpdate} />
+                  }
                 </div>
+                {!this.state.editMode ?
+                    <div className="mana-symbols">
+                      {card.manaCostTokens.map((manaCostToken, i) => (
+                        <i key={card.name + "-manaToken-"+ i} className={MagicCard.getManaClassName(manaCostToken) + " manaCost"} id="mana-icon"></i>
+                      ))}
+                    </div> :
+                    <div className="card-edit-manaCost-container">
+                      <input className="card-edit-manaCost" type="text" value={this.state.manaCostUpdate} onChange={this.handleCardManaCostUpdate} />
+                    </div>
+                }
               </div>
               <img className={card.cardFrameArtClassName} src={card.imageUrl} />
               <div className={card.cardFrameTypeLineClassName}>
-                <h1 className="type">{card.typeLine}</h1>
+                 {!this.state.editMode ?
+                    <h1 className="type">{card.typeLine}</h1> :
+                    <input className="card-edit-type" type="text" value={this.state.typeUpdate} onChange={this.handleCardTypeUpdate} />
+                  }
                 <div className="mana-symbols">
                   <i className="ms ms-dfc-ignite" id="mana-icon"></i>
                 </div>
               </div>
               <div className={card.cardFrameTextBoxClassName}>
-                <div className="description ftb-inner-margin">
-                  {card.textDisplay.map((line, i) => (
-                    <p key={card.name + "-text-" + i} dangerouslySetInnerHTML={{ __html: line }}>
-                    </p>
-                  ))}
-                </div>
-                <p className="description">
-                </p>
-                <p className="flavour-text">
-                  {card.flavorText}
-                </p>
-                <div className="power-and-toughness-frame">
-                  <p className="power-and-toughness">
-                    {card.pt}
+                <div className={card.cardFrameContentClassName}>
+                  <div className="description ftb-inner-margin">
+                    {!this.state.editMode ?
+                      <div>
+                        {card.textDisplay.map((line, i) => (
+                          <p key={card.name + "-text-" + i} dangerouslySetInnerHTML={{ __html: line }}></p>
+                        ))}
+                      </div> 
+                      :
+                      <textarea className="card-edit-text" value={this.state.rawOracleTextUpdate} rows={oracleEditTextAreaRows} onChange={this.handleCardOracleTextUpdate} />
+                    }
+                  </div>
+                  <p className="description">
                   </p>
-                </div>
+                  <p className="flavour-text">
+                    {card.flavorText}
+                  </p>
+                  {card.pt &&
+                    <div className="power-and-toughness-frame">
+                      <div className="power-and-toughness">
+                        {!this.state.editMode ?
+                          <div>{card.pt}</div> :
+                          <input className="card-edit-pt" type="text" value={this.state.powerAndToughnessUpdate} onChange={this.handleCardPowerAndToughnessUpdate} />
+                        }
+                      </div>
+                    </div>
+                  }
+                  </div>
               </div>
               <div className="frame-bottom-info inner-margin">
                 <div className="fbi-left">
                   <p>{card.setNumberDisplay} {card.rarityDisplay}</p>
                   <p>OpenAI &#x2022; <img className="paintbrush" src="https://image.ibb.co/e2VxAS/paintbrush_white.png" alt="paintbrush icon" />Custom Magic</p>
                 </div>
-                <div className="fbi-center" onClick={(e) => logCard(card)}></div>
+                <div className="fbi-center" onClick={(e) => { this.updateEditMode()}}></div>
                 <div className="fbi-right">
                   &#x99; &amp; &#169; 2023 Chat GPT Turbo
                 </div>

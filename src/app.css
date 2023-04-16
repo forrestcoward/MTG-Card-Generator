@@ -39,12 +39,10 @@
   padding-right: 30px;
 }
 
-
 table {
   margin-left: auto;
   margin-right: auto;
 }
-
 
 .userInputPrompt:focus {
   outline: none !important;
@@ -85,4 +83,60 @@ table {
 .generateButton {
   width:200px;
   height:50px;
+}
+
+.card-edit-name {
+  /* Have the card name take up the available space. */
+  width:-webkit-fill-available;
+  margin-right:10px;
+  background:rgba(255, 255, 255, 0.632);
+  color:#000000;
+}
+
+.card-edit-text {
+  display:flex;
+  width:-webkit-fill-available;
+  resize: vertical;
+  background:rgba(255, 255, 255, 0.632);
+  font-size: small;
+  height:-webkit-fill-available;
+  height:auto;
+}
+
+.card-edit-type {
+  display:flex;
+  width:-webkit-fill-available;
+  resize: vertical;
+  background:rgba(255, 255, 255, 0.632);
+  font-size: small;
+  height:-webkit-fill-available;
+  height:auto;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.card-edit-manaCost-container {
+  font-size: 1.3em;
+  margin-left: 10px;
+  align-self: baseline;
+  font-weight: 600;
+  display: flex;
+  margin-left:auto;
+}
+
+.card-edit-manaCost {
+  display:flex;
+  resize: vertical;
+  background:rgba(255, 255, 255, 0.632);
+  font-size: small;
+  height:auto;
+  margin-left: auto;
+  margin-right: 10px;
+  max-width: 80px;
+  text-align: center;
+}
+
+.card-edit-pt {
+  max-width: 50px;
+  text-align: center;
 }

@@ -77,6 +77,20 @@ namespace MTG.CardGenerator.Tests
         }
 
         [Fact]
+        public void CorrectManaCostsInText4()
+        {
+            var card = new MagicCard(new BasicCard()
+            {
+                Name = "Powerful Sorcerer",
+                ManaCost = "{4}{U}",
+                OracleText = "T: Add {U} or {B}.\n2UB, T: Target creature gains deathtouch and lifelink until end of turn. Activate this ability only if you have cast another spell this turn.",
+                Type = "Instant"
+            });
+
+            Assert.Equal("{T}: Add {U} or {B}.\n{2}{U}{B}, {T}: Target creature gains deathtouch and lifelink until end of turn. Activate this ability only if you have cast another spell this turn.", card.RawOracleText);
+        }
+
+        [Fact]
         public void CardParsesManaCostMistakesCorrectly()
         {
             var _card = new BasicCard()

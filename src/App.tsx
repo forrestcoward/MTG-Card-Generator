@@ -18,7 +18,7 @@ export interface MTGCardGeneratorState {
   currentError: string,
 }
 
-const defaultPrompt:string = "Generate me one Magic: The Gathering card from the Dominaria plane."
+const defaultPrompt:string = "is from the Dominaria plane."
 
 export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTGCardGeneratorState> {
   constructor(props: MTGCardGeneratorProps) {
@@ -66,7 +66,7 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
         <div className="container">
         <p>Generate me a Magic: The Gathering card that...</p>
         <label>
-          <input type="text" className="userInputPrompt" placeholder='is from the Dominaria plane.' onChange={this.handleChangeInput} value={this.state.prompt} />
+          <input type="text" className="userInputPrompt" placeholder={defaultPrompt} onChange={this.handleChangeInput} value={this.state.prompt} />
         </label>
         <p></p>
         <table>
@@ -87,8 +87,8 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
         <div className="cardsContainer">
         {
           this.state.cards.map(card => (
-            <div className="cardContainer" key={card.name + -"display"}>
-              <CardDisplay key={card.name} card={card} />
+            <div className="cardContainer" key={`card-container-${card.id}`}>
+              <CardDisplay key={`card-display-${card.id}`} card={card} />
             </div>
           ))
         }

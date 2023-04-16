@@ -3,7 +3,7 @@ import { BasicCard, MagicCard } from "./Card";
 import tutorialCardWizardImage from './card-backgrounds/wizard.png'
 
 const _tutorialCard:BasicCard = {
-  name: "The Magic: The Gathering Card Creator",
+  name: "The M.T.G. Card Creator",
   manaCost: "{6}",
   typeLine: "Legendary Creature — Artificer God",
   type: "Artifact",
@@ -14,7 +14,7 @@ const _tutorialCard:BasicCard = {
   pt: "6/6",
   power: 6,
   toughness: 6,
-  flavorText: "\"I recall the huge design teams employed to devise even the simplest cards. Even the most intelligent of designers will never hope to match the execution and creativity of modern machines. I respect them only as much as they have paved the way, but we will not be looking backwards.\"\n - The Creator",
+  flavorText: "\"Even the most intelligent of designers will never hope to match the execution and creativity of modern machines. I respect them only as much as they have paved the way, but we will not be looking backwards.\"\n - The Creator",
   rarity: "Mythic",
   imageUrl: tutorialCardWizardImage,
 }

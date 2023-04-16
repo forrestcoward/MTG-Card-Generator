@@ -71,7 +71,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 var userPromptToSubmit = $"Generate me one Magic: The Gathering card that {userPrompt}";
 
                 var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
-                OpenAIAPI api = new OpenAIAPI(new APIAuthentication(apiKey));
+                var api = new OpenAIAPI(new APIAuthentication(apiKey));
                 var openAICards = Array.Empty<BasicCard>();
 
                 for (var attempt = 0; attempt < 5; attempt++)
