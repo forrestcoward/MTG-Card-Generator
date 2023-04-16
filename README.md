@@ -1,19 +1,20 @@
-# Magic: The Gathering Card Generator (Utilizing OpenAI)
+# Magic: The Gathering Card Generator
 
 This is a project to generate realistic Magic: The Gathering cards using OpenAI's text and image generation capabilties. Generated cards are rendered beautifully using CSS.
 
-Users can enter a prompt describing the type of Magic card they would like to generate, and the response will be a picture of a card. Here is an example card generation:
+Users can enter a prompt describing the type of Magic card they would like to generate, and the response will be a be a rendered image of a realistic card that matches the prompt (to some capacity). Here is an example card generation:
 
 <p align="center">
   <img src="cards\gpt-generator.png" width="480px" height="700px">
 </p>
 
-# Local Development Guide
+# Development Guide
 
 ## Components
 
 There are two components to this project:
-1. A C# back end consisting of a single Azure function. The backend generates cards based on a prompt and an image based on the card text.
+1. A C# back end consisting of an Azure function application. The backend generates cards based on a prompt and an image based on the card text. 
+    * A simple, stupid, rules engine is implemented to fix common problems on generated cards.
 2. A Typescript and React front end. The front end allows the user to enter a prompt and then renders the generated card on the page.
 
 ## Build & Run the Backend
@@ -34,7 +35,7 @@ There are two components to this project:
   }
 }
 ```
-You will need a valid OpenAI key for running locally. This file is in the `.gitignore` so you do not accidently commit your key.
+You will need a valid OpenAI API key for running locally. This file is in the `.gitignore` so you do not accidently commit your key.
 
 3. Start the `MTG.CardGenerator` project to launch the Azure function emulator over local host.
 
@@ -47,6 +48,10 @@ npm run dev
 ```
 
 Navigate to `http://localhost:8080/` in your browser.
+
+## Deployment
+
+The application is deployed as an [Azure static web app](https://azure.microsoft.com/en-us/products/app-service/static) in a personal Azure subscription. During deployment, the API is integrated and bundled with the application, so the backend does not need to be hosted separately. Pushes into the `main` branch will automatically deploy a new version of the application using a GitHub Action. Deployment takes just a few minutes.
 
 # Links
 
