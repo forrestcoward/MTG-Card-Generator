@@ -135,11 +135,6 @@ body* > {
   .fbi-right {
     font-size: 9px;
   }
-
-  .cardContainer {
-    padding-left: 0px;
-    padding-right: 0px;
-  }
 }
 
 @media (width <= 340px) {
@@ -163,11 +158,6 @@ body* > {
   .flavour-text {
     padding-bottom: 0px;
     padding-top: 5px;
-  }
-
-  .cardContainer {
-    padding-left: 0px;
-    padding-right: 0px;
   }
 }
 

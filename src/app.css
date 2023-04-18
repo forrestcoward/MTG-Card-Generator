@@ -33,15 +33,11 @@
   padding-right:130px;
 }
 
-@media screen and (width <= 440px) {
+@media only screen and (width <= 500px) { 
   .cardsContainer {
     background: white !important;
-  }
-}
-
-@media only screen and (min-width: 412px) and (max-width: 767px) { 
-  .cardsContainer {
-    background: white !important;
+    padding-left: 0px;
+    padding-right: 0px;
   }
 }
 
