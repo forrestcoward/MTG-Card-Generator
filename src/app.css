@@ -33,13 +33,25 @@
   padding-right:130px;
 }
 
+/* Holds a card. */
+.cardContainer {
+  padding-left: 30px;
+  padding-right: 30px;
+}
+
 @media only screen and (width <= 500px) { 
   .cardsContainer {
     background: white !important;
     padding-left: 0px;
     padding-right: 0px;
   }
+
+  .cardContainer {
+    padding-left: 0px;
+    padding-right: 0px;
+  }
 }
+
 
 table {
   margin-left: auto;
