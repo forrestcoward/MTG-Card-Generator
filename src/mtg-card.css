@@ -140,10 +140,6 @@ body* > {
     padding-left: 0px;
     padding-right: 0px;
   }
-
-  .cardsContainer {
-    background: grey;
-  }
 }
 
 @media (width <= 340px) {
