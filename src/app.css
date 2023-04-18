@@ -33,10 +33,10 @@
   padding-right:130px;
 }
 
-/* Holds a card. */
-.cardContainer {
-  padding-left: 30px;
-  padding-right: 30px;
+@media (width <= 440px) {
+  .cardsContainer {
+    background: white;
+  }
 }
 
 table {

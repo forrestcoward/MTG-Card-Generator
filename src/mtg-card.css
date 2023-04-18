@@ -45,6 +45,13 @@ body* > {
 .card-container width is set in App.tsx, other lengths are determined by that.
 */
 /**************************/
+
+/* Holds a card. */
+.cardContainer {
+  padding-left: 30px;
+  padding-right: 30px;
+}
+
 .card-container {
   contain: size layout;
   border: 1px solid black;
@@ -127,6 +134,15 @@ body* > {
   .fbi-left,
   .fbi-right {
     font-size: 9px;
+  }
+
+  .cardContainer {
+    padding-left: 0px;
+    padding-right: 0px;
+  }
+
+  .cardsContainer {
+    background: grey;
   }
 }
 
