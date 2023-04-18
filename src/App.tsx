@@ -1,6 +1,7 @@
 import React from 'react';
 import { CardDisplay, MagicCard  } from './Card';
 import { GenerateMagicCardRequest } from './OpenAI';
+import { findCSSRule } from './Utility';
 import { TutorialCard } from './TutorialCard';
 import "./mtg-card.css";
 import "./app.css";
@@ -33,21 +34,25 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
 
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleChangeInput = this.handleChangeInput.bind(this);
+    this.setCardContainerSize();
+    
+  }
 
+  setCardContainerSize() {
     const cardContainerClass = '.card-container';
-    const cardContainerRule = this.findCSSRule(cardContainerClass);
+    const cardContainerRule = findCSSRule(cardContainerClass);
     // Scale the card entirely based on the card width.
     const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
     const cardWidth = Math.min(480, vw)
     const cardHeight = ((cardWidth * 3.6) / 2.5);
+
     if (cardContainerRule) {
       cardContainerRule.style.width  = `${cardWidth}px`;
       cardContainerRule.style.height = `${cardHeight}px`;
     }
 
     const cardBackgroundClass = '.card-background';
-    const cardBackgroundRule = this.findCSSRule(cardBackgroundClass);
-
+    const cardBackgroundRule = findCSSRule(cardBackgroundClass);
     if (cardBackgroundRule) {
       cardBackgroundRule.style.height = `${cardHeight - 90}px`;
     }
@@ -76,34 +81,6 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
     }).catch((error: Error) => {
       this.setState({ isLoading: false, currentError: error.message + ": " + error.stack })
     });
-  }
-
-  findCSSRule(selector: string): CSSStyleRule | null {
-    const sheets = document.styleSheets;
-    const sheetsLength = sheets.length;
-  
-    for (let i = 0; i < sheetsLength; i++) {
-      let sheet = sheets[i];
-      let rules: CSSRuleList;
-  
-      try {
-        rules = sheet.cssRules || sheet.rules;
-      } catch (e) {
-        continue;
-      }
-  
-      const rulesLength = rules.length;
-  
-      for (let j = 0; j < rulesLength; j++) {
-        let rule = rules[j];
-  
-        if (rule instanceof CSSStyleRule && rule.selectorText === selector) {
-          return rule;
-        }
-      }
-    }
-  
-    return null;
   }
 
   render() {
