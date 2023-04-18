@@ -56,7 +56,7 @@ table {
   background-color: #242031;
   color: #D7D7D7;
   height: 30px;
-  width: 500px;
+  width: min(70vw, 800px);
   padding: 12px 14px 12px 12px;
   text-align: center;
 }

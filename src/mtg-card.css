@@ -40,10 +40,13 @@ body* > {
   box-sizing: border-box;
 }
 
-/* Core card sizes.
+/**************************/
+/* Core card sizes that we will scale.
 .card-container width is set in App.tsx, other lengths are determined by that.
 */
+/**************************/
 .card-container {
+  contain: size layout;
   border: 1px solid black;
   margin: 0 auto;
   margin-top: 30px;
@@ -54,7 +57,7 @@ body* > {
 }
 
 .card-background {
-  margin: 12px 12px 0 12px;
+  margin: 4% 4% 0 4%;
   border-top-left-radius: 6px;
   border-top-right-radius: 6px;
   border-bottom-left-radius: 8%;
@@ -98,7 +101,62 @@ body* > {
   font-weight: 600;
 }
 
+.flavour-text {
+  display: flex;
+  font-style: italic;
+  padding: 4px 0;
+}
+
+/* Sizes of the set number (left) and copyright (right) on the bottom of the frame. */
+.fbi-left,
+.fbi-right {
+    font-size: 10px;
+    position: relative;
+    top: 6px;
+}
+
+@media (width <= 440px) {
+  .power-and-toughness-size  {
+    font-size: 1.1em;
+  }
+
+  .name-type-size {
+    font-size: 1.1em;
+  }
+
+  .fbi-left,
+  .fbi-right {
+    font-size: 9px;
+  }
+}
+
+@media (width <= 340px) {
+  .power-and-toughness-size  {
+    font-size: .8em;
+  }
+
+  .name-type-size {
+    font-size: .9em;
+  }
+
+  .fbi-left,
+  .fbi-right {
+    font-size: 7px;
+  }
+
+  .card-container p {
+    margin-bottom: 0px;
+  }
+
+  .flavour-text {
+    padding-bottom: 0px;
+    padding-top: 5px;
+  }
+}
+
+/**************************/
 /* Card frame background. */
+/**************************/
 /* Single color backgrounds. */
 .card-background-g {
   background-image: url(./card-backgrounds/g.png)
@@ -171,13 +229,9 @@ body* > {
   background-image: url(./card-backgrounds/mc.png);
 }
 
-/*
-    -------------------------
-    -------------------------
-            BORDERS
-    -------------------------
-    -------------------------
-*/
+/**************************/
+/*         BORDERS        */
+/**************************/
 .frame-header,
 .frame-type-line {
     border-bottom: 2px solid #a9a9a9;
@@ -318,27 +372,16 @@ body* > {
   box-shadow: 0 0 0 2px #533d0b96, 0 0 0 2px #ad7f157a, -2px 3px 2px 3px #020202;
 }
 
-/*
-    ----------------------
-    ----------------------
-            OVERFLOW
-    ----------------------
-    ----------------------
-*/
+/* Overflow. */
 .frame-header,
 .frame-type-line,
 .frame-text-box {
     overflow: hidden;
 }
 
-/*
-  ----------------------------------------
-  ----------------------------------------
-            CARD FRAME
-  ----------------------------------------
-  ----------------------------------------
-*/
-
+/**************************/
+/*      Card Frames       */
+/**************************/
 .frame-header,
 .frame-type-line {
     background: 
@@ -572,12 +615,6 @@ linear-gradient(90deg, rgba(11, 112, 56, 0.295), #fcfcfcaf),
     display: flex;
 }
 
-.flavour-text {
-    display: flex;
-    font-style: italic;
-    padding: 10px 0;
-}
-
 p {
     margin-bottom: 5px;
 }
@@ -597,12 +634,6 @@ p {
 
 .fbi-left p:first-of-type {
     margin-bottom: 1px;
-}
-.fbi-left,
-.fbi-right {
-    font-size: 9px;
-    position: relative;
-    top: 6px;
 }
 
 .fbi-center {

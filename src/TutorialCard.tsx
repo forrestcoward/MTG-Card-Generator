@@ -5,7 +5,7 @@ import tutorialCardWizardImage from './card-backgrounds/wizard.png'
 const _tutorialCard:BasicCard = {
   name: "The M.T.G. Card Creator",
   manaCost: "{6}",
-  typeLine: "Legendary Creature — Artificer God",
+  typeLine: "Legendary Creature — Wizard",
   type: "Artifact",
   rawOracleText: "Haste, Hexproof\n{T}: Enter a prompt above and hit \"Generate!\" to generate a unique Magic: The Gathering card into my spell book",
   text: "",

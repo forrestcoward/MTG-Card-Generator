@@ -34,15 +34,11 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleChangeInput = this.handleChangeInput.bind(this);
 
-    const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
-    // const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0)
-
     const cardContainerClass = '.card-container';
     const cardContainerRule = this.findCSSRule(cardContainerClass);
     // Scale the card entirely based on the card width.
-    // Does not work well at the extremes because margins and paddings do not scale
-    // and there are issues with the card border background image.
-    const cardWidth = 360;
+    const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
+    const cardWidth = Math.min(480, vw)
     const cardHeight = ((cardWidth * 3.6) / 2.5);
     if (cardContainerRule) {
       cardContainerRule.style.width  = `${cardWidth}px`;
