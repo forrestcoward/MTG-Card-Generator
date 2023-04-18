@@ -43,8 +43,8 @@ async function MakeOpenAIImageCreateRequest(apiKey:string, imagePrompt:string) :
 }
 
 export async function GenerateMagicCardRequest(userPrompt: string): Promise<MagicCard[]> {
-  // TODO: Do this in a better config fashion.
-  let url: string = 'https://ambitious-meadow-0e2e9ce0f.3.azurestaticapps.net/api/GenerateMagicCard'
+  let url = `${window.location.protocol}//${window.location.hostname}//api/GenerateMagicCard`;
+
   if (location.hostname === "localhost") {
     url = 'http://localhost:7071/api/GenerateMagicCard';
   }
