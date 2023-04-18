@@ -39,6 +39,12 @@
   }
 }
 
+@media only screen and (min-width: 412px) and (max-width: 767px) { 
+  .cardsContainer {
+    background: white !important;
+  }
+}
+
 table {
   margin-left: auto;
   margin-right: auto;
