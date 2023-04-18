@@ -4,10 +4,19 @@ export function findCSSRule(selector: string): CSSStyleRule | null {
 
   for (let i = 0; i < sheetsLength; i++) {
     let sheet = sheets[i];
-    let rules = sheet.cssRules;
+    let rules: CSSRuleList;
 
-    for (let j = 0; j < rules.length; j++) {
+    try {
+      rules = sheet.cssRules || sheet.rules;
+    } catch (e) {
+      continue;
+    }
+
+    const rulesLength = rules.length;
+
+    for (let j = 0; j < rulesLength; j++) {
       let rule = rules[j];
+
       if (rule instanceof CSSStyleRule && rule.selectorText === selector) {
         return rule;
       }
