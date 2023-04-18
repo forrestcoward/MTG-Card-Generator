@@ -183,7 +183,7 @@ export class MagicCard {
   }
 
   get cardFrameTextBoxClassName() {
-    return `frame-text-box frame-text-box-${this.id} frame-text-box-${this.manaCssClassPostfix}`
+    return `frame-text-box frame-text-box-${this.id} frame-text-box-${this.manaCssClassPostfix} frame-margin`
   }
 
   get cardFrameContentClassName() {
@@ -191,7 +191,7 @@ export class MagicCard {
   }
   
   get cardFrameArtClassName() {
-    return `frame-art frame-art-${this.manaCssClassPostfix}`
+    return `frame-art frame-art-${this.manaCssClassPostfix} frame-margin`
   }
 
   get rarityDisplay() {
@@ -237,7 +237,7 @@ export class MagicCard {
 
   // Gets the matching mana project (https://github.com/andrewgioia/mana) CSS token for <i></i> based on the mana token string.
   static getManaClassName(manaToken: string) {
-    return `ms ms-${manaTokenToCssCharacter[manaToken]}`
+    return `ms ms-${manaTokenToCssCharacter[manaToken]} ms-padding`
   }
   
   private getChildrenClientOffsetHeight(element: HTMLElement) {
@@ -394,7 +394,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
           <div className={card.cardDivClassName}>
             <div className="card-frame">
               <div className={card.cardFrameHeaderClassName}>
-                <div className="name">
+                <div className="name name-type-size">
                   {!this.state.editMode ?
                     <p>{card.name}</p> :
                     <input className="card-edit-name" type="text" value={this.state.nameUpdate} onChange={this.handleCardNameUpdate} />
@@ -414,7 +414,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
               <img className={card.cardFrameArtClassName} src={card.imageUrl} />
               <div className={card.cardFrameTypeLineClassName}>
                  {!this.state.editMode ?
-                    <h1 className="type">{card.typeLine}</h1> :
+                    <h1 className="type name-type-size">{card.typeLine}</h1> :
                     <input className="card-edit-type" type="text" value={this.state.typeUpdate} onChange={this.handleCardTypeUpdate} />
                   }
                 <div className="mana-symbols">
@@ -441,7 +441,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
                   </p>
                   {card.pt &&
                     <div className="power-and-toughness-frame">
-                      <div className="power-and-toughness">
+                      <div className="power-and-toughness power-and-toughness-size">
                         {!this.state.editMode ?
                           <div>{card.pt}</div> :
                           <input className="card-edit-pt" type="text" value={this.state.powerAndToughnessUpdate} onChange={this.handleCardPowerAndToughnessUpdate} />

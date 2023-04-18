@@ -40,10 +40,11 @@ body* > {
   box-sizing: border-box;
 }
 
+/* Core card sizes.
+.card-container width is set in App.tsx, other lengths are determined by that.
+*/
 .card-container {
   border: 1px solid black;
-  width: 480px;
-  height: 700px;
   margin: 0 auto;
   margin-top: 30px;
   border-radius: 25px;
@@ -53,8 +54,7 @@ body* > {
 }
 
 .card-background {
-  height: 600px;
-  margin: 20px 20px 0 20px;
+  margin: 12px 12px 0 12px;
   border-top-left-radius: 6px;
   border-top-right-radius: 6px;
   border-bottom-left-radius: 8%;
@@ -63,6 +63,39 @@ body* > {
   background-size: cover;
   display: flex;
   z-index: 0;
+}
+
+.card-frame {
+  z-index: 1;
+  position: relative;
+  height: 100%;
+  max-width: 97%;
+  left: 1.7%;
+  top: 0.5%;
+  display: flex;
+  flex-direction: column;
+}
+
+.frame-text-box {
+  display: flex;
+  background: #d3ded6;
+  background-image: url(https://image.ibb.co/dFcNx7/tile_bg_2.jpg);
+  padding: 7px 6px;
+  max-height:36%;
+  min-height:36%;
+}
+
+.frame-art {
+  height: 48%;
+}
+
+.power-and-toughness-size {
+  font-size: 1.3em;
+}
+
+.name-type-size {
+  font-size: 1.2em;
+  font-weight: 600;
 }
 
 /* Card frame background. */
@@ -305,16 +338,6 @@ body* > {
   ----------------------------------------
   ----------------------------------------
 */
-.card-frame {
-    z-index: 1;
-    position: relative;
-    height: 108%;
-    max-width: 97%;
-    left: 1.5%;
-    top: 0.5%;
-    display: flex;
-    flex-direction: column;
-}
 
 .frame-header,
 .frame-type-line {
@@ -439,10 +462,8 @@ linear-gradient(90deg, rgba(11, 112, 56, 0.295), #fcfcfcaf),
 
 .name,
 .type {
-    font-size: 1.3em;
     margin-left: 10px;
     align-self: baseline;
-    font-weight: 600;
     /* Have the card name take up the available space. */
     width:-webkit-fill-available;
 }
@@ -466,7 +487,6 @@ linear-gradient(90deg, rgba(11, 112, 56, 0.295), #fcfcfcaf),
     border-radius: 18px/40px;
     padding-right: 20px;
     padding-left: 20px;
-    font-size: 1.3em;
 }
 
 #mana-icon {
@@ -480,40 +500,39 @@ linear-gradient(90deg, rgba(11, 112, 56, 0.295), #fcfcfcaf),
   box-shadow: -0.05em 0.12em 0px 0 black;
 }
 
+/* Padding for all mana icons. */
+.ms-padding {
+  padding: 3px;
+}
+
 .ms-1, .ms-2, .ms-3, .ms-4, .ms-5, .ms-6, .ms-7, .ms-8, .ms-9 {
     background-color: #b1b1b1b9;
     border-radius: 50%;
-    padding: 3px; 
 }
 
 .ms-b {
     background-color: #b1b1b1b9;
     border-radius: 50%;
-    padding: 3px;
 }
 
 .ms-u {
     background-color: #a2b4ff;
     border-radius: 50%;
-    padding: 3px;
 }
 
 .ms-r {
     background-color: #ec3c3c9f;
     border-radius: 50%;
-    padding: 3px;
 }
 
 .ms-w {
     background-color: #fcf9f9;
     border-radius: 50%;
-    padding: 3px;
 }
 
 .ms-g {
     background-color: #63d282;
     border-radius: 50%;
-    padding: 3px;
 }
 
 /* Override from mana.min.css and remove font-size so mana symbols show up better in card text. */
@@ -527,12 +546,7 @@ linear-gradient(90deg, rgba(11, 112, 56, 0.295), #fcfcfcaf),
   text-transform: none;
   vertical-align: middle;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale
-}
-
-.frame-art {
-    height: 45%;
-    margin: 0 10px; 
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #set-icon {
@@ -545,15 +559,8 @@ linear-gradient(90deg, rgba(11, 112, 56, 0.295), #fcfcfcaf),
     margin-top: 0;
 } 
 
-.frame-text-box {
-    display: flex;
+.frame-margin {
     margin: 0 10px;
-    background: #d3ded6;
-    background-image: url(https://image.ibb.co/dFcNx7/tile_bg_2.jpg);
-    min-width: 393px;
-    padding: 7px 6px;
-    max-height:34%;
-    min-height:34%;
 }
 
 .frame-text-box-inner {
@@ -593,7 +600,7 @@ p {
 }
 .fbi-left,
 .fbi-right {
-    font-size: 10px;
+    font-size: 9px;
     position: relative;
     top: 6px;
 }
