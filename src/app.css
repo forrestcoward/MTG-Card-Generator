@@ -33,9 +33,9 @@
   padding-right:130px;
 }
 
-@media (width <= 440px) {
+@media screen and (width <= 440px) {
   .cardsContainer {
-    background: white;
+    background: white !important;
   }
 }
 

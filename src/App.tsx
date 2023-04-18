@@ -35,7 +35,6 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleChangeInput = this.handleChangeInput.bind(this);
     this.setCardContainerSize();
-    
   }
 
   setCardContainerSize() {
