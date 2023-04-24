@@ -7,7 +7,7 @@ const _tutorialCard:BasicCard = {
   manaCost: "{6}",
   typeLine: "Legendary Creature — Wizard",
   type: "Artifact",
-  rawOracleText: "Haste, Hexproof\n{T}: Enter a prompt above and hit \"Generate!\" to generate a unique Magic: The Gathering card into my spell book",
+  rawOracleText: "Haste, Hexproof\n{T}: Enter a prompt above and hit \"Generate!\" to generate a unique Magic: The Gathering card into my spell book.\n{T}: Click my holofoil to edit this card.",
   text: "",
   modifiedOracleText: "",
   colorIdentity: "Colorless",
