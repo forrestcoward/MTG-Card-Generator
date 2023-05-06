@@ -61,6 +61,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             try
             {
                 var userPrompt = (string) req.Query["userPrompt"];
+                var model = (string)req.Query["model"];
                 log?.LogInformation($"User prompt: {userPrompt.Replace("\n", "")}");
 
                 if (string.IsNullOrWhiteSpace(userPrompt))
@@ -68,7 +69,20 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     userPrompt = "that is from the Dominaria plane.";
                 }
 
-                var userPromptToSubmit = $"Generate me one 'Magic: The Gathering card' that has the following description: {userPrompt}";
+                var gptModel = Model.GPT4;
+                if (!string.IsNullOrWhiteSpace(model))
+                {
+                    if (model.Equals("gpt-4", StringComparison.OrdinalIgnoreCase))
+                    {
+                        gptModel = Model.GPT4;
+                    }
+                    else if (model.Equals("gpt-3.5", StringComparison.OrdinalIgnoreCase))
+                    {
+                        gptModel = Model.ChatGPTTurbo;
+                    }
+                }
+
+                var userPromptToSubmit = $"Please generate me one 'Magic: The Gathering card' that has the following description: {userPrompt}";
 
                 var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
                 var api = new OpenAIAPI(new APIAuthentication(apiKey));
@@ -85,7 +99,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                             new ChatMessage(ChatMessageRole.System, GenerateCardSystemPrompt)
                         },
                         Temperature = 1,
-                        Model = Model.ChatGPTTurbo,
+                        Model = gptModel,
                     });
 
                     var reply = response.Choices[0].Message.Content;
@@ -98,11 +112,11 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                             { "systemPrompt", GenerateCardSystemPrompt },
                             { "userPrompt", userPromptToSubmit },
                             { "temperature", 1 },
-                            { "model", Model.ChatGPTTurbo },
+                            { "model", gptModel },
                             { "requestId", response.RequestId }
                         });
 
-                    log?.LogInformation($"OpenAI response:{Environment.NewLine}{reply}");
+                    log?.LogInformation($"OpenAI response ({gptModel.ModelID}):{Environment.NewLine}{reply}");
 
                     try
                     {
@@ -127,6 +141,11 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                             }
                             catch (JsonReaderException) { }
                         }
+                    }
+                    catch (JsonSerializationException)
+                    {
+                        log?.LogWarning("Could not deserialize OpenAI response as OpenAIMagicCardResponse object. Now trying to deserialize as BasicCard[]...");
+                        openAICards = JsonConvert.DeserializeObject<BasicCard[]>(reply);
                     }
 
                     if (openAICards.Length > 0)

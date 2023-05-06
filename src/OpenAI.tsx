@@ -10,7 +10,7 @@ async function MakeOpenAIChatComletionRequest(apiKey:string, userPrompt:string, 
   const response = await openai.createChatCompletion({
     model: model,
     messages: [{role: "user", content: userPrompt},
-                {role:"system", content: systemPrompt}],
+               {role: "system", content: systemPrompt}],
     temperature: temperature
   });
 
@@ -42,7 +42,7 @@ async function MakeOpenAIImageCreateRequest(apiKey:string, imagePrompt:string) :
   }
 }
 
-export async function GenerateMagicCardRequest(userPrompt: string): Promise<MagicCard[]> {
+export async function GenerateMagicCardRequest(userPrompt: string, model: string): Promise<MagicCard[]> {
   let url = `${window.location.protocol}//${window.location.hostname}//api/GenerateMagicCard`;
 
   if (location.hostname === "localhost") {
@@ -50,7 +50,8 @@ export async function GenerateMagicCardRequest(userPrompt: string): Promise<Magi
   }
 
   const params: Record<string, string> = {
-    userPrompt: userPrompt
+    userPrompt: userPrompt,
+    model: model
   };
 
   let cards:BasicCard[] = []
