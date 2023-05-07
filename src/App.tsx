@@ -32,6 +32,7 @@ export interface Setting {
 }
 
 const defaultPrompt:string = "is from the Dominaria plane."
+const defaultModel:string= "gpt-4"
 
 export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTGCardGeneratorState> {
   constructor(props: MTGCardGeneratorProps) {
@@ -42,8 +43,8 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
       isLoading: false,
       isSettingsOpen: false,
       modelSettings: [
-        { name: "GPT 4", id: "gpt-4", value: true, description: "The most advanced model to date. Will generate the most unique cards, but is slower than other models." },
-        { name: "GPT 3.5", id: "gpt-3.5", value: false, description: "Less powerful than GPT 4, but faster." },
+        { name: "GPT 4", id: "gpt-4", value: false, description: "The most advanced model to date. Will generate the most unique cards, but is slower than other models." },
+        { name: "GPT 3.5", id: "gpt-3.5", value: true, description: "Less powerful than GPT 4, but faster and less expensive. The default." },
       ],
       cards: [TutorialCard],
       currentError: '',
@@ -107,10 +108,10 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
     this.setState({ isLoading: true, currentError: "" })
     let userPrompt = this.state.prompt
 
-    let model = "gpt-4"
-    let modelSetting = this.state.modelSettings.find(modelSetting => modelSetting.value == true);
+    let model = defaultModel
+    let modelSetting = this.state.modelSettings.find(modelSetting => modelSetting.value == true)
     if (modelSetting) {
-      model = modelSetting.id;
+      model = modelSetting.id
     }
 
     GenerateMagicCardRequest(userPrompt, model).then(cards => {
@@ -144,8 +145,8 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
                 <img className={this.getLoadingClassName()} src={loadingIcon} />
               </td>
               <td>
-                <div className="settingsIconDiv">
-                  <img src={settingsIcon} className="settingsIcon" width={40} height={40} onClick={this.toggleIsSettingsOpen} />
+                <div title="Click to open the settings." className="settingsIconDiv">
+                  <img  src={settingsIcon} className="settingsIcon" width={40} height={40} onClick={this.toggleIsSettingsOpen} />
                 </div>
               </td>
             </tr>

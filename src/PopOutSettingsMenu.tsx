@@ -13,6 +13,7 @@ const MenuContainer = styled.div`
   width: 350px;
   transition: transform 0.3s ease-in-out;
   overflow-y: hidden;
+  border-left: 3px solid black;
 `;
 
 const Overlay = styled.div`
@@ -38,22 +39,16 @@ const PopOutSettingsMenu: React.FC<PopOutSettingsMenuProps> = ({
   modelSettings,
   onModelSettingsChange,
 }) => {
-
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>, id: string) => {
     onModelSettingsChange(id, event.target.checked);
   };
-
   return (
     <>
-      <CSSTransition
-        in={isOpen}
-        timeout={300}
-        classNames="pop-out-settings-menu"
-        unmountOnExit
-      >
+      <CSSTransition in={isOpen} timeout={300} classNames="pop-out-settings-menu" unmountOnExit>
         <MenuContainer>
           <div className="settingsMenuContainer">
             <h1>Settings</h1>
+            <hr/>
             <h2>Model</h2>
             <div>
               Which langauge model to use when generating Magic cards.
@@ -62,19 +57,19 @@ const PopOutSettingsMenu: React.FC<PopOutSettingsMenuProps> = ({
               <table>
                 <tbody>
                   {modelSettings.map((setting) => (
-                    <>
+                    <React.Fragment key={`setting-${setting.id}`}>
                       <tr>
                         <td>
                           <h3>{setting.name}</h3>
                         </td>
-                        <td className="settingSlider">
+                        <td  className="settingSlider">
                           <label className="switch">
                             <input
                               type="checkbox"
                               id={`${setting.name}`}
                               checked={setting.value}
                               onChange={(event) => handleInputChange(event, setting.name)}
-                              />
+                            />
                             <span className="slider round"></span>
                           </label>
                         </td>
@@ -86,7 +81,7 @@ const PopOutSettingsMenu: React.FC<PopOutSettingsMenuProps> = ({
                           </div>
                         </td>
                       </tr>
-                    </>
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>
