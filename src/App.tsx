@@ -132,7 +132,7 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
       cardContainerRule.style.height = `${cardHeight}px`;
 
       if (cardMetaRule) {
-        cardMetaRule.style.width  = `${cardWidth}px`;
+        cardMetaRule.style.width  = `${cardWidth-24}px`;
       }
     }
 

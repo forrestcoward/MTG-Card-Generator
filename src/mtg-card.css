@@ -71,6 +71,7 @@ body* > {
   box-shadow: 3px 2px;
   box-shadow: 6px 3px;
   border-radius: 2px 10px;
+  background-color: #b7b7b742;
 }
 
 .card-background {
