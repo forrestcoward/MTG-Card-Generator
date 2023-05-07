@@ -57,6 +57,22 @@ body* > {
   background: #171314;  
 }
 
+/* Need to define so we can dynamically look up and set CSS properties. */
+.card-meta {
+  width: 0px;
+  margin-top:20px;
+  margin-left:10px;
+}
+
+.card-explanation {
+  border: 1px solid black;
+  border-spacing: 2px;
+  padding: 10px;
+  box-shadow: 3px 2px;
+  box-shadow: 6px 3px;
+  border-radius: 2px 10px;
+}
+
 .card-background {
   margin: 4% 4% 0 4%;
   border-top-left-radius: 6px;

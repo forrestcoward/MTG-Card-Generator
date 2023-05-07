@@ -334,6 +334,12 @@ namespace MTG.CardGenerator
         [JsonProperty("imageUrl")]
         public string ImageUrl { get; set; }
 
+        [JsonProperty("explaination")]
+        public string Explaination { get; set; }
+
+        [JsonProperty("funnyExplaination")]
+        public string FunnyExplaination { get; set; }
+
         [JsonIgnore]
         public string OpenAIImagePrompt
         {
@@ -402,6 +408,8 @@ namespace MTG.CardGenerator
             Rarity = card.Rarity;
             ColorIdentity = GetColorIdentity(ManaCost);
             ImageUrl = string.Empty;
+            Explaination = card.Explanation;
+            FunnyExplaination = card.FunnyExplanation;
 
             if (card.PowerAndToughness != null)
             {

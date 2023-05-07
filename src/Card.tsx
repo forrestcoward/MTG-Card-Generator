@@ -16,6 +16,8 @@ export interface BasicCard {
   flavorText: string,
   rarity: string,
   imageUrl: string,
+  explaination: string,
+  funnyExplaination: string
 }
 
 enum ColorIdentity {
@@ -91,6 +93,9 @@ export class MagicCard {
   imageUrl: string
   setNumberDisplay: string
   id: number
+  prompt: string
+  explaination: string
+  funnyExplaination: string
 
   constructor(card: BasicCard) {
     this.name = card.name
@@ -109,6 +114,9 @@ export class MagicCard {
     this.imageUrl = card.imageUrl
     this.setNumberDisplay = getRandomInt(0, 451) + "/" + 451
     this.id = getRandomInt(0, 1000000000)
+    this.prompt = ""
+    this.explaination = card.explaination
+    this.funnyExplaination = card.funnyExplaination
   }
 
   static clone(card: MagicCard): MagicCard {
@@ -296,6 +304,7 @@ export class MagicCard {
 
 interface CardDisplayProps {
   card: MagicCard;
+  showExplanation: boolean;
 }
 
 interface CardDisplayState {
@@ -447,6 +456,20 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
             </div>
           </div>
         </div>
+        {this.props.showExplanation && 
+          <div className="card-meta card-explanation">
+            The card <b>{card.name}</b> was generated based on the prompt.. 
+            <br/>
+            <br/>
+            "<b><i>{card.prompt}</i></b>"
+            <br/>
+            <br/>
+            {card.explaination}
+            <br/>
+            <br/>
+            {card.funnyExplaination}
+          </div>
+        }
       </div>
     )
   }

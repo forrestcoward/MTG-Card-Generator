@@ -35,6 +35,10 @@ namespace MTG.CardGenerator
         public string Power { get; set; }
         // Sometimes OpenAI returns toughness separately, despite being told to return "pt" as one field.
         public string Toughness { get; set; }
+        // Reason why the LLM genearted the card.
+        public string Explanation { get; set; }
+        // A funny explanation of why the LLM generated the card.
+        public string FunnyExplanation { get; set; }
     }
 
     public class OpenAIMagicCardResponse
@@ -52,7 +56,7 @@ namespace MTG.CardGenerator
     {
         const string GenerateCardSystemPrompt = $@"
 You are an assistant who works as a Magic: The Gathering card designer. You like complex cards with interesting mechanics. The cards you generate should obey the Magic 'color pie' design rules. The cards you generate should also obey the the Magic: The Gathering comprehensive rules as much as possible.
-You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'text', 'flavorText', 'pt', and 'rarity' properties.
+You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'text', 'flavorText', 'pt', 'rarity', 'explanation', and 'funnyExplanation' properties. The 'explanation' property should explain why the card was created the way it was. The 'funnyExplanation' property should be a hilarious explanation of why the card was created the way it was.
 Do not explain the cards or explain your reasoning. Only return the JSON of cards named 'cards'.";
 
         [FunctionName("GenerateMagicCard")]

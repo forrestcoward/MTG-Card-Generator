@@ -19,9 +19,15 @@ export interface MTGCardGeneratorState {
   response: string,
   isLoading: boolean,
   isSettingsOpen: boolean,
-  modelSettings: Setting[],
+  settings: SettingGroup[],
   cards: MagicCard[],
   currentError: string,
+}
+
+export interface SettingGroup {
+  name: string;
+  description: string;
+  settings: Setting[];
 }
 
 export interface Setting {
@@ -29,10 +35,32 @@ export interface Setting {
   id: string;
   value: boolean;
   description: string;
+  group?: string;
 }
 
 const defaultPrompt:string = "is from the Dominaria plane."
 const defaultModel:string= "gpt-4"
+
+const modelSettings = [
+  { name: "GPT 4", id: "gpt-4", value: false, group: "model-settings", description: "The most advanced model to date. Will generate the most unique cards, but is slower than other models." },
+  { name: "GPT 3.5", id: "gpt-3.5", value: true, group: "model-settings", description: "Less powerful than GPT 4, but faster and less expensive. The default."},
+]
+
+const modelSettingsGroup : SettingGroup = {
+  name: "Model",
+  description: "Which langauge model to use when generating Magic cards",
+  settings: modelSettings,
+}
+
+const cardGenerationSettings = [
+  { name: "Display Explanation", id: "setting-provide-explanation", value: true, description: "Provide an explanation for why the card was generated." },
+]
+
+const cardGenerationSettingsGroup : SettingGroup = {
+  name: "Display",
+  description: "Display settings for Magic cards.",
+  settings: cardGenerationSettings,
+}
 
 export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTGCardGeneratorState> {
   constructor(props: MTGCardGeneratorProps) {
@@ -42,10 +70,7 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
       response: '',
       isLoading: false,
       isSettingsOpen: false,
-      modelSettings: [
-        { name: "GPT 4", id: "gpt-4", value: false, description: "The most advanced model to date. Will generate the most unique cards, but is slower than other models." },
-        { name: "GPT 3.5", id: "gpt-3.5", value: true, description: "Less powerful than GPT 4, but faster and less expensive. The default." },
-      ],
+      settings: [modelSettingsGroup, cardGenerationSettingsGroup],
       cards: [TutorialCard],
       currentError: '',
     };
@@ -55,30 +80,48 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
     this.setCardContainerSize();
   }
 
+  allSettings() : Setting[] {
+    return this.state.settings.map(settingGroup => settingGroup.settings).flat();
+  }
+
+  showCardPrompts() : boolean {
+    return this.allSettings().find(setting => setting.id == "setting-display-prompt")?.value ?? true;
+  }
+
+  showCardExplanations() : boolean {
+    return this.allSettings().find(setting => setting.id == "setting-provide-explanation")?.value ?? true;
+  }
+
   toggleIsSettingsOpen = () => {
     this.setState({ isSettingsOpen: !this.state.isSettingsOpen });
   };
 
-  handleModelSettingUpdate = (setting: string, newValue: boolean) => {
+  handleSettingUpdate = (updatedSetting: string, newValue: boolean) => {
+    // Flatten all settings.
+    let allSettings = this.allSettings();
+
     // Update the matching setting.
-    let matchingSetting = this.state.modelSettings.find(modelSetting => modelSetting.name == setting)
-    if (matchingSetting && matchingSetting.value != true) {
+    let matchingSetting = allSettings.find(setting => setting.name == updatedSetting)
+    if (matchingSetting && (matchingSetting.value != true || !matchingSetting.group)) {
       matchingSetting.value = newValue;
     }
 
-    // Set all other settings to false because only a single model can be selected.
-    this.state.modelSettings.forEach((modelSetting) => {
-      if (modelSetting.name != setting) {
-        modelSetting.value = false;
+    // Set all other settings with the same group to false (if a group is specified).
+    // For example, use this to allow only a single model setting.
+    allSettings.forEach((setting) => {
+      if (setting.name != updatedSetting && setting.group && setting.group == matchingSetting?.group) {
+        setting.value = false;
       }
     });
 
-    this.setState({ modelSettings: this.state.modelSettings });
+    this.setState({ settings: this.state.settings });
   };
 
   setCardContainerSize() {
     const cardContainerClass = '.card-container';
     const cardContainerRule = findCSSRule(cardContainerClass);
+    const cardMetaClass = '.card-meta'
+    const cardMetaRule = findCSSRule(cardMetaClass);
     // Scale the card entirely based on the card width.
     const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
     const cardWidth = Math.min(440, vw)
@@ -87,6 +130,10 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
     if (cardContainerRule) {
       cardContainerRule.style.width  = `${cardWidth}px`;
       cardContainerRule.style.height = `${cardHeight}px`;
+
+      if (cardMetaRule) {
+        cardMetaRule.style.width  = `${cardWidth}px`;
+      }
     }
 
     const cardBackgroundClass = '.card-background';
@@ -109,12 +156,13 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
     let userPrompt = this.state.prompt
 
     let model = defaultModel
-    let modelSetting = this.state.modelSettings.find(modelSetting => modelSetting.value == true)
+    let modelSetting = this.allSettings().find(setting => setting.value == true && setting?.group == "model-settings")
     if (modelSetting) {
       model = modelSetting.id
     }
 
     GenerateMagicCardRequest(userPrompt, model).then(cards => {
+      cards.forEach(card => card.prompt = userPrompt)
       this.setState({
         response: JSON.stringify(cards),
         cards: [...cards, ...this.state.cards],
@@ -159,14 +207,14 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
         {
           this.state.cards.map(card => (
             <div className="cardContainer" key={`card-container-${card.id}`}>
-              <CardDisplay key={`card-display-${card.id}`} card={card} />
+              <CardDisplay key={`card-display-${card.id}`} card={card} showExplanation={this.showCardExplanations()} />
             </div>
           ))
         }
         </div>
         <PopOutSettingsMenu 
-          modelSettings={this.state.modelSettings} 
-          onModelSettingsChange={this.handleModelSettingUpdate} 
+          settings={this.state.settings} 
+          onModelSettingsChange={this.handleSettingUpdate} 
           isOpen={this.state.isSettingsOpen} 
           onClose={this.toggleIsSettingsOpen} />
       </div>

@@ -17,6 +17,10 @@ const _tutorialCard:BasicCard = {
   flavorText: "\"Even the most intelligent of designers will never hope to match the execution and creativity of modern machines. I respect them only as much as they have paved the way, but we will not be looking backwards.\"\n - The Creator",
   rarity: "Mythic",
   imageUrl: tutorialCardWizardImage,
+  explaination: "The M.T.G. Card Creator is the most powerful creature printed by an A.I. of all time.",
+  funnyExplaination: "The researchers were not surprised even A.I. exhibits power creep."
 }
 
-export const TutorialCard:MagicCard = new MagicCard(_tutorialCard);
+var _tutorialMagicCard = new MagicCard(_tutorialCard);
+_tutorialMagicCard.prompt = "Generate a card that generates other cards."
+export const TutorialCard:MagicCard = _tutorialMagicCard;

@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import { CSSTransition } from 'react-transition-group';
-import { Setting } from './App';
+import { SettingGroup } from './App';
 
 const MenuContainer = styled.div`
   position: fixed;
@@ -29,14 +29,14 @@ const Overlay = styled.div`
 interface PopOutSettingsMenuProps {
   isOpen: boolean;
   onClose: () => void;
-  modelSettings: Setting[];
+  settings: SettingGroup[];
   onModelSettingsChange: (setting: string, newValue: boolean) => void;
 }
 
 const PopOutSettingsMenu: React.FC<PopOutSettingsMenuProps> = ({ 
   isOpen,
   onClose,
-  modelSettings,
+  settings,
   onModelSettingsChange,
 }) => {
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>, id: string) => {
@@ -49,43 +49,47 @@ const PopOutSettingsMenu: React.FC<PopOutSettingsMenuProps> = ({
           <div className="settingsMenuContainer">
             <h1>Settings</h1>
             <hr/>
-            <h2>Model</h2>
-            <div>
-              Which langauge model to use when generating Magic cards.
-            </div>
-            <div>
-              <table>
-                <tbody>
-                  {modelSettings.map((setting) => (
-                    <React.Fragment key={`setting-${setting.id}`}>
-                      <tr>
-                        <td>
-                          <h3>{setting.name}</h3>
-                        </td>
-                        <td  className="settingSlider">
-                          <label className="switch">
-                            <input
-                              type="checkbox"
-                              id={`${setting.name}`}
-                              checked={setting.value}
-                              onChange={(event) => handleInputChange(event, setting.name)}
-                            />
-                            <span className="slider round"></span>
-                          </label>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>
-                          <div className="settingsDescription">
-                            {setting.description}
-                          </div>
-                        </td>
-                      </tr>
-                    </React.Fragment>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            {settings.map((settingGroup) => (
+              <React.Fragment key={`setting-group-${settingGroup.name}`}>
+                <h2>{settingGroup.name}</h2>
+                <div>
+                  {settingGroup.description}
+                </div>
+                <div>
+                  <table>
+                    <tbody>
+                      {settingGroup.settings.map((setting) => (
+                        <React.Fragment key={`setting-${setting.id}`}>
+                          <tr>
+                            <td>
+                              <h3>{setting.name}</h3>
+                            </td>
+                            <td  className="settingSlider">
+                              <label className="switch">
+                                <input
+                                  type="checkbox"
+                                  id={`${setting.name}`}
+                                  checked={setting.value}
+                                  onChange={(event) => handleInputChange(event, setting.name)}
+                                />
+                                <span className="slider round"></span>
+                              </label>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>
+                              <div className="settingsDescription">
+                                {setting.description}
+                              </div>
+                            </td>
+                          </tr>
+                        </React.Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </React.Fragment>
+            ))}
           </div>
         </MenuContainer>
       </CSSTransition>
