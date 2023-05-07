@@ -112,7 +112,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                             { "systemPrompt", GenerateCardSystemPrompt },
                             { "userPrompt", userPromptToSubmit },
                             { "temperature", 1 },
-                            { "model", gptModel },
+                            { "model", gptModel.ModelID },
                             { "requestId", response.RequestId }
                         });
 
