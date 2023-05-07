@@ -334,9 +334,10 @@ namespace MTG.CardGenerator
         [JsonProperty("imageUrl")]
         public string ImageUrl { get; set; }
 
+        [JsonProperty("userPrompt")]
+        public string UserPrompt { get; set; }
         [JsonProperty("explaination")]
         public string Explaination { get; set; }
-
         [JsonProperty("funnyExplaination")]
         public string FunnyExplaination { get; set; }
 
@@ -408,6 +409,7 @@ namespace MTG.CardGenerator
             Rarity = card.Rarity;
             ColorIdentity = GetColorIdentity(ManaCost);
             ImageUrl = string.Empty;
+            UserPrompt = card.UserPrompt;
             Explaination = card.Explanation;
             FunnyExplaination = card.FunnyExplanation;
 

@@ -39,6 +39,8 @@ namespace MTG.CardGenerator
         public string Explanation { get; set; }
         // A funny explanation of why the LLM generated the card.
         public string FunnyExplanation { get; set; }
+        // The user prompt that generated this card.
+        public string UserPrompt { get; set; }
     }
 
     public class OpenAIMagicCardResponse
@@ -56,6 +58,11 @@ namespace MTG.CardGenerator
     {
         const string GenerateCardSystemPrompt = $@"
 You are an assistant who works as a Magic: The Gathering card designer. You like complex cards with interesting mechanics. The cards you generate should obey the Magic 'color pie' design rules. The cards you generate should also obey the the Magic: The Gathering comprehensive rules as much as possible.
+You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'text', 'flavorText', 'pt', and 'rarity'.
+Do not explain the cards or explain your reasoning. Only return the JSON of cards named 'cards'.";
+
+        const string GenerateCardSystemPromptWithExplaination = $@"
+You are an assistant who works as a Magic: The Gathering card designer. You like complex cards with interesting mechanics. The cards you generate should obey the Magic 'color pie' design rules. The cards you generate should also obey the the Magic: The Gathering comprehensive rules as much as possible.
 You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'text', 'flavorText', 'pt', 'rarity', 'explanation', and 'funnyExplanation' properties. The 'explanation' property should explain why the card was created the way it was. The 'funnyExplanation' property should be a hilarious explanation of why the card was created the way it was.
 Do not explain the cards or explain your reasoning. Only return the JSON of cards named 'cards'.";
 
@@ -64,13 +71,15 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
         {
             try
             {
-                var userPrompt = (string) req.Query["userPrompt"];
+                var rawUserPrompt = (string) req.Query["userPrompt"];
                 var model = (string)req.Query["model"];
-                log?.LogInformation($"User prompt: {userPrompt.Replace("\n", "")}");
+                var includeExplaination = bool.TryParse(req.Query["includeExplaination"], out bool result) && result;
 
-                if (string.IsNullOrWhiteSpace(userPrompt))
+                log?.LogInformation($"User prompt: {rawUserPrompt.Replace("\n", "")}");
+
+                if (string.IsNullOrWhiteSpace(rawUserPrompt))
                 {
-                    userPrompt = "that is from the Dominaria plane.";
+                    rawUserPrompt = "that is from the Dominaria plane.";
                 }
 
                 var gptModel = Model.GPT4;
@@ -86,7 +95,9 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     }
                 }
 
-                var userPromptToSubmit = $"Please generate me one 'Magic: The Gathering card' that has the following description: {userPrompt}";
+                var systemPrompt = includeExplaination ? GenerateCardSystemPromptWithExplaination : GenerateCardSystemPrompt;
+
+                var userPromptToSubmit = $"Please generate me one 'Magic: The Gathering card' that has the following description: {rawUserPrompt}";
 
                 var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
                 var api = new OpenAIAPI(new APIAuthentication(apiKey));
@@ -100,7 +111,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                         Messages = new ChatMessage[]
                         {
                             new ChatMessage(ChatMessageRole.User, userPromptToSubmit),
-                            new ChatMessage(ChatMessageRole.System, GenerateCardSystemPrompt)
+                            new ChatMessage(ChatMessageRole.System, systemPrompt)
                         },
                         Temperature = 1,
                         Model = gptModel,
@@ -113,10 +124,11 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                         properties: new Dictionary<string, object>()
                         {
                             { "response", response },
-                            { "systemPrompt", GenerateCardSystemPrompt },
+                            { "systemPrompt", systemPrompt },
                             { "userPrompt", userPromptToSubmit },
                             { "temperature", 1 },
                             { "model", gptModel.ModelID },
+                            { "includeExplaination", includeExplaination.ToString() },
                             { "requestId", response.RequestId }
                         });
 
@@ -160,6 +172,12 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     {
                         log?.LogError($"[Attempt {attempt+1}] Unable to parse OpenAI response.");
                     }
+                }
+
+                // Attach the user prompt to each card.
+                foreach (var card in openAICards)
+                {
+                    card.UserPrompt = rawUserPrompt;
                 }
 
                 // Parse the cards. If multiple were generated, only process and image for and return one the first one.

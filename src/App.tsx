@@ -48,17 +48,17 @@ const modelSettings = [
 
 const modelSettingsGroup : SettingGroup = {
   name: "Model",
-  description: "Which langauge model to use when generating Magic cards",
+  description: "Which langauge model to use when generating Magic cards.",
   settings: modelSettings,
 }
 
 const cardGenerationSettings = [
-  { name: "Display Explanation", id: "setting-provide-explanation", value: true, description: "Provide an explanation for why the card was generated." },
+  { name: "Explain Yourself", id: "setting-provide-explanation", value: false, description: "Include an explanation below the card explaining the reasoning behind its creation. The AI can be even be quite funny! This will slow down card generation and will not apply to cards generated without this setting on." },
 ]
 
 const cardGenerationSettingsGroup : SettingGroup = {
-  name: "Display",
-  description: "Display settings for Magic cards.",
+  name: "Card Generation",
+  description: "Settings which affect what information to generate.",
   settings: cardGenerationSettings,
 }
 
@@ -82,10 +82,6 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
 
   allSettings() : Setting[] {
     return this.state.settings.map(settingGroup => settingGroup.settings).flat();
-  }
-
-  showCardPrompts() : boolean {
-    return this.allSettings().find(setting => setting.id == "setting-display-prompt")?.value ?? true;
   }
 
   showCardExplanations() : boolean {
@@ -131,6 +127,7 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
       cardContainerRule.style.width  = `${cardWidth}px`;
       cardContainerRule.style.height = `${cardHeight}px`;
 
+      // Card explainations.
       if (cardMetaRule) {
         cardMetaRule.style.width  = `${cardWidth-24}px`;
       }
@@ -161,8 +158,7 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
       model = modelSetting.id
     }
 
-    GenerateMagicCardRequest(userPrompt, model).then(cards => {
-      cards.forEach(card => card.prompt = userPrompt)
+    GenerateMagicCardRequest(userPrompt, model, this.showCardExplanations()).then(cards => {
       this.setState({
         response: JSON.stringify(cards),
         cards: [...cards, ...this.state.cards],
@@ -207,7 +203,7 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
         {
           this.state.cards.map(card => (
             <div className="cardContainer" key={`card-container-${card.id}`}>
-              <CardDisplay key={`card-display-${card.id}`} card={card} showExplanation={this.showCardExplanations()} />
+              <CardDisplay key={`card-display-${card.id}`} card={card} />
             </div>
           ))
         }

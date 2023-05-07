@@ -16,6 +16,7 @@ export interface BasicCard {
   flavorText: string,
   rarity: string,
   imageUrl: string,
+  userPrompt: string,
   explaination: string,
   funnyExplaination: string
 }
@@ -93,7 +94,7 @@ export class MagicCard {
   imageUrl: string
   setNumberDisplay: string
   id: number
-  prompt: string
+  userPrompt: string
   explaination: string
   funnyExplaination: string
 
@@ -114,7 +115,7 @@ export class MagicCard {
     this.imageUrl = card.imageUrl
     this.setNumberDisplay = getRandomInt(0, 451) + "/" + 451
     this.id = getRandomInt(0, 1000000000)
-    this.prompt = ""
+    this.userPrompt = card.userPrompt
     this.explaination = card.explaination
     this.funnyExplaination = card.funnyExplaination
   }
@@ -304,7 +305,6 @@ export class MagicCard {
 
 interface CardDisplayProps {
   card: MagicCard;
-  showExplanation: boolean;
 }
 
 interface CardDisplayState {
@@ -456,18 +456,21 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
             </div>
           </div>
         </div>
-        {this.props.showExplanation && 
-          <div className="card-meta card-explanation">
-            The card <b>{card.name}</b> was generated based on the prompt.. 
-            <br/>
-            <br/>
-            "<b><i>{card.prompt}</i></b>"
-            <br/>
-            <br/>
-            {card.explaination}
-            <br/>
-            <br/>
-            {card.funnyExplaination}
+        {card.explaination && 
+          <div>
+            <h3 className="card-explaination-header">{card.name}</h3>
+            <div className="card-meta card-explanation">
+              The card <b>{card.name}</b> was generated based on the prompt.. 
+              <br/>
+              <br/>
+              "<b><i>{card.userPrompt}</i></b>"
+              <br/>
+              <br/>
+              {card.explaination}
+              <br/>
+              <br/>
+              {card.funnyExplaination}
+            </div>
           </div>
         }
       </div>
