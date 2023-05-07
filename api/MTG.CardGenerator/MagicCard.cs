@@ -403,8 +403,11 @@ namespace MTG.CardGenerator
             ColorIdentity = GetColorIdentity(ManaCost);
             ImageUrl = string.Empty;
 
-            card.PowerAndToughness = card.PowerAndToughness.Replace("(", "");
-            card.PowerAndToughness = card.PowerAndToughness.Replace(")", "");
+            if (card.PowerAndToughness != null)
+            {
+                card.PowerAndToughness = card.PowerAndToughness.Replace("(", "");
+                card.PowerAndToughness = card.PowerAndToughness.Replace(")", "");
+            }
 
             if (string.IsNullOrWhiteSpace(card.PowerAndToughness) &&
                 (!string.IsNullOrWhiteSpace(card.Power) && !string.IsNullOrWhiteSpace(card.Toughness)))
