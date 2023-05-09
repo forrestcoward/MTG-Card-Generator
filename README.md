@@ -51,7 +51,7 @@ Navigate to `http://localhost:8080/` in your browser.
 
 ## Deployment
 
-The application is deployed as an [Azure static web app](https://azure.microsoft.com/en-us/products/app-service/static) in a personal Azure subscription. During deployment, the API is integrated and bundled with the application, so the backend does not need to be hosted separately. Pushes into the `main` branch will automatically deploy a new version of the application using a GitHub Action. Deployment takes just a few minutes.
+The application is deployed as an [Azure static web app](https://azure.microsoft.com/en-us/products/app-service/static) in a personal Azure subscription. During deployment, the API is integrated and bundled with the application, so the backend does not need to be hosted separately. Pushes into the `main` branch will automatically deploy a new version of the application using a GitHub Action. Deployment should just take a few minutes.
 
 # Links
 
