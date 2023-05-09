@@ -69,36 +69,34 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
         [FunctionName("GenerateMagicCard")]
         public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "GET", Route = null)] HttpRequest req, ILogger log)
         {
+            var rawUserPrompt = (string)req.Query["userPrompt"];
+            log?.LogInformation($"User prompt: {rawUserPrompt.Replace("\n", "")}");
+            var model = (string)req.Query["model"];
+            var includeExplaination = bool.TryParse(req.Query["includeExplaination"], out bool result) && result;
+
+            if (string.IsNullOrWhiteSpace(rawUserPrompt))
+            {
+                rawUserPrompt = "that is from the Dominaria plane.";
+            }
+
+            var systemPrompt = includeExplaination ? GenerateCardSystemPromptWithExplaination : GenerateCardSystemPrompt;
+            var userPromptToSubmit = $"Please generate me one 'Magic: The Gathering card' that has the following description: {rawUserPrompt}";
+
+            var gptModel = Model.GPT4;
+            if (!string.IsNullOrWhiteSpace(model))
+            {
+                if (model.Equals("gpt-4", StringComparison.OrdinalIgnoreCase))
+                {
+                    gptModel = Model.GPT4;
+                }
+                else if (model.Equals("gpt-3.5", StringComparison.OrdinalIgnoreCase))
+                {
+                    gptModel = Model.ChatGPTTurbo;
+                }
+            }
+
             try
             {
-                var rawUserPrompt = (string) req.Query["userPrompt"];
-                var model = (string)req.Query["model"];
-                var includeExplaination = bool.TryParse(req.Query["includeExplaination"], out bool result) && result;
-
-                log?.LogInformation($"User prompt: {rawUserPrompt.Replace("\n", "")}");
-
-                if (string.IsNullOrWhiteSpace(rawUserPrompt))
-                {
-                    rawUserPrompt = "that is from the Dominaria plane.";
-                }
-
-                var gptModel = Model.GPT4;
-                if (!string.IsNullOrWhiteSpace(model))
-                {
-                    if (model.Equals("gpt-4", StringComparison.OrdinalIgnoreCase))
-                    {
-                        gptModel = Model.GPT4;
-                    }
-                    else if (model.Equals("gpt-3.5", StringComparison.OrdinalIgnoreCase))
-                    {
-                        gptModel = Model.ChatGPTTurbo;
-                    }
-                }
-
-                var systemPrompt = includeExplaination ? GenerateCardSystemPromptWithExplaination : GenerateCardSystemPrompt;
-
-                var userPromptToSubmit = $"Please generate me one 'Magic: The Gathering card' that has the following description: {rawUserPrompt}";
-
                 var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
                 var api = new OpenAIAPI(new APIAuthentication(apiKey));
                 var openAICards = Array.Empty<BasicCard>();
@@ -174,6 +172,15 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     }
                 }
 
+                if (openAICards.Length == 0)
+                {
+                    return new ContentResult
+                    {
+                        StatusCode = 500,
+                        Content = $"Error: Unable to generate a card for the prompt '{rawUserPrompt}'. Your request may have been rejected as a result of the AI language model safety system.",
+                    };
+                }
+
                 // Attach the user prompt to each card.
                 foreach (var card in openAICards)
                 {
@@ -214,7 +221,22 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             }
             catch (Exception exception)
             {
-                var errorMessage = $"Unexpected exception: {exception}";
+                var errorMessage = $"Error: {exception}";
+
+                if (exception.Source == "OpenAI_API" && 
+                    exception.Message.Contains("Error at images/generations") && 
+                    exception.Message.Contains("Your request was rejected as a result of our safety system"))
+                {
+                    errorMessage = $"Error: Your request to generate a card for prompt '{rawUserPrompt}' was rejected as a result of the AI language model safety system.";
+                }
+
+                if (exception.Source == "OpenAI_API" &&
+                    exception.Message.Contains("Error at chat/completions") &&
+                    exception.Message.Contains("That model is currently overloaded with other requests"))
+                {
+                    errorMessage = $"Error: Your request to generate a card for prompt '{rawUserPrompt}' failed because the AI language model is overloaded with requests. Please try again or use a different model.";
+                }
+
                 log?.LogError(exception, errorMessage);
                 return new ContentResult
                 {

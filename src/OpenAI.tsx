@@ -89,11 +89,12 @@ async function httpGet(url: string, params?: Record<string, string>): Promise<an
       },
     });
 
+    const data = await response.text();
+
     if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+      throw new Error(data);
     }
 
-    const data = await response.text();
     return data;
   } catch (error) {
     console.error('Error fetching data:', error);

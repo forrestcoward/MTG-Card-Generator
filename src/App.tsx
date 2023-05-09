@@ -166,7 +166,7 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
       })
 
     }).catch((error: Error) => {
-      this.setState({ isLoading: false, currentError: error.message + ": " + error.stack })
+      this.setState({ isLoading: false, currentError: error.message })
     });
   }
 
