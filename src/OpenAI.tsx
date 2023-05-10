@@ -32,7 +32,7 @@ async function MakeOpenAIImageCreateRequest(apiKey:string, imagePrompt:string) :
     prompt: imagePrompt,
     n: 1,
     size: CreateImageRequestSizeEnum._256x256,
-  });
+  })
 
   if (response.data && response.data.data && response.data.data[0] && response.data.data[0].url) {
       return response.data.data[0].url
@@ -89,9 +89,12 @@ async function httpGet(url: string, params?: Record<string, string>): Promise<an
       },
     });
 
-    const data = await response.text();
+    let data = await response.text();
 
     if (!response.ok) {
+      if (data == "Backend call failure") {
+        data = "The backend timed out after 45 seconds while generating your card. This is a known issue that will be fixed soon. Sorry! :( Try using GPT-3 or turning off the 'Explain Yourself' setting for faster generation."
+      }
       throw new Error(data);
     }
 
