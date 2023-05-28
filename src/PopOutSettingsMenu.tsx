@@ -31,17 +31,24 @@ interface PopOutSettingsMenuProps {
   onClose: () => void;
   settings: SettingGroup[];
   onModelSettingsChange: (setting: string, newValue: boolean) => void;
+  userOpenAIKey: string;
+  onOpenAIKeyChange: (apiKey: string) => void;
 }
 
 const PopOutSettingsMenu: React.FC<PopOutSettingsMenuProps> = ({ 
   isOpen,
   onClose,
   settings,
+  onOpenAIKeyChange,
+  userOpenAIKey,
   onModelSettingsChange,
 }) => {
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>, id: string) => {
     onModelSettingsChange(id, event.target.checked);
   };
+  const handleOpenAIKeyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    onOpenAIKeyChange(event.target.value);
+  }
   return (
     <>
       <CSSTransition in={isOpen} timeout={300} classNames="pop-out-settings-menu" unmountOnExit>
@@ -90,6 +97,14 @@ const PopOutSettingsMenu: React.FC<PopOutSettingsMenuProps> = ({
                 </div>
               </React.Fragment>
             ))}
+            <h2>OpenAI API Key</h2>
+            <div>
+              Your OpenAI API key to use when generating cards. You can find your API key at <a href="https://beta.openai.com/account/api-keys">https://beta.openai.com/account/api-keys</a>. 
+              <b>This website will not store or use your API key in any way other than to send it to OpenAI to generate card text and images.</b>
+            </div>
+            <label>
+              <input type="password" className="userOpenAIKeyInput" onChange={(event) => handleOpenAIKeyChange(event)} value={userOpenAIKey} />
+            </label>
           </div>
         </MenuContainer>
       </CSSTransition>

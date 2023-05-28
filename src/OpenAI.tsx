@@ -42,7 +42,7 @@ async function MakeOpenAIImageCreateRequest(apiKey:string, imagePrompt:string) :
   }
 }
 
-export async function GenerateMagicCardRequest(userPrompt: string, model: string, includeExplaination: boolean): Promise<MagicCard[]> {
+export async function GenerateMagicCardRequest(userPrompt: string, model: string, includeExplaination: boolean, openAIApiKey: string): Promise<MagicCard[]> {
   let url = `${window.location.protocol}//${window.location.hostname}//api/GenerateMagicCard`;
 
   if (location.hostname === "localhost") {
@@ -54,6 +54,10 @@ export async function GenerateMagicCardRequest(userPrompt: string, model: string
     model: model,
     includeExplaination: includeExplaination.toString()
   };
+
+  if (openAIApiKey) {
+    params.openAIApiKey = openAIApiKey
+  }
 
   let cards:BasicCard[] = []
   await httpGet(url, params)

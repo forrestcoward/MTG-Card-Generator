@@ -73,6 +73,19 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             log?.LogInformation($"User prompt: {rawUserPrompt.Replace("\n", "")}");
             var model = (string)req.Query["model"];
             var includeExplaination = bool.TryParse(req.Query["includeExplaination"], out bool result) && result;
+            var apiKey = (string)req.Query["openAIApiKey"];
+            var userSuppliedKey = true;
+
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+                userSuppliedKey = false;
+                
+                if (string.IsNullOrWhiteSpace(apiKey))
+                {
+                    return new BadRequestObjectResult("No valid OpenAI API key was provided. Please set your OpenAI API key in the settings and try again.");
+                }
+            }
 
             if (string.IsNullOrWhiteSpace(rawUserPrompt))
             {
@@ -97,7 +110,6 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
 
             try
             {
-                var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
                 var api = new OpenAIAPI(new APIAuthentication(apiKey));
                 var openAICards = Array.Empty<BasicCard>();
 
@@ -224,17 +236,44 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 var errorMessage = $"Error: {exception}";
 
                 if (exception.Source == "OpenAI_API" && 
-                    exception.Message.Contains("Error at images/generations") && 
-                    exception.Message.Contains("Your request was rejected as a result of our safety system"))
+                    exception.Message.ContainsIgnoreCase("Error at images/generations") && 
+                    exception.Message.ContainsIgnoreCase("Your request was rejected as a result of our safety system"))
                 {
                     errorMessage = $"Error: Your request to generate a card for prompt '{rawUserPrompt}' was rejected as a result of the AI language model safety system.";
                 }
 
                 if (exception.Source == "OpenAI_API" &&
-                    exception.Message.Contains("Error at chat/completions") &&
-                    exception.Message.Contains("That model is currently overloaded with other requests"))
+                    exception.Message.ContainsIgnoreCase("That model is currently overloaded with other requests"))
                 {
                     errorMessage = $"Error: Your request to generate a card for prompt '{rawUserPrompt}' failed because the AI language model is overloaded with requests. Please try again or use a different model.";
+                }
+
+                if (exception.Source == "OpenAI_API" &&
+                    exception.Message.ContainsIgnoreCase("You exceeded your current quota"))
+                {
+                    if (userSuppliedKey)
+                    {
+                        errorMessage = $"Error: The OpenAI API key you provided has exceeded its quota. Please adjust your usage limits or increase your quota to continue using this API key.";
+                        return new BadRequestObjectResult(errorMessage);
+                    }
+                    else
+                    {
+                        errorMessage = $"Error: The OpenAI API key used by this website has exceeded its quota due to some users spamming requests :( Please set your own OpenAI API key in the settings to continue generating Magic: The Gathering cards.";
+                    }
+                }
+
+                if (exception.Source == "OpenAI_API" &&
+                    exception.Message.ContainsIgnoreCase("OpenAI rejected your authorization"))
+                {
+                    if (userSuppliedKey)
+                    {
+                        errorMessage = $"Error: The OpenAI API key you provided is invalid. Please check the integrity of this API key.";
+                        return new BadRequestObjectResult(errorMessage);
+                    }
+                    else
+                    {
+                        errorMessage = $"Error: The OpenAI API key used by this website is invalid and must be fixed by the website owners.";
+                    }
                 }
 
                 log?.LogError(exception, errorMessage);

@@ -20,6 +20,7 @@ export interface MTGCardGeneratorState {
   isLoading: boolean,
   isSettingsOpen: boolean,
   settings: SettingGroup[],
+  userOpenAIKey: string,
   cards: MagicCard[],
   currentError: string,
 }
@@ -71,6 +72,7 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
       isLoading: false,
       isSettingsOpen: false,
       settings: [modelSettingsGroup, cardGenerationSettingsGroup],
+      userOpenAIKey: '',
       cards: [TutorialCard],
       currentError: '',
     };
@@ -112,6 +114,10 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
 
     this.setState({ settings: this.state.settings });
   };
+
+  handleOpenAIKeyChange = (newUserOpenAIKey: string) => {
+    this.setState({ userOpenAIKey: newUserOpenAIKey });
+  }
 
   setCardContainerSize() {
     const cardContainerClass = '.card-container';
@@ -158,7 +164,7 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
       model = modelSetting.id
     }
 
-    GenerateMagicCardRequest(userPrompt, model, this.showCardExplanations()).then(cards => {
+    GenerateMagicCardRequest(userPrompt, model, this.showCardExplanations(), this.state.userOpenAIKey).then(cards => {
       this.setState({
         response: JSON.stringify(cards),
         cards: [...cards, ...this.state.cards],
@@ -209,8 +215,10 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
         }
         </div>
         <PopOutSettingsMenu 
-          settings={this.state.settings} 
-          onModelSettingsChange={this.handleSettingUpdate} 
+          settings={this.state.settings}
+          onModelSettingsChange={this.handleSettingUpdate}
+          userOpenAIKey={this.state.userOpenAIKey}
+          onOpenAIKeyChange={this.handleOpenAIKeyChange}
           isOpen={this.state.isSettingsOpen} 
           onClose={this.toggleIsSettingsOpen} />
       </div>
