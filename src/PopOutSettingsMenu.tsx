@@ -98,7 +98,7 @@ const PopOutSettingsMenu: React.FC<PopOutSettingsMenuProps> = ({
               </React.Fragment>
             ))}
             <h2>OpenAI API Key</h2>
-            <div>
+            <div> 
               Your OpenAI API key to use when generating cards. You can find your API key at <a href="https://beta.openai.com/account/api-keys">https://beta.openai.com/account/api-keys</a>. 
               <b>This website will not store or use your API key in any way other than to send it to OpenAI to generate card text and images.</b>
             </div>
