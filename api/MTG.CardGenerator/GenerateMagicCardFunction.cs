@@ -133,6 +133,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     log?.LogMetric("CreateChatCompletionsAsync_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
                         properties: new Dictionary<string, object>()
                         {
+                            { "userSuppliedKey", userSuppliedKey },
                             { "response", response },
                             { "systemPrompt", systemPrompt },
                             { "userPrompt", userPromptToSubmit },
@@ -221,6 +222,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     log.LogMetric("CreateImageAsync_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
                         properties: new Dictionary<string, object>()
                         {
+                            { "userSuppliedKey", userSuppliedKey },
                             { "imagePrompt", card.OpenAIImagePrompt },
                             { "imageUrl", card.ImageUrl },
                             { "requestId", response.RequestId }
