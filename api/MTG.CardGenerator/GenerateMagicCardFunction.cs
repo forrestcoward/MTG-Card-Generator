@@ -319,6 +319,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     else
                     {
                         errorMessage = $"Error: The OpenAI API key used by this website is invalid and must be fixed by the website owners.";
+                        log?.LogError($"Invalid API key provided in website config: {apiKey.GetAsObfuscatedSecret(4)}");
                     }
                 }
 

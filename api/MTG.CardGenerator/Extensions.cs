@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -109,6 +110,24 @@ namespace MTG.CardGenerator
         public static bool ContainsIgnoreCase(this string source, string toCheck)
         {
             return source?.IndexOf(toCheck, System.StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        public static string GetAsObfuscatedSecret(this string input, int x)
+        {
+            if (input == null)
+            {
+                throw new ArgumentNullException(nameof(input));
+            }
+
+            if (x > input.Length / 2)
+            {
+                return string.Empty;
+            }
+
+            var firstX = input.Substring(0, x);
+            var lastX = input.Substring(input.Length - x, x);
+
+            return $"{firstX}*********{lastX}";
         }
     }
 }
