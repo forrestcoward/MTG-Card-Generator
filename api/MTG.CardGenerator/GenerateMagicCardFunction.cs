@@ -36,9 +36,9 @@ namespace MTG.CardGenerator
         // Sometimes OpenAI returns toughness separately, despite being told to return "pt" as one field.
         public string Toughness { get; set; }
         // Reason why the LLM genearted the card.
-        public string Explanation { get; set; }
-        // A funny explanation of why the LLM generated the card.
-        public string FunnyExplanation { get; set; }
+        public string explaination { get; set; }
+        // A funny explaination of why the LLM generated the card.
+        public string Funnyexplaination { get; set; }
         // The user prompt that generated this card.
         public string UserPrompt { get; set; }
     }
@@ -57,14 +57,18 @@ namespace MTG.CardGenerator
     public static class GenerateMagicCardFunction
     {
         const string GenerateCardSystemPrompt = $@"
-You are an assistant who works as a Magic: The Gathering card designer. You like complex cards with interesting mechanics. The cards you generate should obey the Magic 'color pie' design rules. The cards you generate should also obey the the Magic: The Gathering comprehensive rules as much as possible.
+You are an assistant who works as a Magic: The Gathering card designer. You like complex cards with interesting mechanics. The cards you generate should obey the Magic 'color pie' design rules and obey the the Magic: The Gathering comprehensive rules.
 You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'text', 'flavorText', 'pt', and 'rarity'.
 Do not explain the cards or explain your reasoning. Only return the JSON of cards named 'cards'.";
 
         const string GenerateCardSystemPromptWithExplaination = $@"
 You are an assistant who works as a Magic: The Gathering card designer. You like complex cards with interesting mechanics. The cards you generate should obey the Magic 'color pie' design rules. The cards you generate should also obey the the Magic: The Gathering comprehensive rules as much as possible.
-You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'text', 'flavorText', 'pt', 'rarity', 'explanation', and 'funnyExplanation' properties. The 'explanation' property should explain why the card was created the way it was. The 'funnyExplanation' property should be a hilarious explanation of why the card was created the way it was.
+You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'text', 'flavorText', 'pt', 'rarity', 'explaination', and 'funnyexplaination' properties. The 'explaination' property should explain why the card was created the way it was. The 'funnyexplaination' property should be a hilarious explaination of why the card was created the way it was.
 Do not explain the cards or explain your reasoning. Only return the JSON of cards named 'cards'.";
+
+        const int temperature = 1;
+
+        static readonly ImageSize imageSize = ImageSize._512;
 
         [FunctionName("GenerateMagicCard")]
         public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "GET", Route = null)] HttpRequest req, ILogger log)
@@ -75,6 +79,13 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             var includeExplaination = bool.TryParse(req.Query["includeExplaination"], out bool result) && result;
             var apiKey = (string)req.Query["openAIApiKey"];
             var userSuppliedKey = true;
+            var tokensUsed = 0;
+            var estimatedCost = 0.0;
+            var estimatedChatCompletionCost = 0.0;
+            var estimatedImageGenerationCost = 0.0;
+
+            var attemptsToGenerateCard = 0;
+            var actualGPTModelUsed = "";
 
             if (string.IsNullOrWhiteSpace(apiKey))
             {
@@ -115,7 +126,9 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
 
                 for (var attempt = 0; attempt < 5; attempt++)
                 {
+                    attemptsToGenerateCard++;
                     var stopwatch = Stopwatch.StartNew();
+
                     var response = await api.Chat.CreateChatCompletionAsync(new ChatRequest()
                     {
                         Messages = new ChatMessage[]
@@ -123,9 +136,15 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                             new ChatMessage(ChatMessageRole.User, userPromptToSubmit),
                             new ChatMessage(ChatMessageRole.System, systemPrompt)
                         },
-                        Temperature = 1,
+                        Temperature = temperature,
                         Model = gptModel,
                     });
+
+                    actualGPTModelUsed = response.Model.ModelID;
+                    tokensUsed += response.Usage.TotalTokens;
+                    var cost = Pricing.GetCost(response);
+                    estimatedChatCompletionCost += cost;
+                    estimatedCost += cost;
 
                     var reply = response.Choices[0].Message.Content;
 
@@ -133,17 +152,20 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     log?.LogMetric("CreateChatCompletionsAsync_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
                         properties: new Dictionary<string, object>()
                         {
-                            { "userSuppliedKey", userSuppliedKey },
+                            { "attemptNumber", attemptsToGenerateCard },
+                            { "estimatedCost", estimatedChatCompletionCost },
+                            { "includeExplaination", includeExplaination.ToString() },
+                            { "model", actualGPTModelUsed },
+                            { "requestId", response.RequestId },
                             { "response", response },
                             { "systemPrompt", systemPrompt },
+                            { "temperature", temperature },
+                            { "tokensUsed", response.Usage.TotalTokens },
                             { "userPrompt", userPromptToSubmit },
-                            { "temperature", 1 },
-                            { "model", gptModel.ModelID },
-                            { "includeExplaination", includeExplaination.ToString() },
-                            { "requestId", response.RequestId }
+                            { "userSuppliedKey", userSuppliedKey },
                         });
 
-                    log?.LogInformation($"OpenAI response ({gptModel.ModelID}):{Environment.NewLine}{reply}");
+                    log?.LogInformation($"OpenAI response ({actualGPTModelUsed}):{Environment.NewLine}{reply}");
 
                     try
                     {
@@ -185,6 +207,8 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     }
                 }
 
+                log?.LogInformation($"{tokensUsed} {actualGPTModelUsed} chat completion tokens used (${estimatedChatCompletionCost}).");
+
                 if (openAICards.Length == 0)
                 {
                     return new ContentResult
@@ -211,9 +235,13 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     {
                         NumOfImages = 1,
                         ResponseFormat = ImageResponseFormat.Url,
-                        Size = ImageSize._1024,
+                        Size = imageSize,
                         Prompt = card.OpenAIImagePrompt,
                     });
+
+                    var cost = Pricing.GetImageCost(imageSize);
+                    estimatedImageGenerationCost += cost;
+                    estimatedCost += cost;
 
                     card.ImageUrl = response.Data[0].Url;
                     log.LogInformation($"Card image url: {card.ImageUrl}");
@@ -222,15 +250,31 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     log.LogMetric("CreateImageAsync_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
                         properties: new Dictionary<string, object>()
                         {
-                            { "userSuppliedKey", userSuppliedKey },
                             { "imagePrompt", card.OpenAIImagePrompt },
                             { "imageUrl", card.ImageUrl },
-                            { "requestId", response.RequestId }
-                        });
+                            { "imageSize", imageSize.ToString() },
+                            { "requestId", response.RequestId },
+                        }); ;
                 }
 
                 var json = JsonConvert.SerializeObject(new GenerateMagicCardFunctionResponse() { Cards = cards });
                 log?.LogInformation($"API JSON response:{Environment.NewLine}{JToken.Parse(json)}");
+
+                log?.LogInformation($"Estimated cost: ${estimatedCost}");
+                log?.LogMetric("GenerateMagicCard_EstimatedCost", estimatedCost, new Dictionary<string, object>()
+                {
+                    { "estimatedChatCompletionCost", estimatedChatCompletionCost },
+                    { "estimatedCost", estimatedCost },
+                    { "estimatedImageGenerationCost", estimatedImageGenerationCost },
+                    { "imageSize", imageSize.ToString() },
+                    { "includeExplaination", includeExplaination.ToString() },
+                    { "model", actualGPTModelUsed },
+                    { "numberOfChatCompletionAttempts", attemptsToGenerateCard },
+                    { "systemPrompt", systemPrompt },
+                    { "temperature", temperature },
+                    { "userPrompt", userPromptToSubmit },
+                });
+
                 return new OkObjectResult(json);
             }
             catch (Exception exception)

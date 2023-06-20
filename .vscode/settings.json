@@ -1,5 +1,4 @@
 {
   "editor.tabSize": 2,
-  "editor.detectIndentation": false,
-  "dotnet.defaultSolution": "api\\MTG.CardGenerator.sln"
+  "editor.detectIndentation": false
 }

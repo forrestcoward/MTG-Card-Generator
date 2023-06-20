@@ -92,7 +92,7 @@ namespace MTG.CardGenerator
             return false;
         }
 
-        public static CardRule[] CardRules = new CardRule[]
+        internal static CardRule[] CardRules = new CardRule[]
         {
             new CardRule()
             {
@@ -377,7 +377,7 @@ namespace MTG.CardGenerator
         [JsonIgnore]
         public List<CardRule> ViolatedRules { get; }
 
-        public static Regex UnbracketedManaCostRegex = new(@"(?<cost>(\s|^)[123456789WUBRG]+(\s|$|:))");
+        internal static Regex UnbracketedManaCostRegex = new(@"(?<cost>(\s|^)[123456789WUBRG]+(\s|$|:))");
 
         public static string CorrectUnbracketedManaCosts(string oracleText)
         {
@@ -410,8 +410,8 @@ namespace MTG.CardGenerator
             ColorIdentity = GetColorIdentity(ManaCost);
             ImageUrl = string.Empty;
             UserPrompt = card.UserPrompt;
-            Explaination = card.Explanation;
-            FunnyExplaination = card.FunnyExplanation;
+            Explaination = card.explaination;
+            FunnyExplaination = card.Funnyexplaination;
 
             if (card.PowerAndToughness != null)
             {
@@ -475,10 +475,7 @@ namespace MTG.CardGenerator
             // Correct the rules.
             foreach (var rule in ViolatedRules)
             {
-                if (rule.FixViolation != null)
-                {
-                    rule.FixViolation(this, rule, violationToTextLine[rule]);
-                }
+                rule.FixViolation?.Invoke(this, rule, violationToTextLine[rule]);
             }
         }
 
