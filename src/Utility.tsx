@@ -1,5 +1,33 @@
 import { MagicCard } from "./Card";
 
+// Dynamically adjust card sizes
+export function setCardContainerSize() {
+  const cardContainerClass = '.card-container';
+  const cardContainerRule = findCSSRule(cardContainerClass);
+  const cardMetaClass = '.card-meta'
+  const cardMetaRule = findCSSRule(cardMetaClass);
+  // Scale the card entirely based on the card width.
+  const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
+  const cardWidth = Math.min(440, vw)
+  const cardHeight = ((cardWidth * 3.6) / 2.5);
+
+  if (cardContainerRule) {
+    cardContainerRule.style.width  = `${cardWidth}px`;
+    cardContainerRule.style.height = `${cardHeight}px`;
+
+    // Card explanations.
+    if (cardMetaRule) {
+      cardMetaRule.style.width  = `${cardWidth-24}px`;
+    }
+  }
+
+  const cardBackgroundClass = '.card-background';
+  const cardBackgroundRule = findCSSRule(cardBackgroundClass);
+  if (cardBackgroundRule) {
+    cardBackgroundRule.style.height = `${cardHeight - 90}px`;
+  }
+}
+
 export function findCSSRule(selector: string): CSSStyleRule | null {
   const sheets = document.styleSheets;
   const sheetsLength = sheets.length;
@@ -33,7 +61,6 @@ export function getRandomInt(min: number, max: number) {
   max = Math.floor(max);
   return Math.floor(Math.random() * (max - min) + min);
 }
-
 
 export function logCard(card: MagicCard) {
   console.log(card)

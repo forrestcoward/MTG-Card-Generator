@@ -18,8 +18,8 @@ const _tutorialCard:BasicCard = {
   rarity: "Mythic",
   imageUrl: tutorialCardWizardImage,
   userPrompt: "",
-  explaination: "",
-  funnyExplaination: ""
+  explanation: "",
+  funnyExplanation: ""
 }
 
 export const TutorialCard:MagicCard = new MagicCard(_tutorialCard);

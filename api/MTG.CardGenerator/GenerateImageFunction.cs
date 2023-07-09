@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using DarkLoop.Azure.Functions.Authorize;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
@@ -17,16 +18,16 @@ namespace MTG.CardGenerator
     public static class GenerateImageFunction
     {
         [FunctionName("GenerateImage")]
-        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "GET", Route = null)] HttpRequest req, ILogger log)
+        [FunctionAuthorize]
+        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", Route = null)] HttpRequest req, ILogger log)
         {
             try
             {
                 var userPrompt = (string)req.Query["userPrompt"];
                 log?.LogInformation($"User prompt: {userPrompt.Replace("\n", "")}");
 
-                var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
-                OpenAIAPI api = new OpenAIAPI(new APIAuthentication(apiKey));
-                var openAICards = Array.Empty<BasicCard>();
+                var apiKey = Environment.GetEnvironmentVariable(Constants.OpenAIApiKey);
+                var api = new OpenAIAPI(new APIAuthentication(apiKey));
 
                 // Generate an image for each card.
                 var stopwatch = Stopwatch.StartNew();

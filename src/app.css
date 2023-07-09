@@ -126,6 +126,10 @@ table {
   border-radius: 15px;
 }
 
+.generateButton:hover {
+  background-color: rgba(228, 228, 228, 0.953);
+}
+
 .card-edit-name {
   /* Have the card name take up the available space. */
   width:-webkit-fill-available;

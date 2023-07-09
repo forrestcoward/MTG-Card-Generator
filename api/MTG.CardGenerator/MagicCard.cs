@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using MTG.CardGenerator.Models;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
@@ -29,6 +30,7 @@ namespace MTG.CardGenerator
         ThreePlusColored,
         Unknown
     }
+
     public enum CardType
     {
         Creature,
@@ -39,6 +41,7 @@ namespace MTG.CardGenerator
         Land,
         Unknown
     }
+
     public enum CardPropertyOrKeyword
     {
         Flashback,
@@ -304,11 +307,11 @@ namespace MTG.CardGenerator
     public class MagicCard
     {
         [JsonProperty("name")]
-        public string Name { get; }
+        public string Name { get; set; }
         [JsonProperty("manaCost")]
         public string ManaCost { get; set; }
         [JsonProperty("typeLine")]
-        public string TypeLine { get; }
+        public string TypeLine { get; set; }
         [JsonConverter(typeof(StringEnumConverter))]
         [JsonProperty("type")]
         public CardType Type { get; set; }
@@ -317,9 +320,9 @@ namespace MTG.CardGenerator
         [JsonProperty("modifiedOracleText")]
         public string ModifiedOracleText { get; set; }
         [JsonProperty("flavorText")]
-        public string FlavorText { get; }
+        public string FlavorText { get; set; }
         [JsonProperty("rarity")]
-        public string Rarity { get; }
+        public string Rarity { get; set; }
         [JsonProperty("pt")]
         public string PowerAndToughness { get; set; }
         [JsonProperty("power")]
@@ -336,10 +339,10 @@ namespace MTG.CardGenerator
 
         [JsonProperty("userPrompt")]
         public string UserPrompt { get; set; }
-        [JsonProperty("explaination")]
-        public string Explaination { get; set; }
-        [JsonProperty("funnyExplaination")]
-        public string FunnyExplaination { get; set; }
+        [JsonProperty("explanation")]
+        public string Explanation { get; set; }
+        [JsonProperty("funnyExplanation")]
+        public string FunnyExplanation { get; set; }
 
         [JsonIgnore]
         public string OpenAIImagePrompt
@@ -399,6 +402,12 @@ namespace MTG.CardGenerator
 
         public MagicCard(BasicCard card)
         {
+            if (card == null)
+            {
+                // When inserting this object into Cosmos DB, it tris to call this ctor with card=null.
+                return;
+            }
+
             Name = card.Name;
             TypeLine = card.Type;
             Type = GetCardType(TypeLine);
@@ -410,8 +419,8 @@ namespace MTG.CardGenerator
             ColorIdentity = GetColorIdentity(ManaCost);
             ImageUrl = string.Empty;
             UserPrompt = card.UserPrompt;
-            Explaination = card.explaination;
-            FunnyExplaination = card.Funnyexplaination;
+            Explanation = card.Explanation;
+            FunnyExplanation = card.FunnyExplanation;
 
             if (card.PowerAndToughness != null)
             {

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://aka.ms/azure/static-web-apps-cli/schema",
+  "configurations": {
+    "open-ai-mtg-card-generator": {
+      "appLocation": ".",
+      "apiLocation": "api/MTG.CardGenerator",
+      "outputLocation": "dist",
+      "apiLanguage": "dotnetisolated",
+      "apiVersion": "6.0",
+      "appBuildCommand": "npm run build",
+      "apiBuildCommand": "dotnet publish -c Release",
+      "run": "npm run dev",
+      "appDevserverUrl": "http://localhost:8080",
+      "swaConfigLocation": "src/staticwebapp.config.json"
+    },
+    "debug swa": {
+      "appDevserverUrl": "http://localhost:8080",
+      "run": "npm run dev",
+      "apiDevserverUrl": "http://localhost:7071"
+    }
+  }
+}

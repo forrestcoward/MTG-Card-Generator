@@ -17,8 +17,8 @@ export interface BasicCard {
   rarity: string,
   imageUrl: string,
   userPrompt: string,
-  explaination: string,
-  funnyExplaination: string
+  explanation: string,
+  funnyExplanation: string
 }
 
 enum ColorIdentity {
@@ -95,8 +95,8 @@ export class MagicCard {
   setNumberDisplay: string
   id: number
   userPrompt: string
-  explaination: string
-  funnyExplaination: string
+  explanation: string
+  funnyExplanation: string
 
   constructor(card: BasicCard) {
     this.name = card.name
@@ -116,8 +116,8 @@ export class MagicCard {
     this.setNumberDisplay = getRandomInt(0, 451) + "/" + 451
     this.id = getRandomInt(0, 1000000000)
     this.userPrompt = card.userPrompt
-    this.explaination = card.explaination
-    this.funnyExplaination = card.funnyExplaination
+    this.explanation = card.explanation
+    this.funnyExplanation = card.funnyExplanation
   }
 
   static clone(card: MagicCard): MagicCard {
@@ -456,9 +456,9 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
             </div>
           </div>
         </div>
-        {card.explaination && 
+        {card.explanation && 
           <div>
-            <h3 className="card-explaination-header">{card.name}</h3>
+            <h3 className="card-explanation-header">{card.name}</h3>
             <div className="card-meta card-explanation">
               The card <b>{card.name}</b> was generated based on the prompt.. 
               <br/>
@@ -466,10 +466,10 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
               "<b><i>{card.userPrompt}</i></b>"
               <br/>
               <br/>
-              {card.explaination}
+              {card.explanation}
               <br/>
               <br/>
-              {card.funnyExplaination}
+              {card.funnyExplanation}
             </div>
           </div>
         }

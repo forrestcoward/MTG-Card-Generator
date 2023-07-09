@@ -1,4 +1,5 @@
-﻿using Xunit;
+﻿using MTG.CardGenerator.Models;
+using Xunit;
 
 namespace MTG.CardGenerator.Tests
 {

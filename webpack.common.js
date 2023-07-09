@@ -4,10 +4,12 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, './dist'),
     filename: 'bundle.js',
-    assetModuleFilename: 'images/[hash][ext][query]'
+    assetModuleFilename: 'images/[hash][ext][query]',
+    publicPath: '/', // Required for react router.
   },
   devServer: {
     hot: true,
+    historyApiFallback: true, // Required for react router.
     client: {
       progress: true,
     },

@@ -20,5 +20,17 @@
             "webRoot": "${workspaceFolder}",
             "trace": true,
         },
+        {
+            "type": "node-terminal",
+            "name": "swa start",
+            "request": "launch",
+            "command": "swa start http://localhost:8080 --run 'npm run dev' --api-devserver-url http://localhost:7071 --open",
+        },
+        {
+          "type": "node-terminal",
+          "name": "npm run dev",
+          "request": "launch",
+          "command": "npm run dev",
+        }
     ]
 }

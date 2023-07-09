@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import { CSSTransition } from 'react-transition-group';
-import { SettingGroup } from './App';
+import { SettingGroup } from './MTGCardGenerator';
 
 const MenuContainer = styled.div`
   position: fixed;

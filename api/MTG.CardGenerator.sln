@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.6.33521.677
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MTG.CardGenerator", "MTG.CardGenerator\MTG.CardGenerator.csproj", "{79AF1DF9-FF29-4E81-8114-70DA06102E59}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MTG.CardGenerator", "MTG.CardGenerator\MTG.CardGenerator.csproj", "{79AF1DF9-FF29-4E81-8114-70DA06102E59}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MTG.CardGenerator.Tests", "MTG.CardGenerator.Tests\MTG.CardGenerator.Tests.csproj", "{3025286B-4523-41A1-97B5-697036A912E0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MTG.CardGenerator.Tests", "MTG.CardGenerator.Tests\MTG.CardGenerator.Tests.csproj", "{3025286B-4523-41A1-97B5-697036A912E0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

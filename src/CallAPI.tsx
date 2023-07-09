@@ -1,5 +1,6 @@
 import { Configuration, CreateImageRequestSizeEnum, OpenAIApi } from "openai";
 import { BasicCard, MagicCard } from "./Card";
+import { AuthenticationResult, PublicClientApplication } from "@azure/msal-browser";
 
 async function MakeOpenAIChatComletionRequest(apiKey:string, userPrompt:string, systemPrompt:string, temperature:number = 1, model:string = "gpt-3.5-turbo") : Promise<string> {
   const configuration = new Configuration({
@@ -42,17 +43,62 @@ async function MakeOpenAIImageCreateRequest(apiKey:string, imagePrompt:string) :
   }
 }
 
-export async function GenerateMagicCardRequest(userPrompt: string, model: string, includeExplaination: boolean, openAIApiKey: string): Promise<MagicCard[]> {
-  let url = `${window.location.protocol}//${window.location.hostname}//api/GenerateMagicCard`;
+export async function RetrieveMsalToken(msal: PublicClientApplication, scopes: string[]): Promise<AuthenticationResult | undefined> {
+  const account = msal.getAllAccounts()[0];
+  if (!account) {
+    return undefined;
+  }
+
+  const accessTokenRequest = {
+    scopes: scopes,
+    account: account,
+  };
+
+  return await msal.acquireTokenSilent(accessTokenRequest).then(async function (response) {
+    return response;
+  }).catch(async function (error) {
+    console.error("Error retrieving MSAL token:" + error)
+    return undefined;
+  });
+}
+
+export async function GetUserMagicCards(msal: PublicClientApplication): Promise<MagicCard[]> {
+  let url = 'https://mtgcardgenerator-development.azurewebsites.net/api/GetMagicCards';
+
+  if (location.hostname === "localhost") {
+    url = 'http://localhost:7071/api/GetMagicCards';
+  }
+
+  var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
+
+  const params: Record<string, string> = { };
+
+  let cards:BasicCard[] = []
+  await httpGet(url, token, params)
+    .then(data => {
+      cards = JSON.parse(data).cards;
+    })
+    .catch(error => {
+      console.error('There was an error getting magic cards for user:', error);
+      throw error
+    });
+
+    return cards.map(card => new MagicCard(card));
+}
+
+export async function GenerateMagicCardRequest(userPrompt: string, model: string, includeExplanation: boolean, openAIApiKey: string, msal: PublicClientApplication): Promise<MagicCard[]> {
+  let url = 'https://mtgcardgenerator-development.azurewebsites.net/api/GenerateMagicCard';
 
   if (location.hostname === "localhost") {
     url = 'http://localhost:7071/api/GenerateMagicCard';
   }
 
+  var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
+
   const params: Record<string, string> = {
     userPrompt: userPrompt,
     model: model,
-    includeExplaination: includeExplaination.toString()
+    includeExplanation: includeExplanation.toString(),
   };
 
   if (openAIApiKey) {
@@ -60,7 +106,7 @@ export async function GenerateMagicCardRequest(userPrompt: string, model: string
   }
 
   let cards:BasicCard[] = []
-  await httpGet(url, params)
+  await httpGet(url, token, params)
     .then(data => {
       cards = JSON.parse(data).cards;
     })
@@ -72,12 +118,10 @@ export async function GenerateMagicCardRequest(userPrompt: string, model: string
     return cards.map(card => new MagicCard(card));
 }
 
-// TODO: This code kind of sucks, error handling especially.
-async function httpGet(url: string, params?: Record<string, string>): Promise<any> {
+async function httpGet(url: string, msalResult: AuthenticationResult | undefined, params?: Record<string, string>): Promise<any> {
   const sanitizedParams: Record<string, string> = {};
   if (params) {
     Object.keys(params).forEach((key) => {
-      //sanitizedParams[key] = encodeURIComponent(params[key]);
       sanitizedParams[key] = params[key];
     });
   }
@@ -85,12 +129,25 @@ async function httpGet(url: string, params?: Record<string, string>): Promise<an
   const queryParams = new URLSearchParams(sanitizedParams).toString();
   const fullUrl = queryParams ? `${url}?${queryParams}` : url;
 
+  let headers : Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
+
+  if (msalResult) {
+    var token = msalResult.accessToken;
+    if (!token) {
+      token = msalResult.idToken;
+    }
+
+    if (token) {
+      headers['Authorization'] = 'Bearer ' + token
+    }
+  }
+
   try {
     const response = await fetch(fullUrl, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: headers
     });
 
     let data = await response.text();
@@ -99,6 +156,11 @@ async function httpGet(url: string, params?: Record<string, string>): Promise<an
       if (data == "Backend call failure") {
         data = "The backend timed out after 45 seconds while generating your card. This is a known issue that will be fixed soon. Sorry! :( Try using GPT-3 or turning off the 'Explain Yourself' setting for faster generation."
       }
+
+      if (response.status == 401 || response.status == 403)  {
+        throw new Error("You are not authorized to use this API. Please sign in and try again.")
+      }
+
       throw new Error(data);
     }
 

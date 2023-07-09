@@ -1,9 +1,11 @@
 import React from 'react';
 import { CardDisplay, MagicCard  } from './Card';
-import { GenerateMagicCardRequest } from './OpenAI';
-import { findCSSRule } from './Utility';
+import { GenerateMagicCardRequest } from './CallAPI';
+import { setCardContainerSize } from './Utility';
 import { TutorialCard } from './TutorialCard';
 import PopOutSettingsMenu from './PopOutSettingsMenu';
+import { PublicClientApplication } from '@azure/msal-browser';
+
 import "./mtg-card.css";
 import "./app.css";
 
@@ -11,8 +13,11 @@ import "./app.css";
 import loadingIcon from './card-backgrounds/staff.png'
 // @ts-ignore
 import settingsIcon from './card-backgrounds/settings.png'
+import { AuthenticatedTemplate, MsalAuthenticationTemplate, UnauthenticatedTemplate } from '@azure/msal-react';
 
-export interface MTGCardGeneratorProps { }
+export interface MTGCardGeneratorProps { 
+  msalInstance: PublicClientApplication;
+}
 
 export interface MTGCardGeneratorState {
   prompt: string,
@@ -23,6 +28,7 @@ export interface MTGCardGeneratorState {
   userOpenAIKey: string,
   cards: MagicCard[],
   currentError: string,
+  userName: string,
 }
 
 export interface SettingGroup {
@@ -75,11 +81,12 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
       userOpenAIKey: '',
       cards: [TutorialCard],
       currentError: '',
+      userName: '',
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleChangeInput = this.handleChangeInput.bind(this);
-    this.setCardContainerSize();
+    setCardContainerSize();
   }
 
   allSettings() : Setting[] {
@@ -119,33 +126,6 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
     this.setState({ userOpenAIKey: newUserOpenAIKey });
   }
 
-  setCardContainerSize() {
-    const cardContainerClass = '.card-container';
-    const cardContainerRule = findCSSRule(cardContainerClass);
-    const cardMetaClass = '.card-meta'
-    const cardMetaRule = findCSSRule(cardMetaClass);
-    // Scale the card entirely based on the card width.
-    const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
-    const cardWidth = Math.min(440, vw)
-    const cardHeight = ((cardWidth * 3.6) / 2.5);
-
-    if (cardContainerRule) {
-      cardContainerRule.style.width  = `${cardWidth}px`;
-      cardContainerRule.style.height = `${cardHeight}px`;
-
-      // Card explainations.
-      if (cardMetaRule) {
-        cardMetaRule.style.width  = `${cardWidth-24}px`;
-      }
-    }
-
-    const cardBackgroundClass = '.card-background';
-    const cardBackgroundRule = findCSSRule(cardBackgroundClass);
-    if (cardBackgroundRule) {
-      cardBackgroundRule.style.height = `${cardHeight - 90}px`;
-    }
-  }
-
   getLoadingClassName() : string{
     return this.state.isLoading ? "loadingAnimation loadingIcon" : "loadingIcon";
   }
@@ -164,7 +144,7 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
       model = modelSetting.id
     }
 
-    GenerateMagicCardRequest(userPrompt, model, this.showCardExplanations(), this.state.userOpenAIKey).then(cards => {
+    GenerateMagicCardRequest(userPrompt, model, this.showCardExplanations(), this.state.userOpenAIKey, this.props.msalInstance).then(cards => {
       this.setState({
         response: JSON.stringify(cards),
         cards: [...cards, ...this.state.cards],
@@ -178,49 +158,51 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
 
   render() {
     return (
-      <div className="outerContainer">
-        <div className="container">
-        <p>Generate me a Magic: The Gathering card that...</p>
-        <label>
-          <input type="text" className="userInputPrompt" placeholder={defaultPrompt} onChange={this.handleChangeInput} value={this.state.prompt} />
-        </label>
-        <p></p>
-        <table>
-          <tbody>
-            <tr>
-              <td>
-                <button className="generateButton" type="submit" onClick={() => this.handleSubmit()} disabled={this.state.isLoading}>Generate!</button>
-              </td>
-              <td>
-                <img className={this.getLoadingClassName()} src={loadingIcon} />
-              </td>
-              <td>
-                <div title="Click to open the settings." className="settingsIconDiv">
-                  <img  src={settingsIcon} className="settingsIcon" width={40} height={40} onClick={this.toggleIsSettingsOpen} />
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <h2 style={{ color: 'red' }}>{this.state.currentError}</h2>
-        <textarea value={this.state.response} readOnly={true} rows={30} cols={120} hidden={true} />
+      <div>
+        <div className="outerContainer">
+          <div className="container">
+            <p>Generate me a Magic: The Gathering card that...</p>
+            <label>
+              <input type="text" className="userInputPrompt" placeholder={defaultPrompt} onChange={this.handleChangeInput} value={this.state.prompt} />
+            </label>
+            <p></p>
+            <table>
+              <tbody>
+                <tr>
+                  <td>
+                    <button className="generateButton" type="submit" onClick={() => this.handleSubmit()} disabled={this.state.isLoading}>Generate!</button>
+                  </td>
+                  <td>
+                    <img className={this.getLoadingClassName()} src={loadingIcon} />
+                  </td>
+                  <td>
+                    <div title="Click to open the settings." className="settingsIconDiv">
+                      <img  src={settingsIcon} className="settingsIcon" width={40} height={40} onClick={this.toggleIsSettingsOpen} />
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <h2 style={{ color: 'red' }}>{this.state.currentError}</h2>
+            <textarea value={this.state.response} readOnly={true} rows={30} cols={120} hidden={true} />
+          </div>
+          <div className="cardsContainer">
+          {
+            this.state.cards.map(card => (
+              <div className="cardContainer" key={`card-container-${card.id}`}>
+                <CardDisplay key={`card-display-${card.id}`} card={card} />
+              </div>
+            ))
+          }
+          </div>
+          <PopOutSettingsMenu 
+            settings={this.state.settings}
+            onModelSettingsChange={this.handleSettingUpdate}
+            userOpenAIKey={this.state.userOpenAIKey}
+            onOpenAIKeyChange={this.handleOpenAIKeyChange}
+            isOpen={this.state.isSettingsOpen} 
+            onClose={this.toggleIsSettingsOpen} />
         </div>
-        <div className="cardsContainer">
-        {
-          this.state.cards.map(card => (
-            <div className="cardContainer" key={`card-container-${card.id}`}>
-              <CardDisplay key={`card-display-${card.id}`} card={card} />
-            </div>
-          ))
-        }
-        </div>
-        <PopOutSettingsMenu 
-          settings={this.state.settings}
-          onModelSettingsChange={this.handleSettingUpdate}
-          userOpenAIKey={this.state.userOpenAIKey}
-          onOpenAIKeyChange={this.handleOpenAIKeyChange}
-          isOpen={this.state.isSettingsOpen} 
-          onClose={this.toggleIsSettingsOpen} />
       </div>
     );
   }

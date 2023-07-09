@@ -1,13 +1,127 @@
-﻿using System;
+﻿using Azure.Storage.Blobs;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace MTG.CardGenerator
 {
     public static class Extensions
     {
+        private static readonly HttpClient client = new();
+
+        public static JwtSecurityToken ReadJwtToken(this HttpRequest request, ILogger log = null)
+        {
+            try
+            {
+                var authHeader = request.Headers["Authorization"].ToString();
+                var jwtToken = authHeader.Replace("Bearer ", string.Empty);
+                var token = new JwtSecurityTokenHandler().ReadJwtToken(jwtToken);
+                return token;
+            }
+            catch(Exception ex)
+            {
+                log?.LogError($"Error reading JWT token: {ex}");
+                return null;
+            }
+        }
+        
+        public static string GetClaim(this HttpRequest req, string claimName, string defaultValue = "")
+        {
+            var jwtToken = req.ReadJwtToken();
+            return jwtToken.GetClaim(claimName, defaultValue);
+        }
+
+        public static string GetClaim(this JwtSecurityToken jwtToken, string claimName, string defaultValue = "")
+        {
+            if (jwtToken == null)
+            {
+                return defaultValue;
+            }
+
+            var subClaim = jwtToken.Claims.FirstOrDefault(x => x.Type == claimName);
+            return subClaim == null ? defaultValue : subClaim.Value;
+        }
+
+        public static string GetSettingOrThrow(string settingName)
+        {
+            var setting = Environment.GetEnvironmentVariable(settingName);
+            if (string.IsNullOrWhiteSpace(setting))
+            {
+                throw new ArgumentException($"Setting '{settingName}' is not set or empty.");
+            }
+
+            return setting;
+        }
+
+        public static string GetUserSubject(this HttpRequest req, ILogger log = null)
+        {
+            var validateBearerToken = Environment.GetEnvironmentVariable(Constants.ValidateBearerToken) == null || bool.Parse(Environment.GetEnvironmentVariable(Constants.ValidateBearerToken));
+
+            JwtSecurityToken jwtToken = null;
+            if (validateBearerToken)
+            {
+                jwtToken = req.ReadJwtToken(log);
+            }
+
+            if (jwtToken == null && validateBearerToken)
+            {
+                // This should never happen if the FunctionAuthorize attribute is present.
+                return string.Empty;
+            }
+
+            var defaultUserSubject = Environment.GetEnvironmentVariable(Constants.DefaultUserSubject);
+            if (string.IsNullOrWhiteSpace(defaultUserSubject))
+            {
+                defaultUserSubject = "Anonymous";
+            }
+
+            var userSubject = GetClaim(jwtToken, "sub", defaultValue: defaultUserSubject);
+            if (userSubject == defaultUserSubject && validateBearerToken)
+            {
+                // This should never happen if the FunctionAuthorize attribute is present.
+                return string.Empty;
+            }
+
+            return userSubject;
+        }
+
+        public static async Task<string> DownloadImageAsB64(string imageUrl)
+        {
+            var imageBytes = await client.GetByteArrayAsync(imageUrl);
+            var base64Image = Convert.ToBase64String(imageBytes);
+            return base64Image;
+        }
+
+        public static async Task<string> StoreImageInBlobAsync(string imageUrl, string blobStorageName, string blobStorageEndpoint, string blobStorageContainerName, string blobStorageAccessKey, ILogger log = null)
+        {
+            using var response = await client.GetAsync(imageUrl, HttpCompletionOption.ResponseHeadersRead);
+            response.EnsureSuccessStatusCode();
+
+            var blobName = $"{Guid.NewGuid()}.jpg";
+
+            // Create a StorageSharedKeyCredential which we will use to build the BlobServiceClient.
+            var sharedKeyCredential = new Azure.Storage.StorageSharedKeyCredential(blobStorageName, blobStorageAccessKey);
+
+            // Create a BlobServiceClient that will authenticate through the StorageSharedKeyCredential.
+            var blobServiceClient = new BlobServiceClient(new Uri(blobStorageEndpoint), sharedKeyCredential);
+
+            // Get reference to the blobContainer and the blob to upload.
+            var blobContainerClient = blobServiceClient.GetBlobContainerClient(blobStorageContainerName);
+            var blobClient = blobContainerClient.GetBlobClient(blobName);
+
+            await blobClient.UploadAsync(await response.Content.ReadAsStreamAsync());
+
+            log?.LogInformation($"Image '{imageUrl}' uploaded to blob '{blobClient.Uri}'.");
+            return blobClient.Uri.ToString();
+        }
+
         public static Dictionary<string, string> GetNamedGroupsMatches(this Regex regex, string input)
         {
             var namedGroupMatches = new Dictionary<string, string>();
@@ -124,7 +238,7 @@ namespace MTG.CardGenerator
                 return string.Empty;
             }
 
-            var firstX = input.Substring(0, x);
+            var firstX = input[..x];
             var lastX = input.Substring(input.Length - x, x);
 
             return $"{firstX}*********{lastX}";
