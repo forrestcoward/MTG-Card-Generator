@@ -1,13 +1,12 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/azure/functions-action
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Function App CI/CD
+name: [Prod] Function App CI/CD
 
 on:
   push:
     branches:
       - main
-      - development
   workflow_dispatch:
 
 env:
@@ -38,6 +37,6 @@ jobs:
         id: fa
         with:
           app-name: 'MTGCardGenerator'
-          slot-name: 'development'
+          slot-name: 'Production'
           package: '${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/output'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_38C56B969C214438A4231D523793AC72 }}
