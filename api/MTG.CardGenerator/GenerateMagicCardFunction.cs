@@ -68,15 +68,25 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             var jwtToken = req.ReadJwtToken();
             var userName = Extensions.GetClaim(jwtToken, "name", defaultValue: "Anonymous");
             var userSubject = Extensions.GetClaim(jwtToken, "sub", defaultValue: "Anonymous");
+            var userLoggedIn = !userSubject.Equals("Anonymous", StringComparison.OrdinalIgnoreCase);
 
             if (string.IsNullOrWhiteSpace(apiKey))
             {
-                apiKey = Environment.GetEnvironmentVariable(Constants.OpenAIApiKey);
                 userSuppliedKey = false;
-                
+
+                if (userLoggedIn)
+                {
+                    apiKey = Environment.GetEnvironmentVariable(Constants.OpenAIApiKeyLoggedIn);
+                }
+
                 if (string.IsNullOrWhiteSpace(apiKey))
                 {
-                    return new BadRequestObjectResult("No valid OpenAI API key was provided. Please set your OpenAI API key in the settings and try again.");
+                    apiKey = Environment.GetEnvironmentVariable(Constants.OpenAIApiKey);
+
+                    if (string.IsNullOrWhiteSpace(apiKey))
+                    {
+                        return new BadRequestObjectResult("No valid OpenAI API key was provided. Please set your OpenAI API key in the settings and try again.");
+                    }
                 }
             }
 
@@ -338,9 +348,13 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                         errorMessage = $"Error: The OpenAI API key you provided has exceeded its quota. Please adjust your usage limits or increase your quota to continue using this API key.";
                         return new BadRequestObjectResult(errorMessage);
                     }
+                    else if (!userSuppliedKey && userLoggedIn)
+                    {
+                        errorMessage = $"Error: The OpenAI API key used by this website has exceeded its quota. Please set your own OpenAI API key in the settings to continue generating Magic: The Gathering cards!";
+                    }
                     else
                     {
-                        errorMessage = $"Error: The OpenAI API key used by this website has exceeded its quota due to some users spamming requests :( Please set your own OpenAI API key in the settings to continue generating Magic: The Gathering cards.";
+                        errorMessage = $"Error: The OpenAI API key used by this website has exceeded its quota. Please try logging in or supplying your own OpenAI API key in the settings to continue generating Magic: The Gathering cards!";
                     }
                 }
 
@@ -352,9 +366,14 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                         errorMessage = $"Error: The OpenAI API key you provided is invalid. Please check the integrity of this API key.";
                         return new BadRequestObjectResult(errorMessage);
                     }
+                    else if (!userSuppliedKey && userLoggedIn)
+                    {
+                        errorMessage = $"Error: The OpenAI API key provided by this website was invalid. Please supply your own Open AI API key in the settings to continue generating Magic: The Gathering cards!";
+                        log?.LogError($"Invalid API key provided in website config: {apiKey.GetAsObfuscatedSecret(4)}");
+                    }
                     else
                     {
-                        errorMessage = $"Error: The OpenAI API key used by this website is invalid and must be fixed by the website owners.";
+                        errorMessage = $"Error: The OpenAI API key provided by this website was invalid. Please try logging in or supplying your own Open AI API key in the settings to continue generating Magic: The Gathering cards!";
                         log?.LogError($"Invalid API key provided in website config: {apiKey.GetAsObfuscatedSecret(4)}");
                     }
                 }
