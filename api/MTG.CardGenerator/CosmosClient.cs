@@ -64,13 +64,15 @@ namespace MTG.CardGenerator
                log?.LogError($"Error: {e.Message}");
             }
         }
-        public async Task<List<CardGenerationRecord>> GetMagicCards<MagicCard>(string userSubject)
+        public async Task<List<CardGenerationRecord>> GetMagicCards<MagicCard>(string userSubject, int top = 50)
         {
             var queryDefinition = new QueryDefinitionWrapper(
-                    @"SELECT *
+                    @"SELECT TOP @top *
                     FROM c
-                    WHERE c.user.userSubject = @userSubject")
-                .WithParameter("@userSubject", userSubject);
+                    WHERE c.user.userSubject = @userSubject
+                    ORDER BY c._ts DESC")
+                .WithParameter("@userSubject", userSubject)
+                .WithParameter("@top", top);
 
             List<CardGenerationRecord> userCards = await QueryCosmosDB<CardGenerationRecord>(queryDefinition.QueryDefinition).ConfigureAwait(true);
             return userCards;
