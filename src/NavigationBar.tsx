@@ -17,34 +17,16 @@ export const NavigationBar = () => {
     const handleLoginPopup = () => {
         instance
             .loginPopup({
-                ...loginRequest,
-                redirectUri: 'https://ambitious-meadow-0e2e9ce0f-development.eastus2.3.azurestaticapps.net/',
+                ...loginRequest
             })
             .catch((error) => console.log(error));
     };
 
-    const handleLoginRedirect = () => {
-        instance.loginRedirect(loginRequest).catch((error) => console.log(error));
-    };
-
-    const handleLogoutRedirect = () => {
-        instance.logoutRedirect();
-    };
-
     const handleLogoutPopup = () => {
-        instance.logoutPopup({
-            mainWindowRedirectUri: '/', // Redirects the top level app after logout.
-        });
+        instance.logoutPopup();
     };
-
-    //const handleProfileEdit = () => {
-    //    if (inProgress === InteractionStatus.None) {
-    //        instance.acquireTokenRedirect(b2cPolicies.authorities.editProfile);
-    //    }
-    //};
 
     // <img width={30} height={30} src={siteIcon}></img>
-
     return (
       <>
         <div className="navbar">

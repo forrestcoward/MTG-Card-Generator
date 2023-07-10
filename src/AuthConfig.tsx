@@ -9,7 +9,6 @@ export const b2cPolicies = {
     names: {
         signUpSignIn: 'B2C_1_signup_signin',
         forgotPassword: 'B2C_1_reset_v3',
-        editProfile: 'B2C_1_edit_openaikey',
     },
     authorities: {
         signUpSignIn: {
@@ -17,10 +16,7 @@ export const b2cPolicies = {
         },
         forgotPassword: {
             authority: 'https://mtgcardgenerator.b2clogin.com/mtgcardgenerator.onmicrosoft.com/B2C_1_reset_v3',
-        },
-        editProfile: {
-            authority: 'https://mtgcardgenerator.b2clogin.com/mtgcardgenerator.onmicrosoft.com/B2C_1_edit_openaikey',
-        },
+        }
     },
     authorityDomain: 'mtgcardgenerator.b2clogin.com',
 };
@@ -41,8 +37,8 @@ export const msalConfig =
         navigateToLoginRequestUrl: false, // If "true", will navigate back to the original request location before processing the auth code response.
     },
     cache: {
-        cacheLocation: 'sessionStorage', // Configures cache location. "sessionStorage" is more secure, but "localStorage" gives you SSO between tabs.
-        storeAuthStateInCookie: false, // Set this to "true" if you are having issues on IE11 or Edge
+        cacheLocation: 'localStorage', // Configures cache location. "sessionStorage" is more secure, but "localStorage" gives you SSO between tabs.
+        storeAuthStateInCookie: true, // Set this to "true" if you are having issues on IE11 or Edge
     },
     system: {
         loggerOptions: {
