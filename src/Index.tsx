@@ -31,15 +31,15 @@ if (rootNode) {
   createRoot(rootNode)
     .render(
       <React.StrictMode>
-        <MsalProvider instance={msalInstance}>
           <BrowserRouter>
+            <MsalProvider instance={msalInstance}>
             <NavigationBar />
             <Routes>
               <Route path="/" element={ <MTGCardGenerator msalInstance={msalInstance} /> } />
               <Route path="MyCards" element={ <MyCards msalInstance={msalInstance} /> } />
             </Routes>
+            </MsalProvider>
           </BrowserRouter>
-        </MsalProvider>
     </React.StrictMode>
   );
 }
