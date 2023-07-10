@@ -14,6 +14,16 @@ export const NavigationBar = () => {
         activeAccount = instance.getActiveAccount();
     }
 
+    const handleLogin = () => {
+      let mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      if (mobile) {
+        // MSAL not working well on mobile for some reason.
+        handleLoginRedirect();
+      } else {
+        handleLoginPopup();
+      }
+    }
+
     const handleLoginPopup = () => {
         instance
             .loginPopup({
@@ -72,7 +82,7 @@ export const NavigationBar = () => {
             <UnauthenticatedTemplate>
               <li className="navbar-item">
                 <div>
-                  <button className="loginButton" onClick={handleLoginRedirect}>
+                  <button className="loginButton" onClick={handleLogin}>
                           Login
                   </button>
                 </div>

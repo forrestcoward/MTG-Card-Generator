@@ -63,7 +63,12 @@ export async function RetrieveMsalToken(msal: PublicClientApplication, scopes: s
 }
 
 export async function GetUserMagicCards(msal: PublicClientApplication): Promise<MagicCard[]> {
-  let url = 'https://mtgcardgenerator-development.azurewebsites.net/api/GetMagicCards';
+
+  let url = 'https://mtgcardgenerator.azurewebsites.net/api/GetMagicCards';
+
+  if (location.hostname === "ambitious-meadow-0e2e9ce0f-development.eastus2.3.azurestaticapps.net") {
+    url = 'https://mtgcardgenerator-development.azurewebsites.net/api/GetMagicCards';
+  }
 
   if (location.hostname === "localhost") {
     url = 'http://localhost:7071/api/GetMagicCards';
@@ -87,7 +92,11 @@ export async function GetUserMagicCards(msal: PublicClientApplication): Promise<
 }
 
 export async function GenerateMagicCardRequest(userPrompt: string, model: string, includeExplanation: boolean, openAIApiKey: string, msal: PublicClientApplication): Promise<MagicCard[]> {
-  let url = 'https://mtgcardgenerator-development.azurewebsites.net/api/GenerateMagicCard';
+  let url = 'https://mtgcardgenerator.azurewebsites.net/api/GenerateMagicCard';
+
+  if (location.hostname === "ambitious-meadow-0e2e9ce0f-development.eastus2.3.azurestaticapps.net") {
+    url = 'https://mtgcardgenerator-development.azurewebsites.net/api/GenerateMagicCard';
+  }
 
   if (location.hostname === "localhost") {
     url = 'http://localhost:7071/api/GenerateMagicCard';
