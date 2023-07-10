@@ -18,7 +18,7 @@ export const NavigationBar = () => {
         instance
             .loginPopup({
                 ...loginRequest,
-                redirectUri: '/',
+                redirectUri: 'https://ambitious-meadow-0e2e9ce0f-development.eastus2.3.azurestaticapps.net/',
             })
             .catch((error) => console.log(error));
     };
