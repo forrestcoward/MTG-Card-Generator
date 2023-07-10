@@ -5,7 +5,6 @@ import "./nav-bar.css";
 
 // @ts-ignore
 import siteIcon from '../card-backgrounds/site-icon.png'
-import { EventType } from '@azure/msal-browser';
 
 export const NavigationBar = () => {
     const { instance, inProgress } = useMsal();
@@ -23,20 +22,20 @@ export const NavigationBar = () => {
             .catch((error) => console.log(error));
     };
 
+    const handleLoginRedirect = () => {
+        instance.loginRedirect(loginRequest).catch((error) => console.log(error));
+    };
+
+    const handleLogoutRedirect = () => {
+        instance.logoutRedirect();
+    };
+
     const handleLogoutPopup = () => {
         instance.logoutPopup();
     };
 
-    // Do not know if this helps.
-    instance.addEventCallback((event : any) => {
-      if ((event.eventType === EventType.LOGIN_SUCCESS ||
-           event.eventType === EventType.ACQUIRE_TOKEN_SUCCESS || 
-           event.eventType === EventType.SSO_SILENT_SUCCESS) && event.payload.account) {
-            instance.setActiveAccount(event.payload.account);
-      }
-  });
-
     // <img width={30} height={30} src={siteIcon}></img>
+
     return (
       <>
         <div className="navbar">
@@ -73,7 +72,7 @@ export const NavigationBar = () => {
             <UnauthenticatedTemplate>
               <li className="navbar-item">
                 <div>
-                  <button className="loginButton" onClick={handleLoginPopup}>
+                  <button className="loginButton" onClick={handleLoginRedirect}>
                           Login
                   </button>
                 </div>
