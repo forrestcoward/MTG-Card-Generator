@@ -277,7 +277,6 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     var blobStorageContainerName = Extensions.GetSettingOrThrow(Constants.BlobStorageContainerName);
                     var blobStorageAccessKey = Extensions.GetSettingOrThrow(Constants.BlobStorageAccessKey);
                     var cosmosDatabaseId = Extensions.GetSettingOrThrow(Constants.CosmosDBDatabaseId);
-                    var cosmosCollectionId = Extensions.GetSettingOrThrow(Constants.CosmosDBCollectionId);
 
                     // For each generated card, store the card image in blob storage and insert a record into the database.
                     foreach (var card in cards)
@@ -301,8 +300,10 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                                 openAIResponse = openAIResponse,
                                 includeExplanation = includeExplanation,
                                 userSupliedKey = userSuppliedKey,
+                                estimatedCost = estimatedCost,
+                                timestamp = DateTime.Now.ToUniversalTime(),
                             },
-                            user = new User()
+                            user = new UserMeta()
                             {
                                 userName = userName,
                                 userSubject = userSubject,
@@ -310,15 +311,38 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                             magicCards = cards,
                         };
 
-                        var cosmosClient = new CosmosClient(cosmosDatabaseId, cosmosCollectionId, log);
-                        await cosmosClient.AddItemToContainerAsync(cardGenerationRecord);
-                        log.LogInformation($"Wrote card generation record to CosmosDB database '{cosmosDatabaseId}' in collection '{cosmosCollectionId}'.");
+                        var cardsCosmosClient = new CosmosClient(cosmosDatabaseId, Constants.CosmosDBCardsCollectionName, log);
+                        await cardsCosmosClient.AddItemToContainerAsync(cardGenerationRecord);
+                        log.LogInformation($"Wrote card generation record to database '{cosmosDatabaseId}'.");
                     }
+
                 }
                 catch (Exception ex)
                 {
-                    // Non-fatal to overall operation, but we did not store the cad.
-                    log.LogError($"Failed to store generated card in database: {ex}");
+                    // Non-fatal to overall operation.
+                    log.LogError($"Failed to store generated card: {ex}");
+                }
+
+                try
+                {
+                    var cosmosDatabaseId = Extensions.GetSettingOrThrow(Constants.CosmosDBDatabaseId);
+                    var usersCosmosClient = new CosmosClient(cosmosDatabaseId, Constants.CosmosDBUsersCollectionName, log);
+                    if (!await usersCosmosClient.DocumentExists(id: userSubject))
+                    {
+                        await usersCosmosClient.AddItemToContainerAsync(new User()
+                        {
+                            userName = userName,
+                            userSubject = userSubject,
+                        });
+                    }
+
+                    await usersCosmosClient.UpdateUserRecord(userSubject, cards.Length, estimatedCost);
+                    log.LogInformation("Updated user record for user '{userSubject}' in database.");
+                }
+                catch (Exception ex)
+                {
+                    // Non-fatal to overall operation.
+                    log.LogError($"Failed to create or update user record: {ex}");
                 }
 
                 return new OkObjectResult(json);

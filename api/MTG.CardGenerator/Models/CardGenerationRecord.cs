@@ -1,10 +1,12 @@
-﻿namespace MTG.CardGenerator.Models
+﻿using System;
+
+namespace MTG.CardGenerator.Models
 {
     public class CardGenerationRecord
     {
         public string id { get; set; }
         public GenerationMetaData generationMetadata { get; set; }
-        public User user { get; set; }
+        public UserMeta user { get; set; }
         public MagicCard[] magicCards { get; set; }
     }
 
@@ -20,9 +22,11 @@
         public string openAIResponse { get; set; }
         public bool includeExplanation { get; set; }
         public bool userSupliedKey { get; set; }
+        public double estimatedCost { get; set; }
+        public DateTime timestamp { get; set; }
     }
 
-    public class User
+    public class UserMeta
     {
         public string userName { get; set; }
         public string userSubject { get; set; }

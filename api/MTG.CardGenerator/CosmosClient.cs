@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
+using User = MTG.CardGenerator.Models.User;
 
 namespace MTG.CardGenerator
 {
@@ -64,6 +65,7 @@ namespace MTG.CardGenerator
                log?.LogError($"Error: {e.Message}");
             }
         }
+
         public async Task<List<CardGenerationRecord>> GetMagicCards<MagicCard>(string userSubject, int top = 50)
         {
             var queryDefinition = new QueryDefinitionWrapper(
@@ -74,8 +76,37 @@ namespace MTG.CardGenerator
                 .WithParameter("@userSubject", userSubject)
                 .WithParameter("@top", top);
 
-            List<CardGenerationRecord> userCards = await QueryCosmosDB<CardGenerationRecord>(queryDefinition.QueryDefinition).ConfigureAwait(true);
+            List<CardGenerationRecord> userCards = await QueryCosmosDB<CardGenerationRecord>(queryDefinition.QueryDefinition);
             return userCards;
+        }
+
+        public async Task<ItemResponse<User>> UpdateUserRecord(string userSubject, int numberOfNewCards, double cardGenerationEstimatedCost)
+        {
+            return await PatchDocument<User>(userSubject, userSubject, new List<PatchOperation>
+            {
+                PatchOperation.Increment("/totalCostOfCardsGenerated", cardGenerationEstimatedCost),
+                PatchOperation.Increment("/numberOfCardsGenerated", numberOfNewCards),
+                PatchOperation.Add("/lastActiveTime", DateTime.Now.ToUniversalTime())
+            });
+        }
+
+        public async Task<bool> DocumentExists(string id)
+        {
+            try
+            {
+                // Use point read which is the most efficient way to read a single item by its id with retrieving item content.
+                ResponseMessage response = await container.ReadItemStreamAsync(id, new PartitionKey(id));
+                return response.StatusCode == HttpStatusCode.OK;
+            }
+            catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+            {
+                return false;
+            }
+        }
+
+        private async Task<ItemResponse<T>> PatchDocument<T>(string id, string partitionkey, List<PatchOperation> patches)
+        {
+            return await container.PatchItemAsync<T>(id, new PartitionKey(partitionkey), patches);
         }
 
         private async Task<List<T>> QueryCosmosDB<T>(QueryDefinition query, int batchNumber = 0, bool throwIfNoResults = false, string queryName = "", bool verbose = false, ILogger log = null)
