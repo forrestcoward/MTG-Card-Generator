@@ -4,6 +4,7 @@ using MTG.CardGenerator.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using User = MTG.CardGenerator.Models.User;
@@ -49,20 +50,18 @@ namespace MTG.CardGenerator
             return new Microsoft.Azure.Cosmos.CosmosClient(endpointUrl, accessKey);
         }
 
-        public async Task AddItemToContainerAsync<T>(T item)
+        public async Task<T> AddItemToContainerAsync<T>(T item)
         {
             try
             {
-                T response = await container.CreateItemAsync<T>(item);
+                T response = await container.CreateItemAsync(item);
+                return response;
             }
             catch (CosmosException ce)
             {
                 var baseException = ce.GetBaseException();
-                log?.LogError($"{ce.StatusCode} error occurred: {ce.Message}, Inner Exception: {baseException.Message}");
-            }
-            catch (Exception e)
-            {
-               log?.LogError($"Error: {e.Message}");
+                log?.LogError($"{ce.StatusCode} error occurred inserting item: {ce.Message}, Inner Exception: {baseException.Message}");
+                throw;
             }
         }
 
@@ -80,14 +79,39 @@ namespace MTG.CardGenerator
             return userCards;
         }
 
-        public async Task<ItemResponse<User>> UpdateUserRecord(string userSubject, int numberOfNewCards, double cardGenerationEstimatedCost)
+        public async Task<User> GetUserRecord(string userSubject)
         {
-            return await PatchDocument<User>(userSubject, userSubject, new List<PatchOperation>
+            var queryDefinition = new QueryDefinitionWrapper(
+                @"SELECT TOP 1 * FROM c WHERE c.userSubject = @userSubject")
+            .WithParameter("@userSubject", userSubject);
+
+            User user = (await QueryCosmosDB<User>(queryDefinition.QueryDefinition)).FirstOrDefault();
+            return user;
+        }
+
+        public async Task<ItemResponse<User>> UpdateUserRecord(User user, string userSubject, int numberOfNewCards, double cardGenerationEstimatedCost, bool userSuppliedApiKey)
+        {
+            var operations = new List<PatchOperation>
             {
                 PatchOperation.Increment("/totalCostOfCardsGenerated", cardGenerationEstimatedCost),
                 PatchOperation.Increment("/numberOfCardsGenerated", numberOfNewCards),
                 PatchOperation.Add("/lastActiveTime", DateTime.Now.ToUniversalTime())
-            });
+            };
+
+            if (user.lastActiveTime?.Date != DateTime.Now.ToUniversalTime().Date)
+            {
+                // If this is the first time the user has generated today, reset their number of free card generations allowed in the day.
+                operations.Add(PatchOperation.Replace("/numberOfFreeCardsGeneratedToday", 0));
+            }
+
+
+            if (!userSuppliedApiKey)
+            {
+                // Otherwise, increment the number of cards generated today.
+                operations.Add(PatchOperation.Increment("/numberOfFreeCardsGeneratedToday", numberOfNewCards));
+            }
+
+            return await PatchDocument<User>(userSubject, userSubject, operations);
         }
 
         public async Task<bool> DocumentExists(string id)

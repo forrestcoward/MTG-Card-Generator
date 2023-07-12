@@ -10,5 +10,6 @@ namespace MTG.CardGenerator.Models
         public long numberOfCardsGenerated { get; set; } = 0;
         public DateTime? lastActiveTime { get; set; } = null;
         public long totalCostOfCardsGenerated { get; set; } = 0;
+        public int numberOfFreeCardsGeneratedToday { get; set; } = 0;
     }
 }

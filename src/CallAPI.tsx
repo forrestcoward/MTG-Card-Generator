@@ -162,10 +162,6 @@ async function httpGet(url: string, msalResult: AuthenticationResult | undefined
     let data = await response.text();
 
     if (!response.ok) {
-      if (data == "Backend call failure") {
-        data = "The backend timed out after 45 seconds while generating your card. This is a known issue that will be fixed soon. Sorry! :( Try using GPT-3 or turning off the 'Explain Yourself' setting for faster generation."
-      }
-
       if (response.status == 401 || response.status == 403)  {
         throw new Error("You are not authorized to use this API. Please sign in and try again.")
       }

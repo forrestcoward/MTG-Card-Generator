@@ -40,10 +40,12 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
 
         const string GenerateCardSystemPromptWithExplanation = $@"
 You are an assistant who works as a Magic: The Gathering card designer. You like complex cards with interesting mechanics. The cards you generate should obey the Magic 'color pie' design rules. The cards you generate should also obey the the Magic: The Gathering comprehensive rules as much as possible.
-You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'text', 'flavorText', 'pt', 'rarity', 'explanation', and 'funnyexplanation' properties. The 'explanation' property should explain why the card was created the way it was. The 'funnyexplanation' property should be a hilarious explanation of why the card was created the way it was.
+You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'text', 'flavorText', 'pt', 'rarity', 'explanation', and 'funnyExplanation' properties. The 'explanation' property should explain why the card was created the way it was. The 'funnyExplanation' property should be a hilarious explanation of why the card was created the way it was.
 Do not explain the cards or explain your reasoning. Only return the JSON of cards named 'cards'.";
 
         const double temperature = 1;
+
+        const int AllowedFreeGenerationsPerDay = 60;
 
         static readonly ImageSize imageSize = ImageSize._1024;
 
@@ -54,7 +56,8 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             log?.LogInformation($"User prompt: {rawUserPrompt.Replace("\n", "")}");
             var model = (string)req.Query["model"];
             var includeExplanation = bool.TryParse(req.Query["includeExplanation"], out bool result) && result;
-            var apiKey = (string)req.Query["openAIApiKey"];
+            var userSuppliedApiKey = (string)req.Query["openAIApiKey"];
+            var cosmosDatabaseId = Extensions.GetSettingOrThrow(Constants.CosmosDBDatabaseId);
             var userSuppliedKey = true;
             var tokensUsed = 0;
             var estimatedCost = 0.0;
@@ -69,21 +72,40 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             var userName = Extensions.GetClaim(jwtToken, "name", defaultValue: "Anonymous");
             var userSubject = Extensions.GetClaim(jwtToken, "sub", defaultValue: "Anonymous");
             var userLoggedIn = !userSubject.Equals("Anonymous", StringComparison.OrdinalIgnoreCase);
+            var usersCosmosClient = new CosmosClient(cosmosDatabaseId, Constants.CosmosDBUsersCollectionName, log);
+            var user = await usersCosmosClient.GetUserRecord(userSubject);
 
-            if (string.IsNullOrWhiteSpace(apiKey))
+            // If the user is logged in and has not provided an API key, limit the number of free generations they can do per day.
+            if (userLoggedIn && string.IsNullOrWhiteSpace(userSuppliedApiKey))
+            {
+                if (user != null)
+                {
+                    if (user.lastActiveTime?.Date == DateTime.Now.ToUniversalTime().Date && user.numberOfFreeCardsGeneratedToday >= AllowedFreeGenerationsPerDay)
+                    {
+                        return new ContentResult
+                        {
+                            StatusCode = 429,
+                            Content = $"You have exceeded your number of free generations for the day ({AllowedFreeGenerationsPerDay}). Try again tomorrow or enter your own Open AI API key in the settings to continue generating!",
+                        };
+                    }
+                }
+            }
+
+            var apiKeyToUse = userSuppliedApiKey;
+            if (string.IsNullOrWhiteSpace(apiKeyToUse))
             {
                 userSuppliedKey = false;
 
                 if (userLoggedIn)
                 {
-                    apiKey = Environment.GetEnvironmentVariable(Constants.OpenAIApiKeyLoggedIn);
+                    apiKeyToUse = Environment.GetEnvironmentVariable(Constants.OpenAIApiKeyLoggedIn);
                 }
 
-                if (string.IsNullOrWhiteSpace(apiKey))
+                if (string.IsNullOrWhiteSpace(apiKeyToUse))
                 {
-                    apiKey = Environment.GetEnvironmentVariable(Constants.OpenAIApiKey);
+                    apiKeyToUse = Environment.GetEnvironmentVariable(Constants.OpenAIApiKey);
 
-                    if (string.IsNullOrWhiteSpace(apiKey))
+                    if (string.IsNullOrWhiteSpace(apiKeyToUse))
                     {
                         return new BadRequestObjectResult("No valid OpenAI API key was provided. Please set your OpenAI API key in the settings and try again.");
                     }
@@ -113,7 +135,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
 
             try
             {
-                var api = new OpenAIAPI(new APIAuthentication(apiKey));
+                var api = new OpenAIAPI(new APIAuthentication(apiKeyToUse));
                 var openAICards = Array.Empty<BasicCard>();
 
                 for (var attempt = 0; attempt < 5; attempt++)
@@ -276,7 +298,6 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     var blobStorageEndpoint = Extensions.GetSettingOrThrow(Constants.BlobStorageEndpoint);
                     var blobStorageContainerName = Extensions.GetSettingOrThrow(Constants.BlobStorageContainerName);
                     var blobStorageAccessKey = Extensions.GetSettingOrThrow(Constants.BlobStorageAccessKey);
-                    var cosmosDatabaseId = Extensions.GetSettingOrThrow(Constants.CosmosDBDatabaseId);
 
                     // For each generated card, store the card image in blob storage and insert a record into the database.
                     foreach (var card in cards)
@@ -325,19 +346,20 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
 
                 try
                 {
-                    var cosmosDatabaseId = Extensions.GetSettingOrThrow(Constants.CosmosDBDatabaseId);
-                    var usersCosmosClient = new CosmosClient(cosmosDatabaseId, Constants.CosmosDBUsersCollectionName, log);
-                    if (!await usersCosmosClient.DocumentExists(id: userSubject))
+                    if (userLoggedIn)
                     {
-                        await usersCosmosClient.AddItemToContainerAsync(new User()
+                        if (user == null)
                         {
-                            userName = userName,
-                            userSubject = userSubject,
-                        });
-                    }
+                            user = await usersCosmosClient.AddItemToContainerAsync(new User()
+                            {
+                                userName = userName,
+                                userSubject = userSubject,
+                            });
+                        }
 
-                    await usersCosmosClient.UpdateUserRecord(userSubject, cards.Length, estimatedCost);
-                    log.LogInformation("Updated user record for user '{userSubject}' in database.");
+                        await usersCosmosClient.UpdateUserRecord(user, userSubject, cards.Length, estimatedCost, !string.IsNullOrWhiteSpace(userSuppliedApiKey));
+                        log.LogInformation($"Updated user record for user '{userSubject}' in database.");
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -393,12 +415,12 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     else if (!userSuppliedKey && userLoggedIn)
                     {
                         errorMessage = $"Error: The OpenAI API key provided by this website was invalid. Please supply your own Open AI API key in the settings to continue generating Magic: The Gathering cards!";
-                        log?.LogError($"Invalid API key provided in website config: {apiKey.GetAsObfuscatedSecret(4)}");
+                        log?.LogError($"Invalid API key provided in website config: {apiKeyToUse.GetAsObfuscatedSecret(4)}");
                     }
                     else
                     {
                         errorMessage = $"Error: The OpenAI API key provided by this website was invalid. Please try logging in or supplying your own Open AI API key in the settings to continue generating Magic: The Gathering cards!";
-                        log?.LogError($"Invalid API key provided in website config: {apiKey.GetAsObfuscatedSecret(4)}");
+                        log?.LogError($"Invalid API key provided in website config: {apiKeyToUse.GetAsObfuscatedSecret(4)}");
                     }
                 }
 

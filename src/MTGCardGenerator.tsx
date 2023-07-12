@@ -13,7 +13,6 @@ import "./app.css";
 import loadingIcon from './card-backgrounds/staff.png'
 // @ts-ignore
 import settingsIcon from './card-backgrounds/settings.png'
-import { AuthenticatedTemplate, MsalAuthenticationTemplate, UnauthenticatedTemplate } from '@azure/msal-react';
 
 export interface MTGCardGeneratorProps { 
   msalInstance: PublicClientApplication;
