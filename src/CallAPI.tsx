@@ -1,7 +1,7 @@
-import { Configuration, CreateImageRequestSizeEnum, OpenAIApi } from "openai";
 import { BasicCard, MagicCard } from "./Card";
 import { AuthenticationResult, PublicClientApplication } from "@azure/msal-browser";
 
+/*
 async function MakeOpenAIChatComletionRequest(apiKey:string, userPrompt:string, systemPrompt:string, temperature:number = 1, model:string = "gpt-3.5-turbo") : Promise<string> {
   const configuration = new Configuration({
     apiKey: apiKey,
@@ -42,6 +42,7 @@ async function MakeOpenAIImageCreateRequest(apiKey:string, imagePrompt:string) :
       throw "Error: Invalid response from OpenAI.createImage. See console.log for more details."
   }
 }
+*/
 
 export async function RetrieveMsalToken(msal: PublicClientApplication, scopes: string[]): Promise<AuthenticationResult | undefined> {
   const account = msal.getAllAccounts()[0];
