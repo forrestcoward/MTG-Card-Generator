@@ -39,6 +39,9 @@ export class MyCards extends React.Component<MyCardsProps, MyCardsState> {
 
   getUserCards() {
     GetUserMagicCards(this.props.msalInstance).then((cards) => {
+      cards.forEach(card => {
+        card.showPrompt = true
+      })
       this.setState({cards: cards, loading: false})
     }).catch((error) => {
       console.log(error)

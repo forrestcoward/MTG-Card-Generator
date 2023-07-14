@@ -5,6 +5,8 @@ import "./nav-bar.css";
 
 // @ts-ignore
 import siteIcon from '../card-backgrounds/site-icon.png'
+import { Dropdown, Space } from 'antd';
+import { CaretDownFilled, DatabaseOutlined, DownOutlined, HomeOutlined, LogoutOutlined, SmileOutlined } from '@ant-design/icons';
 
 export const NavigationBar = () => {
     const { instance, inProgress } = useMsal();
@@ -46,6 +48,38 @@ export const NavigationBar = () => {
 
     // <img width={30} height={30} src={siteIcon}></img>
 
+    const items = [
+      {
+        key: '1',
+        label: (
+          <a href="/">
+            Home
+          </a>
+        ),
+        icon: <HomeOutlined />
+      },
+      {
+        key: '2',
+        label: (
+          <a href="/MyCards">
+            My Cards
+          </a>
+        ),
+        icon: <DatabaseOutlined />,
+      },
+      {
+        key: '3',
+        label: (
+          <a onClick={handleLogoutPopup}>
+            Logout
+          </a>
+        ),
+        icon: <LogoutOutlined />,
+        disabled: false,
+        danger: true,
+      }
+    ];
+
     return (
       <>
         <div className="navbar">
@@ -56,27 +90,19 @@ export const NavigationBar = () => {
               </div>
             </li>
             <AuthenticatedTemplate>
-              <li className="navbar-item">
-                <div>
-                  Welcome, {activeAccount && activeAccount.name ? activeAccount.name : 'Unknown'}!
-                </div>
-              </li>
-              <li className="navbar-item">
-                <div>
-                  <a href="/">Generate</a>
-                </div>
-              </li>
-              <li className="navbar-item">
-                <div>
-                  <a href="/MyCards">My Cards</a>
-                </div>
-              </li>
-              <li className="navbar-item">
-                <div>
-                  <button className="loginButton" onClick={handleLogoutPopup}>
-                    Logout
-                  </button>
-                </div>
+              <li>
+                <Dropdown menu={{ items }}>
+                  <a onClick={(e) => e.preventDefault()}>
+                    <div className='navbar-item'>
+                      <Space>
+                        <div>
+                          {activeAccount && activeAccount.name ? activeAccount.name : 'Unknown'}
+                        </div>
+                        <CaretDownFilled />
+                      </Space>
+                    </div>
+                  </a>
+                </Dropdown>
               </li>
             </AuthenticatedTemplate>
             <UnauthenticatedTemplate>

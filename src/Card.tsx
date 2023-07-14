@@ -1,4 +1,5 @@
 import React from "react";
+import { Image } from 'antd';
 import { getRandomInt } from "./Utility";
 
 export interface BasicCard {
@@ -97,6 +98,7 @@ export class MagicCard {
   userPrompt: string
   explanation: string
   funnyExplanation: string
+  showPrompt: boolean = false
 
   constructor(card: BasicCard) {
     this.name = card.name
@@ -380,6 +382,41 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
   render() {
     const card = this.state.card
     const oracleEditTextAreaRows = card.textDisplay.length * 3
+
+    let explanationJsx = <div></div>
+    if (card.explanation || card.showPrompt) {
+      // If an explanation was generated, show it.
+      if (card.explanation) {
+        explanationJsx =
+          <div>
+            <h3 className="card-explanation-header">{card.name}</h3>
+            <div className="card-meta card-explanation">
+              The card <b>{card.name}</b> was generated based on the prompt.. 
+              <br/>
+              <br/>
+              "<b><i>{card.userPrompt}</i></b>"
+              <br/>
+              <br/>
+              {card.explanation}
+              <br/>
+              <br/>
+              {card.funnyExplanation}
+            </div>
+          </div>
+      } else if (card.showPrompt) {
+        explanationJsx =
+          <div>
+            <h3 className="card-explanation-header">{card.name}</h3>
+            <div className="card-meta card-explanation">
+              The card <b>{card.name}</b> was generated based on the prompt.. 
+              <br/>
+              <br/>
+              "<b><i>{card.userPrompt}</i></b>"
+            </div>
+          </div>
+      }
+    }
+
     return (
       <div>
         <div className="card-container">
@@ -403,7 +440,9 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
                     </div>
                 }
               </div>
-              <img className={card.cardFrameArtClassName} src={card.imageUrl} />
+              <div className={card.cardFrameArtClassName}>
+                <Image height={"100%"} width={"100%"} src={card.imageUrl} />
+              </div>
               <div className={card.cardFrameTypeLineClassName}>
                  {!this.state.editMode ?
                     <h1 className="type name-type-size">{card.typeLine}</h1> :
@@ -456,23 +495,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
             </div>
           </div>
         </div>
-        {card.explanation && 
-          <div>
-            <h3 className="card-explanation-header">{card.name}</h3>
-            <div className="card-meta card-explanation">
-              The card <b>{card.name}</b> was generated based on the prompt.. 
-              <br/>
-              <br/>
-              "<b><i>{card.userPrompt}</i></b>"
-              <br/>
-              <br/>
-              {card.explanation}
-              <br/>
-              <br/>
-              {card.funnyExplanation}
-            </div>
-          </div>
-        }
+        {explanationJsx}
       </div>
     )
   }

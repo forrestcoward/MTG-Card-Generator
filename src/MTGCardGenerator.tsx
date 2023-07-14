@@ -48,7 +48,7 @@ const defaultPrompt:string = "is from the Dominaria plane."
 const defaultModel:string= "gpt-4"
 
 const modelSettings = [
-  { name: "GPT 4", id: "gpt-4", value: false, group: "model-settings", description: "The most advanced model to date. Will generate the most unique cards, but is slower than other models." },
+  { name: "GPT 4", id: "gpt-4", value: false, group: "model-settings", description: "The most advanced, capable model to date, but is slower than other models." },
   { name: "GPT 3.5", id: "gpt-3.5", value: true, group: "model-settings", description: "Less powerful than GPT 4, but faster and less expensive. The default."},
 ]
 
@@ -59,7 +59,7 @@ const modelSettingsGroup : SettingGroup = {
 }
 
 const cardGenerationSettings = [
-  { name: "Explain Yourself", id: "setting-provide-explanation", value: false, description: "Include an explanation below the card explaining the reasoning behind its creation. The AI can be even be quite funny! This will slow down card generation and will not apply to cards generated without this setting on." },
+  { name: "Explain Yourself", id: "setting-provide-explanation", value: false, description: "Explain why the card was generated. The AI can be even be quite funny! Will slow down card generation." },
 ]
 
 const cardGenerationSettingsGroup : SettingGroup = {
@@ -160,7 +160,7 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
       <div>
         <div className="outerContainer">
           <div className="container">
-            <p>Generate me a Magic: The Gathering card that...</p>
+            <p>Generate a Magic: The Gathering card...</p>
             <label>
               <input type="text" className="userInputPrompt" placeholder={defaultPrompt} onChange={this.handleChangeInput} value={this.state.prompt} />
             </label>

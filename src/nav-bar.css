@@ -3,6 +3,10 @@
   color: white
 }
 
+.navbar-item {
+  color: white
+}
+
 .navbar-item div a:hover {
   color: grey
 }
@@ -19,6 +23,7 @@
   background-color: rgba(0, 0, 0, 0.764);
   padding: 5px;
   align-items: center;
+  height: 35px;
 }
 
 .navbar-item {

@@ -419,7 +419,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     }
                     else
                     {
-                        errorMessage = $"Error: The OpenAI API key provided by this website was invalid. Please try logging in or supplying your own Open AI API key in the settings to continue generating Magic: The Gathering cards!";
+                        errorMessage = $"Error: Please log in or supply your own Open AI API key in the settings to generate Magic: The Gathering cards!";
                         log?.LogError($"Invalid API key provided in website config: {apiKeyToUse.GetAsObfuscatedSecret(4)}");
                     }
                 }
