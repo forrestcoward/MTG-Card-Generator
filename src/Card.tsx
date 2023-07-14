@@ -385,7 +385,6 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
 
     let explanationJsx = <div></div>
     if (card.explanation || card.showPrompt) {
-      // If an explanation was generated, show it.
       if (card.explanation) {
         explanationJsx =
           <div>
@@ -441,7 +440,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
                 }
               </div>
               <div className={card.cardFrameArtClassName}>
-                <Image height={"100%"} width={"100%"} src={card.imageUrl} />
+                <Image loading="lazy" height={"100%"} width={"100%"} src={card.imageUrl} />
               </div>
               <div className={card.cardFrameTypeLineClassName}>
                  {!this.state.editMode ?
