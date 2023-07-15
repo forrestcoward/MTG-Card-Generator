@@ -86,7 +86,7 @@ export const NavigationBar = () => {
           <ul className="navbar-items">
             <li className="navbar-item navbar-brand">
               <div>
-                MTG Card Generator
+                <a style={{textDecoration:"none"}} href="/">MTG Card Generator</a>
               </div>
             </li>
             <AuthenticatedTemplate>

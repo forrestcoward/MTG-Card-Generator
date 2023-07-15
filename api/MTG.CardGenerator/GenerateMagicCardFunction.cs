@@ -302,7 +302,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     // For each generated card, store the card image in blob storage and insert a record into the database.
                     foreach (var card in cards)
                     {
-                        var blobUrl = await Extensions.StoreImageInBlobAsync(card.ImageUrl, blobStorageName, blobStorageEndpoint, blobStorageContainerName, blobStorageAccessKey, log);
+                        var blobUrl = await Extensions.StoreImageInBlobAsync(card.ImageUrl, blobStorageName, blobStorageEndpoint, blobStorageContainerName, blobStorageAccessKey, log: log);
                         card.ImageUrl = blobUrl;
 
                         // Insert this record into the database.

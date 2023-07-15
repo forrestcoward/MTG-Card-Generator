@@ -1,9 +1,11 @@
 ﻿using Azure.Storage.Blobs;
+using ImageMagick;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -92,31 +94,60 @@ namespace MTG.CardGenerator
             return userSubject;
         }
 
-        public static async Task<string> DownloadImageAsB64(string imageUrl)
+        private static Stream CompressImage(Stream imageStream, int quality, int width)
         {
-            var imageBytes = await client.GetByteArrayAsync(imageUrl);
-            var base64Image = Convert.ToBase64String(imageBytes);
-            return base64Image;
+            if (quality <= 0 || quality > 100)
+            {
+                throw new ArgumentException($"Parameter '{nameof(quality)}' must be between 0 and 100");
+            }
+
+            var outStream = new MemoryStream();
+            using (var image = new MagickImage(imageStream))
+            {
+                // Between 0 and 100.
+                image.Quality = quality;
+                // Resize image. Will maintain aspect ratio of h=0.
+                image.Resize(width, 0);
+                image.Write(outStream);
+            }
+
+            // Reset stream position.
+            outStream.Position = 0;
+            return outStream;
         }
 
-        public static async Task<string> StoreImageInBlobAsync(string imageUrl, string blobStorageName, string blobStorageEndpoint, string blobStorageContainerName, string blobStorageAccessKey, ILogger log = null)
+        private static MemoryStream ToMemoryStream(this Stream inputStream)
+        {
+            var memoryStream = new MemoryStream();
+            inputStream.CopyTo(memoryStream);
+            memoryStream.Position = 0;
+            return memoryStream;
+        }
+
+        public static async Task<string> StoreImageInBlobAsync(string imageUrl, string blobStorageName, string blobStorageEndpoint, string blobStorageContainerName, string blobStorageAccessKey, bool uploadUncompressedImage = false, ILogger log = null)
         {
             using var response = await client.GetAsync(imageUrl, HttpCompletionOption.ResponseHeadersRead);
             response.EnsureSuccessStatusCode();
 
-            var blobName = $"{Guid.NewGuid()}.jpg";
+            var guid = Guid.NewGuid();
+            var blobName = $"{guid}.jpg";
+            var uncompressedBlobName = $"{guid}.full.jpg";
 
-            // Create a StorageSharedKeyCredential which we will use to build the BlobServiceClient.
             var sharedKeyCredential = new Azure.Storage.StorageSharedKeyCredential(blobStorageName, blobStorageAccessKey);
-
-            // Create a BlobServiceClient that will authenticate through the StorageSharedKeyCredential.
             var blobServiceClient = new BlobServiceClient(new Uri(blobStorageEndpoint), sharedKeyCredential);
-
-            // Get reference to the blobContainer and the blob to upload.
             var blobContainerClient = blobServiceClient.GetBlobContainerClient(blobStorageContainerName);
-            var blobClient = blobContainerClient.GetBlobClient(blobName);
 
-            await blobClient.UploadAsync(await response.Content.ReadAsStreamAsync());
+            var stream = (await response.Content.ReadAsStreamAsync()).ToMemoryStream();
+
+            var blobClient = blobContainerClient.GetBlobClient(blobName);
+            // Will reduce size of image by over 80%.
+            await blobClient.UploadAsync(CompressImage(stream, quality: 65, width: 500));
+
+            if (uploadUncompressedImage)
+            {
+                var blobClientUncompressed = blobContainerClient.GetBlobClient(uncompressedBlobName);
+                await blobClientUncompressed.UploadAsync(stream);
+            }
 
             log?.LogInformation($"Image '{imageUrl}' uploaded to blob '{blobClient.Uri}'.");
             return blobClient.Uri.ToString();
