@@ -2,11 +2,10 @@ import { AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from '@azure/
 import { loginRequest } from './AuthConfig';
 import React from 'react';
 import "./nav-bar.css";
-
 // @ts-ignore
-import siteIcon from '../card-backgrounds/site-icon.png'
+import githubIcon from "./card-backgrounds/github-mark-white.png"
 import { Dropdown, Space } from 'antd';
-import { CaretDownFilled, DatabaseOutlined, DownOutlined, HomeOutlined, LogoutOutlined, SmileOutlined } from '@ant-design/icons';
+import { CaretDownFilled, DatabaseOutlined, HomeOutlined, LogoutOutlined } from '@ant-design/icons';
 
 export const NavigationBar = () => {
     const { instance, inProgress } = useMsal();
@@ -45,9 +44,7 @@ export const NavigationBar = () => {
     const handleLogoutPopup = () => {
         instance.logoutPopup();
     };
-
-    // <img width={30} height={30} src={siteIcon}></img>
-
+    
     const items = [
       {
         key: '1',
@@ -85,8 +82,11 @@ export const NavigationBar = () => {
         <div className="navbar">
           <ul className="navbar-items">
             <li className="navbar-item navbar-brand">
-              <div>
-                <a style={{textDecoration:"none"}} href="/">MTG Card Generator</a>
+              <div style={{display:'flex', padding:'none', textAlign:'center'}}>
+                <a style={{textDecoration:"none", textAlign:'center'}} href="/">MTG Card Generator</a>
+                <a href="https://github.com/forrestcoward/MTG-Card-Generator" target="_blank">
+                  <img title="View source code on GitHub" src={githubIcon} width="17" height="17" style={{paddingLeft:"7px"}}></img>
+                </a>
               </div>
             </li>
             <AuthenticatedTemplate>
@@ -109,7 +109,7 @@ export const NavigationBar = () => {
               <li className="navbar-item">
                 <div>
                   <button className="loginButton" onClick={handleLogin}>
-                          Login
+                    Login
                   </button>
                 </div>
               </li>
