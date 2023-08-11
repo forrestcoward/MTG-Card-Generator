@@ -1,7 +1,6 @@
 # Magic: The Gathering Card Generator
 
-## > [View Live Website](https://ambitious-meadow-0e2e9ce0f.3.azurestaticapps.net/) <
-
+## [https://www.mtgcardgenerator.com](https://www.mtgcardgenerator.com/)
 The Magic: The Gathering Card Generator is a project that uses AI (particuarlly, OpenAI's offerings) to generate realistic Magic: The Gathering cards. Generated cards are rendered beautifully using CSS.
 
 Users can enter a prompt describing the type of Magic card they would like to generate, and the response will be a be a rendered image of a realistic card that matches the prompt. Here is an example card generation:
@@ -28,6 +27,7 @@ There are two components to this project:
 1. An Azure, C# back end which is an Azure function API built on top of other Azure resources (Cosmos DB, Blob storage).
     * The backend API generates cards based on a prompt and an image based on the card text. A simple, stupid, rules engine is implemented to fix common problems on generated cards.
     * [Azure B2C](https://learn.microsoft.com/en-us/azure/active-directory-b2c/overview) is used as the SSO provider for the login experience.
+    * If the user is logged on, a history is stored for the user so generated cards can be viewed later.
 2. A React, Typescript single-page application (SPA). The front end allows the user to login, enter a prompt and then renders the generated card on the page once the API response is received.
 
 ## Build & Run the Backend
@@ -86,7 +86,7 @@ This application is deployed entirely within a personal Azure subscription. Push
 
 | Branch | Azure Static Web App SPA  | Azure Function |
 |---|---|---|
-| `main` | https://ambitious-meadow-0e2e9ce0f.3.azurestaticapps.net/ | https://mtgcardgenerator.azurewebsites.net |
+| `main` | https://www.mtgcardgenerator.com/ <br /> https://ambitious-meadow-0e2e9ce0f.3.azurestaticapps.net/ | https://mtgcardgenerator.azurewebsites.net |
 | `development` | https://ambitious-meadow-0e2e9ce0f-development.eastus2.3.azurestaticapps.net/ | https://mtgcardgenerator-development.azurewebsites.net |
 
 All other resources required to make the website work are already deployed and configured in Azure.
