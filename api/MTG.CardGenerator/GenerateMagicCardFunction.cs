@@ -45,7 +45,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
 
         const double temperature = 1;
 
-        const int AllowedFreeGenerationsPerDay = 60;
+        const int AllowedFreeGenerationsPerDay = 30;
 
         static readonly ImageSize imageSize = ImageSize._1024;
 
