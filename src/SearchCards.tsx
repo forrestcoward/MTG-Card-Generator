@@ -80,7 +80,7 @@ export class SearchCards extends React.Component<SearchCardsProps, SearchCardsSt
               <tbody>
                 <tr>
                   <td>
-                    <button className="generateButton" type="submit" onClick={() => this.handleSubmit()} disabled={this.state.isLoading}>Generate!</button>
+                    <button className="generateButton" type="submit" onClick={() => this.handleSubmit()} disabled={this.state.isLoading}>Search!</button>
                   </td>
                   <td>
                     <img className={this.getLoadingClassName()} src={loadingIcon} />

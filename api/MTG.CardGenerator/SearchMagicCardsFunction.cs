@@ -40,8 +40,6 @@ namespace MTG.CardGenerator
             public string funnyExplanation { get; set; }
         }
 
-        private static string indexName = "generated-cards-index";
-
         [FunctionName("SearchMagicCards")]
         [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
         public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log)
@@ -72,9 +70,9 @@ namespace MTG.CardGenerator
                 }
 
                 var cardsCosmosClient = new CosmosClient(cosmosDatabaseId, Constants.CosmosDBCardsCollectionName, log);
-                var matchingCards = await cardsCosmosClient.GetMagicCards(ids);
+                var cards = await cardsCosmosClient.GetMagicCards(ids);
 
-                var generatedCards = matchingCards.Select(x => x.magicCards.FirstOrDefault()).ToArray();
+                var generatedCards = cards.Select(x => x.magicCards.FirstOrDefault()).Take(30).ToArray();
                 var json = JsonConvert.SerializeObject(new SearchMagicCardsFunctionResponse() { Cards = generatedCards });
                 return new OkObjectResult(json);
             }
