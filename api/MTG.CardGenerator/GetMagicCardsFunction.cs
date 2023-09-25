@@ -14,7 +14,7 @@ namespace MTG.CardGenerator
 {
     public static class GetMagicCardsFunction
     {
-        internal class GetMagicCardFunctionResponse
+        private class GetMagicCardFunctionResponse
         {
             [JsonProperty("cards")]
             public MagicCard[] Cards { get; set; }
@@ -34,7 +34,7 @@ namespace MTG.CardGenerator
 
                 var databaseId = Extensions.GetSettingOrThrow(Constants.CosmosDBDatabaseId);
                 var cosmosClient = new CosmosClient(databaseId, Constants.CosmosDBCardsCollectionName, log);
-                var userCards = await cosmosClient.GetMagicCards<MagicCard>(userSubject);
+                var userCards = await cosmosClient.GetUsersMagicCards(userSubject);
                 log.LogInformation($"Found {userCards.Count} cards for user '{userSubject}'.");
 
                 var generatedCards = userCards.Select(x => x.magicCards.FirstOrDefault()).ToArray();

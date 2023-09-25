@@ -20,19 +20,19 @@ using System.Threading.Tasks;
 
 namespace MTG.CardGenerator
 {
-    internal class OpenAIMagicCardResponse
-    {
-        public BasicCard[] Cards { get; set; }
-    }
-
-    internal class GenerateMagicCardFunctionResponse
-    {
-        [JsonProperty("cards")]
-        public MagicCard[] Cards { get; set; }
-    }
-
     public static class GenerateMagicCardFunction
     {
+        private class OpenAIMagicCardResponse
+        {
+            public BasicCard[] Cards { get; set; }
+        }
+
+        private class GenerateMagicCardFunctionResponse
+        {
+            [JsonProperty("cards")]
+            public MagicCard[] Cards { get; set; }
+        }
+
         const string GenerateCardSystemPrompt = $@"
 You are an assistant who works as a Magic: The Gathering card designer. You like complex cards with interesting mechanics. The cards you generate should obey the Magic 'color pie' design rules and obey the the Magic: The Gathering comprehensive rules.
 You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'text', 'flavorText', 'pt', and 'rarity'.

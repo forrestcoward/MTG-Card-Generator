@@ -6,6 +6,7 @@
     <UserSecretsId>b8a636c1-8453-4afa-a9e5-ae9d18fe7352</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Azure.Search.Documents" Version="11.4.0" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.16.0" />
     <PackageReference Include="DarkLoop.Azure.Functions.Authorize" Version="3.1.2" />
     <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="13.1.3" />

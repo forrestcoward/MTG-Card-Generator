@@ -18,6 +18,9 @@
         public const string BlobStorageContainerName = "BlobStorageContainerName";
         public const string BlobStorageAccessKey = "BlobStorageAccessKey";
         public const string DefaultUserSubject = "DefaultUserSubject";
+        public const string CognitiveSearchEndpoint = "CognitiveSearchEndpoint";
+        public const string CognitiveSearchConnectionKey = "CognitiveSearchConnectionKey";
+        public const string CognitiveSearchCardSearchIndexName = "CognitiveSearchCardSearchIndexName";
         // Constants.
         public const string APIAuthorizationScope = "generate.mtg.card";
         public const string CosmosDBCardsCollectionName = "generated-cards";

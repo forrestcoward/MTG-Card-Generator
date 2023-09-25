@@ -32,7 +32,6 @@ namespace MTG.CardGenerator
             container = database.CreateContainerIfNotExistsAsync(ContainerId, "/id").Result;
             log = logger;
         }
-
         private static Microsoft.Azure.Cosmos.CosmosClient InitializeCosmosClient()
         {
             var endpointUrl = Environment.GetEnvironmentVariable(Constants.CosmosDBEndpointUrl);
@@ -65,7 +64,7 @@ namespace MTG.CardGenerator
             }
         }
 
-        public async Task<List<CardGenerationRecord>> GetMagicCards<MagicCard>(string userSubject, int top = 50)
+        public async Task<List<CardGenerationRecord>> GetUsersMagicCards(string userSubject, int top = 50)
         {
             var queryDefinition = new QueryDefinitionWrapper(
                     @"SELECT TOP @top *
@@ -75,7 +74,19 @@ namespace MTG.CardGenerator
                 .WithParameter("@userSubject", userSubject)
                 .WithParameter("@top", top);
 
-            List<CardGenerationRecord> userCards = await QueryCosmosDB<CardGenerationRecord>(queryDefinition.QueryDefinition);
+            var userCards = await QueryCosmosDB<CardGenerationRecord>(queryDefinition.QueryDefinition);
+            return userCards;
+        }
+
+        public async Task<List<CardGenerationRecord>> GetMagicCards(IEnumerable<string> ids)
+        {
+            ids = ids.Select(x => $"'{x}'");
+            var queryDefinition = new QueryDefinitionWrapper(
+                @$"SELECT *
+                    FROM c
+                    WHERE ARRAY_CONTAINS([{string.Join(",", ids)}], c.id)");
+
+            var userCards = await QueryCosmosDB<CardGenerationRecord>(queryDefinition.QueryDefinition);
             return userCards;
         }
 

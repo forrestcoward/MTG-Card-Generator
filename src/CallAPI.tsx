@@ -128,6 +128,37 @@ export async function GenerateMagicCardRequest(userPrompt: string, model: string
     return cards.map(card => new MagicCard(card));
 }
 
+export async function SearchMagicCardsRequest(query: string, msal: PublicClientApplication): Promise<MagicCard[]> {
+  let url = 'https://mtgcardgenerator.azurewebsites.net/api/SearchMagicCards';
+
+  if (location.hostname === "ambitious-meadow-0e2e9ce0f-development.eastus2.3.azurestaticapps.net") {
+    url = 'https://mtgcardgenerator-development.azurewebsites.net/api/SearchMagicCards';
+  }
+
+  if (location.hostname === "localhost") {
+    url = 'http://localhost:7071/api/SearchMagicCards';
+  }
+
+  var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
+
+  const params: Record<string, string> = {
+    query: query,
+  };
+
+  let cards:BasicCard[] = []
+  await httpGet(url, token, params)
+    .then(data => {
+      cards = JSON.parse(data).cards;
+    })
+    .catch(error => {
+      console.error('There was an error generating card JSON:', error);
+      throw error
+    });
+
+    return cards.map(card => new MagicCard(card));
+}
+
+
 async function httpGet(url: string, msalResult: AuthenticationResult | undefined, params?: Record<string, string>): Promise<any> {
   const sanitizedParams: Record<string, string> = {};
   if (params) {
