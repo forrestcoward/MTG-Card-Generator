@@ -1,0 +1,22 @@
+{
+  "@odata.context": "https://mtgcardgenerator-cogsearch.search.windows.net/$metadata#indexers/$entity",
+  "@odata.etag": "\"0x8DBBD3046ADBEFB\"",
+  "name": "generated-cards-indexer",
+  "description": "Indexes generated Magic: The Gathering cards.",
+  "dataSourceName": "mtgcardgenerator-db",
+  "skillsetName": null,
+  "targetIndexName": "generated-cards-index",
+  "disabled": null,
+  "schedule": null,
+  "parameters": {
+    "batchSize": null,
+    "maxFailedItems": null,
+    "maxFailedItemsPerBatch": null,
+    "base64EncodeKeys": false,
+    "configuration": {}
+  },
+  "fieldMappings": [],
+  "outputFieldMappings": [],
+  "cache": null,
+  "encryptionKey": null
+}

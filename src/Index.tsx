@@ -38,7 +38,6 @@ if (rootNode) {
             <Routes>
               <Route path="/" element={ <MTGCardGenerator msalInstance={msalInstance} /> } />
               <Route path="MyCards" element={ <MyCards msalInstance={msalInstance} /> } />
-              <Route path="SearchCards" element={ <SearchCards msalInstance={msalInstance} /> } />
             </Routes>
             </MsalProvider>
           </BrowserRouter>

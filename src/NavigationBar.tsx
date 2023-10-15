@@ -64,6 +64,7 @@ export const NavigationBar = () => {
         ),
         icon: <DatabaseOutlined />,
       },
+      /*
       {
         key: '3',
         label: (
@@ -73,8 +74,9 @@ export const NavigationBar = () => {
         ),
         icon: <SearchOutlined />,
       },
+      */
       {
-        key: '4',
+        key: '3',
         label: (
           <a onClick={handleLogoutPopup}>
             Logout
