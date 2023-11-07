@@ -1,5 +1,5 @@
 import { BasicCard, MagicCard } from "./Card";
-import { AuthenticationResult, PublicClientApplication } from "@azure/msal-browser";
+import { AuthenticationResult, InteractionRequiredAuthError, PublicClientApplication } from "@azure/msal-browser";
 
 /*
 async function MakeOpenAIChatComletionRequest(apiKey:string, userPrompt:string, systemPrompt:string, temperature:number = 1, model:string = "gpt-3.5-turbo") : Promise<string> {
@@ -58,6 +58,10 @@ export async function RetrieveMsalToken(msal: PublicClientApplication, scopes: s
   return await msal.acquireTokenSilent(accessTokenRequest).then(async function (response) {
     return response;
   }).catch(async function (error) {
+    if (error instanceof InteractionRequiredAuthError) {
+      // fallback to interaction when silent call fails
+      return msal.acquireTokenPopup(accessTokenRequest);
+    }
     console.error("Error retrieving MSAL token:" + error)
     return undefined;
   });

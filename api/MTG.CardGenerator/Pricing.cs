@@ -23,6 +23,7 @@ namespace MTG.CardGenerator
             // GPT 4
             new ModelCost() { Model = "gpt-4-0314", InputPrice = .03 / 1000, OutputPrice = .06 / 1000 },
             new ModelCost() { Model = "gpt-4-0613", InputPrice = .03 / 1000, OutputPrice = .06 / 1000 },
+            new ModelCost() { Model = "gpt-4-1106-preview", InputPrice = .01 / 1000, OutputPrice = .03 / 1000 },
         };
 
         public static double GetCost(ChatResult result)

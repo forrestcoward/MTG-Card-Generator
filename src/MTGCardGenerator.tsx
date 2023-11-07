@@ -48,7 +48,7 @@ const defaultPrompt:string = "is from the Dominaria plane."
 const defaultModel:string= "gpt-4"
 
 const modelSettings = [
-  { name: "GPT 4", id: "gpt-4", value: false, group: "model-settings", description: "The most advanced, capable model to date, but is slower than other models." },
+  { name: "GPT 4", id: "gpt-4-1106-preview", value: false, group: "model-settings", description: "The most advanced, capable model to date, but is slower than other models." },
   { name: "GPT 3.5", id: "gpt-3.5", value: true, group: "model-settings", description: "Less powerful than GPT 4, but faster and less expensive. The default."},
 ]
 
