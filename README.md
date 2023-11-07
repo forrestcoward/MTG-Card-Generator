@@ -7,7 +7,7 @@ Users can enter a prompt describing the type of Magic card they would like to ge
 
 <p align="center">
   <img src="cards\gpt-generator.png" width="480px" height="700px">
-</p>
+</p> 
 
 # Features
 
