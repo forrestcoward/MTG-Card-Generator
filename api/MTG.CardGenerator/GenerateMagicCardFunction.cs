@@ -127,7 +127,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 {
                     gptModel = Model.GPT4;
                 }
-                else if (model.Equals("gtp-4-turbo", StringComparison.OrdinalIgnoreCase))
+                else if (model.Equals("gpt-4-1106-preview", StringComparison.OrdinalIgnoreCase))
                 {
                     gptModel = new Model("gpt-4-1106-preview") { OwnedBy = "openai" };
                 }
