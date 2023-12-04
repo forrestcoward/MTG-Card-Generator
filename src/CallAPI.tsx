@@ -96,7 +96,7 @@ export async function GetUserMagicCards(msal: PublicClientApplication): Promise<
     return cards.map(card => new MagicCard(card));
 }
 
-export async function GenerateMagicCardRequest(userPrompt: string, model: string, includeExplanation: boolean, openAIApiKey: string, msal: PublicClientApplication): Promise<MagicCard[]> {
+export async function GenerateMagicCardRequest(userPrompt: string, model: string, includeExplanation: boolean, highQualityImages: boolean, openAIApiKey: string, msal: PublicClientApplication): Promise<MagicCard[]> {
   let url = 'https://mtgcardgenerator.azurewebsites.net/api/GenerateMagicCard';
 
   if (location.hostname === "ambitious-meadow-0e2e9ce0f-development.eastus2.3.azurestaticapps.net") {
@@ -113,6 +113,7 @@ export async function GenerateMagicCardRequest(userPrompt: string, model: string
     userPrompt: userPrompt,
     model: model,
     includeExplanation: includeExplanation.toString(),
+    highQualityImage: highQualityImages.toString(),
   };
 
   if (openAIApiKey) {

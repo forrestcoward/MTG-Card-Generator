@@ -5,12 +5,8 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using OpenAI_API;
-using OpenAI_API.Images;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace MTG.CardGenerator
@@ -25,28 +21,13 @@ namespace MTG.CardGenerator
             {
                 var userPrompt = (string)req.Query["userPrompt"];
                 log?.LogInformation($"User prompt: {userPrompt.Replace("\n", "")}");
-
                 var apiKey = Environment.GetEnvironmentVariable(Constants.OpenAIApiKey);
-                var api = new OpenAIAPI(new APIAuthentication(apiKey));
-
-                // Generate an image for each card.
                 var stopwatch = Stopwatch.StartNew();
-                var response = await api.ImageGenerations.CreateImageAsync(new ImageGenerationRequest()
-                {
-                    NumOfImages = 1,
-                    ResponseFormat = ImageResponseFormat.Url,
-                    Size = ImageSize._1024,
-                    Prompt = userPrompt,
-                });
-
-                var jsonResponse = new Dictionary<string, object>();
-                var urls = response.Data.Select(x => x.Url);
-                jsonResponse["urls"] = urls;
-
+                var url = ImageGenerator.GenerateImage(userPrompt, Constants.Dalle3ModelName, detailedImagePrompt: false, apiKey, log).Result;
                 stopwatch.Stop();
                 log.LogMetric("CreateImageAsync_DurationSeconds", stopwatch.Elapsed.TotalSeconds);
 
-                var json = JsonConvert.SerializeObject(urls);
+                var json = JsonConvert.SerializeObject(new[] {url});
                 return new OkObjectResult(json);
             }
             catch (Exception exception)

@@ -6,10 +6,9 @@ using Microsoft.Extensions.Logging;
 using MTG.CardGenerator.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using OpenAI_API;
-using OpenAI_API.Chat;
-using OpenAI_API.Images;
-using OpenAI_API.Models;
+using OpenAI;
+using OpenAI.Managers;
+using OpenAI.ObjectModels.RequestModels;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -17,6 +16,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using static OpenAI.ObjectModels.StaticValues.ImageStatics;
 
 namespace MTG.CardGenerator
 {
@@ -43,11 +43,11 @@ You are an assistant who works as a Magic: The Gathering card designer. You like
 You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'text', 'flavorText', 'pt', 'rarity', 'explanation', and 'funnyExplanation' properties. The 'explanation' property should explain why the card was created the way it was. The 'funnyExplanation' property should be a hilarious explanation of why the card was created the way it was.
 Do not explain the cards or explain your reasoning. Only return the JSON of cards named 'cards'.";
 
-        const double temperature = 1;
+        const float temperature = 1;
 
-        const int AllowedFreeGenerationsPerDay = 30;
+        const int AllowedFreeGenerationsPerDay = 25;
 
-        static readonly ImageSize imageSize = ImageSize._1024;
+        static readonly string imageSize = Size.Size1024;
 
         [FunctionName("GenerateMagicCard")]
         public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", Route = null)] HttpRequest req, ILogger log)
@@ -56,13 +56,12 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             log?.LogInformation($"User prompt: {rawUserPrompt.Replace("\n", "")}");
             var model = (string)req.Query["model"];
             var includeExplanation = bool.TryParse(req.Query["includeExplanation"], out bool result) && result;
+            var highQualityImage = bool.TryParse(req.Query["highQualityImage"], out bool hd) && hd;
             var userSuppliedApiKey = (string)req.Query["openAIApiKey"];
             var cosmosDatabaseId = Extensions.GetSettingOrThrow(Constants.CosmosDBDatabaseId);
             var userSuppliedKey = true;
             var tokensUsed = 0;
-            var estimatedCost = 0.0;
-            var estimatedChatCompletionCost = 0.0;
-            var estimatedImageGenerationCost = 0.0;
+            var cost = new Cost();
             var openAIResponse = "";
 
             var attemptsToGenerateCard = 0;
@@ -78,7 +77,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             // If the user is logged in and has not provided an API key, limit the number of free generations they can do per day.
             if (userLoggedIn && string.IsNullOrWhiteSpace(userSuppliedApiKey))
             {
-                if (user != null)
+                if (user != null && user.id != "fd42ec51-676d-479a-bab4-b7e7b86887e8")
                 {
                     if (user.lastActiveTime?.Date == DateTime.Now.ToUniversalTime().Date && user.numberOfFreeCardsGeneratedToday >= AllowedFreeGenerationsPerDay)
                     {
@@ -120,26 +119,33 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             var systemPrompt = includeExplanation ? GenerateCardSystemPromptWithExplanation : GenerateCardSystemPrompt;
             var userPromptToSubmit = $"Please generate me one 'Magic: The Gathering card' that has the following description: {rawUserPrompt}";
 
-            var gptModel = Model.GPT4;
+            var gptModel = OpenAI.ObjectModels.Models.Gpt_4;
+            var chatResponseFormat = ChatCompletionCreateRequest.ResponseFormats.Json;
             if (!string.IsNullOrWhiteSpace(model))
             {
                 if (model.Equals("gpt-4", StringComparison.OrdinalIgnoreCase))
                 {
-                    gptModel = Model.GPT4;
+                    gptModel = OpenAI.ObjectModels.Models.Gpt_4;
                 }
                 else if (model.Equals("gpt-4-1106-preview", StringComparison.OrdinalIgnoreCase))
                 {
-                    gptModel = new Model("gpt-4-1106-preview") { OwnedBy = "openai" };
+                    gptModel = OpenAI.ObjectModels.Models.Gpt_4_1106_preview;
                 }
                 else if (model.Equals("gpt-3.5", StringComparison.OrdinalIgnoreCase))
                 {
-                    gptModel = Model.ChatGPTTurbo;
+                    gptModel = OpenAI.ObjectModels.Models.Gpt_3_5_Turbo;
+                    // JSON not supported in gpt-3.5.
+                    chatResponseFormat = ChatCompletionCreateRequest.ResponseFormats.Text;
                 }
             }
 
             try
             {
-                var api = new OpenAIAPI(new APIAuthentication(apiKeyToUse));
+                var openAIService = new OpenAIService(new OpenAiOptions()
+                {
+                    ApiKey = apiKeyToUse
+                });
+
                 var openAICards = Array.Empty<BasicCard>();
 
                 for (var attempt = 0; attempt < 5; attempt++)
@@ -147,22 +153,26 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     attemptsToGenerateCard++;
                     var stopwatch = Stopwatch.StartNew();
 
-                    var response = await api.Chat.CreateChatCompletionAsync(new ChatRequest()
+                    var response = await openAIService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
                     {
-                        Messages = new ChatMessage[]
+                        Messages = new List<ChatMessage>
                         {
-                            new ChatMessage(ChatMessageRole.User, userPromptToSubmit),
-                            new ChatMessage(ChatMessageRole.System, systemPrompt)
+                            ChatMessage.FromUser(userPromptToSubmit),
+                            ChatMessage.FromSystem(systemPrompt),
                         },
-                        Temperature = temperature,
                         Model = gptModel,
+                        Temperature = temperature,
+                        ChatResponseFormat = chatResponseFormat,
                     });
 
-                    actualGPTModelUsed = response.Model.ModelID;
+                    if (!response.Successful)
+                    {
+                        throw new Exception(response.Error.Message);
+                    }
+
+                    actualGPTModelUsed = response.Model;
                     tokensUsed += response.Usage.TotalTokens;
-                    var cost = Pricing.GetCost(response);
-                    estimatedChatCompletionCost += cost;
-                    estimatedCost += cost;
+                    cost.AddChatCost(response);
 
                     openAIResponse = response.Choices[0].Message.Content;
 
@@ -171,10 +181,9 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                         properties: new Dictionary<string, object>()
                         {
                             { "attemptNumber", attemptsToGenerateCard },
-                            { "estimatedCost", estimatedChatCompletionCost },
+                            { "estimatedCost", Pricing.GetCost(response) },
                             { "includeExplanation", includeExplanation.ToString() },
                             { "model", actualGPTModelUsed },
-                            { "requestId", response.RequestId },
                             { "response", response },
                             { "systemPrompt", systemPrompt },
                             { "temperature", temperature },
@@ -226,7 +235,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     }
                 }
 
-                log?.LogInformation($"{tokensUsed} {actualGPTModelUsed} chat completion tokens used (${estimatedChatCompletionCost}).");
+                log?.LogInformation($"{tokensUsed} {actualGPTModelUsed} chat completion tokens used (${cost.TotalCost}).");
 
                 if (openAICards.Length == 0)
                 {
@@ -246,48 +255,51 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 // Parse the cards. If multiple were generated, only process and image for and return one the first one.
                 var cards = openAICards.Select(x => new MagicCard(x)).ToArray().Take(1).ToArray();
 
+                var imageModel = Constants.Dalle2ModelName;
+                if (new Random().Next(1, 4) == 1)
+                {
+                    // 1/3 of the time use Dalle3.
+                    imageModel = Constants.Dalle3ModelName;
+                }
+
+                if (highQualityImage)
+                {
+                    imageModel = Constants.Dalle3ModelName;
+                }
+
                 // Generate an image for each card.
                 foreach (var card in cards)
                 {
                     var stopwatch = Stopwatch.StartNew();
-                    var response = await api.ImageGenerations.CreateImageAsync(new ImageGenerationRequest()
-                    {
-                        NumOfImages = 1,
-                        ResponseFormat = ImageResponseFormat.Url,
-                        Size = imageSize,
-                        Prompt = card.OpenAIImagePrompt,
-                    });
 
-                    var cost = Pricing.GetImageCost(imageSize);
-                    estimatedImageGenerationCost += cost;
-                    estimatedCost += cost;
-
-                    card.ImageUrl = response.Data[0].Url;
-                    log.LogInformation($"Card image url: {card.ImageUrl}");
-
+                    var url = await ImageGenerator.GenerateImage(card.GetImagePrompt(imageModel), imageModel, highQualityImage, apiKeyToUse, log, cost);
+                    card.ImageUrl = url;
                     stopwatch.Stop();
+
+                    cost.AddImageCost(imageSize, imageModel);
+
                     log.LogMetric("CreateImageAsync_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
                         properties: new Dictionary<string, object>()
                         {
-                            { "imagePrompt", card.OpenAIImagePrompt },
+                            { "imagePrompt", card.GetImagePrompt(imageModel) },
+                            { "imageModel", imageModel },
                             { "imageUrl", card.ImageUrl },
-                            { "imageSize", imageSize.ToString() },
-                            { "requestId", response.RequestId },
+                            { "imageSize", imageSize },
                             { "userSubject", userSubject },
-                        }); ;
+                        });
                 }
 
                 var json = JsonConvert.SerializeObject(new GenerateMagicCardFunctionResponse() { Cards = cards });
                 log?.LogInformation($"API JSON response:{Environment.NewLine}{JToken.Parse(json)}");
 
-                log?.LogInformation($"Estimated cost: ${estimatedCost}");
-                log?.LogMetric("GenerateMagicCard_EstimatedCost", estimatedCost, new Dictionary<string, object>()
+                log?.LogInformation($"Estimated cost: ${cost.TotalCost}");
+                log?.LogMetric("GenerateMagicCard_EstimatedCost", cost.TotalCost, new Dictionary<string, object>()
                 {
-                    { "estimatedChatCompletionCost", estimatedChatCompletionCost },
-                    { "estimatedCost", estimatedCost },
-                    { "estimatedImageGenerationCost", estimatedImageGenerationCost },
-                    { "imageSize", imageSize.ToString() },
+                    { "estimatedCost", cost.TotalCost },
+                    { "imageSize", imageSize },
+                    { "imageModel", imageModel },
                     { "includeExplanation", includeExplanation.ToString() },
+                    { "highQualityImage", highQualityImage.ToString() },
                     { "model", actualGPTModelUsed },
                     { "numberOfChatCompletionAttempts", attemptsToGenerateCard },
                     { "systemPrompt", systemPrompt },
@@ -317,7 +329,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                             {
                                 userPrompt = userPromptToSubmit,
                                 systemPrompt = systemPrompt,
-                                imagePrompt = cards.First().OpenAIImagePrompt,
+                                imagePrompt = cards.First().GetImagePrompt(imageModel),
                                 temperature = temperature,
                                 tokensUsed = tokensUsed,
                                 model = actualGPTModelUsed,
@@ -325,7 +337,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                                 openAIResponse = openAIResponse,
                                 includeExplanation = includeExplanation,
                                 userSupliedKey = userSuppliedKey,
-                                estimatedCost = estimatedCost,
+                                estimatedCost = cost.TotalCost,
                                 timestamp = DateTime.Now.ToUniversalTime(),
                             },
                             user = new UserMeta()
@@ -361,7 +373,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                             });
                         }
 
-                        await usersCosmosClient.UpdateUserRecord(user, userSubject, cards.Length, estimatedCost, !string.IsNullOrWhiteSpace(userSuppliedApiKey));
+                        await usersCosmosClient.UpdateUserRecord(user, userSubject, cards.Length, cost.TotalCost, !string.IsNullOrWhiteSpace(userSuppliedApiKey));
                         log.LogInformation($"Updated user record for user '{userSubject}' in database.");
                     }
                 }
@@ -377,21 +389,17 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             {
                 var errorMessage = $"Error: {exception}";
 
-                if (exception.Source == "OpenAI_API" && 
-                    exception.Message.ContainsIgnoreCase("Error at images/generations") && 
-                    exception.Message.ContainsIgnoreCase("Your request was rejected as a result of our safety system"))
+                if (exception.Message.ContainsIgnoreCase("Your request was rejected as a result of our safety system"))
                 {
-                    errorMessage = $"Error: Your request to generate a card for prompt '{rawUserPrompt}' was rejected as a result of the AI language model safety system.";
+                    errorMessage = $"Error: Your request to generate a card for prompt '{rawUserPrompt}' was rejected as a result of the AI language model safety system. Please try again.";
                 }
 
-                if (exception.Source == "OpenAI_API" &&
-                    exception.Message.ContainsIgnoreCase("That model is currently overloaded with other requests"))
+                if (exception.Message.ContainsIgnoreCase("That model is currently overloaded with other requests"))
                 {
                     errorMessage = $"Error: Your request to generate a card for prompt '{rawUserPrompt}' failed because the AI language model is overloaded with requests. Please try again or use a different model.";
                 }
 
-                if (exception.Source == "OpenAI_API" &&
-                    exception.Message.ContainsIgnoreCase("You exceeded your current quota"))
+                if (exception.Message.ContainsIgnoreCase("You exceeded your current quota"))
                 {
                     if (userSuppliedKey)
                     {
@@ -408,8 +416,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     }
                 }
 
-                if (exception.Source == "OpenAI_API" &&
-                    exception.Message.ContainsIgnoreCase("OpenAI rejected your authorization"))
+                if (exception.Message.ContainsIgnoreCase("OpenAI rejected your authorization") || exception.Message.ContainsIgnoreCase("Incorrect API key provided"))
                 {
                     if (userSuppliedKey)
                     {

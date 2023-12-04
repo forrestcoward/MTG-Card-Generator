@@ -25,5 +25,8 @@
         public const string APIAuthorizationScope = "generate.mtg.card";
         public const string CosmosDBCardsCollectionName = "generated-cards";
         public const string CosmosDBUsersCollectionName = "users";
+        // Model constants.
+        public const string Dalle3ModelName = "dall-e-3";
+        public const string Dalle2ModelName = "dall-e-2";
     }
 }

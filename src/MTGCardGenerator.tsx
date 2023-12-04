@@ -59,7 +59,8 @@ const modelSettingsGroup : SettingGroup = {
 }
 
 const cardGenerationSettings = [
-  { name: "Explain Yourself", id: "setting-provide-explanation", value: false, description: "Explain why the card was generated. The AI can be even be quite funny! Will slow down card generation." },
+  { name: "Explain Yourself", id: "setting-provide-explanation", value: false, description: "Explain why the card was generated. The AI can be even be quite funny! May slow down card generation." },
+  { name: "High Quality Images", id: "setting-high-quality-images", value: false, description: "Generate the highest quality art using the state of the art. May slow down card generation considerably." },
 ]
 
 const cardGenerationSettingsGroup : SettingGroup = {
@@ -94,6 +95,10 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
 
   showCardExplanations() : boolean {
     return this.allSettings().find(setting => setting.id == "setting-provide-explanation")?.value ?? true;
+  }
+
+  highQualityImages() : boolean {
+    return this.allSettings().find(setting => setting.id == "setting-high-quality-images")?.value ?? false;
   }
 
   toggleIsSettingsOpen = () => {
@@ -143,7 +148,7 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
       model = modelSetting.id
     }
 
-    GenerateMagicCardRequest(userPrompt, model, this.showCardExplanations(), this.state.userOpenAIKey, this.props.msalInstance).then(cards => {
+    GenerateMagicCardRequest(userPrompt, model, this.showCardExplanations(), this.highQualityImages(), this.state.userOpenAIKey, this.props.msalInstance).then(cards => {
       this.setState({
         response: JSON.stringify(cards),
         cards: [...cards, ...this.state.cards],

@@ -344,30 +344,35 @@ namespace MTG.CardGenerator
         [JsonProperty("funnyExplanation")]
         public string FunnyExplanation { get; set; }
 
-        [JsonIgnore]
-        public string OpenAIImagePrompt
+        public string GetImagePrompt(string imageModel)
         {
-            get
+            var prompt = $"{Name}: {FlavorText}";
+
+            if (Type == CardType.Creature)
             {
-                var prompt = $"{Name}: {FlavorText}";
-
-                if (Type == CardType.Creature)
+                if (imageModel == Constants.Dalle2ModelName)
                 {
-                    prompt = $"An image of '{Name}', a '{Type}', Greg Kutkowski style, digital art";
+                    prompt = $"'An image of {Name}, a {TypeLine}: {FlavorText}. Greg Kutkowski style, digital, fantasy art.";
                 }
-
-                if (Type == CardType.Instant || Type == CardType.Sorcery || Type == CardType.Enchantment || Type == CardType.Artifact)
+                
+                if (imageModel == Constants.Dalle3ModelName)
                 {
-                    prompt = $"An image of '{Name}', that illustrates the following description: {FlavorText}. The image should be Greg Rutkowski style, digital art.";
+                    // Dalle 3 does not like the flavor text in the prompt usually. It leads to a lot of text in the images.
+                    prompt = $"An image of {Name}, a {TypeLine}. Greg Kutkowski style, digital, fantasy art.";
                 }
-
-                if (Type == CardType.Enchantment || Type == CardType.Artifact)
-                {
-                    prompt = $"An image of '{Name}' that illustrates the following description: {FlavorText}. The image should be Greg Rutkowski style, digital art.";
-                }
-
-                return prompt;
             }
+
+            if (Type == CardType.Instant || Type == CardType.Sorcery || Type == CardType.Enchantment || Type == CardType.Artifact)
+            {
+                prompt = $"An image of {Name}: {FlavorText}. Greg Kutkowski style, digital, fantasy art.";
+            }
+
+            if (Type == CardType.Enchantment || Type == CardType.Artifact)
+            {
+                prompt = $"An image of {Name}: {FlavorText}. Greg Kutkowski style, digital, fantasy art.";
+            }
+
+            return prompt;
         }
 
         [JsonIgnore]
