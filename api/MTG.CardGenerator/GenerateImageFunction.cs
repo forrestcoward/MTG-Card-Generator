@@ -23,7 +23,7 @@ namespace MTG.CardGenerator
                 log?.LogInformation($"User prompt: {userPrompt.Replace("\n", "")}");
                 var apiKey = Environment.GetEnvironmentVariable(Constants.OpenAIApiKey);
                 var stopwatch = Stopwatch.StartNew();
-                var url = ImageGenerator.GenerateImage(userPrompt, Constants.Dalle3ModelName, detailedImagePrompt: false, apiKey, log).Result;
+                var url = ImageGenerator.GenerateImage(userPrompt, Constants.Dalle3ModelName, apiKey, log).Result;
                 stopwatch.Stop();
                 log.LogMetric("CreateImageAsync_DurationSeconds", stopwatch.Elapsed.TotalSeconds);
 

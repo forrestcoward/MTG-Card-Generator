@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -271,17 +272,21 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 foreach (var card in cards)
                 {
                     var stopwatch = Stopwatch.StartNew();
+                    var imagePrompt = ImageGenerator.GetImagePromptForCard(card, imageModel);
 
-                    var url = await ImageGenerator.GenerateImage(card.GetImagePrompt(imageModel), imageModel, highQualityImage, apiKeyToUse, log, cost);
+                    if (highQualityImage)
+                    {
+                        imagePrompt = await ImageGenerator.GenerateDetailedImagePrompt(card, imagePrompt, apiKeyToUse, log, cost);
+                    }
+
+                    var url = await ImageGenerator.GenerateImage(imagePrompt, imageModel, apiKeyToUse, log, cost);
                     card.ImageUrl = url;
                     stopwatch.Stop();
-
-                    cost.AddImageCost(imageSize, imageModel);
 
                     log.LogMetric("CreateImageAsync_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
                         properties: new Dictionary<string, object>()
                         {
-                            { "imagePrompt", card.GetImagePrompt(imageModel) },
+                            { "imagePrompt", imagePrompt },
                             { "imageModel", imageModel },
                             { "imageUrl", card.ImageUrl },
                             { "imageSize", imageSize },
@@ -329,7 +334,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                             {
                                 userPrompt = userPromptToSubmit,
                                 systemPrompt = systemPrompt,
-                                imagePrompt = cards.First().GetImagePrompt(imageModel),
+                                imagePrompt = ImageGenerator.GetImagePromptForCard(cards.First(), imageModel),
                                 temperature = temperature,
                                 tokensUsed = tokensUsed,
                                 model = actualGPTModelUsed,

@@ -344,37 +344,6 @@ namespace MTG.CardGenerator
         [JsonProperty("funnyExplanation")]
         public string FunnyExplanation { get; set; }
 
-        public string GetImagePrompt(string imageModel)
-        {
-            var prompt = $"{Name}: {FlavorText}";
-
-            if (Type == CardType.Creature)
-            {
-                if (imageModel == Constants.Dalle2ModelName)
-                {
-                    prompt = $"'An image of {Name}, a {TypeLine}: {FlavorText}. Greg Kutkowski style, digital, fantasy art.";
-                }
-                
-                if (imageModel == Constants.Dalle3ModelName)
-                {
-                    // Dalle 3 does not like the flavor text in the prompt usually. It leads to a lot of text in the images.
-                    prompt = $"An image of {Name}, a {TypeLine}. Greg Kutkowski style, digital, fantasy art.";
-                }
-            }
-
-            if (Type == CardType.Instant || Type == CardType.Sorcery || Type == CardType.Enchantment || Type == CardType.Artifact)
-            {
-                prompt = $"An image of {Name}: {FlavorText}. Greg Kutkowski style, digital, fantasy art.";
-            }
-
-            if (Type == CardType.Enchantment || Type == CardType.Artifact)
-            {
-                prompt = $"An image of {Name}: {FlavorText}. Greg Kutkowski style, digital, fantasy art.";
-            }
-
-            return prompt;
-        }
-
         [JsonIgnore]
         public CardTextLine[] ParsedOracleTextLines { get; }
 
