@@ -15,6 +15,8 @@ Users can enter a prompt describing the type of Magic card they would like to ge
 
 * Generated cards are rendered beautifully using CSS and designed to look like real Magic cards. Realistic card background and symbols are used, and card text is scaled appropriately to fill the content.
 
+* High quality images may optionally be generated using dall-e-3 iterative prompt approach.
+
 * User's may optionally login (via an SSO provider) to have their card generation history stored for viewing later.
 
 # Development Guide
