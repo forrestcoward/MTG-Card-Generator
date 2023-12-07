@@ -1,6 +1,9 @@
 import React from "react";
-import { Image } from 'antd';
+import { Image, Menu, Dropdown } from 'antd';
+import { DownOutlined } from '@ant-design/icons';
 import { getRandomInt } from "./Utility";
+import domtoimage from 'dom-to-image';
+import { saveAs } from 'file-saver';
 
 export interface BasicCard {
   name: string,
@@ -261,9 +264,18 @@ export class MagicCard {
   }
 
   // Adjust the size of the card's text box until it fits within the card.
+  toImage(): Promise<Blob> {
+    const node = document.getElementById(`card-${this.id}`);
+    if (node) {
+      return domtoimage.toBlob(node);
+    } else {
+      return Promise.reject(new Error('Card not found'));
+    }
+  }
+
   adjustFontSize() {
-    const container : HTMLElement | null = document.querySelector(".frame-text-box-" + this.id)
-    const innerContainer : HTMLElement | null = document.querySelector(".frame-text-box-inner-" + this.id)
+    const container : HTMLElement | null = document.querySelector(`.frame-text-box-${this.id}`)
+    const innerContainer : HTMLElement | null = document.querySelector(`.frame-text-box-inner-${this.id}`)
 
     if (!container || !innerContainer) {
       return
@@ -379,9 +391,23 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     this.setState({ editMode: !this.state.editMode, card: updatedCard })
   }
 
+  handleDownload() {
+    this.state.card.toImage().then(blob => {
+      saveAs(blob, `${this.state.card.name}.png`);
+    });
+  }
+
   render() {
-    const card = this.state.card
-    const oracleEditTextAreaRows = card.textDisplay.length * 3
+    const card = this.state.card;
+    const oracleEditTextAreaRows = card.textDisplay.length * 3;
+
+    const menu = (
+      <Menu>
+        <Menu.Item key="1" onClick={this.handleDownload.bind(this)}>
+          Download Image
+        </Menu.Item>
+      </Menu>
+    );
 
     let explanationJsx = <div></div>
     if (card.explanation || card.showPrompt) {
@@ -418,7 +444,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
 
     return (
       <div>
-        <div className="card-container">
+        <div className="card-container" id={`card-${card.id}`}>
           <div className={card.cardDivClassName}>
             <div className="card-frame">
               <div className={card.cardFrameHeaderClassName}>
@@ -488,7 +514,11 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
                 </div>
                 <div className="fbi-center" onClick={(e) => { this.updateEditMode()}}></div>
                 <div className="fbi-right">
-                  &#x99; &amp; &#169; 2023 Chat GPT Turbo
+                  <Dropdown overlay={menu}>
+                    <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
+                      &#x99; &amp; &#169; 2023 Chat GPT Turbo <DownOutlined />
+                    </a>
+                  </Dropdown>
                 </div>
               </div>
             </div>
