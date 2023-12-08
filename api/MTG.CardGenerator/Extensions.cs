@@ -202,8 +202,14 @@ namespace MTG.CardGenerator
         // Add '{' and '}' around legal mana character symbols. This is used to correct improperly formatted mana costs in card titles and oracle text.
         public static string BracketManaSymbols(this string input)
         {
+            // TODO: Need to handle all of this with regex, just a quick fix for now.
+            if (input == "10")
+            {
+                return "{10}";
+            }
+
             // TODO: Define this somewhere more globally. May need to add other symbols too, like 'X' and 'T'.
-            var validManaSymbols = new[] { 'R', 'W', 'G', 'U', 'B', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+            var validManaSymbols = new[] { 'R', 'W', 'G', 'U', 'B', '0','1', '2', '3', '4', '5', '6', '7', '8', '9' };
             var result = new StringBuilder();
             foreach (char c in input)
             {

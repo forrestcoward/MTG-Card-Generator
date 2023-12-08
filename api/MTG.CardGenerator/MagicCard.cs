@@ -337,6 +337,9 @@ namespace MTG.CardGenerator
         [JsonProperty("imageUrl")]
         public string ImageUrl { get; set; }
 
+        [JsonProperty("temporaryImageUrl")]
+        public string TemporaryImageUrl { get; set; }
+
         [JsonProperty("userPrompt")]
         public string UserPrompt { get; set; }
         [JsonProperty("explanation")]

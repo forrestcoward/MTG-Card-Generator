@@ -31,6 +31,10 @@ module.exports = {
       {
         test: /\.png/,
         type: 'asset/resource'
+      },
+      {
+        test: /\.jpg/,
+        type: 'asset/resource'
       }
     ],
   },

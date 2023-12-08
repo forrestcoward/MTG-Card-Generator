@@ -1,9 +1,12 @@
 import React from "react";
 import { Image, Menu, Dropdown } from 'antd';
-import { DownOutlined } from '@ant-design/icons';
+import { DownloadOutlined } from '@ant-design/icons';
 import { getRandomInt } from "./Utility";
-import domtoimage from 'dom-to-image';
 import { saveAs } from 'file-saver';
+
+// @ts-ignore
+import whitePaintBrush from './card-backgrounds/paintbrush-white.png'
+import { toBlob } from 'html-to-image';
 
 export interface BasicCard {
   name: string,
@@ -20,6 +23,7 @@ export interface BasicCard {
   flavorText: string,
   rarity: string,
   imageUrl: string,
+  temporaryImageUrl: string,
   userPrompt: string,
   explanation: string,
   funnyExplanation: string
@@ -96,6 +100,7 @@ export class MagicCard {
   flavorText: string
   rarity: string
   imageUrl: string
+  temporaryImageUrl: string
   setNumberDisplay: string
   id: number
   userPrompt: string
@@ -118,6 +123,7 @@ export class MagicCard {
     this.pt = card.pt
     this.rarity = card.rarity
     this.imageUrl = card.imageUrl
+    this.temporaryImageUrl = card.temporaryImageUrl
     this.setNumberDisplay = getRandomInt(0, 451) + "/" + 451
     this.id = getRandomInt(0, 1000000000)
     this.userPrompt = card.userPrompt
@@ -263,16 +269,27 @@ export class MagicCard {
     return height;
   }
 
-  // Adjust the size of the card's text box until it fits within the card.
-  toImage(): Promise<Blob> {
-    const node = document.getElementById(`card-${this.id}`);
-    if (node) {
-      return domtoimage.toBlob(node);
-    } else {
-      return Promise.reject(new Error('Card not found'));
+  toImage(): Promise<Blob | null> {
+    var node = document.getElementById(`card-${this.id}`);
+    if (!node) {
+      return Promise.reject(new Error('Card node not found in DOM tree to transform to image.'));
+    }
+
+    try {
+      return toBlob(node, { 
+        cacheBust: true,
+        // Get rid of 'margin-top' and 'box-shadow' styles. Causes html-to-image to render incorrectly.
+        style: { 
+          marginTop: '0px',
+          boxShadow: 'none',
+      }, },)
+    }
+    catch (error) {
+      return Promise.reject(error)
     }
   }
 
+  // Adjust the size of the card's text box until it fits within the card.
   adjustFontSize() {
     const container : HTMLElement | null = document.querySelector(`.frame-text-box-${this.id}`)
     const innerContainer : HTMLElement | null = document.querySelector(`.frame-text-box-inner-${this.id}`)
@@ -329,6 +346,7 @@ interface CardDisplayState {
   typeUpdate : string;
   manaCostUpdate: string;
   powerAndToughnessUpdate: string;
+  showTemporaryImage: boolean;
 }
 
 export class CardDisplay extends React.Component<CardDisplayProps, CardDisplayState> {
@@ -342,6 +360,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
       typeUpdate: props.card.typeLine,
       manaCostUpdate: props.card.manaCost,
       powerAndToughnessUpdate: props.card.pt,
+      showTemporaryImage: true,
     };
 
     this.handleCardNameUpdate = this.handleCardNameUpdate.bind(this);
@@ -388,13 +407,28 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     updatedCard.typeLine = this.state.typeUpdate
     updatedCard.manaCost = this.state.manaCostUpdate
     updatedCard.pt = this.state.powerAndToughnessUpdate
+    updatedCard.showPrompt = this.state.card.showPrompt
     this.setState({ editMode: !this.state.editMode, card: updatedCard })
   }
 
+  toggleShowTemporaryImage() {
+    this.setState({ showTemporaryImage: !this.state.showTemporaryImage })
+  }
+
   handleDownload() {
+    // Bit of a hack but html-to-image cannot render the card if the image url is directly from dalle due to CORS.
+    // Note that the dalle image is short lived and will not last ever, we just display it initially because it is higher resolution.
+    // So when the user wants to download, we need to temporarily display our compressed version of the image.
+      this.toggleShowTemporaryImage();
     this.state.card.toImage().then(blob => {
-      saveAs(blob, `${this.state.card.name}.png`);
-    });
+      if (blob != null) {
+        saveAs(blob, `${this.state.card.name}.png`);
+      }
+    }).catch(error => {
+      console.error("Error downloading card as image.")
+    }).finally(() => {
+        this.toggleShowTemporaryImage();
+    })
   }
 
   render() {
@@ -404,7 +438,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     const menu = (
       <Menu>
         <Menu.Item key="1" onClick={this.handleDownload.bind(this)}>
-          Download Image
+          Download Card Image
         </Menu.Item>
       </Menu>
     );
@@ -466,7 +500,10 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
                 }
               </div>
               <div className={card.cardFrameArtClassName}>
+              {this.state.showTemporaryImage ?
+                <Image loading="lazy" height={"100%"} width={"100%"} src={card.temporaryImageUrl ? card.temporaryImageUrl : card.imageUrl} /> :
                 <Image loading="lazy" height={"100%"} width={"100%"} src={card.imageUrl} />
+              }
               </div>
               <div className={card.cardFrameTypeLineClassName}>
                  {!this.state.editMode ?
@@ -510,19 +547,22 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
               <div className="frame-bottom-info inner-margin">
                 <div className="fbi-left">
                   <p>{card.setNumberDisplay} {card.rarityDisplay}</p>
-                  <p>OpenAI &#x2022; <img className="paintbrush" src="https://image.ibb.co/e2VxAS/paintbrush_white.png" alt="paintbrush icon" />Custom Magic</p>
+                  <p>OpenAI &#x2022; <img className="paintbrush" src={whitePaintBrush} alt="paintbrush icon" />Custom Magic</p>
                 </div>
                 <div className="fbi-center" onClick={(e) => { this.updateEditMode()}}></div>
                 <div className="fbi-right">
-                  <Dropdown overlay={menu}>
-                    <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
-                      &#x99; &amp; &#169; 2023 Chat GPT Turbo <DownOutlined />
-                    </a>
-                  </Dropdown>
+                    &#x99; &amp; &#169; 2023 Chat GPT Turbo
                 </div>
               </div>
             </div>
           </div>
+        </div>
+        <div className="card-options">
+          <Dropdown overlay={menu}>
+            <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
+              <DownloadOutlined />
+            </a>
+          </Dropdown>
         </div>
         {explanationJsx}
       </div>

@@ -9,7 +9,6 @@ import { setCardContainerSize } from "./Utility";
 import { AuthenticatedTemplate, UnauthenticatedTemplate } from "@azure/msal-react";
 import { Loader } from "./Loader";
 
-
 export interface MyCardsProps{
   msalInstance: PublicClientApplication
 }
@@ -41,6 +40,8 @@ export class MyCards extends React.Component<MyCardsProps, MyCardsState> {
     GetUserMagicCards(this.props.msalInstance).then((cards) => {
       cards.forEach(card => {
         card.showPrompt = true
+        // Never use the temporary image because it might not exist anymore. Can make this better in the future.
+        card.temporaryImageUrl = card.imageUrl
       })
       this.setState({cards: cards, loading: false})
     }).catch((error) => {

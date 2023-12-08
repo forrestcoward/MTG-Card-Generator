@@ -6,6 +6,7 @@ import { TutorialCard } from './TutorialCard';
 import PopOutSettingsMenu from './PopOutSettingsMenu';
 import { PublicClientApplication } from '@azure/msal-browser';
 
+import "./mana.min.css";
 import "./mtg-card.css";
 import "./app.css";
 
@@ -48,13 +49,13 @@ const defaultPrompt:string = "is from the Dominaria plane."
 const defaultModel:string= "gpt-4"
 
 const modelSettings = [
-  { name: "GPT 4", id: "gpt-4-1106-preview", value: false, group: "model-settings", description: "The most advanced, capable model to date, but is slower than other models." },
-  { name: "GPT 3.5", id: "gpt-3.5", value: true, group: "model-settings", description: "Less powerful than GPT 4, but faster and less expensive. The default."},
+  { name: "GPT 4", id: "gpt-4-1106-preview", value: false, group: "model-settings", description: "The most advanced model, but slower." },
+  { name: "GPT 3.5", id: "gpt-3.5", value: true, group: "model-settings", description: "Less intelligent than GPT 4, but faster."},
 ]
 
 const modelSettingsGroup : SettingGroup = {
   name: "Model",
-  description: "Which langauge model to use when generating Magic cards.",
+  description: "Language model to use.",
   settings: modelSettings,
 }
 
@@ -65,7 +66,7 @@ const cardGenerationSettings = [
 
 const cardGenerationSettingsGroup : SettingGroup = {
   name: "Card Generation",
-  description: "Settings which affect what information to generate.",
+  description: "Customize card generation.",
   settings: cardGenerationSettings,
 }
 

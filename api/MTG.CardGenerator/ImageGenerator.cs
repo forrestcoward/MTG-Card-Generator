@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using OpenAI;
 using OpenAI.Managers;
 using OpenAI.ObjectModels;

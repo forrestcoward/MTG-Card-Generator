@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -280,7 +279,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     }
 
                     var url = await ImageGenerator.GenerateImage(imagePrompt, imageModel, apiKeyToUse, log, cost);
-                    card.ImageUrl = url;
+                    card.TemporaryImageUrl = url;
                     stopwatch.Stop();
 
                     log.LogMetric("CreateImageAsync_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
@@ -294,25 +293,6 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                         });
                 }
 
-                var json = JsonConvert.SerializeObject(new GenerateMagicCardFunctionResponse() { Cards = cards });
-                log?.LogInformation($"API JSON response:{Environment.NewLine}{JToken.Parse(json)}");
-
-                log?.LogInformation($"Estimated cost: ${cost.TotalCost}");
-                log?.LogMetric("GenerateMagicCard_EstimatedCost", cost.TotalCost, new Dictionary<string, object>()
-                {
-                    { "estimatedCost", cost.TotalCost },
-                    { "imageSize", imageSize },
-                    { "imageModel", imageModel },
-                    { "includeExplanation", includeExplanation.ToString() },
-                    { "highQualityImage", highQualityImage.ToString() },
-                    { "model", actualGPTModelUsed },
-                    { "numberOfChatCompletionAttempts", attemptsToGenerateCard },
-                    { "systemPrompt", systemPrompt },
-                    { "temperature", temperature },
-                    { "userSubject", userSubject },
-                    { "userPrompt", userPromptToSubmit },
-                });
-
                 try
                 {
                     var blobStorageName = Extensions.GetSettingOrThrow(Constants.BlobStorageName);
@@ -323,7 +303,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     // For each generated card, store the card image in blob storage and insert a record into the database.
                     foreach (var card in cards)
                     {
-                        var blobUrl = await Extensions.StoreImageInBlobAsync(card.ImageUrl, blobStorageName, blobStorageEndpoint, blobStorageContainerName, blobStorageAccessKey, log: log);
+                        var blobUrl = await Extensions.StoreImageInBlobAsync(card.TemporaryImageUrl, blobStorageName, blobStorageEndpoint, blobStorageContainerName, blobStorageAccessKey, log: log);
                         card.ImageUrl = blobUrl;
 
                         // Insert this record into the database.
@@ -338,7 +318,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                                 temperature = temperature,
                                 tokensUsed = tokensUsed,
                                 model = actualGPTModelUsed,
-                                imageSize = imageSize.ToString(),
+                                imageSize = imageSize,
                                 openAIResponse = openAIResponse,
                                 includeExplanation = includeExplanation,
                                 userSupliedKey = userSuppliedKey,
@@ -387,6 +367,25 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     // Non-fatal to overall operation.
                     log.LogError($"Failed to create or update user record: {ex}");
                 }
+
+                var json = JsonConvert.SerializeObject(new GenerateMagicCardFunctionResponse() { Cards = cards });
+                log?.LogInformation($"API JSON response:{Environment.NewLine}{JToken.Parse(json)}");
+
+                log?.LogInformation($"Estimated cost: ${cost.TotalCost}");
+                log?.LogMetric("GenerateMagicCard_EstimatedCost", cost.TotalCost, new Dictionary<string, object>()
+                {
+                    { "estimatedCost", cost.TotalCost },
+                    { "imageSize", imageSize },
+                    { "imageModel", imageModel },
+                    { "includeExplanation", includeExplanation.ToString() },
+                    { "highQualityImage", highQualityImage.ToString() },
+                    { "model", actualGPTModelUsed },
+                    { "numberOfChatCompletionAttempts", attemptsToGenerateCard },
+                    { "systemPrompt", systemPrompt },
+                    { "temperature", temperature },
+                    { "userSubject", userSubject },
+                    { "userPrompt", userPromptToSubmit },
+                });
 
                 return new OkObjectResult(json);
             }
