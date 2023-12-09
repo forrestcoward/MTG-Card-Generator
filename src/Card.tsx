@@ -288,8 +288,45 @@ export class MagicCard {
     }
   }
 
+  adjustTypeLineSize() {
+    const container : HTMLElement | null = document.getElementById(`type-container-${this.id}`)
+    const innerContainer : HTMLElement | null = document.getElementById(`type-${this.id}`)
+
+    if (!container || !innerContainer) {
+      return
+    }
+    
+    let offset = 25; // Hack, may change when padding changes.
+    let fontSize = window.getComputedStyle(innerContainer, null).getPropertyValue('font-size');
+    let fontSizeFloat = parseFloat(fontSize);
+    while (innerContainer.scrollWidth > container.offsetWidth - offset && fontSizeFloat > 12) {
+        fontSizeFloat--;
+        innerContainer.style.fontSize = fontSizeFloat + "px";
+    }
+  }
+
+  AdjustNameSize() {
+    const container : HTMLElement | null = document.getElementById(`title-container-${this.id}`)
+    const nameContainer : HTMLElement | null = document.getElementById(`name-${this.id}`)
+    const manaContainer : HTMLElement | null = document.getElementById(`mana-${this.id}`)
+
+    if (!container || !nameContainer || !manaContainer) {
+      return
+    }
+
+    let offset = 10; // Hack, may change when adding changes.
+    let fontSize = window.getComputedStyle(nameContainer, null).getPropertyValue('font-size');
+    let fontSizeFloat = parseFloat(fontSize);
+    while ((nameContainer.scrollWidth + manaContainer.scrollWidth) > container.offsetWidth - offset && fontSizeFloat > 12) {
+        fontSizeFloat--;
+        nameContainer.style.fontSize = fontSizeFloat + "px";
+    }
+  }
+
   // Adjust the size of the card's text box until it fits within the card.
   adjustFontSize() {
+    this.adjustTypeLineSize()
+    this.AdjustNameSize()
     const container : HTMLElement | null = document.querySelector(`.frame-text-box-${this.id}`)
     const innerContainer : HTMLElement | null = document.querySelector(`.frame-text-box-inner-${this.id}`)
 
@@ -372,7 +409,9 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
   }
 
   componentDidUpdate(prevProps: Readonly<CardDisplayProps>, prevState: Readonly<CardDisplayState>, snapshot?: any): void {
-    if (this.state.card.rawOracleText != prevState.card.rawOracleText) {
+    if (this.state.card.rawOracleText != prevState.card.rawOracleText || 
+      this.state.card.typeLine != prevState.card.typeLine ||
+      this.state.card.name != prevState.card.name) {
       this.state.card.adjustFontSize()
     }
   }
@@ -478,15 +517,15 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
         <div className="card-container" id={`card-${card.id}`}>
           <div className={card.cardDivClassName}>
             <div className="card-frame">
-              <div className={card.cardFrameHeaderClassName}>
-                <div className="name name-type-size">
+              <div id={`title-container-${card.id}`}  style={{whiteSpace:"pre"}} className={card.cardFrameHeaderClassName}>
+                <div id={`name-${card.id}`} className="name name-type-size">
                   {!this.state.editMode ?
                     <p>{card.name}</p> :
                     <input className="card-edit-name" type="text" value={this.state.nameUpdate} onChange={this.handleCardNameUpdate} />
                   }
                 </div>
                 {!this.state.editMode ?
-                    <div className="mana-symbols">
+                    <div id={`mana-${card.id}`} className="mana-symbols">
                       {card.manaCostTokens.map((manaCostToken, i) => (
                         <i key={card.name + "-manaToken-"+ i} className={MagicCard.getManaClassName(manaCostToken) + " manaCost"} id="mana-icon"></i>
                       ))}
@@ -502,9 +541,9 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
                 <Image loading="lazy" height={"100%"} width={"100%"} src={card.imageUrl} />
               }
               </div>
-              <div className={card.cardFrameTypeLineClassName}>
+              <div id={`type-container-${card.id}`} style={{whiteSpace:"pre"}} className={card.cardFrameTypeLineClassName}>
                  {!this.state.editMode ?
-                    <h1 className="type name-type-size">{card.typeLine}</h1> :
+                    <h1 id={`type-${card.id}`} className="type name-type-size">{card.typeLine}</h1> :
                     <input className="card-edit-type" type="text" value={this.state.typeUpdate} onChange={this.handleCardTypeUpdate} />
                   }
                 <div className="mana-symbols">
