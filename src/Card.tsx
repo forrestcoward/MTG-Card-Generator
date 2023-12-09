@@ -276,7 +276,7 @@ export class MagicCard {
 
     try {
       return toBlob(node, { 
-        cacheBust: true, backgroundColor: 'transparent',
+        cacheBust: true,
         // Get rid of 'margin-top' and 'box-shadow' styles. Causes html-to-image to render incorrectly.
         style: { 
           marginTop: '0px',
@@ -557,7 +557,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
         { this.state.showCardMenu &&
         <div className="card-menu">
           <Tooltip title={<div><b>Prompt: </b>{this.state.card.userPrompt}</div>} placement="left">
-            <QuestionCircleOutlined style={{fontSize: "24px", marginLeft: "3px"}} />
+            <QuestionCircleOutlined style={{fontSize: "30px", marginLeft: "3px"}} />
           </Tooltip>
           { card.explanation ?
           <Tooltip title={
@@ -571,13 +571,13 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
               {card.funnyExplanation}
             </div>
           } overlayInnerStyle={{width: '320px', backgroundColor:'rgba(0, 0, 0, 0.93)' }} placement="left" >
-            <InfoCircleOutlined style={{fontSize: "24px", marginLeft: "3px"}} />
+            <InfoCircleOutlined style={{fontSize: "30px", marginLeft: "3px"}} />
           </Tooltip>
           : null
           }
           <Dropdown overlay={menu}>
             <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
-              <CaretDownFilled style={{fontSize: "24px"}} />
+              <CaretDownFilled style={{fontSize: "30px"}} />
             </a>
           </Dropdown>
         </div>
