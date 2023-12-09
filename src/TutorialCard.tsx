@@ -17,7 +17,8 @@ const _tutorialCard:BasicCard = {
   flavorText: "\"Even the most intelligent of designers will never hope to match the execution and creativity of modern machines. I respect them only as much as they have paved the way, but we will not be looking backwards.\"\n - The Creator",
   rarity: "Mythic",
   imageUrl: tutorialCardWizardImage,
-  userPrompt: "",
+  temporaryImageUrl: '',
+  userPrompt: "Enter a prompt above to start generating!",
   explanation: "",
   funnyExplanation: ""
 }

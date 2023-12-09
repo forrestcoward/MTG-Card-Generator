@@ -1,6 +1,6 @@
 import React from "react";
-import { Image, Menu, Dropdown } from 'antd';
-import { DownloadOutlined } from '@ant-design/icons';
+import { Image, Menu, Dropdown, Tooltip } from 'antd';
+import { CaretDownFilled, CloudDownloadOutlined, EditOutlined, InfoCircleOutlined, QuestionCircleOutlined, SaveFilled } from '@ant-design/icons';
 import { getRandomInt } from "./Utility";
 import { saveAs } from 'file-saver';
 
@@ -106,7 +106,6 @@ export class MagicCard {
   userPrompt: string
   explanation: string
   funnyExplanation: string
-  showPrompt: boolean = false
 
   constructor(card: BasicCard) {
     this.name = card.name
@@ -277,7 +276,7 @@ export class MagicCard {
 
     try {
       return toBlob(node, { 
-        cacheBust: true,
+        cacheBust: true, backgroundColor: 'transparent',
         // Get rid of 'margin-top' and 'box-shadow' styles. Causes html-to-image to render incorrectly.
         style: { 
           marginTop: '0px',
@@ -347,6 +346,7 @@ interface CardDisplayState {
   manaCostUpdate: string;
   powerAndToughnessUpdate: string;
   showTemporaryImage: boolean;
+  showCardMenu: boolean;
 }
 
 export class CardDisplay extends React.Component<CardDisplayProps, CardDisplayState> {
@@ -361,6 +361,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
       manaCostUpdate: props.card.manaCost,
       powerAndToughnessUpdate: props.card.pt,
       showTemporaryImage: true,
+      showCardMenu: true,
     };
 
     this.handleCardNameUpdate = this.handleCardNameUpdate.bind(this);
@@ -407,7 +408,6 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     updatedCard.typeLine = this.state.typeUpdate
     updatedCard.manaCost = this.state.manaCostUpdate
     updatedCard.pt = this.state.powerAndToughnessUpdate
-    updatedCard.showPrompt = this.state.card.showPrompt
     this.setState({ editMode: !this.state.editMode, card: updatedCard })
   }
 
@@ -415,7 +415,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     this.setState({ showTemporaryImage: !this.state.showTemporaryImage })
   }
 
-  handleDownload() {
+  handleCardDownload() {
     // Bit of a hack but html-to-image cannot render the card if the image url is directly from dalle due to CORS.
     // Note that the dalle image is short lived and will not last ever, we just display it initially because it is higher resolution.
     // So when the user wants to download, we need to temporarily display our compressed version of the image.
@@ -431,50 +431,47 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     })
   }
 
+  handleArtDownload() {
+    var img = this.state.card.temporaryImageUrl ? this.state.card.temporaryImageUrl : this.state.card.imageUrl
+    window.open(img, '_blank');
+  }
+
   render() {
     const card = this.state.card;
     const oracleEditTextAreaRows = card.textDisplay.length * 3;
 
     const menu = (
       <Menu>
-        <Menu.Item key="1" onClick={this.handleDownload.bind(this)}>
-          Download Card Image
+        <Menu.Item  onClick={this.handleCardDownload.bind(this)}>
+          <Tooltip title="Download this card as a PNG image" placement="left">
+              <CloudDownloadOutlined style={{fontSize: "20px"}} />
+              <span style={{marginLeft: "5px"}} >Download Card</span>
+          </Tooltip>
         </Menu.Item>
+        <Menu.Item onClick={this.handleArtDownload.bind(this)}>
+          <Tooltip title="Download the card art" placement="left">
+              <CloudDownloadOutlined style={{fontSize: "20px"}} />
+              <span style={{marginLeft: "5px"}} >Download Art</span>
+          </Tooltip>
+        </Menu.Item>
+        {
+        this.state.editMode ? 
+          <Menu.Item onClick={this.updateEditMode.bind(this)}>
+            <Tooltip title="Save the card text" placement='left'>
+              <SaveFilled style={{fontSize: "20px"}} />
+              <span style={{marginLeft: "5px"}} >Save</span>
+            </Tooltip>
+          </Menu.Item>
+        : 
+          <Menu.Item onClick={this.updateEditMode.bind(this)}>
+            <Tooltip title="Modify the card text" placement='left'>
+              <EditOutlined style={{fontSize: "20px"}} />
+              <span style={{marginLeft: "5px"}} >Edit</span>
+            </Tooltip>
+          </Menu.Item>
+        }
       </Menu>
     );
-
-    let explanationJsx = <div></div>
-    if (card.explanation || card.showPrompt) {
-      if (card.explanation) {
-        explanationJsx =
-          <div>
-            <h3 className="card-explanation-header">{card.name}</h3>
-            <div className="card-meta card-explanation">
-              The card <b>{card.name}</b> was generated based on the prompt.. 
-              <br/>
-              <br/>
-              "<b><i>{card.userPrompt}</i></b>"
-              <br/>
-              <br/>
-              {card.explanation}
-              <br/>
-              <br/>
-              {card.funnyExplanation}
-            </div>
-          </div>
-      } else if (card.showPrompt) {
-        explanationJsx =
-          <div>
-            <h3 className="card-explanation-header">{card.name}</h3>
-            <div className="card-meta card-explanation">
-              The card <b>{card.name}</b> was generated based on the prompt.. 
-              <br/>
-              <br/>
-              "<b><i>{card.userPrompt}</i></b>"
-            </div>
-          </div>
-      }
-    }
 
     return (
       <div>
@@ -557,14 +554,34 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
             </div>
           </div>
         </div>
-        <div className="card-options">
+        { this.state.showCardMenu &&
+        <div className="card-menu">
+          <Tooltip title={<div><b>Prompt: </b>{this.state.card.userPrompt}</div>} placement="left">
+            <QuestionCircleOutlined style={{fontSize: "24px", marginLeft: "3px"}} />
+          </Tooltip>
+          { card.explanation ?
+          <Tooltip title={
+            <div>
+              <b>About This Card</b>
+              <br/>
+              <br/>
+              {card.explanation}
+              <br/>
+              <br/>
+              {card.funnyExplanation}
+            </div>
+          } overlayInnerStyle={{width: '320px', backgroundColor:'rgba(0, 0, 0, 0.93)' }} placement="left" >
+            <InfoCircleOutlined style={{fontSize: "24px", marginLeft: "3px"}} />
+          </Tooltip>
+          : null
+          }
           <Dropdown overlay={menu}>
             <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
-              <DownloadOutlined />
+              <CaretDownFilled style={{fontSize: "24px"}} />
             </a>
           </Dropdown>
         </div>
-        {explanationJsx}
+        }
       </div>
     )
   }

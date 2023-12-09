@@ -39,7 +39,6 @@ export class MyCards extends React.Component<MyCardsProps, MyCardsState> {
   getUserCards() {
     GetUserMagicCards(this.props.msalInstance).then((cards) => {
       cards.forEach(card => {
-        card.showPrompt = true
         // Never use the temporary image because it might not exist anymore. Can make this better in the future.
         card.temporaryImageUrl = card.imageUrl
       })

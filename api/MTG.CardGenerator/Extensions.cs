@@ -130,8 +130,8 @@ namespace MTG.CardGenerator
             response.EnsureSuccessStatusCode();
 
             var guid = Guid.NewGuid();
-            var blobName = $"{guid}.jpg";
-            var uncompressedBlobName = $"{guid}.full.jpg";
+            var blobName = $"{guid}.png";
+            var uncompressedBlobName = $"{guid}.full.png";
 
             var sharedKeyCredential = new Azure.Storage.StorageSharedKeyCredential(blobStorageName, blobStorageAccessKey);
             var blobServiceClient = new BlobServiceClient(new Uri(blobStorageEndpoint), sharedKeyCredential);

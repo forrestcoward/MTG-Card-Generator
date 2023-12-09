@@ -63,19 +63,11 @@ body* > {
   margin-left:10px;
 }
 
-.card-explanation-header {
-  text-align: center;
-  margin-top: 15px;
-  margin-bottom: 10px;
+/*
+.ant-tooltip-inner {
+  width: 400px;
 }
-
-.card-explanation {
-  border: 1px solid black;
-  border-spacing: 2px;
-  padding: 10px;
-  border-radius: 2px 10px;
-  background-color: rgb(183 183 183 / 37%);
-}
+*/
 
 .card-background {
   margin: 4% 4% 0 4%;
@@ -684,10 +676,12 @@ p {
     max-width: 10px;
 }
 
-.card-options {
+.card-menu {
     float: right;
+    margin-right: 10px;
+    margin-top: 2px;
 }
 
-.ant-dropdown-link:hover {
+.anticon:hover {
   color: #1890ff;
 }
