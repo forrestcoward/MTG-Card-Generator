@@ -8,6 +8,7 @@ namespace MTG.CardGenerator.Models
         public GenerationMetaData generationMetadata { get; set; }
         public UserMeta user { get; set; }
         public MagicCard[] magicCards { get; set; }
+        public CardBattle cardBattle { get; set; }
     }
 
     public class GenerationMetaData

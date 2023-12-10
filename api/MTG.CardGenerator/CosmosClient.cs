@@ -32,6 +32,7 @@ namespace MTG.CardGenerator
             container = database.CreateContainerIfNotExistsAsync(ContainerId, "/id").Result;
             log = logger;
         }
+
         private static Microsoft.Azure.Cosmos.CosmosClient InitializeCosmosClient()
         {
             var endpointUrl = Environment.GetEnvironmentVariable(Constants.CosmosDBEndpointUrl);
@@ -64,6 +65,46 @@ namespace MTG.CardGenerator
             }
         }
 
+        public async Task<int> GetDocumentCount()
+        {
+            var countQuery = new QueryDefinition("SELECT VALUE COUNT(1) FROM c");
+            var countIterator = container.GetItemQueryIterator<int>(countQuery);
+            var count = 0;
+            while (countIterator.HasMoreResults)
+            {
+                var countResponse = await countIterator.ReadNextAsync();
+                count = countResponse.Resource.First();
+            }
+
+            return count;
+        }
+
+        public async Task<List<T>> GetRandomDocuments<T>(int number)
+        {
+            var result = new List<T>();
+            var count = await GetDocumentCount();
+            var rnd = new Random();
+
+            for (var i = 0; i < number; i++)
+            {
+                var randomOffset = rnd.Next(count);
+
+                // Fetch a random document.
+                var randomDocQuery = new QueryDefinition($"SELECT * FROM c OFFSET {randomOffset} LIMIT 1");
+                var randomDocIterator = container.GetItemQueryIterator<T>(randomDocQuery);
+                while (randomDocIterator.HasMoreResults)
+                {
+                    var randomDocResponse = await randomDocIterator.ReadNextAsync();
+                    foreach (var item in randomDocResponse)
+                    {
+                        result.Add(item);
+                    }
+                }
+            }
+
+            return result;
+        }
+
         public async Task<List<CardGenerationRecord>> GetUsersMagicCards(string userSubject, int top = 50)
         {
             var queryDefinition = new QueryDefinitionWrapper(
@@ -90,6 +131,18 @@ namespace MTG.CardGenerator
             return userCards;
         }
 
+        public async Task<List<CardGenerationRecord>> GetCardBattleLeaders()
+        {
+            var queryDefinition = new QueryDefinitionWrapper(
+                @$"SELECT *
+                    FROM c
+                    Order BY c.cardBattle.victories DESC");
+
+            var leaders = await QueryCosmosDB<CardGenerationRecord>(queryDefinition.QueryDefinition);
+            return leaders;
+        }
+
+
         public async Task<User> GetUserRecord(string userSubject)
         {
             var queryDefinition = new QueryDefinitionWrapper(
@@ -98,6 +151,45 @@ namespace MTG.CardGenerator
 
             User user = (await QueryCosmosDB<User>(queryDefinition.QueryDefinition)).FirstOrDefault();
             return user;
+        }
+
+        public async Task SetCardBattleResult(string winnerId, string loserId)
+        {
+            var winnerDocument = await GetDocument<CardGenerationRecord>(winnerId);
+            var loserDocument = await GetDocument<CardGenerationRecord>(loserId);
+
+            var winnerOperations = new List<PatchOperation>
+            {
+                PatchOperation.Increment("/cardBattle/victories", 1),
+                PatchOperation.Add("/cardBattle/mostRecent", DateTime.Now.ToUniversalTime())
+            };
+
+            if (winnerDocument.cardBattle == null)
+            {
+                winnerOperations.Insert(0,
+                PatchOperation.Add("/cardBattle", new { victories = 0, defeats = 0 }));
+            }
+
+            var loserOperations = new List<PatchOperation>
+            {
+                PatchOperation.Increment("/cardBattle/defeats", 1),
+                PatchOperation.Add("/cardBattle/mostRecent", DateTime.Now.ToUniversalTime())
+            };
+
+            if (loserDocument.cardBattle == null)
+            {
+                loserOperations.Insert(0,
+                PatchOperation.Add("/cardBattle", new { victories = 0, defeats = 0 }));
+            }
+
+            await PatchDocument<CardGenerationRecord>(winnerId, winnerId, winnerOperations);
+            await PatchDocument<CardGenerationRecord>(loserId, loserId, loserOperations);
+        }
+
+        public async Task<T> GetDocument<T>(string id) where T : class
+        {
+            ItemResponse<T> response = await container.ReadItemAsync<T>(id, new PartitionKey(id));
+            return response.Resource;
         }
 
         public async Task<ItemResponse<User>> UpdateUserRecord(User user, string userSubject, int numberOfNewCards, double cardGenerationEstimatedCost, bool userSuppliedApiKey)
