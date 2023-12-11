@@ -124,8 +124,10 @@ body* > {
 .name-type-size {
   font-size: 1.2em;
   font-weight: 600;
+  /*
   position:relative;
   bottom:3px;
+  */
 }
 
 .flavour-text {
@@ -564,7 +566,8 @@ body* > {
 }
 
 #mana-icon {
-    font-size: 1.05em;
+    /*font-size: 1.05em;*/
+    font-size:110%;
     border-radius: 50%;
     margin-right: 5px;
     align-self: center;

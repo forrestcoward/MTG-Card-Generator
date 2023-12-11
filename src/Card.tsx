@@ -328,6 +328,23 @@ export class MagicCard {
     let offset = 25; // Hack, may change when padding changes.
     let fontSize = window.getComputedStyle(innerContainer, null).getPropertyValue('font-size');
     let fontSizeFloat = parseFloat(fontSize);
+
+
+    while (innerContainer.clientHeight / container.clientHeight < .55) {
+      fontSizeFloat++;
+      innerContainer.style.fontSize = fontSizeFloat + "px";
+    }
+
+    while (innerContainer.clientHeight / container.clientHeight > .55) {
+      fontSizeFloat--;
+      innerContainer.style.fontSize = fontSizeFloat + "px";
+
+      if (fontSizeFloat <= 4) {
+        break
+      }
+    }
+
+
     while (innerContainer.scrollWidth > container.offsetWidth - offset && fontSizeFloat > 12) {
         fontSizeFloat--;
         innerContainer.style.fontSize = fontSizeFloat + "px";
@@ -343,9 +360,25 @@ export class MagicCard {
       return
     }
 
-    let offset = 10; // Hack, may change when adding changes.
     let fontSize = window.getComputedStyle(nameContainer, null).getPropertyValue('font-size');
     let fontSizeFloat = parseFloat(fontSize);
+
+    while (nameContainer.clientHeight / container.clientHeight < .7) {
+      fontSizeFloat++;
+      nameContainer.style.fontSize = fontSizeFloat + "px";
+    }
+
+    while (nameContainer.clientHeight / container.clientHeight > .7) {
+      fontSizeFloat--;
+      nameContainer.style.fontSize = fontSizeFloat + "px";
+
+      if (fontSizeFloat <= 4) {
+        break
+      }
+    }
+
+    let offset = 0; // Hack, may change when adding changes.
+
     while ((nameContainer.scrollWidth + manaContainer.scrollWidth) > container.offsetWidth - offset && fontSizeFloat > 12) {
         fontSizeFloat--;
         nameContainer.style.fontSize = fontSizeFloat + "px";
@@ -368,7 +401,7 @@ export class MagicCard {
     let textContainer = innerContainer.children[0] as HTMLElement
     let flavorTextContainer = innerContainer.children[2] as HTMLElement
 
-    const maxFontSize = 24
+    //const maxFontSize = 24
     const minFontSize = 5
     const heightOffset = 30
     let fontSize = parseInt(window.getComputedStyle(textContainer).fontSize)
@@ -376,18 +409,20 @@ export class MagicCard {
     // Make the font size larger until it overflows the container.
     // Make larger first so we can shrink it one notch after.
     while (this.getChildrenClientOffsetHeight(innerContainer) < (container.clientHeight - heightOffset)) {
+      //while (innerContainer.clientHeight < (container.clientHeight - heightOffset)) {
 
       fontSize += .5
       textContainer.style.fontSize = fontSize + 'px'
       flavorTextContainer.style.fontSize = fontSize + 'px'
 
-      if (fontSize >= maxFontSize) {
-        break
-      }
+      //if (fontSize >= maxFontSize) {
+      //  break
+      //}
     }
 
     // Make the font size smaller until it fits the container.
     while (this.getChildrenClientOffsetHeight(innerContainer) > (container.clientHeight - heightOffset)) {
+      //while (innerContainer.clientHeight> (container.clientHeight - heightOffset)) {
       fontSize -= .5
       textContainer.style.fontSize = fontSize + 'px'
       flavorTextContainer.style.fontSize = fontSize + 'px'
