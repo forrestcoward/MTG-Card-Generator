@@ -5,7 +5,7 @@ import "./nav-bar.css";
 // @ts-ignore
 import githubIcon from "./card-backgrounds/github-mark-white.png"
 import { Dropdown, Space } from 'antd';
-import { CaretDownFilled, DatabaseOutlined, HomeOutlined, LogoutOutlined, SearchOutlined } from '@ant-design/icons';
+import { CaretDownFilled, DatabaseOutlined, FireOutlined, HomeOutlined, LogoutOutlined, SearchOutlined } from '@ant-design/icons';
 
 export const NavigationBar = () => {
     const { instance, inProgress } = useMsal();
@@ -64,19 +64,17 @@ export const NavigationBar = () => {
         ),
         icon: <DatabaseOutlined />,
       },
-      /*
       {
         key: '3',
         label: (
-          <a href="/SearchCards">
-            Search Cards
+          <a href="/CardBattle">
+            Card Duel
           </a>
         ),
-        icon: <SearchOutlined />,
+        icon: <FireOutlined />,
       },
-      */
       {
-        key: '3',
+        key: '4',
         label: (
           <a onClick={handleLogoutPopup}>
             Logout

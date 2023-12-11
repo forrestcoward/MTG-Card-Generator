@@ -8,8 +8,8 @@
     "@babel/preset-react": "^7.18.6",
     "@babel/preset-typescript": "^7.21.0",
     "@types/file-saver": "^2.0.7",
-    "@types/react": "^18.2.15",
-    "@types/react-dom": "^18.2.7",
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
     "@types/react-transition-group": "^4.4.6",
     "babel-loader": "^9.1.2",
     "css-loader": "^6.7.3",
@@ -34,12 +34,14 @@
     "@emotion/react": "^11.11.0",
     "@emotion/styled": "^11.11.0",
     "@rc-component/trigger": "^1.14.1",
+    "@use-gesture/react": "^10.3.0",
     "antd": "^5.7.0",
     "file-saver": "^2.0.5",
     "html-to-image": "^1.11.11",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.14.1",
+    "react-swipe-component": "^3.0.0",
     "react-transition-group": "^4.4.5"
   }
 }

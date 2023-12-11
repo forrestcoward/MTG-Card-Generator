@@ -97,9 +97,9 @@ namespace MTG.CardGenerator
             }
         }
 
-        [FunctionName("CardBattle")]
+        [FunctionName("GenerateCardBattle")]
         //[FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
-        public static async Task<IActionResult> RunCardBattle([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log)
+        public static async Task<IActionResult> GenerateCardBattle([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log)
         {
             try
             {

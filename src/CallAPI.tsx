@@ -1,4 +1,4 @@
-import { BasicCard, MagicCard } from "./Card";
+import { BasicCard, CardGenerationRecord, MagicCard } from "./Card";
 import { AuthenticationResult, InteractionRequiredAuthError, PublicClientApplication } from "@azure/msal-browser";
 
 export async function RetrieveMsalToken(msal: PublicClientApplication, scopes: string[]): Promise<AuthenticationResult | undefined> {
@@ -24,22 +24,66 @@ export async function RetrieveMsalToken(msal: PublicClientApplication, scopes: s
   });
 }
 
-export async function GetUserMagicCards(msal: PublicClientApplication): Promise<MagicCard[]> {
+const productionApiUrl = 'https://mtgcardgenerator.azurewebsites.net/api';
+const developmentApiUrl  = 'https://mtgcardgenerator-development.azurewebsites.net/api';
+const developmentHostName = 'ambitious-meadow-0e2e9ce0f-development.eastus2.3.azurestaticapps.net';
+const localApiUrl = 'http://localhost:7071/api';
 
-  let url = 'https://mtgcardgenerator.azurewebsites.net/api/GetMagicCards';
+function getApiUrl(apiName : string): string {
+  var baseUrl = productionApiUrl;
 
-  if (location.hostname === "ambitious-meadow-0e2e9ce0f-development.eastus2.3.azurestaticapps.net") {
-    url = 'https://mtgcardgenerator-development.azurewebsites.net/api/GetMagicCards';
+  if (location.hostname === developmentHostName) {
+    baseUrl = developmentApiUrl
   }
 
   if (location.hostname === "localhost") {
-    url = 'http://localhost:7071/api/GetMagicCards';
+    baseUrl = localApiUrl;
   }
 
+  return `${baseUrl}/${apiName}`;
+}
+
+export async function GenerateCardBattle(msal: PublicClientApplication): Promise<CardGenerationRecord[]> {
+
+  let url = getApiUrl('GenerateCardBattle');
   var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
 
   const params: Record<string, string> = { };
+  let cardGenerationRecords:CardGenerationRecord[] = []
+  await httpGet(url, token, params)
+    .then(data => {
+      cardGenerationRecords = JSON.parse(data).cards;
+    })
+    .catch(error => {
+      console.error('There was an error generating a card battle:', error);
+      throw error
+    });
 
+    return cardGenerationRecords;
+}
+
+export async function CardBattleResult(winnerId: string, loserId: string, msal: PublicClientApplication) {
+
+  let url = getApiUrl('CardBattleResult');
+  var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
+
+  const params: Record<string, string> = { "winnerId": winnerId, "loserId": loserId};
+  await httpGet(url, token, params)
+    .then(data => {
+    })
+    .catch(error => {
+      console.error('There was an error declaring card battle result:', error);
+      throw error
+    });
+}
+
+
+export async function GetUserMagicCards(msal: PublicClientApplication): Promise<MagicCard[]> {
+
+  let url = getApiUrl('GetMagicCards');
+  var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
+
+  const params: Record<string, string> = { };
   let cards:BasicCard[] = []
   await httpGet(url, token, params)
     .then(data => {
@@ -54,16 +98,7 @@ export async function GetUserMagicCards(msal: PublicClientApplication): Promise<
 }
 
 export async function GenerateMagicCardRequest(userPrompt: string, model: string, includeExplanation: boolean, highQualityImages: boolean, openAIApiKey: string, msal: PublicClientApplication): Promise<MagicCard[]> {
-  let url = 'https://mtgcardgenerator.azurewebsites.net/api/GenerateMagicCard';
-
-  if (location.hostname === "ambitious-meadow-0e2e9ce0f-development.eastus2.3.azurestaticapps.net") {
-    url = 'https://mtgcardgenerator-development.azurewebsites.net/api/GenerateMagicCard';
-  }
-
-  if (location.hostname === "localhost") {
-    url = 'http://localhost:7071/api/GenerateMagicCard';
-  }
-
+  let url = getApiUrl('GenerateMagicCard');
   var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
 
   const params: Record<string, string> = {
@@ -91,16 +126,7 @@ export async function GenerateMagicCardRequest(userPrompt: string, model: string
 }
 
 export async function SearchMagicCardsRequest(query: string, msal: PublicClientApplication): Promise<MagicCard[]> {
-  let url = 'https://mtgcardgenerator.azurewebsites.net/api/SearchMagicCards';
-
-  if (location.hostname === "ambitious-meadow-0e2e9ce0f-development.eastus2.3.azurestaticapps.net") {
-    url = 'https://mtgcardgenerator-development.azurewebsites.net/api/SearchMagicCards';
-  }
-
-  if (location.hostname === "localhost") {
-    url = 'http://localhost:7071/api/SearchMagicCards';
-  }
-
+  let url = getApiUrl('SearchMagicCards');
   var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
 
   const params: Record<string, string> = {

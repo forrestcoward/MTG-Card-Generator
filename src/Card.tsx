@@ -85,6 +85,31 @@ const manaTokenToCssCharacter : Record<string, string> = {
   "{X}": "x",
 }
 
+export interface Cardbattle {
+  victories: number,
+  defeats: number,
+}
+
+export interface GenerationMetadata {
+  model: string,
+}
+
+export interface User {
+  username: string,
+}
+
+export interface CardGenerationRecords {
+  cards: CardGenerationRecord[]
+}
+
+export interface CardGenerationRecord {
+  id: string
+  user: User
+  magicCards: BasicCard[]
+  cardBattle: Cardbattle
+  generationMetadata: GenerationMetadata
+}
+
 export class MagicCard {
   name: string
   manaCost: string
@@ -259,6 +284,10 @@ export class MagicCard {
   static getManaClassName(manaToken: string) {
     return `ms ms-${manaTokenToCssCharacter[manaToken]} ms-padding`
   }
+
+  static getManaClassNameForTitle(manaToken: string) {
+    return `ms ms-${manaTokenToCssCharacter[manaToken]} ms-padding-title`
+  }
   
   private getChildrenClientOffsetHeight(element: HTMLElement) {
     let height = 0;
@@ -372,6 +401,7 @@ export class MagicCard {
 
 interface CardDisplayProps {
   card: MagicCard;
+  showCardMenu: boolean;
 }
 
 interface CardDisplayState {
@@ -398,7 +428,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
       manaCostUpdate: props.card.manaCost,
       powerAndToughnessUpdate: props.card.pt,
       showTemporaryImage: true,
-      showCardMenu: true,
+      showCardMenu: props.showCardMenu,
     };
 
     this.handleCardNameUpdate = this.handleCardNameUpdate.bind(this);
@@ -527,7 +557,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
                 {!this.state.editMode ?
                     <div id={`mana-${card.id}`} className="mana-symbols">
                       {card.manaCostTokens.map((manaCostToken, i) => (
-                        <i key={card.name + "-manaToken-"+ i} className={MagicCard.getManaClassName(manaCostToken) + " manaCost"} id="mana-icon"></i>
+                        <i key={card.name + "-manaToken-"+ i} className={MagicCard.getManaClassNameForTitle(manaCostToken) + " manaCost"} id="mana-icon"></i>
                       ))}
                     </div> :
                     <div className="card-edit-manaCost-container">

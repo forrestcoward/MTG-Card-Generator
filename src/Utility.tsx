@@ -1,14 +1,14 @@
 import { MagicCard } from "./Card";
 
 // Dynamically adjust card sizes
-export function setCardContainerSize() {
+export function setCardContainerSize(minWidth: number = 700) {
   const cardContainerClass = '.card-container';
   const cardContainerRule = findCSSRule(cardContainerClass);
   const cardMetaClass = '.card-meta'
-  const cardMetaRule = findCSSRule(cardMetaClass);
+  //const cardMetaRule = findCSSRule(cardMetaClass);
   // Scale the card entirely based on the card width.
   const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
-  const cardWidth = Math.min(440, vw)
+  const cardWidth = Math.min(minWidth, vw - 16)
   const cardHeight = ((cardWidth * 3.6) / 2.5);
 
   if (cardContainerRule) {
@@ -16,15 +16,16 @@ export function setCardContainerSize() {
     cardContainerRule.style.height = `${cardHeight}px`;
 
     // Card explanations.
-    if (cardMetaRule) {
-      cardMetaRule.style.width  = `${cardWidth-24}px`;
-    }
+    //if (cardMetaRule) {
+    //  cardMetaRule.style.width  = `${cardWidth-24}px`;
+    //}
   }
 
   const cardBackgroundClass = '.card-background';
   const cardBackgroundRule = findCSSRule(cardBackgroundClass);
   if (cardBackgroundRule) {
-    cardBackgroundRule.style.height = `${cardHeight - 90}px`;
+    //cardBackgroundRule.style.height = `${cardHeight - 90}px`;
+    //cardBackgroundRule.style.height = `100%`;
   }
 }
 
