@@ -545,7 +545,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     return (
       <div>
         <div className="card-container" id={`card-${card.id}`}>
-          <div className={card.cardDivClassName}>
+        <div className={card.cardDivClassName}></div>
             <div className="card-frame">
               <div id={`title-container-${card.id}`}  style={{whiteSpace:"pre"}} className={card.cardFrameHeaderClassName}>
                 <div id={`name-${card.id}`} className="name name-type-size">
@@ -621,7 +621,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
                 </div>
               </div>
             </div>
-          </div>
+
         </div>
         { this.state.showCardMenu &&
         <div className="card-menu">

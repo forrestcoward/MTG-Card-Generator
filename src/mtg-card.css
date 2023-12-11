@@ -70,15 +70,16 @@ body* > {
 */
 
 .card-background {
-  margin: 4% 4% 0 4%;
+  margin: 4% 4% 4% 4%;
   border-top-left-radius: 6px;
   border-top-right-radius: 6px;
   border-bottom-left-radius: 8%;
   border-bottom-right-radius: 8%;
-  height: 90%;
+  height: 86%;
+  width: 92%;
+  position: absolute;
   background-repeat: no-repeat;
   background-size: cover;
-  background: round;
   display: flex;
   z-index: 0;
 }
@@ -92,8 +93,9 @@ body* > {
 
   z-index: 1;
   position: relative;
-  height: 110%;
-  width: 100%;
+  margin: 4% 4% 4% 5%;
+  height: 100%;
+  width: 90.5%;
 
   display: flex;
   flex-direction: column;
@@ -108,11 +110,11 @@ body* > {
   max-height:36%;
   min-height:36%;
   */
-  height: 26%;
+  height: 30%;
 }
 
 .frame-art {
-  height: 48%;
+  height: 44%;
 }
 
 .power-and-toughness-size {
