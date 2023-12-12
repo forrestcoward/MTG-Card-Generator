@@ -57,18 +57,6 @@ body* > {
   background: #171314;  
 }
 
-/* Need to define so we can dynamically look up and set CSS properties. */
-.card-meta {
-  width: 0px;
-  margin-left:10px;
-}
-
-/*
-.ant-tooltip-inner {
-  width: 400px;
-}
-*/
-
 .card-background {
   margin: 4% 4% 4% 4%;
   border-top-left-radius: 6px;
@@ -85,18 +73,11 @@ body* > {
 }
 
 .card-frame {
-  /*
-  max-width: 97%;
-  left: 1.7%;
-  top: 0.5%;
-  */
-
   z-index: 1;
   position: relative;
   margin: 4% 4% 4% 5%;
   height: 100%;
   width: 90.5%;
-
   display: flex;
   flex-direction: column;
 }
@@ -106,10 +87,6 @@ body* > {
   background: #d3ded6;
   background-image: url(./card-backgrounds/frame-text-box-background.jpg);
   padding: 6px 5px;
-  /*
-  max-height:36%;
-  min-height:36%;
-  */
   height: 30%;
 }
 
@@ -124,10 +101,6 @@ body* > {
 .name-type-size {
   font-size: 1.2em;
   font-weight: 600;
-  /*
-  position:relative;
-  bottom:3px;
-  */
 }
 
 .flavour-text {
@@ -137,52 +110,18 @@ body* > {
 }
 
 /* Sizes of the set number (left) and copyright (right) on the bottom of the frame. */
+
 .fbi-left,
 .fbi-right {
-    font-size: 10px;
-    padding-top: 3px
+    padding-top: 2px;
 }
 
 @media (width <= 440px) {
-  .power-and-toughness-size  {
-    font-size: 1.1em;
-  }
-
-  .name-type-size {
-    font-size: 1.1em;
-  }
-
-  .fbi-left,
-  .fbi-right {
-    font-size: 9px;
-  }
 }
 
 @media (width <= 340px) {
-  .power-and-toughness-size  {
-    font-size: .8em;
-  }
-
-  .name-type-size {
-    font-size: .9em;
-  }
-
-  .fbi-left,
-  .fbi-right {
-    font-size: 7px;
-  }
-
   .card-container p {
     margin-bottom: 0px;
-  }
-
-  .flavour-text {
-    padding-bottom: 0px;
-    padding-top: 5px;
-  }
-
-  .power-and-toughness-size {
-    font-size: 1em;
   }
 }
 
@@ -269,10 +208,6 @@ body* > {
     border-bottom: 2px solid #a9a9a9;
     border-left: 2px solid #a9a9a9;
     position: relative; /* This is required so antd img doesn't overflow. */
-    /*
-    border-top: 1px solid #fff;
-    border-right: 1px solid #fff;
-    */
 }
 
 .frame-header,
@@ -565,11 +500,10 @@ body* > {
     padding-left: 20px;
 }
 
-#mana-icon {
-    /*font-size: 1.05em;*/
-    font-size:110%;
+#mana-icon{
+    font-size: 100%;
     border-radius: 50%;
-    margin-right: 5px;
+    margin-right: 3px;
     align-self: center;
 }
 
@@ -579,7 +513,7 @@ body* > {
 
 /* Padding for most mana icons. */
 .ms-padding {
-  padding: 1px;
+  padding: 2px;
 }
 
 /* Padding for title mana icons. */

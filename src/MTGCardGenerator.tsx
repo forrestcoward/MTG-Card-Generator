@@ -143,15 +143,10 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
   }
 
   handleCardWidthChanged(event: React.ChangeEvent<HTMLInputElement>) {
-   // this.setState({ cardWidth: parseInt(event.target.value) });
     var newWidth = parseInt(event.target.value)
     setCardContainerSize(newWidth);
-    //if (parseInt(event.target.value)) {
-    //  setCardContainerSize()
-    //}
     this.state.cards[0].adjustFontSize();
   }
-
 
   handleSubmit() {
     this.setState({ isLoading: true, currentError: "" })
@@ -192,7 +187,7 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
                     <button className="generateButton" type="submit" onClick={() => this.handleSubmit()} disabled={this.state.isLoading}>Generate!</button>
                   </td>
                   <td>
-                  <input type="text" className="cardWidthPrompt" onChange={this.handleCardWidthChanged} defaultValue={this.state.cardWidth} />
+                  <input type="text" className="cardWidthPrompt" onChange={this.handleCardWidthChanged} defaultValue={this.state.cardWidth} style={{display: "none"}}/>
                   </td>
                   <td>
                     <img className={this.getLoadingClassName()} src={loadingIcon} />
