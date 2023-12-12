@@ -370,8 +370,8 @@ export class MagicCard {
       return
     }
 
-    this.adjustTextHeightBasedOnClientHeight(container, nameContainer, .55)
-    this.adjustTextHeightBasedOnChildrenClientOffsetHeight(container, manaContainer, .55, 4, false)
+    this.adjustTextHeightBasedOnClientHeight(container, nameContainer, .57)
+    this.adjustTextHeightBasedOnChildrenClientOffsetHeight(container, manaContainer, .57, 4, false)
 
     // The width is the scroll width of the name and the mana plus some extra padding for when the mana images load in (this gets calculated before images are loaded).
     const calculateWidth = function() { return nameContainer.scrollWidth + manaContainer.scrollWidth + manaContainer.children.length * 3 }
@@ -399,11 +399,11 @@ export class MagicCard {
       return
     }
 
-    this.adjustTextHeightBasedOnClientHeight(container, nameContainer, .7)
-    this.adjustTextHeightBasedOnChildrenClientOffsetHeight(container, manaContainer, .72, 4, false)
+    this.adjustTextHeightBasedOnClientHeight(container, nameContainer, .77)
+    this.adjustTextHeightBasedOnChildrenClientOffsetHeight(container, manaContainer, .77, 4, false)
 
     // The width is the scroll width of the name and the mana plus some extra padding for when the mana images load in (this gets calculated before images are loaded).
-    const calculateWidth = function() { return nameContainer.scrollWidth + manaContainer.scrollWidth + manaContainer.children.length * 3 }
+    const calculateWidth = function() { return nameContainer.scrollWidth + manaContainer.scrollWidth + manaContainer.children.length * 4 }
     let prevWidth = 0;
     let fontSize = parseFloat(window.getComputedStyle(nameContainer, null).getPropertyValue('font-size'));
 
@@ -449,7 +449,7 @@ export class MagicCard {
       flavorTextContainer.style.fontSize = fontSize + 'px'
 
       if (ptContainer != null) {
-        ptContainer.style.fontSize = (fontSize + 2) + 'px'
+        ptContainer.style.fontSize = (fontSize + 4) + 'px'
       }
 
       manaTokens.forEach(manaToken => {(manaToken as HTMLElement).style.fontSize = fontSize + 'px'})
@@ -463,7 +463,7 @@ export class MagicCard {
       manaTokens.forEach(manaToken => {(manaToken as HTMLElement).style.fontSize = fontSize + 'px'})
 
       if (ptContainer != null) {
-        ptContainer.style.fontSize = (fontSize + 2) + 'px'
+        ptContainer.style.fontSize = (fontSize + 5) + 'px'
       }
 
       if (fontSize <= minFontSize) {
@@ -648,8 +648,8 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
               </div>
               <div className={card.cardFrameArtClassName}>
               {this.state.showTemporaryImage ?
-                <Image loading="lazy" height={"100%"} width={"100%"} src={card.temporaryImageUrl ? card.temporaryImageUrl : card.imageUrl} /> :
-                <Image loading="lazy" height={"100%"} width={"100%"} src={card.imageUrl} />
+                <Image onLoad={() => this.state.card.adjustFontSize()} loading="lazy" height={"100%"} width={"100%"} src={card.temporaryImageUrl ? card.temporaryImageUrl : card.imageUrl} /> :
+                <Image onLoad={() => this.state.card.adjustFontSize()} loading="lazy" height={"100%"} width={"100%"} src={card.imageUrl} />
               }
               </div>
               <div id={`type-container-${card.id}`} style={{whiteSpace:"pre"}} className={card.cardFrameTypeLineClassName}>

@@ -187,7 +187,7 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
                     <button className="generateButton" type="submit" onClick={() => this.handleSubmit()} disabled={this.state.isLoading}>Generate!</button>
                   </td>
                   <td>
-                  <input type="text" className="cardWidthPrompt" onChange={this.handleCardWidthChanged} defaultValue={this.state.cardWidth} style={{display: "none"}}/>
+                  <input type="text" className="cardWidthPrompt" onChange={this.handleCardWidthChanged} defaultValue={this.state.cardWidth} style={{display: "visible"}}/>
                   </td>
                   <td>
                     <img className={this.getLoadingClassName()} src={loadingIcon} />

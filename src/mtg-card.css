@@ -86,12 +86,12 @@ body* > {
   display: flex;
   background: #d3ded6;
   background-image: url(./card-backgrounds/frame-text-box-background.jpg);
-  padding: 6px 5px;
-  height: 30%;
+  padding: 7px 6px;
+  height: 32%;
 }
 
 .frame-art {
-  height: 44%;
+  height: 42%;
 }
 
 .power-and-toughness-size {
@@ -356,12 +356,11 @@ body* > {
         linear-gradient(0deg, rgba(201, 216, 201, .3), rgba(201, 216, 209, .3)), 
         url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
     display: flex;
-    margin-top: 3%;
+    margin-top: 3.3%;
     margin-left: 2%;
     margin-right: 2%;
-    min-height:2%;
-    max-height:1%;
-    padding: 2.5% 0;
+    height:2.4%;
+    padding: 2% 0;
     display: flex;
     justify-content: space-between;
     border-radius: 18px/40px;
@@ -554,7 +553,7 @@ body* > {
 /* Override from mana.min.css and remove font-size so mana symbols show up better in card text. */
 .ms {
   display: inline-block;
-  font: normal normal normal 14px/1 Mana;
+  font: normal normal normal 22px/1 Mana;
   /*font-size: inherit;*/
   line-height: 1em;
   text-rendering: auto;
@@ -576,7 +575,7 @@ body* > {
 } 
 
 .frame-margin {
-    margin: 0 3%;
+    margin: 0 3.1%;
 }
 
 .frame-text-box-inner {
