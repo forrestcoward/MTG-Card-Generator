@@ -377,8 +377,8 @@ export class MagicCard {
       return
     }
 
-    this.adjustTextHeightBasedOnClientHeight(container, nameContainer, .57)
-    this.adjustTextHeightBasedOnChildrenClientOffsetHeight(container, manaContainer, .57, 4, false)
+    this.adjustTextHeightBasedOnClientHeight(container, nameContainer, .58)
+    this.adjustTextHeightBasedOnChildrenClientOffsetHeight(container, manaContainer, .58, 4, false)
 
     // The width is the scroll width of the name and the mana plus some extra padding for when the mana images load in (this gets calculated before images are loaded).
     const calculateWidth = function() { return nameContainer.scrollWidth + manaContainer.scrollWidth + manaContainer.children.length * 3 }
@@ -406,8 +406,8 @@ export class MagicCard {
       return
     }
 
-    this.adjustTextHeightBasedOnClientHeight(container, nameContainer, .59)
-    this.adjustTextHeightBasedOnChildrenClientOffsetHeight(container, manaContainer, .73, 4, false)
+    this.adjustTextHeightBasedOnClientHeight(container, nameContainer, .6)
+    this.adjustTextHeightBasedOnChildrenClientOffsetHeight(container, manaContainer, .75, 4, false)
 
     // The width is the scroll width of the name and the mana plus some extra padding for when the mana images load in (this gets calculated before images are loaded).
     const calculateWidth = function() { return nameContainer.scrollWidth + manaContainer.scrollWidth + manaContainer.children.length * 4 }
