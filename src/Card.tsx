@@ -346,6 +346,9 @@ export class MagicCard {
         break
       }
     }
+
+
+    innerContainer.style.fontSize = (fontSizeFloat - 1) + "px"
   }
 
   private adjustTextHeightBasedOnChildrenClientOffsetHeight(container: HTMLElement, innerContainer: HTMLElement, fit: number, minFontSize: number = 4, vertical: boolean) {
@@ -433,7 +436,7 @@ export class MagicCard {
       return
     }
 
-    this.adjustTextHeightBasedOnClientHeight(container, nameContainer, .045, 2)
+    this.adjustTextHeightBasedOnClientHeight(container, nameContainer, .045, 1)
   }
 
   // Adjust the size of the card's text box until it fits within the card.

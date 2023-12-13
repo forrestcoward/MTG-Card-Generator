@@ -58,12 +58,12 @@ body* > {
 }
 
 .card-background {
-  margin: 4% 4% 4% 4%;
+  margin: 4% 0% 0% 4%;
   border-top-left-radius: 6px;
   border-top-right-radius: 6px;
   border-bottom-left-radius: 8%;
   border-bottom-right-radius: 8%;
-  height: 86%;
+  height: 88%;
   width: 92%;
   position: absolute;
   background-repeat: no-repeat;
