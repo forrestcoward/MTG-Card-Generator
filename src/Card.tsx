@@ -334,12 +334,12 @@ export class MagicCard {
     let fontSizeFloat = parseFloat(fontSize)
 
     while (innerContainer.clientHeight / container.clientHeight < fit) {
-      fontSizeFloat++
+      fontSizeFloat += .5
       innerContainer.style.fontSize = fontSizeFloat + "px"
     }
 
     while (innerContainer.clientHeight / container.clientHeight > fit) {
-      fontSizeFloat--
+      fontSizeFloat -= .5
       innerContainer.style.fontSize = fontSizeFloat + "px"
 
       if (fontSizeFloat <= minFontSize) {
@@ -433,7 +433,7 @@ export class MagicCard {
       return
     }
 
-    this.adjustTextHeightBasedOnClientHeight(container, nameContainer, .05, 4)
+    this.adjustTextHeightBasedOnClientHeight(container, nameContainer, .045, 2)
   }
 
   // Adjust the size of the card's text box until it fits within the card.
