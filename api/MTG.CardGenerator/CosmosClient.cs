@@ -105,13 +105,52 @@ namespace MTG.CardGenerator
             return result;
         }
 
+        public async Task<CardGenerationRecord> GetRandomCardRecord(ILogger log)
+        {
+            for (var attempt = 0; attempt < 20; attempt++)
+            {
+                var param = GetRandomAlphanumericCharacter() + GetRandomAlphanumericCharacter();
+                var queryDefinition = new QueryDefinitionWrapper(
+                    @$"
+SELECT * FROM c
+WHERE STARTSWITH(c.magicCards[0].imageUrl, 'https://mtgcardgen')
+AND STARTSWITH(c.id, @param)
+")
+               .WithParameter("@param", param);
+
+                var records = await QueryCosmosDB<CardGenerationRecord>(queryDefinition.QueryDefinition);
+
+                if (records.Count != 0)
+                {
+                    var randomIndex = Random.Next(0, records.Count);
+                    return records[randomIndex];
+                }
+                else
+                {
+                    log.LogWarning("No card records found starting with '{param}'. Trying again...", param);
+                }
+            }
+
+            throw new Exception("Error retrieving random card record.");
+        }
+
+        private static readonly char[] AlphanumericCharacters = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray();
+        private static readonly Random Random = new Random();
+        private static string GetRandomAlphanumericCharacter()
+        {
+            int randomIndex = Random.Next(0, AlphanumericCharacters.Length);
+            return AlphanumericCharacters[randomIndex].ToString();
+        }
+
         public async Task<List<CardGenerationRecord>> GetUsersMagicCards(string userSubject, int top = 50)
         {
             var queryDefinition = new QueryDefinitionWrapper(
-                    @"SELECT TOP @top *
-                    FROM c
-                    WHERE c.user.userSubject = @userSubject
-                    ORDER BY c._ts DESC")
+                @"
+SELECT TOP @top *
+FROM c
+WHERE c.user.userSubject = @userSubject
+ORDER BY c._ts DESC
+")
                 .WithParameter("@userSubject", userSubject)
                 .WithParameter("@top", top);
 
@@ -172,10 +211,12 @@ namespace MTG.CardGenerator
         public async Task<List<CardGenerationRecord>> GetTopCards()
         {
             var queryDefinition = new QueryDefinitionWrapper(
-                @$"SELECT *
-                    FROM c
-                    WHERE IS_DEFINED(c.rating)
-                    ORDER BY c.rating.averageScore DESC OFFSET 0 LIMIT 50");
+                @$"
+SELECT *
+FROM c
+WHERE IS_DEFINED(c.rating)
+ORDER BY c.rating.averageScore DESC OFFSET 0 LIMIT 50
+");
 
             var leaders = await QueryCosmosDB<CardGenerationRecord>(queryDefinition.QueryDefinition);
             return leaders;

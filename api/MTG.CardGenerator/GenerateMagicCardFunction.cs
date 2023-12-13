@@ -319,6 +319,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                                 tokensUsed = tokensUsed,
                                 model = actualGPTModelUsed,
                                 imageSize = imageSize,
+                                imageModel = imageModel,
                                 openAIResponse = openAIResponse,
                                 includeExplanation = includeExplanation,
                                 userSupliedKey = userSuppliedKey,

@@ -44,6 +44,7 @@ namespace MTG.CardGenerator.Models
         public int tokensUsed { get; set; }
         public string model { get; set; }
         public string imageSize { get; set; }
+        public string imageModel { get; set; }
         public string openAIResponse { get; set; }
         public bool includeExplanation { get; set; }
         public bool userSupliedKey { get; set; }

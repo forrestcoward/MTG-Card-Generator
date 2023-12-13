@@ -27,6 +27,12 @@ namespace MTG.CardGenerator
             public List<CardGenerationRecord> Cards { get; set; }
         }
 
+        internal class GetRandomCardFunctionResponse
+        {
+            [JsonProperty("cards")]
+            public CardGenerationRecord[] Cards { get; set; }
+        }
+
         [FunctionName("GetRandomCard")]
         [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
         public static async Task<IActionResult> RunGetRandomCard([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log)
@@ -35,9 +41,11 @@ namespace MTG.CardGenerator
             {
                 var databaseId = Extensions.GetSettingOrThrow(Constants.CosmosDBDatabaseId);
                 var cosmosClient = new CosmosClient(databaseId, Constants.CosmosDBCardsCollectionName, log);
-                var cards = await cosmosClient.GetRandomDocuments<CardGenerationRecord>(1);
 
-                var json = JsonConvert.SerializeObject(new CardBattleFunctionResponse() { Cards = cards });
+                // var cards = await cosmosClient.GetRandomDocuments<CardGenerationRecord>(1);
+                var card = await cosmosClient.GetRandomCardRecord(log);
+
+                var json = JsonConvert.SerializeObject(new GetRandomCardFunctionResponse() { Cards = new[] { card } });
                 return new OkObjectResult(json);
             }
             catch (Exception ex)
@@ -53,7 +61,7 @@ namespace MTG.CardGenerator
 
         [FunctionName("RateCard")]
         [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
-        public static async Task<IActionResult> RunCardBattleLeaderboard([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log)
+        public static async Task<IActionResult> RunRateCardFunction([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log)
         {
             var cardId = (string)req.Query["cardId"];
             var ratingString = (string)req.Query["rating"];
@@ -112,7 +120,6 @@ namespace MTG.CardGenerator
         [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
         public static async Task<IActionResult> RunTopCards([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log)
         {
-
             try
             {
                 var databaseId = Extensions.GetSettingOrThrow(Constants.CosmosDBDatabaseId);

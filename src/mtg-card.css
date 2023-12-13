@@ -102,6 +102,7 @@ body* > {
   font-size: 1.2em;
   font-weight: 600;
   margin-bottom: 0px;
+  white-space: pre; /* This is required so the card name and type does not overflow. */
 }
 
 .flavour-text {
@@ -111,7 +112,6 @@ body* > {
 }
 
 /* Sizes of the set number (left) and copyright (right) on the bottom of the frame. */
-
 .fbi-left,
 .fbi-right {
     padding-top: 2px;

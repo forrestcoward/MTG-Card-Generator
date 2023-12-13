@@ -62,6 +62,7 @@ export async function GetRandomCard(msal: PublicClientApplication): Promise<Card
 }
 
 export async function RateCard(cardId: string, rating: number, msal: PublicClientApplication): Promise<CardRating | undefined> {
+
   let url = getApiUrl('RateCard');
   var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
 
@@ -80,6 +81,7 @@ export async function RateCard(cardId: string, rating: number, msal: PublicClien
 }
 
 export async function TopCards(msal: PublicClientApplication): Promise<CardGenerationRecord[]> {
+
   let url = getApiUrl('TopCards');
   var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
 

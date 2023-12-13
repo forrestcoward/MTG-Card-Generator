@@ -33,18 +33,22 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
     };
 
     setCardContainerSize();
-    this.getRandomCard();
 
     this.props.msalInstance.addEventCallback((message: EventMessage) => {
       if (message.eventType === EventType.LOGIN_SUCCESS) {
-        //this.generateCardBattle();
+        this.getRandomCard();
       }
     });
+  }
+
+  componentDidMount(): void {
+    this.getRandomCard();
   }
 
   getRandomCard() {
     GetRandomCard(this.props.msalInstance).then((cards) => {
       var card = new MagicCard(cards[0].magicCards[0]);
+      card.temporaryImageUrl = card.imageUrl
       this.setState({card: card, cardId: cards[0].id, loading: false})
     }).catch((error) => {
       console.log(error)

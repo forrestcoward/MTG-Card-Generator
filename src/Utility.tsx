@@ -61,3 +61,57 @@ export function logCard(card: MagicCard) {
     "rarity": card.rarity,
   }))
 }
+
+export function getChildrenClientOffsetHeight(element: HTMLElement, vertical: boolean = true) {
+  let height = 0
+  for (let i = 0; i < element.children.length; i++) {
+    if (vertical) {
+      height += (element.children[i] as HTMLElement).offsetHeight
+    } else {
+      height = Math.max(height, (element.children[i] as HTMLElement).offsetHeight)
+    }
+  }
+  return height
+}
+
+// Adjust the text size of innerContainer so it fits a certain ratio within container.
+export function adjustTextHeightBasedOnClientHeight(container: HTMLElement, innerContainer: HTMLElement, fit: number, minFontSize: number = 4) {
+  let fontSize = window.getComputedStyle(innerContainer, null).getPropertyValue('font-size')
+  let fontSizeFloat = parseFloat(fontSize)
+
+  while (innerContainer.clientHeight / container.clientHeight < fit) {
+    fontSizeFloat += .5
+    innerContainer.style.fontSize = fontSizeFloat + "px"
+  }
+
+  while (innerContainer.clientHeight / container.clientHeight > fit) {
+    fontSizeFloat -= .5
+    innerContainer.style.fontSize = fontSizeFloat + "px"
+
+    if (fontSizeFloat <= minFontSize) {
+      break
+    }
+  }
+
+  // Shrink by 1 extra for better fits.
+  innerContainer.style.fontSize = (fontSizeFloat - 1) + "px"
+}
+
+export function adjustTextHeightBasedOnChildrenClientOffsetHeight(container: HTMLElement, innerContainer: HTMLElement, fit: number, minFontSize: number = 4, vertical: boolean) {
+  let fontSize = window.getComputedStyle(innerContainer, null).getPropertyValue('font-size')
+  let fontSizeFloat = parseFloat(fontSize)
+
+  while (getChildrenClientOffsetHeight(innerContainer, vertical) / container.clientHeight < fit) {
+    fontSizeFloat++
+    innerContainer.style.fontSize = fontSizeFloat + "px"
+  }
+
+  while (getChildrenClientOffsetHeight(innerContainer, vertical) / container.clientHeight > fit) {
+    fontSizeFloat--
+    innerContainer.style.fontSize = fontSizeFloat + "px"
+
+    if (fontSizeFloat <= minFontSize) {
+      break
+    }
+  }
+}

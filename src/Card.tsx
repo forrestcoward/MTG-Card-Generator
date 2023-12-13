@@ -1,7 +1,7 @@
 import React from "react";
 import { Image, Menu, Dropdown, Tooltip } from 'antd';
 import { CaretDownFilled, CloudDownloadOutlined, EditOutlined, InfoCircleOutlined, QuestionCircleOutlined, SaveFilled } from '@ant-design/icons';
-import { getRandomInt } from "./Utility";
+import { adjustTextHeightBasedOnChildrenClientOffsetHeight, adjustTextHeightBasedOnClientHeight, getChildrenClientOffsetHeight, getRandomInt } from "./Utility";
 import { saveAs } from 'file-saver';
 
 // @ts-ignore
@@ -316,62 +316,16 @@ export class MagicCard {
     }
   }
 
-  private getChildrenClientOffsetHeight(element: HTMLElement, vertical: boolean = true) {
-    let height = 0
-    for (let i = 0; i < element.children.length; i++) {
-      if (vertical) {
-        height += (element.children[i] as HTMLElement).offsetHeight
-      } else {
-        height = Math.max(height, (element.children[i] as HTMLElement).offsetHeight)
-      }
-    }
-    return height
+  // Adjusts the font sizes on the card to fit within the card dimensions.
+  adjustFontSize() {
+    this.adjustTypeLineSize()
+    this.adjustNameSize()
+    this.adjustFrameBottomSize();
+    this.adjustCardTextSize();
   }
 
-  // Adjust the text size of innerContainer so it fits a certain ratio within container.
-  private adjustTextHeightBasedOnClientHeight(container: HTMLElement, innerContainer: HTMLElement, fit: number, minFontSize: number = 4) {
-    let fontSize = window.getComputedStyle(innerContainer, null).getPropertyValue('font-size')
-    let fontSizeFloat = parseFloat(fontSize)
-
-    while (innerContainer.clientHeight / container.clientHeight < fit) {
-      fontSizeFloat += .5
-      innerContainer.style.fontSize = fontSizeFloat + "px"
-    }
-
-    while (innerContainer.clientHeight / container.clientHeight > fit) {
-      fontSizeFloat -= .5
-      innerContainer.style.fontSize = fontSizeFloat + "px"
-
-      if (fontSizeFloat <= minFontSize) {
-        break
-      }
-    }
-
-
-    innerContainer.style.fontSize = (fontSizeFloat - 1) + "px"
-  }
-
-  private adjustTextHeightBasedOnChildrenClientOffsetHeight(container: HTMLElement, innerContainer: HTMLElement, fit: number, minFontSize: number = 4, vertical: boolean) {
-    let fontSize = window.getComputedStyle(innerContainer, null).getPropertyValue('font-size')
-    let fontSizeFloat = parseFloat(fontSize)
-
-    while (this.getChildrenClientOffsetHeight(innerContainer, vertical) / container.clientHeight < fit) {
-      fontSizeFloat++
-      innerContainer.style.fontSize = fontSizeFloat + "px"
-    }
-
-    while (this.getChildrenClientOffsetHeight(innerContainer, vertical) / container.clientHeight > fit) {
-      fontSizeFloat--
-      innerContainer.style.fontSize = fontSizeFloat + "px"
-
-      if (fontSizeFloat <= minFontSize) {
-        break
-      }
-    }
-  }
-
-  // Adjust type and set icon size to fit within container.
-  adjustTypeLineSize() {
+  // Adjust type and set icon size relative to the height of their container.
+  private adjustTypeLineSize(ratio:number = .6) {
     const container : HTMLElement | null = document.getElementById(`type-container-${this.id}`)
     const nameContainer : HTMLElement | null = document.getElementById(`type-${this.id}`)
     const manaContainer : HTMLElement | null = document.getElementById(`set-${this.id}`)
@@ -380,11 +334,10 @@ export class MagicCard {
       return
     }
 
-    this.adjustTextHeightBasedOnClientHeight(container, nameContainer, .58)
-    this.adjustTextHeightBasedOnChildrenClientOffsetHeight(container, manaContainer, .58, 4, false)
+    adjustTextHeightBasedOnClientHeight(container, nameContainer, ratio)
+    adjustTextHeightBasedOnChildrenClientOffsetHeight(container, manaContainer, ratio, 4, false)
 
-    // The width is the scroll width of the name and the mana plus some extra padding for when the mana images load in (this gets calculated before images are loaded).
-    const calculateWidth = function() { return nameContainer.scrollWidth + manaContainer.scrollWidth + manaContainer.children.length * 3 }
+    const calculateWidth = function() { return nameContainer.scrollWidth + manaContainer.scrollWidth }
     let prevWidth = 0;
     let fontSize = parseFloat(window.getComputedStyle(nameContainer, null).getPropertyValue('font-size'));
 
@@ -399,8 +352,8 @@ export class MagicCard {
     }
   }
 
-  // Adjust name and mana cost size to fit within container.
-  adjustNameSize() {
+  // Adjust name and mana cost size relative to the height of their container.
+  private adjustNameSize(nameToContainerRatio:number = .6, manaToContainerRatio:number = .75) {
     const container : HTMLElement | null = document.getElementById(`title-container-${this.id}`)
     const nameContainer : HTMLElement | null = document.getElementById(`name-${this.id}`)
     const manaContainer : HTMLElement | null = document.getElementById(`mana-${this.id}`)
@@ -409,11 +362,10 @@ export class MagicCard {
       return
     }
 
-    this.adjustTextHeightBasedOnClientHeight(container, nameContainer, .6)
-    this.adjustTextHeightBasedOnChildrenClientOffsetHeight(container, manaContainer, .75, 4, false)
+    adjustTextHeightBasedOnClientHeight(container, nameContainer, nameToContainerRatio)
+    adjustTextHeightBasedOnChildrenClientOffsetHeight(container, manaContainer, manaToContainerRatio, 4, false)
 
-    // The width is the scroll width of the name and the mana plus some extra padding for when the mana images load in (this gets calculated before images are loaded).
-    const calculateWidth = function() { return nameContainer.scrollWidth + manaContainer.scrollWidth + manaContainer.children.length * 4 }
+    const calculateWidth = function() { return nameContainer.scrollWidth + manaContainer.scrollWidth }
     let prevWidth = 0;
     let fontSize = parseFloat(window.getComputedStyle(nameContainer, null).getPropertyValue('font-size'));
 
@@ -428,7 +380,8 @@ export class MagicCard {
     }
   }
 
-  adjustFrameBottomSize() {
+  // Adjust the size of the bottom frame relative to the card background.
+  private adjustFrameBottomSize(ratio:number = .045, minFontSize:number = 1) {
     const container : HTMLElement | null = document.getElementById(`card-background-${this.id}`)
     const nameContainer : HTMLElement | null = document.getElementById(`frame-bottom-${this.id}`)
 
@@ -436,14 +389,10 @@ export class MagicCard {
       return
     }
 
-    this.adjustTextHeightBasedOnClientHeight(container, nameContainer, .045, 1)
+    adjustTextHeightBasedOnClientHeight(container, nameContainer, ratio, minFontSize)
   }
 
-  // Adjust the size of the card's text box until it fits within the card.
-  adjustFontSize() {
-    this.adjustTypeLineSize()
-    this.adjustNameSize()
-    this.adjustFrameBottomSize();
+  private adjustCardTextSize(minFontSize:number = 5, maxFontSize:number = 21) {
     const container : HTMLElement | null = document.querySelector(`.frame-text-box-${this.id}`)
     const innerContainer : HTMLElement | null = document.querySelector(`.frame-text-box-inner-${this.id}`)
     const manaTokens = document.querySelectorAll(`.card-text-mana-token-${this.id}`)
@@ -459,13 +408,12 @@ export class MagicCard {
     let textContainer = innerContainer.children[0] as HTMLElement
     let flavorTextContainer = innerContainer.children[2] as HTMLElement
 
-    const minFontSize = 5
     const heightOffset = 30
     let fontSize = parseInt(window.getComputedStyle(textContainer).fontSize)
 
     // Make the font size larger until it overflows the container.
     // Make larger first so we can shrink it one notch after.
-    while (this.getChildrenClientOffsetHeight(innerContainer) < (container.clientHeight - heightOffset)) {
+    while (getChildrenClientOffsetHeight(innerContainer) < (container.clientHeight - heightOffset)) {
       fontSize += .5
       textContainer.style.fontSize = fontSize + 'px'
       flavorTextContainer.style.fontSize = fontSize + 'px'
@@ -474,11 +422,15 @@ export class MagicCard {
         ptContainer.style.fontSize = (fontSize + 4) + 'px'
       }
 
+      if (fontSize > maxFontSize) {
+        break
+      }
+
       manaTokens.forEach(manaToken => {(manaToken as HTMLElement).style.fontSize = (fontSize-2) + 'px'})
     }
 
     // Make the font size smaller until it fits the container.
-    while (this.getChildrenClientOffsetHeight(innerContainer) > (container.clientHeight - heightOffset)) {
+    while (getChildrenClientOffsetHeight(innerContainer) > (container.clientHeight - heightOffset)) {
       fontSize -= .5
       textContainer.style.fontSize = fontSize + 'px'
       flavorTextContainer.style.fontSize = fontSize + 'px'
