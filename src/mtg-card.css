@@ -101,6 +101,7 @@ body* > {
 .name-type-size {
   font-size: 1.2em;
   font-weight: 600;
+  margin-bottom: 0px;
 }
 
 .flavour-text {
@@ -258,7 +259,7 @@ body* > {
 .frame-art-uw,
 .frame-type-line-uw,
 .frame-text-box-uw {
-  box-shadow: 0 0 0 2px #999999, 0 0 0 5px #151414, -3px 3px 2px 5px #2f2e2e;
+  box-shadow: 0 0 0 2px #999999, 0 0 0 5px #151414, -3px 3px 2px 4px #2f2e2e;
 }
 
 .frame-header-ub,
@@ -286,14 +287,14 @@ body* > {
 .frame-art-wg,
 .frame-type-line-wg,
 .frame-text-box-wg {
-  box-shadow: 0 0 0 3px #3030302d, 0 0 0 2px #b3b3b334, -2px 3px 2px 4px #020202;
+  box-shadow: 0 0 0 3px #3030302d, 0 0 0 2px #b3b3b334, -2px 3px 2px 3px #020202;
 }
 
 .frame-header-wb,
 .frame-art-wb,
 .frame-type-line-wb,
 .frame-text-box-wb {
-  box-shadow: 0 0 0 2px #999999, 0 0 0 5px #151414, -3px 3px 2px 5px #2f2e2e;
+  box-shadow: 0 0 0 2px #999999, 0 0 0 5px #151414, -3px 3px 2px 4px #2f2e2e;
 }
 
 .frame-header-ur,
@@ -329,7 +330,7 @@ body* > {
 .frame-art-c,
 .frame-type-line-c,
 .frame-text-box-c {
-  box-shadow: 0 0 0 2px #999999, 0 0 0 5px #151414, -3px 3px 2px 5px #2f2e2e;
+  box-shadow: 0 0 0 2px #999999, 0 0 0 5px #151414, -3px 3px 2px 3px #2f2e2e;
 }
 
 /* Three plus color background. */
@@ -476,6 +477,7 @@ body* > {
     align-self: baseline;
     /* Have the card name take up the available space. */
     width:-webkit-fill-available;
+    margin-top: 1px;
 }
 
 .mana-symbols {
@@ -588,7 +590,7 @@ body* > {
 }
 
 p {
-    margin-bottom: 5px;
+    margin-bottom: 3px;
 }
 
 .ftb-inner-margin {

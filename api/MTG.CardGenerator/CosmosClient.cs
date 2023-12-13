@@ -119,7 +119,7 @@ namespace MTG.CardGenerator
             return userCards;
         }
 
-        public async Task<List<CardGenerationRecord>> GetMagicCards(IEnumerable<string> ids)
+        public async Task<List<CardGenerationRecord>> GetMagicCardRecords(IEnumerable<string> ids)
         {
             ids = ids.Select(x => $"'{x}'");
             var queryDefinition = new QueryDefinitionWrapper(
@@ -131,17 +131,10 @@ namespace MTG.CardGenerator
             return userCards;
         }
 
-        public async Task<List<CardGenerationRecord>> GetCardBattleLeaders()
+        public async Task<CardGenerationRecord> GetMagicCard(string id)
         {
-            var queryDefinition = new QueryDefinitionWrapper(
-                @$"SELECT *
-                    FROM c
-                    Order BY c.cardBattle.victories DESC");
-
-            var leaders = await QueryCosmosDB<CardGenerationRecord>(queryDefinition.QueryDefinition);
-            return leaders;
+            return await GetDocument<CardGenerationRecord>(id);
         }
-
 
         public async Task<User> GetUserRecord(string userSubject)
         {
@@ -153,43 +146,39 @@ namespace MTG.CardGenerator
             return user;
         }
 
-        public async Task SetCardBattleResult(string winnerId, string loserId)
+        public async Task SetRatingResult(CardGenerationRecord card, int rating)
         {
-            var winnerDocument = await GetDocument<CardGenerationRecord>(winnerId);
-            var loserDocument = await GetDocument<CardGenerationRecord>(loserId);
-
-            var winnerOperations = new List<PatchOperation>
+            var operations = new List<PatchOperation>
             {
-                PatchOperation.Increment("/cardBattle/victories", 1),
-                PatchOperation.Add("/cardBattle/mostRecent", DateTime.Now.ToUniversalTime())
+                PatchOperation.Increment("/rating/numberOfVotes", 1),
+                PatchOperation.Increment("/rating/totalScore", rating),
+                PatchOperation.Add("/rating/mostRecent", DateTime.Now.ToUniversalTime())
             };
 
-            if (winnerDocument.cardBattle == null)
+            if (card.rating != null)
             {
-                winnerOperations.Insert(0,
-                PatchOperation.Add("/cardBattle", new { victories = 0, defeats = 0 }));
+                operations.Add(PatchOperation.Set("/rating/averageScore", Math.Round((double)(card.rating.TotalScore + rating) / (card.rating.NumberOfVotes + 1), 4)));
             }
 
-            var loserOperations = new List<PatchOperation>
+            if (card.rating == null)
             {
-                PatchOperation.Increment("/cardBattle/defeats", 1),
-                PatchOperation.Add("/cardBattle/mostRecent", DateTime.Now.ToUniversalTime())
-            };
-
-            if (loserDocument.cardBattle == null)
-            {
-                loserOperations.Insert(0,
-                PatchOperation.Add("/cardBattle", new { victories = 0, defeats = 0 }));
+                operations.Insert(0, PatchOperation.Add("/rating", new { numberOfVotes = 0, totalScore = 0, averageScore = 0 }));
+                operations.Add(PatchOperation.Set("/rating/averageScore", rating));
             }
 
-            await PatchDocument<CardGenerationRecord>(winnerId, winnerId, winnerOperations);
-            await PatchDocument<CardGenerationRecord>(loserId, loserId, loserOperations);
+            await PatchDocument<CardGenerationRecord>(card.id, card.id, operations);
         }
 
-        public async Task<T> GetDocument<T>(string id) where T : class
+        public async Task<List<CardGenerationRecord>> GetTopCards()
         {
-            ItemResponse<T> response = await container.ReadItemAsync<T>(id, new PartitionKey(id));
-            return response.Resource;
+            var queryDefinition = new QueryDefinitionWrapper(
+                @$"SELECT *
+                    FROM c
+                    WHERE IS_DEFINED(c.rating)
+                    ORDER BY c.rating.averageScore DESC OFFSET 0 LIMIT 50");
+
+            var leaders = await QueryCosmosDB<CardGenerationRecord>(queryDefinition.QueryDefinition);
+            return leaders;
         }
 
         public async Task<ItemResponse<User>> UpdateUserRecord(User user, string userSubject, int numberOfNewCards, double cardGenerationEstimatedCost, bool userSuppliedApiKey)
@@ -215,6 +204,12 @@ namespace MTG.CardGenerator
             }
 
             return await PatchDocument<User>(userSubject, userSubject, operations);
+        }
+
+        public async Task<T> GetDocument<T>(string id) where T : class
+        {
+            ItemResponse<T> response = await container.ReadItemAsync<T>(id, new PartitionKey(id));
+            return response.Resource;
         }
 
         public async Task<bool> DocumentExists(string id)
@@ -295,5 +290,51 @@ namespace MTG.CardGenerator
 
             return results;
         }
+
+        #region Card battle functions
+        public async Task<List<CardGenerationRecord>> GetCardBattleLeaders()
+        {
+            var queryDefinition = new QueryDefinitionWrapper(
+                @$"SELECT *
+                    FROM c
+                    Order BY c.cardBattle.victories DESC");
+
+            var leaders = await QueryCosmosDB<CardGenerationRecord>(queryDefinition.QueryDefinition);
+            return leaders;
+        }
+
+        public async Task SetCardBattleResult(string winnerId, string loserId)
+        {
+            var winnerDocument = await GetDocument<CardGenerationRecord>(winnerId);
+            var loserDocument = await GetDocument<CardGenerationRecord>(loserId);
+
+            var winnerOperations = new List<PatchOperation>
+            {
+                PatchOperation.Increment("/cardBattle/victories", 1),
+                PatchOperation.Add("/cardBattle/mostRecent", DateTime.Now.ToUniversalTime())
+            };
+
+            if (winnerDocument.cardBattle == null)
+            {
+                winnerOperations.Insert(0,
+                PatchOperation.Add("/cardBattle", new { victories = 0, defeats = 0 }));
+            }
+
+            var loserOperations = new List<PatchOperation>
+            {
+                PatchOperation.Increment("/cardBattle/defeats", 1),
+                PatchOperation.Add("/cardBattle/mostRecent", DateTime.Now.ToUniversalTime())
+            };
+
+            if (loserDocument.cardBattle == null)
+            {
+                loserOperations.Insert(0,
+                PatchOperation.Add("/cardBattle", new { victories = 0, defeats = 0 }));
+            }
+
+            await PatchDocument<CardGenerationRecord>(winnerId, winnerId, winnerOperations);
+            await PatchDocument<CardGenerationRecord>(loserId, loserId, loserOperations);
+        }
+        #endregion
     }
 }

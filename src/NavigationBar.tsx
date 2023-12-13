@@ -64,15 +64,17 @@ export const NavigationBar = () => {
         ),
         icon: <DatabaseOutlined />,
       },
+      /*
       {
         key: '3',
         label: (
-          <a href="/CardBattle">
-            Card Duel
+          <a href="/CardRating">
+            Rate Cards
           </a>
         ),
         icon: <FireOutlined />,
       },
+      */
       {
         key: '4',
         label: (

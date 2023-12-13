@@ -1,4 +1,4 @@
-import { BasicCard, CardGenerationRecord, MagicCard } from "./Card";
+import { BasicCard, CardGenerationRecord, CardRating, MagicCard } from "./Card";
 import { AuthenticationResult, InteractionRequiredAuthError, PublicClientApplication } from "@azure/msal-browser";
 
 export async function RetrieveMsalToken(msal: PublicClientApplication, scopes: string[]): Promise<AuthenticationResult | undefined> {
@@ -41,6 +41,60 @@ function getApiUrl(apiName : string): string {
   }
 
   return `${baseUrl}/${apiName}`;
+}
+
+export async function GetRandomCard(msal: PublicClientApplication): Promise<CardGenerationRecord[]> {
+  let url = getApiUrl('GetRandomCard');
+  var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
+
+  const params: Record<string, string> = { };
+  let cardGenerationRecords:CardGenerationRecord[] = []
+  await httpGet(url, token, params)
+    .then(data => {
+      cardGenerationRecords = JSON.parse(data).cards;
+    })
+    .catch(error => {
+      console.error('There was an error getting a random card:', error);
+      throw error
+    });
+
+    return cardGenerationRecords;
+}
+
+export async function RateCard(cardId: string, rating: number, msal: PublicClientApplication): Promise<CardRating | undefined> {
+  let url = getApiUrl('RateCard');
+  var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
+
+  const params: Record<string, string> = { "cardId": cardId, "rating": rating.toString()};
+  let cardRating:CardRating | undefined = undefined
+  await httpGet(url, token, params)
+    .then(data => {
+      cardRating = JSON.parse(data);
+    })
+    .catch(error => {
+      console.error('There was an error rating a card:', error);
+      throw error
+    });
+
+    return cardRating;
+}
+
+export async function TopCards(msal: PublicClientApplication): Promise<CardGenerationRecord[]> {
+  let url = getApiUrl('TopCards');
+  var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
+
+  const params: Record<string, string> = { };
+  let cardGenerationRecords:CardGenerationRecord[] = []
+  await httpGet(url, token, params)
+    .then(data => {
+      cardGenerationRecords = JSON.parse(data).cards;
+    })
+    .catch(error => {
+      console.error('There was an error getting top cards:', error);
+      throw error
+    });
+
+    return cardGenerationRecords;
 }
 
 export async function GenerateCardBattle(msal: PublicClientApplication): Promise<CardGenerationRecord[]> {

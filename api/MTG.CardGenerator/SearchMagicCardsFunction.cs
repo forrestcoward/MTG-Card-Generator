@@ -70,7 +70,7 @@ namespace MTG.CardGenerator
                 }
 
                 var cardsCosmosClient = new CosmosClient(cosmosDatabaseId, Constants.CosmosDBCardsCollectionName, log);
-                var cards = await cardsCosmosClient.GetMagicCards(ids);
+                var cards = await cardsCosmosClient.GetMagicCardRecords(ids);
 
                 var generatedCards = cards.Select(x => x.magicCards.FirstOrDefault()).Take(30).ToArray();
                 var json = JsonConvert.SerializeObject(new SearchMagicCardsFunctionResponse() { Cards = generatedCards });

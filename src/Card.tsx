@@ -90,6 +90,12 @@ export interface Cardbattle {
   defeats: number,
 }
 
+export interface CardRating {
+  numberOfVotes: number,
+  totalScore: number,
+  averageScore: number,
+}
+
 export interface GenerationMetadata {
   model: string,
 }
@@ -107,6 +113,7 @@ export interface CardGenerationRecord {
   user: User
   magicCards: BasicCard[]
   cardBattle: Cardbattle
+  rating: CardRating
   generationMetadata: GenerationMetadata
 }
 
@@ -399,8 +406,8 @@ export class MagicCard {
       return
     }
 
-    this.adjustTextHeightBasedOnClientHeight(container, nameContainer, .77)
-    this.adjustTextHeightBasedOnChildrenClientOffsetHeight(container, manaContainer, .77, 4, false)
+    this.adjustTextHeightBasedOnClientHeight(container, nameContainer, .59)
+    this.adjustTextHeightBasedOnChildrenClientOffsetHeight(container, manaContainer, .73, 4, false)
 
     // The width is the scroll width of the name and the mana plus some extra padding for when the mana images load in (this gets calculated before images are loaded).
     const calculateWidth = function() { return nameContainer.scrollWidth + manaContainer.scrollWidth + manaContainer.children.length * 4 }
@@ -418,10 +425,22 @@ export class MagicCard {
     }
   }
 
+  adjustFrameBottomSize() {
+    const container : HTMLElement | null = document.getElementById(`card-background-${this.id}`)
+    const nameContainer : HTMLElement | null = document.getElementById(`frame-bottom-${this.id}`)
+
+    if (!container || !nameContainer) {
+      return
+    }
+
+    this.adjustTextHeightBasedOnClientHeight(container, nameContainer, .05, 4)
+  }
+
   // Adjust the size of the card's text box until it fits within the card.
   adjustFontSize() {
     this.adjustTypeLineSize()
     this.adjustNameSize()
+    this.adjustFrameBottomSize();
     const container : HTMLElement | null = document.querySelector(`.frame-text-box-${this.id}`)
     const innerContainer : HTMLElement | null = document.querySelector(`.frame-text-box-inner-${this.id}`)
     const manaTokens = document.querySelectorAll(`.card-text-mana-token-${this.id}`)
@@ -452,7 +471,7 @@ export class MagicCard {
         ptContainer.style.fontSize = (fontSize + 4) + 'px'
       }
 
-      manaTokens.forEach(manaToken => {(manaToken as HTMLElement).style.fontSize = fontSize + 'px'})
+      manaTokens.forEach(manaToken => {(manaToken as HTMLElement).style.fontSize = (fontSize-2) + 'px'})
     }
 
     // Make the font size smaller until it fits the container.
@@ -460,7 +479,7 @@ export class MagicCard {
       fontSize -= .5
       textContainer.style.fontSize = fontSize + 'px'
       flavorTextContainer.style.fontSize = fontSize + 'px'
-      manaTokens.forEach(manaToken => {(manaToken as HTMLElement).style.fontSize = fontSize + 'px'})
+      manaTokens.forEach(manaToken => {(manaToken as HTMLElement).style.fontSize = (fontSize-2) + 'px'})
 
       if (ptContainer != null) {
         ptContainer.style.fontSize = (fontSize + 5) + 'px'
@@ -469,11 +488,6 @@ export class MagicCard {
       if (fontSize <= minFontSize) {
         break
       }
-    }
-
-    const nameContainer : HTMLElement | null = document.getElementById(`type-${this.id}`)
-    if (nameContainer != null) {
-      frameBottom.style.fontSize = ((parseFloat(nameContainer.style.fontSize) / 2)) + 'px'
     }
   }
 }
@@ -525,11 +539,6 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
       this.state.card.adjustFontSize()
     }
   }
-
-  componentDidMount(): void {
-    this.state.card.adjustFontSize()
-  }
-
 
   handleCardNameUpdate(event: React.ChangeEvent<HTMLInputElement>) {
     this.setState({ nameUpdate: event.target.value });
@@ -590,33 +599,36 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     const card = this.state.card;
     const oracleEditTextAreaRows = card.textDisplay.length * 3;
 
+    const cardMenuIconFontSize = "30px";
+    const optionsMenuItemStyle : React.CSSProperties = {marginLeft: "5px"}
+    const optionsMenuIconStyle : React.CSSProperties = {fontSize: "20px"}
     const menu = (
       <Menu>
         <Menu.Item  onClick={this.handleCardDownload.bind(this)}>
           <Tooltip title="Download this card as a PNG image" placement="left">
-              <CloudDownloadOutlined style={{fontSize: "20px"}} />
-              <span style={{marginLeft: "5px"}} >Download Card</span>
+              <CloudDownloadOutlined style={optionsMenuIconStyle} />
+              <span style={optionsMenuItemStyle} >Download Card</span>
           </Tooltip>
         </Menu.Item>
         <Menu.Item onClick={this.handleArtDownload.bind(this)}>
           <Tooltip title="Download the card art" placement="left">
-              <CloudDownloadOutlined style={{fontSize: "20px"}} />
-              <span style={{marginLeft: "5px"}} >Download Art</span>
+              <CloudDownloadOutlined style={optionsMenuIconStyle} />
+              <span style={optionsMenuItemStyle} >Download Art</span>
           </Tooltip>
         </Menu.Item>
         {
         this.state.editMode ? 
           <Menu.Item onClick={this.updateEditMode.bind(this)}>
             <Tooltip title="Save the card text" placement='left'>
-              <SaveFilled style={{fontSize: "20px"}} />
-              <span style={{marginLeft: "5px"}} >Save</span>
+              <SaveFilled style={optionsMenuIconStyle} />
+              <span style={optionsMenuItemStyle} >Save</span>
             </Tooltip>
           </Menu.Item>
         : 
           <Menu.Item onClick={this.updateEditMode.bind(this)}>
             <Tooltip title="Modify the card text" placement='left'>
-              <EditOutlined style={{fontSize: "20px"}} />
-              <span style={{marginLeft: "5px"}} >Edit</span>
+              <EditOutlined style={optionsMenuIconStyle} />
+              <span style={optionsMenuItemStyle} >Edit</span>
             </Tooltip>
           </Menu.Item>
         }
@@ -625,13 +637,13 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
 
     return (
       <div>
-        <div className="card-container" id={`card-${card.id}`}>
-        <div className={card.cardDivClassName}></div>
+        <div id={`card-${card.id}`} className="card-container">
+        <div id={`card-background-${card.id}`} className={card.cardDivClassName}></div>
             <div className="card-frame">
-              <div id={`title-container-${card.id}`}  style={{whiteSpace:"pre"}} className={card.cardFrameHeaderClassName}>
-                <div id={`name-${card.id}`} className="name name-type-size">
+              <div id={`title-container-${card.id}`} className={card.cardFrameHeaderClassName}>
+                <div id={`name-${card.id}`} style={{alignSelf:"center"}} className="name name-type-size">
                   {!this.state.editMode ?
-                    <p>{card.name}</p> :
+                    <div>{card.name}</div> :
                     <input className="card-edit-name" type="text" value={this.state.nameUpdate} onChange={this.handleCardNameUpdate} />
                   }
                 </div>
@@ -652,7 +664,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
                 <Image onLoad={() => this.state.card.adjustFontSize()} loading="lazy" height={"100%"} width={"100%"} src={card.imageUrl} />
               }
               </div>
-              <div id={`type-container-${card.id}`} style={{whiteSpace:"pre"}} className={card.cardFrameTypeLineClassName}>
+              <div id={`type-container-${card.id}`} className={card.cardFrameTypeLineClassName}>
                  {!this.state.editMode ?
                     <h1 id={`type-${card.id}`} className="type name-type-size">{card.typeLine}</h1> :
                     <input className="card-edit-type" type="text" value={this.state.typeUpdate} onChange={this.handleCardTypeUpdate} />
@@ -707,7 +719,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
         { this.state.showCardMenu &&
         <div className="card-menu">
           <Tooltip title={<div><b>Prompt: </b>{this.state.card.userPrompt}</div>} placement="left">
-            <QuestionCircleOutlined style={{fontSize: "30px", marginLeft: "3px"}} />
+            <QuestionCircleOutlined style={{fontSize: cardMenuIconFontSize, marginLeft: "3px"}} />
           </Tooltip>
           { card.explanation ?
           <Tooltip title={
@@ -721,13 +733,13 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
               {card.funnyExplanation}
             </div>
           } overlayInnerStyle={{width: '320px', backgroundColor:'rgba(0, 0, 0, 0.93)' }} placement="left" >
-            <InfoCircleOutlined style={{fontSize: "30px", marginLeft: "3px"}} />
+            <InfoCircleOutlined style={{fontSize: cardMenuIconFontSize, marginLeft: "3px"}} />
           </Tooltip>
           : null
           }
           <Dropdown overlay={menu}>
             <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
-              <CaretDownFilled style={{fontSize: "30px"}} />
+              <CaretDownFilled style={{fontSize: cardMenuIconFontSize}} />
             </a>
           </Dropdown>
         </div>

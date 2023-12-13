@@ -1,7 +1,7 @@
 import { MagicCard } from "./Card";
 
 // Dynamically adjust card sizes
-export function setCardContainerSize(minWidth: number = 500) {
+export function setCardContainerSize(minWidth: number = 440) {
   const cardContainerClass = '.card-container';
   const cardContainerRule = findCSSRule(cardContainerClass);
 

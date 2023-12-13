@@ -1,7 +1,30 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 
 namespace MTG.CardGenerator.Models
 {
+    public class CardRating
+    {
+        [JsonProperty("numberOfVotes")]
+        public int NumberOfVotes { get; set; }
+        [JsonProperty("totalScore")]
+        public long TotalScore { get; set; }
+        [JsonProperty("averageScore")]
+        public double AverageScore { get; set; }
+        [JsonProperty("mostRecent")]
+        public DateTime MostRecent { get; set; }
+    }
+
+    public class CardBattle
+    {
+        [JsonProperty("victories")]
+        public int Victories { get; set; }
+        [JsonProperty("defeats")]
+        public int Defeats { get; set; }
+        [JsonProperty("mostRecent")]
+        public DateTime MostRecent { get; set; }
+    }
+
     public class CardGenerationRecord
     {
         public string id { get; set; }
@@ -9,6 +32,7 @@ namespace MTG.CardGenerator.Models
         public UserMeta user { get; set; }
         public MagicCard[] magicCards { get; set; }
         public CardBattle cardBattle { get; set; }
+        public CardRating rating { get; set; }
     }
 
     public class GenerationMetaData

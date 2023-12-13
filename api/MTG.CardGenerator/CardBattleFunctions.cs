@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 
 namespace MTG.CardGenerator
 {
+    // Not finished "Card Battle" feature.
     public static class CardBattleFunctions
     {
         internal class CardBattleFunctionResponse
@@ -20,18 +21,18 @@ namespace MTG.CardGenerator
             public List<CardGenerationRecord> Cards { get; set; }
         }
 
-        internal class CardBattleResultResponse
-        {
-
-        }
-
         internal class CardBattleLeaderboardResponse
         {
             [JsonProperty("cards")]
             public List<CardGenerationRecord> Cards { get; set; }
         }
 
+        internal class CardBattleResultResponse
+        {
+        }
+
         [FunctionName("CardBattleLeaderboard")]
+        [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
         public static async Task<IActionResult> RunCardBattleLeaderboard([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log)
         {
             var winnerId = (string)req.Query["winnerId"];
@@ -39,17 +40,9 @@ namespace MTG.CardGenerator
 
             try
             {
-                //var userSubject = req.GetUserSubject(log);
-                //if (string.IsNullOrWhiteSpace(userSubject))
-                //{
-                //    return new UnauthorizedResult();
-                //}
-
                 var databaseId = Extensions.GetSettingOrThrow(Constants.CosmosDBDatabaseId);
                 var cosmosClient = new CosmosClient(databaseId, Constants.CosmosDBCardsCollectionName, log);
                 var leaders = await cosmosClient.GetCardBattleLeaders();
-
-
                 var json = JsonConvert.SerializeObject(new CardBattleLeaderboardResponse() { Cards = leaders });
                 return new OkObjectResult(json);
             }
@@ -65,6 +58,7 @@ namespace MTG.CardGenerator
         }
 
         [FunctionName("CardBattleResult")]
+        [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
         public static async Task<IActionResult> RunCardBattleVictory([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log)
         {
             var winnerId = (string)req.Query["winnerId"];
@@ -72,17 +66,9 @@ namespace MTG.CardGenerator
 
             try
             {
-                //var userSubject = req.GetUserSubject(log);
-                //if (string.IsNullOrWhiteSpace(userSubject))
-                //{
-                //    return new UnauthorizedResult();
-                //}
-
                 var databaseId = Extensions.GetSettingOrThrow(Constants.CosmosDBDatabaseId);
                 var cosmosClient = new CosmosClient(databaseId, Constants.CosmosDBCardsCollectionName, log);
                 await cosmosClient.SetCardBattleResult(winnerId, loserId);
-
-
                 var json = JsonConvert.SerializeObject(new CardBattleResultResponse() { });
                 return new OkObjectResult(json);
             }
@@ -98,21 +84,14 @@ namespace MTG.CardGenerator
         }
 
         [FunctionName("GenerateCardBattle")]
-        //[FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
+        [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
         public static async Task<IActionResult> GenerateCardBattle([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log)
         {
             try
             {
-                //var userSubject = req.GetUserSubject(log);
-                //if (string.IsNullOrWhiteSpace(userSubject))
-                //{
-                //    return new UnauthorizedResult();
-                //}
-
                 var databaseId = Extensions.GetSettingOrThrow(Constants.CosmosDBDatabaseId);
                 var cosmosClient = new CosmosClient(databaseId, Constants.CosmosDBCardsCollectionName, log);
                 var cards = await cosmosClient.GetRandomDocuments<CardGenerationRecord>(2);
-
 
                 var json = JsonConvert.SerializeObject(new CardBattleFunctionResponse() { Cards = cards });
                 return new OkObjectResult(json);
