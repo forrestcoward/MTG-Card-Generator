@@ -1,7 +1,7 @@
 import React from "react";
 import { Image, Menu, Dropdown, Tooltip, Button } from 'antd';
 import { CaretDownFilled, CloudDownloadOutlined, EditOutlined, InfoCircleOutlined, QuestionCircleOutlined, SaveFilled, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons';
-import { adjustTextHeightBasedOnChildrenClientOffsetHeight, adjustTextHeightBasedOnClientHeight, getChildrenClientOffsetHeight, getRandomInt } from "./Utility";
+import { adjustTextHeightBasedOnChildrenClientOffsetHeight, adjustTextHeightBasedOnClientHeight, getChildrenClientOffsetHeight, getRandomInt, isMobileDevice } from "./Utility";
 import { saveAs } from 'file-saver';
 
 // @ts-ignore
@@ -494,6 +494,7 @@ interface CardDisplayState {
   powerAndToughnessUpdate: string;
   showTemporaryImage: boolean;
   showCardMenu: boolean;
+  showSizeAdjustmentButtons: boolean;
   increaseSizeAllowed: boolean;
   decreaseSizeAllowed: boolean;
   cardWidth: number;
@@ -502,6 +503,7 @@ interface CardDisplayState {
 export class CardDisplay extends React.Component<CardDisplayProps, CardDisplayState> {
   constructor(props: CardDisplayProps) {
     super(props);
+    const viewportWidth = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
     this.state = {
       card: props.card,
       editMode: false,
@@ -515,6 +517,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
       increaseSizeAllowed: true,
       decreaseSizeAllowed: true,
       cardWidth: props.defaultCardWidth,
+      showSizeAdjustmentButtons: !isMobileDevice() || viewportWidth > 900,
     };
 
     this.handleCardNameUpdate = this.handleCardNameUpdate.bind(this);
@@ -751,12 +754,16 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
           </Tooltip>
           : null
           }
+          { this.state.showSizeAdjustmentButtons &&
           <Button type="text" size="middle" shape="circle" disabled={!this.state.increaseSizeAllowed}>
               <ZoomInOutlined onClick={() => this.increaseCardSize(30)} style={{fontSize: cardMenuIconFontSize, marginRight: "-4px"}} />
           </Button>
+          }
+          { this.state.showSizeAdjustmentButtons &&
           <Button type="text" size="middle" shape="circle" disabled={!this.state.decreaseSizeAllowed}>
               <ZoomOutOutlined onClick={() => this.decreaseCardSize(30)} style={{fontSize: cardMenuIconFontSize, marginRight: "-7px"}} />
           </Button>
+          }
           <Dropdown overlay={menu}>
             <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
               <CaretDownFilled style={{fontSize: cardMenuIconFontSize}} />

@@ -44,6 +44,11 @@ export function findCSSRule(selector: string): CSSStyleRule | null {
   return null;
 }
 
+export function isMobileDevice() {
+  var userAgent = navigator.userAgent;
+  return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+}
+
 export function getRandomInt(min: number, max: number) {
   min = Math.ceil(min);
   max = Math.floor(max);
