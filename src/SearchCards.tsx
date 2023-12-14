@@ -23,11 +23,13 @@ export interface SearchCardsState {
   cards: MagicCard[],
   currentError: string,
   userName: string,
+  defaultCardWidth: number
 }
 
 export class SearchCards extends React.Component<SearchCardsProps, SearchCardsState> {
   constructor(props: SearchCardsProps) {
     super(props);
+    let width = setCardContainerSize();
     this.state = {
       prompt: '',
       response: '',
@@ -35,11 +37,11 @@ export class SearchCards extends React.Component<SearchCardsProps, SearchCardsSt
       cards: [],
       currentError: '',
       userName: '',
+      defaultCardWidth: width
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleChangeInput = this.handleChangeInput.bind(this);
-    setCardContainerSize();
   }
 
   getLoadingClassName() : string{
@@ -95,7 +97,7 @@ export class SearchCards extends React.Component<SearchCardsProps, SearchCardsSt
           {
             this.state.cards.map(card => (
               <div className="cardContainer" key={`card-container-${card.id}`}>
-                <CardDisplay key={`card-display-${card.id}`} card={card} />
+                <CardDisplay key={`card-display-${card.id}`} card={card} showCardMenu={true} defaultCardWidth={this.state.defaultCardWidth} />
               </div>
             ))
           }

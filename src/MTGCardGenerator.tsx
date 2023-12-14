@@ -29,7 +29,7 @@ export interface MTGCardGeneratorState {
   cards: MagicCard[],
   currentError: string,
   userName: string,
-  cardWidth: number,
+  defaultCardWidth: number,
 }
 
 export interface SettingGroup {
@@ -74,6 +74,7 @@ const cardGenerationSettingsGroup : SettingGroup = {
 export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTGCardGeneratorState> {
   constructor(props: MTGCardGeneratorProps) {
     super(props);
+    let width = setCardContainerSize();
     this.state = {
       prompt: '',
       response: '',
@@ -84,7 +85,7 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
       cards: [TutorialCard],
       currentError: '',
       userName: '',
-      cardWidth: 440
+      defaultCardWidth: width
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -187,7 +188,7 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
                     <button className="generateButton" type="submit" onClick={() => this.handleSubmit()} disabled={this.state.isLoading}>Generate!</button>
                   </td>
                   <td>
-                  <input type="text" className="cardWidthPrompt" onChange={this.handleCardWidthChanged} defaultValue={this.state.cardWidth} style={{display: "none"}}/>
+                  <input type="text" className="cardWidthPrompt" onChange={this.handleCardWidthChanged} defaultValue={this.state.defaultCardWidth} style={{display: "none"}}/>
                   </td>
                   <td>
                     <img className={this.getLoadingClassName()} src={loadingIcon} />
@@ -207,7 +208,7 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
           {
             this.state.cards.map(card => (
               <div className="cardContainer" key={`card-container-${card.id}`}>
-                <CardDisplay key={`card-display-${card.id}`} card={card} showCardMenu={true} />
+                <CardDisplay key={`card-display-${card.id}`} card={card} showCardMenu={true} defaultCardWidth={this.state.defaultCardWidth} />
               </div>
             ))
           }

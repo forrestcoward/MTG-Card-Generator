@@ -1,6 +1,6 @@
 import React from "react";
-import { Image, Menu, Dropdown, Tooltip } from 'antd';
-import { CaretDownFilled, CloudDownloadOutlined, EditOutlined, InfoCircleOutlined, QuestionCircleOutlined, SaveFilled } from '@ant-design/icons';
+import { Image, Menu, Dropdown, Tooltip, Button } from 'antd';
+import { CaretDownFilled, CloudDownloadOutlined, EditOutlined, InfoCircleOutlined, QuestionCircleOutlined, SaveFilled, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons';
 import { adjustTextHeightBasedOnChildrenClientOffsetHeight, adjustTextHeightBasedOnClientHeight, getChildrenClientOffsetHeight, getRandomInt } from "./Utility";
 import { saveAs } from 'file-saver';
 
@@ -191,33 +191,30 @@ export class MagicCard {
     var green = false;
   
     var manaCostTokens = this.manaCostTokens;
-    if (!this.manaCostTokens) {
-      return ColorIdentity.Unknown
-    }
+    if (!this.manaCostTokens) return ColorIdentity.Unknown
+    if (manaCostTokens.includes("{W}")) white = true 
+    if (manaCostTokens.includes("{U}")) blue = true
+    if (manaCostTokens.includes("{B}")) black = true
+    if (manaCostTokens.includes("{R}")) red = true
+    if (manaCostTokens.includes("{G}")) green = true
   
-    if (manaCostTokens.includes("{W}")) { white = true }
-    if (manaCostTokens.includes("{U}")) { blue = true }
-    if (manaCostTokens.includes("{B}")) { black = true }
-    if (manaCostTokens.includes("{R}")) { red = true }
-    if (manaCostTokens.includes("{G}")) { green = true }
+    if ( white && !blue && !black && !red && !green) return ColorIdentity.White
+    if (!white &&  blue && !black && !red && !green) return ColorIdentity.Blue
+    if (!white && !blue &&  black && !red && !green) return ColorIdentity.Black
+    if (!white && !blue && !black &&  red && !green) return ColorIdentity.Red
+    if (!white && !blue && !black && !red &&  green) return ColorIdentity.Green
+    if (!white && !blue && !black && !red && !green) return ColorIdentity.Colorless
   
-    if (white && !blue && !black && !red && !green) { return ColorIdentity.White }
-    if (!white && blue && !black && !red && !green) { return ColorIdentity.Blue }
-    if (!white && !blue && black && !red && !green) { return ColorIdentity.Black }
-    if (!white && !blue && !black && red && !green) { return ColorIdentity.Red }
-    if (!white && !blue && !black && !red && green) { return ColorIdentity.Green }
-    if (!white && !blue && !black && !red && !green) { return ColorIdentity.Colorless }
-  
-    if (white && blue && !black && !red && !green) { return ColorIdentity.Azorius }
-    if (!white && blue && black && !red && !green) { return ColorIdentity.Dimir }
-    if (!white && !blue && black && red && !green) { return ColorIdentity.Rakdos }
-    if (!white && !blue && !black && red && green) { return ColorIdentity.Gruul }
-    if (white && !blue && !black && !red && green) { return ColorIdentity.Selesnya }
-    if (white && !blue && black && !red && !green) { return ColorIdentity.Orzhov }
-    if (!white && blue && !black && red && !green) { return ColorIdentity.Izzet }
-    if (!white && !blue && black && !red && green) { return ColorIdentity.Golgari }
-    if (white && !blue && !black && red && !green) { return ColorIdentity.Boros }
-    if (!white && blue && !black && !red && green) { return ColorIdentity.Simic }
+    if ( white &&  blue && !black && !red && !green) return ColorIdentity.Azorius
+    if (!white &&  blue &&  black && !red && !green) return ColorIdentity.Dimir
+    if (!white && !blue &&  black &&  red && !green) return ColorIdentity.Rakdos
+    if (!white && !blue && !black &&  red &&  green) return ColorIdentity.Gruul
+    if ( white && !blue && !black && !red &&  green) return ColorIdentity.Selesnya
+    if ( white && !blue &&  black && !red && !green) return ColorIdentity.Orzhov
+    if (!white &&  blue && !black &&  red && !green) return ColorIdentity.Izzet
+    if (!white && !blue &&  black && !red &&  green) return ColorIdentity.Golgari
+    if ( white && !blue && !black &&  red && !green) return ColorIdentity.Boros
+    if (!white &&  blue && !black && !red &&  green) return ColorIdentity.Simic
   
     return ColorIdentity.ThreePlusColored;
   }
@@ -297,7 +294,7 @@ export class MagicCard {
   }
 
   toImage(): Promise<Blob | null> {
-    var node = document.getElementById(`card-${this.id}`);
+    var node = document.getElementById(`card-${this.id}`)
     if (!node) {
       return Promise.reject(new Error('Card node not found in DOM tree to transform to image.'));
     }
@@ -316,12 +313,42 @@ export class MagicCard {
     }
   }
 
+  getCardContainer() {
+    return document.getElementById(`card-${this.id}`)
+  }
+
+  getWidth() {
+    var node = document.getElementById(`card-${this.id}`)
+    if (node == null) {
+      return 0
+    }
+    return node!.clientWidth
+  }
+
   // Adjusts the font sizes on the card to fit within the card dimensions.
   adjustFontSize() {
     this.adjustTypeLineSize()
     this.adjustNameSize()
     this.adjustFrameBottomSize();
     this.adjustCardTextSize();
+  }
+
+  increaseSize(increase: number = 40) {
+    const container : HTMLElement | null = document.getElementById(`card-${this.id}`)
+    this.adjustCardSize(container!.clientWidth + increase)
+  }
+
+  decreaseSize(decrease: number = 40) {
+    const container : HTMLElement | null = document.getElementById(`card-${this.id}`)
+    this.adjustCardSize(container!.clientWidth - decrease)
+  }
+
+  adjustCardSize(width: number = 440) {
+    const container : HTMLElement | null = document.getElementById(`card-${this.id}`)
+    const height = ((width * 3.6) / 2.5);
+    container!.style.width  = `${width}px`;
+    container!.style.height = `${height}px`;
+    this.adjustFontSize();
   }
 
   // Adjust type and set icon size relative to the height of their container.
@@ -363,7 +390,11 @@ export class MagicCard {
     }
 
     adjustTextHeightBasedOnClientHeight(container, nameContainer, nameToContainerRatio)
-    adjustTextHeightBasedOnChildrenClientOffsetHeight(container, manaContainer, manaToContainerRatio, 4, false)
+
+    if (manaContainer.children.length != 0) {
+      // Some malformed cards will have no mana value.
+      adjustTextHeightBasedOnChildrenClientOffsetHeight(container, manaContainer, manaToContainerRatio, 4, false)
+    }
 
     const calculateWidth = function() { return nameContainer.scrollWidth + manaContainer.scrollWidth }
     let prevWidth = 0;
@@ -392,7 +423,7 @@ export class MagicCard {
     adjustTextHeightBasedOnClientHeight(container, nameContainer, ratio, minFontSize)
   }
 
-  private adjustCardTextSize(minFontSize:number = 5, maxFontSize:number = 21) {
+  private adjustCardTextSize(minFontSize:number = 5, maxFontSize:number = 30) {
     const container : HTMLElement | null = document.querySelector(`.frame-text-box-${this.id}`)
     const innerContainer : HTMLElement | null = document.querySelector(`.frame-text-box-inner-${this.id}`)
     const manaTokens = document.querySelectorAll(`.card-text-mana-token-${this.id}`)
@@ -450,6 +481,7 @@ export class MagicCard {
 interface CardDisplayProps {
   card: MagicCard;
   showCardMenu: boolean;
+  defaultCardWidth: number;
 }
 
 interface CardDisplayState {
@@ -462,6 +494,9 @@ interface CardDisplayState {
   powerAndToughnessUpdate: string;
   showTemporaryImage: boolean;
   showCardMenu: boolean;
+  increaseSizeAllowed: boolean;
+  decreaseSizeAllowed: boolean;
+  cardWidth: number;
 }
 
 export class CardDisplay extends React.Component<CardDisplayProps, CardDisplayState> {
@@ -477,6 +512,9 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
       powerAndToughnessUpdate: props.card.pt,
       showTemporaryImage: true,
       showCardMenu: props.showCardMenu,
+      increaseSizeAllowed: true,
+      decreaseSizeAllowed: true,
+      cardWidth: props.defaultCardWidth,
     };
 
     this.handleCardNameUpdate = this.handleCardNameUpdate.bind(this);
@@ -533,7 +571,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     // Bit of a hack but html-to-image cannot render the card if the image url is directly from dalle due to CORS.
     // Note that the dalle image is short lived and will not last ever, we just display it initially because it is higher resolution.
     // So when the user wants to download, we need to temporarily display our compressed version of the image.
-      this.toggleShowTemporaryImage();
+    this.toggleShowTemporaryImage();
     this.state.card.toImage().then(blob => {
       if (blob != null) {
         saveAs(blob, `${this.state.card.name}.png`);
@@ -541,7 +579,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     }).catch(error => {
       console.error("Error downloading card as image.")
     }).finally(() => {
-        this.toggleShowTemporaryImage();
+      this.toggleShowTemporaryImage();
     })
   }
 
@@ -550,23 +588,45 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     window.open(img, '_blank');
   }
 
+  increaseCardSize(increase: number) {
+    var newWidth = this.state.cardWidth + increase
+    this.state.card.adjustCardSize(newWidth)
+    this.updateSizeToggles(newWidth)
+  }
+
+  decreaseCardSize(decrease: number) {
+    var newWidth = this.state.cardWidth - decrease
+    this.state.card.adjustCardSize(newWidth)
+    this.updateSizeToggles(newWidth)
+  }
+
+  private updateSizeToggles(newWidth: number) {
+    if (newWidth <= 330) {
+      this.setState({ increaseSizeAllowed: true, decreaseSizeAllowed: false, cardWidth: newWidth })
+    }
+
+    if (newWidth >= 330) {
+      this.setState({ increaseSizeAllowed: true, decreaseSizeAllowed: true, cardWidth: newWidth })
+    }
+  }
+
   render() {
     const card = this.state.card;
     const oracleEditTextAreaRows = card.textDisplay.length * 3;
 
-    const cardMenuIconFontSize = "30px";
+    const cardMenuIconFontSize = "40px";
     const optionsMenuItemStyle : React.CSSProperties = {marginLeft: "5px"}
-    const optionsMenuIconStyle : React.CSSProperties = {fontSize: "20px"}
+    const optionsMenuIconStyle : React.CSSProperties = {fontSize: "30px"}
     const menu = (
       <Menu>
         <Menu.Item  onClick={this.handleCardDownload.bind(this)}>
-          <Tooltip title="Download this card as a PNG image" placement="left">
+          <Tooltip placement="left">
               <CloudDownloadOutlined style={optionsMenuIconStyle} />
               <span style={optionsMenuItemStyle} >Download Card</span>
           </Tooltip>
         </Menu.Item>
         <Menu.Item onClick={this.handleArtDownload.bind(this)}>
-          <Tooltip title="Download the card art" placement="left">
+          <Tooltip placement="left">
               <CloudDownloadOutlined style={optionsMenuIconStyle} />
               <span style={optionsMenuItemStyle} >Download Art</span>
           </Tooltip>
@@ -593,7 +653,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     return (
       <div>
         <div id={`card-${card.id}`} className="card-container">
-        <div id={`card-background-${card.id}`} className={card.cardDivClassName}></div>
+          <div id={`card-background-${card.id}`} className={card.cardDivClassName}></div>
             <div className="card-frame">
               <div id={`title-container-${card.id}`} className={card.cardFrameHeaderClassName}>
                 <div id={`name-${card.id}`} style={{alignSelf:"center"}} className="name name-type-size">
@@ -669,7 +729,6 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
                 </div>
               </div>
             </div>
-
         </div>
         { this.state.showCardMenu &&
         <div className="card-menu">
@@ -692,6 +751,12 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
           </Tooltip>
           : null
           }
+          <Button type="text" size="middle" shape="circle" disabled={!this.state.increaseSizeAllowed}>
+              <ZoomInOutlined onClick={() => this.increaseCardSize(30)} style={{fontSize: cardMenuIconFontSize, marginRight: "-4px"}} />
+          </Button>
+          <Button type="text" size="middle" shape="circle" disabled={!this.state.decreaseSizeAllowed}>
+              <ZoomOutOutlined onClick={() => this.decreaseCardSize(30)} style={{fontSize: cardMenuIconFontSize, marginRight: "-7px"}} />
+          </Button>
           <Dropdown overlay={menu}>
             <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
               <CaretDownFilled style={{fontSize: cardMenuIconFontSize}} />

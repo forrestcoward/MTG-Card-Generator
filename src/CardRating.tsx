@@ -20,19 +20,20 @@ interface CardRatingState {
   card: MagicCard | undefined;
   cardId: string;
   loading: boolean;
+  defaultCardWidth: number;
 }
 
 export class CardRating extends React.Component<CardRatingProps, CardRatingState> {
   constructor(props: CardRatingProps) {
     super(props);
 
+    let width = setCardContainerSize();
     this.state = {
       card: undefined,
       cardId: "",
-      loading: true
+      loading: true,
+      defaultCardWidth: width
     };
-
-    setCardContainerSize();
 
     this.props.msalInstance.addEventCallback((message: EventMessage) => {
       if (message.eventType === EventType.LOGIN_SUCCESS) {
@@ -81,7 +82,7 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
         <div style={{display: "flex", flexWrap: "wrap", justifyContent: "center"}}>
           <div style={{display: "flex"}}>
             <div className="cardContainer" key={`card-container-${this.state.card.id}`}>
-              <CardDisplay key={`card-display-${this.state.card.id}`} card={this.state.card} showCardMenu={false} />
+              <CardDisplay key={`card-display-${this.state.card.id}`} card={this.state.card} showCardMenu={false} defaultCardWidth={this.state.defaultCardWidth} />
               <Button onClick={this.rateCard.bind(this, this.state.cardId, 1)} style={{ marginTop: '10px', height:"50px", justifyContent: "center" }}>
                 <Bs1Circle style={{fontSize: '40px'}} />
               </Button>

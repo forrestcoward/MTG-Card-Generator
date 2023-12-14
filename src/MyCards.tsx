@@ -15,18 +15,21 @@ export interface MyCardsProps{
 
 export interface MyCardsState {
  cards: MagicCard[],
+ defaultCardWidth: number,
  loading: boolean,
 }
 
 export class MyCards extends React.Component<MyCardsProps, MyCardsState> {
   constructor(props: MyCardsProps) {
     super(props);
+
+    var width = setCardContainerSize();
     this.state = {
       cards: [],
       loading: true,
+      defaultCardWidth: width
     };
 
-    setCardContainerSize();
     this.getUserCards();
 
     this.props.msalInstance.addEventCallback((message: EventMessage) => {
@@ -63,7 +66,7 @@ export class MyCards extends React.Component<MyCardsProps, MyCardsState> {
       {
         this.state.cards.map(card => (
           <div className="cardContainer" key={`card-container-${card.id}`}>
-            <CardDisplay key={`card-display-${card.id}`} card={card} showCardMenu={true} />
+            <CardDisplay key={`card-display-${card.id}`} card={card} showCardMenu={true} defaultCardWidth={this.state.defaultCardWidth} />
           </div>
         ))
       }

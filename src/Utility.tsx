@@ -1,19 +1,19 @@
-import { MagicCard } from "./Card";
-
 // Dynamically adjust card sizes
 export function setCardContainerSize(minWidth: number = 440) {
-  const cardContainerClass = '.card-container';
-  const cardContainerRule = findCSSRule(cardContainerClass);
+  const cardContainerClass = '.card-container'
+  const cardContainerRule = findCSSRule(cardContainerClass)
 
   // Scale the card entirely based on the card width.
   const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
   const cardWidth = Math.min(minWidth, vw - 16)
-  const cardHeight = ((cardWidth * 3.6) / 2.5);
+  const cardHeight = ((cardWidth * 3.6) / 2.5)
 
   if (cardContainerRule) {
-    cardContainerRule.style.width  = `${cardWidth}px`;
-    cardContainerRule.style.height = `${cardHeight}px`;
+    cardContainerRule.style.width  = `${cardWidth}px`
+    cardContainerRule.style.height = `${cardHeight}px`
   }
+
+  return cardWidth
 }
 
 export function findCSSRule(selector: string): CSSStyleRule | null {
@@ -50,18 +50,6 @@ export function getRandomInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min) + min);
 }
 
-export function logCard(card: MagicCard) {
-  console.log(card)
-  console.log(JSON.stringify({
-    "name": card.name,
-    "pt": card.pt,
-    "type": card.typeLine,
-    "manaCost": card.manaCost,
-    "text": card.rawOracleText,
-    "rarity": card.rarity,
-  }))
-}
-
 export function getChildrenClientOffsetHeight(element: HTMLElement, vertical: boolean = true) {
   let height = 0
   for (let i = 0; i < element.children.length; i++) {
@@ -78,6 +66,10 @@ export function getChildrenClientOffsetHeight(element: HTMLElement, vertical: bo
 export function adjustTextHeightBasedOnClientHeight(container: HTMLElement, innerContainer: HTMLElement, fit: number, minFontSize: number = 4) {
   let fontSize = window.getComputedStyle(innerContainer, null).getPropertyValue('font-size')
   let fontSizeFloat = parseFloat(fontSize)
+
+  if (innerContainer.clientHeight == 0) {
+    return
+  }
 
   while (innerContainer.clientHeight / container.clientHeight < fit) {
     fontSizeFloat += .5
@@ -100,6 +92,10 @@ export function adjustTextHeightBasedOnClientHeight(container: HTMLElement, inne
 export function adjustTextHeightBasedOnChildrenClientOffsetHeight(container: HTMLElement, innerContainer: HTMLElement, fit: number, minFontSize: number = 4, vertical: boolean) {
   let fontSize = window.getComputedStyle(innerContainer, null).getPropertyValue('font-size')
   let fontSizeFloat = parseFloat(fontSize)
+
+  if (innerContainer.children.length == 0 || getChildrenClientOffsetHeight(innerContainer, vertical) == 0) {
+    return
+  }
 
   while (getChildrenClientOffsetHeight(innerContainer, vertical) / container.clientHeight < fit) {
     fontSizeFloat++

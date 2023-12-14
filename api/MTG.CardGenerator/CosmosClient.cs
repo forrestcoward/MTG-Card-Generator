@@ -331,51 +331,5 @@ ORDER BY c.rating.averageScore DESC OFFSET 0 LIMIT 50
 
             return results;
         }
-
-        #region Card battle functions
-        public async Task<List<CardGenerationRecord>> GetCardBattleLeaders()
-        {
-            var queryDefinition = new QueryDefinitionWrapper(
-                @$"SELECT *
-                    FROM c
-                    Order BY c.cardBattle.victories DESC");
-
-            var leaders = await QueryCosmosDB<CardGenerationRecord>(queryDefinition.QueryDefinition);
-            return leaders;
-        }
-
-        public async Task SetCardBattleResult(string winnerId, string loserId)
-        {
-            var winnerDocument = await GetDocument<CardGenerationRecord>(winnerId);
-            var loserDocument = await GetDocument<CardGenerationRecord>(loserId);
-
-            var winnerOperations = new List<PatchOperation>
-            {
-                PatchOperation.Increment("/cardBattle/victories", 1),
-                PatchOperation.Add("/cardBattle/mostRecent", DateTime.Now.ToUniversalTime())
-            };
-
-            if (winnerDocument.cardBattle == null)
-            {
-                winnerOperations.Insert(0,
-                PatchOperation.Add("/cardBattle", new { victories = 0, defeats = 0 }));
-            }
-
-            var loserOperations = new List<PatchOperation>
-            {
-                PatchOperation.Increment("/cardBattle/defeats", 1),
-                PatchOperation.Add("/cardBattle/mostRecent", DateTime.Now.ToUniversalTime())
-            };
-
-            if (loserDocument.cardBattle == null)
-            {
-                loserOperations.Insert(0,
-                PatchOperation.Add("/cardBattle", new { victories = 0, defeats = 0 }));
-            }
-
-            await PatchDocument<CardGenerationRecord>(winnerId, winnerId, winnerOperations);
-            await PatchDocument<CardGenerationRecord>(loserId, loserId, loserOperations);
-        }
-        #endregion
     }
 }
