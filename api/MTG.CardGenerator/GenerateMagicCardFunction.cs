@@ -47,8 +47,6 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
 
         const int AllowedFreeGenerationsPerDay = 25;
 
-        static readonly string imageSize = Size.Size1024;
-
         [FunctionName("GenerateMagicCard")]
         public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", Route = null)] HttpRequest req, ILogger log)
         {
@@ -269,11 +267,10 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
 
                 ImageGenerator.ImageGenerationOptions imageOptions = null;
 
-                // Generate an image for each card.
                 foreach (var card in cards)
                 {
                     var stopwatch = Stopwatch.StartNew();
-                    imageOptions = ImageGenerator.GetImagePromptForCard(card, imageModel);
+                    imageOptions = ImageGenerator.GetImageOptionsForCard(card, imageModel);
 
                     if (highQualityImage)
                     {
@@ -281,7 +278,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                         imageOptions.Prompt = detailedPrompt;
                     }
 
-                    var url = await ImageGenerator.GenerateImage(imageOptions, apiKeyToUse, log, cost);
+                    var url = await ImageGenerator.GenerateImage(imageOptions.Prompt, imageOptions.Model, imageOptions.Size, apiKeyToUse, log, cost);
                     card.TemporaryImageUrl = url;
                     stopwatch.Stop();
 
@@ -291,21 +288,17 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                             { "imagePrompt", imageOptions.Prompt },
                             { "imageModel", imageOptions.Model },
                             { "imageUrl", card.ImageUrl },
-                            { "imageSize", imageSize },
+                            { "imageSize", imageOptions.Size },
                             { "userSubject", userSubject },
                         });
-                }
 
-                try
-                {
-                    var blobStorageName = Extensions.GetSettingOrThrow(Constants.BlobStorageName);
-                    var blobStorageEndpoint = Extensions.GetSettingOrThrow(Constants.BlobStorageEndpoint);
-                    var blobStorageContainerName = Extensions.GetSettingOrThrow(Constants.BlobStorageContainerName);
-                    var blobStorageAccessKey = Extensions.GetSettingOrThrow(Constants.BlobStorageAccessKey);
-
-                    // For each generated card, store the card image in blob storage and insert a record into the database.
-                    foreach (var card in cards)
+                    try
                     {
+                        var blobStorageName = Extensions.GetSettingOrThrow(Constants.BlobStorageName);
+                        var blobStorageEndpoint = Extensions.GetSettingOrThrow(Constants.BlobStorageEndpoint);
+                        var blobStorageContainerName = Extensions.GetSettingOrThrow(Constants.BlobStorageContainerName);
+                        var blobStorageAccessKey = Extensions.GetSettingOrThrow(Constants.BlobStorageAccessKey);
+
                         var blobUrl = await Extensions.StoreImageInBlobAsync(card.TemporaryImageUrl, blobStorageName, blobStorageEndpoint, blobStorageContainerName, blobStorageAccessKey, log: log);
                         card.ImageUrl = blobUrl;
 
@@ -321,7 +314,8 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                                 temperature = temperature,
                                 tokensUsed = tokensUsed,
                                 model = actualGPTModelUsed,
-                                imageSize = imageSize,
+                                imageSize = imageOptions.Size,
+                                imageStyle = imageOptions.Style,
                                 imageModel = imageOptions.Model,
                                 openAIResponse = openAIResponse,
                                 includeExplanation = includeExplanation,
@@ -340,13 +334,13 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                         var cardsCosmosClient = new CosmosClient(cosmosDatabaseId, Constants.CosmosDBCardsCollectionName, log);
                         await cardsCosmosClient.AddItemToContainerAsync(cardGenerationRecord);
                         log.LogInformation($"Wrote card generation record to database '{cosmosDatabaseId}'.");
-                    }
 
-                }
-                catch (Exception ex)
-                {
-                    // Non-fatal to overall operation.
-                    log.LogError($"Failed to store generated card: {ex}");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Non-fatal to overall operation.
+                        log.LogError($"Failed to store generated card: {ex}");
+                    }
                 }
 
                 try
@@ -379,7 +373,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 log?.LogMetric("GenerateMagicCard_EstimatedCost", cost.TotalCost, new Dictionary<string, object>()
                 {
                     { "estimatedCost", cost.TotalCost },
-                    { "imageSize", imageSize },
+                    { "imageSize", imageOptions.Size },
                     { "imageModel", imageModel },
                     { "includeExplanation", includeExplanation.ToString() },
                     { "highQualityImage", highQualityImage.ToString() },

@@ -17,18 +17,22 @@ namespace MTG.CardGenerator
             public string Prompt { get; set; }
             public string Style { get; set; }
             public string Model { get; set; }
+            public string Size { get; set; }
         }
 
         private static string[] Artists = new string[]
         {
             "Greg Kutkowski style, digital, fantasy art.",
+            "Greg Kutkowski style, digital, fantasy art.",
+            "Greg Kutkowski style, digital, fantasy art.",
             "Terese Nielsen style, digital, fantasy art. ",
             "Veronique Meignaud style, digital, fantasy art.",
             "Wassily Kandinsky, abstract art.",
-            "Vincent van Gogh, impressionist style."
+            "Vincent van Gogh, impressionist style.",
+            "Salvador Dali, surrealism style"
         };
 
-        public static ImageGenerationOptions GetImagePromptForCard(MagicCard card, string imageModel)
+        public static ImageGenerationOptions GetImageOptionsForCard(MagicCard card, string imageModel)
         {
             var prompt = $"{card.Name}: {card.FlavorText}";
             var artistStyle = Artists[new Random().Next(Artists.Length)];
@@ -61,15 +65,16 @@ namespace MTG.CardGenerator
             {
                 Prompt = prompt,
                 Style = artistStyle,
-                Model = imageModel
+                Model = imageModel,
+                Size = StaticValues.ImageStatics.Size.Size1024,
             };
         }
 
-        public static async Task<string> GenerateImage(ImageGenerationOptions options, string apiKey, ILogger log, Cost? cost = null)
+        public static async Task<string> GenerateImage(string prompt, string model, string size, string apiKey, ILogger log, Cost? cost = null)
         {
-            if (options.Model != Constants.Dalle2ModelName && options.Model != Constants.Dalle3ModelName)
+            if (model != Constants.Dalle2ModelName && model != Constants.Dalle3ModelName)
             {
-                throw new System.Exception($"Invalid image model: {options.Model}. Expecting '{Constants.Dalle2ModelName}' or '{Constants.Dalle3ModelName}'.");
+                throw new System.Exception($"Invalid image model: {model}. Expecting '{Constants.Dalle2ModelName}' or '{Constants.Dalle3ModelName}'.");
             }
 
             var openAIService = new OpenAIService(new OpenAiOptions()
@@ -77,19 +82,19 @@ namespace MTG.CardGenerator
                 ApiKey = apiKey
             });
 
-            log.LogInformation($"{options.Model} image prompt: {options.Prompt}");
+            log.LogInformation($"{model} image prompt: {prompt}");
 
             var imageResult = await openAIService.Image.CreateImage(new ImageCreateRequest
             {
-                Prompt = options.Prompt,
+                Prompt = prompt,
                 N = 1,
-                Size = StaticValues.ImageStatics.Size.Size1024,
-                Model = options.Model,
+                Size = size,
+                Model = model,
                 Quality = "standard",
                 ResponseFormat = StaticValues.ImageStatics.ResponseFormat.Url
             });
 
-            cost?.AddImageCost(StaticValues.ImageStatics.Size.Size1024, options.Model);
+            cost?.AddImageCost(size, model);
 
             if (!imageResult.Successful)
             {

@@ -109,11 +109,18 @@ namespace MTG.CardGenerator
         {
             for (var attempt = 0; attempt < 20; attempt++)
             {
-                var param = GetRandomAlphanumericCharacter() + GetRandomAlphanumericCharacter();
+                var param = GetRandomAlphanumericCharacter();
+                if (attempt  < 10)
+                {
+                    param = GetRandomAlphanumericCharacter() + GetRandomAlphanumericCharacter();
+                }
+
                 var queryDefinition = new QueryDefinitionWrapper(
                     @$"
 SELECT * FROM c
 WHERE STARTSWITH(c.magicCards[0].imageUrl, 'https://mtgcardgen')
+AND c.generationMetadata.imageModel = 'dall-e-3'
+AND c.generationMetadata.model = 'gpt-4-1106-preview'
 AND STARTSWITH(c.id, @param)
 ")
                .WithParameter("@param", param);

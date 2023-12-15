@@ -5,6 +5,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using OpenAI.ObjectModels;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -23,7 +24,7 @@ namespace MTG.CardGenerator
                 log?.LogInformation($"User prompt: {userPrompt.Replace("\n", "")}");
                 var apiKey = Environment.GetEnvironmentVariable(Constants.OpenAIApiKey);
                 var stopwatch = Stopwatch.StartNew();
-                var url = ImageGenerator.GenerateImage(userPrompt, Constants.Dalle3ModelName, apiKey, log).Result;
+                var url = ImageGenerator.GenerateImage(userPrompt, Constants.Dalle3ModelName, StaticValues.ImageStatics.Size.Size1024, apiKey, log).Result;
                 stopwatch.Stop();
                 log.LogMetric("CreateImageAsync_DurationSeconds", stopwatch.Elapsed.TotalSeconds);
 
