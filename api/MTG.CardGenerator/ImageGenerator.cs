@@ -3,6 +3,7 @@ using OpenAI;
 using OpenAI.Managers;
 using OpenAI.ObjectModels;
 using OpenAI.ObjectModels.RequestModels;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -11,42 +12,64 @@ namespace MTG.CardGenerator
 {
     public static class ImageGenerator
     {
-        public static string GetImagePromptForCard(MagicCard card, string imageModel)
+        public class ImageGenerationOptions
+        {
+            public string Prompt { get; set; }
+            public string Style { get; set; }
+            public string Model { get; set; }
+        }
+
+        private static string[] Artists = new string[]
+        {
+            "Greg Kutkowski style, digital, fantasy art.",
+            "Terese Nielsen style, digital, fantasy art. ",
+            "Veronique Meignaud style, digital, fantasy art.",
+            "Wassily Kandinsky, abstract art.",
+            "Vincent van Gogh, impressionist style."
+        };
+
+        public static ImageGenerationOptions GetImagePromptForCard(MagicCard card, string imageModel)
         {
             var prompt = $"{card.Name}: {card.FlavorText}";
+            var artistStyle = Artists[new Random().Next(Artists.Length)];
 
             if (card.Type == CardType.Creature)
             {
                 if (imageModel == Constants.Dalle2ModelName)
                 {
-                    prompt = $"'An image of {card.Name}, a {card.TypeLine}: {card.FlavorText}. Greg Kutkowski style, digital, fantasy art.";
+                    prompt = $"'An image of {card.Name}, a {card.TypeLine}: {card.FlavorText}. {artistStyle}";
                 }
 
                 if (imageModel == Constants.Dalle3ModelName)
                 {
                     // Dalle 3 does not like the flavor text in the prompt usually. It leads to a lot of text in the images.
-                    prompt = $"An image of {card.Name}, a {card.TypeLine}. Greg Kutkowski style, digital, fantasy art.";
+                    prompt = $"An image of {card.Name}, a {card.TypeLine}. {artistStyle}";
                 }
             }
 
-            if (card.Type == CardType.Instant || card.Type == CardType.Sorcery || card.Type == CardType.Enchantment || card.Type == CardType.Artifact)
+            if (card.Type == CardType.Instant || 
+                card.Type == CardType.Sorcery || 
+                card.Type == CardType.Enchantment || 
+                card.Type == CardType.Artifact || 
+                card.Type == CardType.Enchantment ||
+                card.Type == CardType.Artifact)
             {
-                prompt = $"An image of {card.Name}: {card.FlavorText}. Greg Kutkowski style, digital, fantasy art.";
+                prompt = $"An image of {card.Name}: {card.FlavorText}. {artistStyle}";
             }
 
-            if (card.Type == CardType.Enchantment || card.Type == CardType.Artifact)
+            return new ImageGenerationOptions()
             {
-                prompt = $"An image of {card.Name}: {card.FlavorText}. Greg Kutkowski style, digital, fantasy art.";
-            }
-
-            return prompt;
+                Prompt = prompt,
+                Style = artistStyle,
+                Model = imageModel
+            };
         }
 
-        public static async Task<string> GenerateImage(string imagePrompt, string imageModel, string apiKey, ILogger log, Cost? cost = null)
+        public static async Task<string> GenerateImage(ImageGenerationOptions options, string apiKey, ILogger log, Cost? cost = null)
         {
-            if (imageModel != Constants.Dalle2ModelName && imageModel != Constants.Dalle3ModelName)
+            if (options.Model != Constants.Dalle2ModelName && options.Model != Constants.Dalle3ModelName)
             {
-                throw new System.Exception($"Invalid image model: {imageModel}. Expecting '{Constants.Dalle2ModelName}' or '{Constants.Dalle3ModelName}'.");
+                throw new System.Exception($"Invalid image model: {options.Model}. Expecting '{Constants.Dalle2ModelName}' or '{Constants.Dalle3ModelName}'.");
             }
 
             var openAIService = new OpenAIService(new OpenAiOptions()
@@ -54,42 +77,36 @@ namespace MTG.CardGenerator
                 ApiKey = apiKey
             });
 
-            log.LogInformation($"{imageModel} image prompt: {imagePrompt}");
+            log.LogInformation($"{options.Model} image prompt: {options.Prompt}");
 
             var imageResult = await openAIService.Image.CreateImage(new ImageCreateRequest
             {
-                Prompt = imagePrompt,
+                Prompt = options.Prompt,
                 N = 1,
                 Size = StaticValues.ImageStatics.Size.Size1024,
-                Model = imageModel,
+                Model = options.Model,
                 Quality = "standard",
                 ResponseFormat = StaticValues.ImageStatics.ResponseFormat.Url
             });
 
-            cost?.AddImageCost(StaticValues.ImageStatics.Size.Size1024, imageModel);
+            cost?.AddImageCost(StaticValues.ImageStatics.Size.Size1024, options.Model);
 
             if (!imageResult.Successful)
             {
-                throw new System.Exception($"Failed to generate image: {imageResult.Error.Message}");
+                throw new Exception($"Failed to generate image: {imageResult.Error.Message}");
             }
 
             return imageResult.Results.First().Url;
         }
 
-        public static async Task<string> GenerateDetailedImagePrompt(MagicCard card, string baseImagePrompt, string apiKey, ILogger log, Cost? cost = null)
+        public static async Task<string> GenerateDetailedImagePrompt(ImageGenerationOptions options, string apiKey, ILogger log, Cost? cost = null)
         {
             var openAIService = new OpenAIService(new OpenAiOptions()
             {
                 ApiKey = apiKey
             });
 
-            var prompt = $"Please generate a detailed image prompt for the following: {baseImagePrompt}";
-
-            /*
-            var prompt2 = @$"Please generate a detailed prompt for this Magic: The Gathering card:
-{JsonConvert.SerializeObject(card)}.
-Greg Kutkowski style, digital, fantasy art. Output the image prompt and nothing else.";
-            */
+            var prompt = $"Please generate an image prompt for the following text (the prompt should reflect the artists style listed in the text): {options.Prompt}";
 
             var result = await openAIService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
             {

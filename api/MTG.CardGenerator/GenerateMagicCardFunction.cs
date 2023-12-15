@@ -267,26 +267,29 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     imageModel = Constants.Dalle3ModelName;
                 }
 
+                ImageGenerator.ImageGenerationOptions imageOptions = null;
+
                 // Generate an image for each card.
                 foreach (var card in cards)
                 {
                     var stopwatch = Stopwatch.StartNew();
-                    var imagePrompt = ImageGenerator.GetImagePromptForCard(card, imageModel);
+                    imageOptions = ImageGenerator.GetImagePromptForCard(card, imageModel);
 
                     if (highQualityImage)
                     {
-                        imagePrompt = await ImageGenerator.GenerateDetailedImagePrompt(card, imagePrompt, apiKeyToUse, log, cost);
+                        var detailedPrompt = await ImageGenerator.GenerateDetailedImagePrompt(imageOptions, apiKeyToUse, log, cost);
+                        imageOptions.Prompt = detailedPrompt;
                     }
 
-                    var url = await ImageGenerator.GenerateImage(imagePrompt, imageModel, apiKeyToUse, log, cost);
+                    var url = await ImageGenerator.GenerateImage(imageOptions, apiKeyToUse, log, cost);
                     card.TemporaryImageUrl = url;
                     stopwatch.Stop();
 
                     log.LogMetric("CreateImageAsync_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
                         properties: new Dictionary<string, object>()
                         {
-                            { "imagePrompt", imagePrompt },
-                            { "imageModel", imageModel },
+                            { "imagePrompt", imageOptions.Prompt },
+                            { "imageModel", imageOptions.Model },
                             { "imageUrl", card.ImageUrl },
                             { "imageSize", imageSize },
                             { "userSubject", userSubject },
@@ -314,12 +317,12 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                             {
                                 userPrompt = userPromptToSubmit,
                                 systemPrompt = systemPrompt,
-                                imagePrompt = ImageGenerator.GetImagePromptForCard(cards.First(), imageModel),
+                                imagePrompt = imageOptions.Prompt,
                                 temperature = temperature,
                                 tokensUsed = tokensUsed,
                                 model = actualGPTModelUsed,
                                 imageSize = imageSize,
-                                imageModel = imageModel,
+                                imageModel = imageOptions.Model,
                                 openAIResponse = openAIResponse,
                                 includeExplanation = includeExplanation,
                                 userSupliedKey = userSuppliedKey,
