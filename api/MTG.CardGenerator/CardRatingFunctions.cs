@@ -4,10 +4,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using MTG.CardGenerator.CosmosClients;
 using MTG.CardGenerator.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace MTG.CardGenerator
@@ -38,11 +40,9 @@ namespace MTG.CardGenerator
         {
             try
             {
-                var databaseId = Extensions.GetSettingOrThrow(Constants.CosmosDBDatabaseId);
-                var cosmosClient = new CosmosClient(databaseId, Constants.CosmosDBCardsCollectionName, log);
-
+                var cardsClient = new CardsClient(log);
                 // var cards = await cosmosClient.GetRandomDocuments<CardGenerationRecord>(1);
-                var card = await cosmosClient.GetRandomCardRecord(log);
+                var card = await cardsClient.GetRandomCardRecord(log);
 
                 var json = JsonConvert.SerializeObject(new GetRandomCardFunctionResponse() { Cards = new[] { card } });
                 return new OkObjectResult(json);
@@ -85,10 +85,8 @@ namespace MTG.CardGenerator
 
             try
             {
-                var databaseId = Extensions.GetSettingOrThrow(Constants.CosmosDBDatabaseId);
-                var cosmosClient = new CosmosClient(databaseId, Constants.CosmosDBCardsCollectionName, log);
-
-                var card = await cosmosClient.GetMagicCard(cardId);
+                var cardsClient = new CardsClient(log);
+                var card = await cardsClient.GetMagicCard(cardId);
 
                 if (card == null)
                 {
@@ -99,8 +97,8 @@ namespace MTG.CardGenerator
                     };
                 }
 
-                await cosmosClient.SetRatingResult(card, rating);
-                var updatedCard = await cosmosClient.GetMagicCard(cardId);
+                await cardsClient.SetRatingResult(card, rating);
+                var updatedCard = await cardsClient.GetMagicCard(cardId);
                 var json = JsonConvert.SerializeObject(new RateCardFunctionResponse() { Rating = updatedCard.rating });
                 return new OkObjectResult(json);
             }
@@ -121,9 +119,8 @@ namespace MTG.CardGenerator
         {
             try
             {
-                var databaseId = Extensions.GetSettingOrThrow(Constants.CosmosDBDatabaseId);
-                var cosmosClient = new CosmosClient(databaseId, Constants.CosmosDBCardsCollectionName, log);
-                var topCards = await cosmosClient.GetTopCards();
+                var cardsClient = new CardsClient(log);
+                var topCards = (await cardsClient.GetTopCards(top: 50, requiredNumberOfVotes: 1)).ToList();
                 var json = JsonConvert.SerializeObject(new TopCardsFunctionResponse() { Cards = topCards });
                 return new OkObjectResult(json);
             }

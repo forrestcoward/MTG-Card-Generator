@@ -1,10 +1,10 @@
 import React from 'react';
-import { Button } from 'antd';
+import { Button, Table } from 'antd';
 import { EventMessage, EventType, PublicClientApplication } from '@azure/msal-browser';
-import { CardDisplay, MagicCard } from './Card';
+import { CardDisplay, CardGenerationRecord, MagicCard } from './Card';
 import { Loader } from './Loader';
 import { AuthenticatedTemplate, UnauthenticatedTemplate } from '@azure/msal-react';
-import { GetRandomCard, RateCard } from './CallAPI';
+import { GetRandomCard, RateCard, TopCards } from './CallAPI';
 
 import "./mana.min.css";
 import "./mtg-card.css";
@@ -21,6 +21,7 @@ interface CardRatingState {
   cardId: string;
   loading: boolean;
   defaultCardWidth: number;
+  topCards: CardGenerationRecord[];
 }
 
 export class CardRating extends React.Component<CardRatingProps, CardRatingState> {
@@ -31,6 +32,7 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
     this.state = {
       card: undefined,
       cardId: "",
+      topCards: [],
       loading: true,
       defaultCardWidth: width
     };
@@ -44,6 +46,7 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
 
   componentDidMount(): void {
     this.getRandomCard();
+    this.getTopCards();
   }
 
   getRandomCard() {
@@ -51,6 +54,17 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
       var card = new MagicCard(cards[0].magicCards[0]);
       card.temporaryImageUrl = card.imageUrl
       this.setState({card: card, cardId: cards[0].id, loading: false})
+    }).catch((error) => {
+      console.log(error)
+    })
+  }
+
+  getTopCards() {
+    TopCards(this.props.msalInstance).then((cards) => {
+      cards.forEach(c => {
+        c.magicCards[0].temporaryImageUrl = c.magicCards[0].imageUrl
+      })
+      this.setState({topCards: cards})
     }).catch((error) => {
       console.log(error)
     })
@@ -74,32 +88,84 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
       <Loader />
     </div>
 
+type DataSourceItem = {
+  rank: number;
+  score: number; // or another appropriate type depending on what card.rating.averageScore returns
+  card: JSX.Element;
+};
+
+const dataSource: DataSourceItem[] = [];
+
+  const columns = [
+    {
+      title: 'Rank',
+      dataIndex: 'rank',
+      key: 'rank',
+    },
+    {
+      title: 'Score',
+      dataIndex: 'score',
+      key: 'score',
+    },
+    {
+      title: 'Card',
+      dataIndex: 'card',
+      key: 'card',
+    },
+  ];
+
+  this.state.topCards.forEach((card, index) => {
+    let entry = {
+      rank: index,
+      score: card.rating.averageScore,
+      card: 
+        <div className="cardContainer" key={`card-container-${card.id}`}>
+          <CardDisplay key={`card-display-${card.id}`} card={new MagicCard(card.magicCards[0])} showCardMenu={false} defaultCardWidth={400} />
+       </div>
+    }
+    dataSource.push(entry);
+  })
+
     var userCardDisplay = <div></div>
     if (this.state.card)
     {
       userCardDisplay = 
       <div>
         <div style={{display: "flex", flexWrap: "wrap", justifyContent: "center"}}>
-          <div style={{display: "flex"}}>
-            <div className="cardContainer" key={`card-container-${this.state.card.id}`}>
-              <CardDisplay key={`card-display-${this.state.card.id}`} card={this.state.card} showCardMenu={false} defaultCardWidth={this.state.defaultCardWidth} />
-              <Button onClick={this.rateCard.bind(this, this.state.cardId, 1)} style={{ marginTop: '10px', height:"50px", justifyContent: "center" }}>
-                <Bs1Circle style={{fontSize: '40px'}} />
-              </Button>
-              <Button onClick={this.rateCard.bind(this, this.state.cardId, 2)} style={{ marginTop: '10px', height:"50px", justifyContent: "center" }}>
-                <Bs2Circle style={{fontSize: '40px'}} />
-              </Button>
-              <Button onClick={this.rateCard.bind(this, this.state.cardId, 3)} style={{ marginTop: '10px', height:"50px", justifyContent: "center" }}>
-                <Bs3Circle style={{fontSize: '40px'}} />
-              </Button>
-              <Button onClick={this.rateCard.bind(this, this.state.cardId, 4)} style={{ marginTop: '10px', height:"50px", justifyContent: "center" }}>
-                <Bs4Circle style={{fontSize: '40px'}} />
-              </Button>
-              <Button onClick={this.rateCard.bind(this, this.state.cardId, 5)} style={{ marginTop: '10px', height:"50px", justifyContent: "center" }}>
-                <Bs5Circle style={{fontSize: '40px'}} />
-              </Button>
-            </div>
-          </div>
+          <table>
+            <tbody>
+              <tr>
+                <td>
+                  <div className="cardContainer" key={`card-container-${this.state.card.id}`}>
+                    <CardDisplay key={`card-display-${this.state.card.id}`} card={this.state.card} showCardMenu={false} defaultCardWidth={this.state.defaultCardWidth} />
+                  </div>
+                </td>
+              </tr>
+              <tr style={{textAlign: "center"}}>
+                <td>
+                  <Button onClick={this.rateCard.bind(this, this.state.cardId, 1)} type="text" style={{ marginTop: '10px', height:"50px", justifyContent: "center" }}>
+                    <Bs1Circle className="anticon" style={{fontSize: '45px'}} />
+                  </Button>
+                  <Button onClick={this.rateCard.bind(this, this.state.cardId, 2)} type="text" style={{ marginTop: '10px', height:"50px", justifyContent: "center" }}>
+                    <Bs2Circle className="anticon" style={{fontSize: '45px'}} />
+                  </Button>
+                  <Button onClick={this.rateCard.bind(this, this.state.cardId, 3)} type="text" style={{ marginTop: '10px', height:"50px", justifyContent: "center" }}>
+                    <Bs3Circle className="anticon" style={{fontSize: '45px'}} />
+                  </Button>
+                  <Button onClick={this.rateCard.bind(this, this.state.cardId, 4)} type="text" style={{ marginTop: '10px', height:"50px", justifyContent: "center" }}>
+                    <Bs4Circle className="anticon" style={{fontSize: '45px'}} />
+                  </Button>
+                  <Button onClick={this.rateCard.bind(this, this.state.cardId, 5)} type="text" style={{ marginTop: '10px', height:"50px", justifyContent: "center" }}>
+                    <Bs5Circle className="anticon" style={{fontSize: '45px'}} />
+                  </Button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style={{textAlign: "center"}}>
+        <Table bordered={true} dataSource={dataSource} columns={columns} />;
         </div>
       </div>
     }

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using MTG.CardGenerator.CosmosClients;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -69,8 +70,8 @@ namespace MTG.CardGenerator
                     ids.Add(result.Document.id);
                 }
 
-                var cardsCosmosClient = new CosmosClient(cosmosDatabaseId, Constants.CosmosDBCardsCollectionName, log);
-                var cards = await cardsCosmosClient.GetMagicCardRecords(ids);
+                var cardsClient = new CardsClient(log);
+                var cards = await cardsClient.GetMagicCardRecords(ids);
 
                 var generatedCards = cards.Select(x => x.magicCards.FirstOrDefault()).Take(30).ToArray();
                 var json = JsonConvert.SerializeObject(new SearchMagicCardsFunctionResponse() { Cards = generatedCards });

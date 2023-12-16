@@ -536,6 +536,10 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     }
   }
 
+  componentDidMount(): void {
+    this.state.card.adjustCardSize(this.props.defaultCardWidth)
+  }
+
   handleCardNameUpdate(event: React.ChangeEvent<HTMLInputElement>) {
     this.setState({ nameUpdate: event.target.value });
   }

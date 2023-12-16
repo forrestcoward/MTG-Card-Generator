@@ -113,6 +113,7 @@ dist
 
 # Azure Functions localsettings file
 local.settings.json
+local.settings.prod.json
 
 # User-specific files
 *.suo

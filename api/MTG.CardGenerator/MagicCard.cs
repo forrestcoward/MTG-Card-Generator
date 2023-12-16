@@ -520,23 +520,23 @@ namespace MTG.CardGenerator
             if (manaCostTokens.Contains("{R}")) red = true;
             if (manaCostTokens.Contains("{G}")) green = true;
 
-            if (white && !blue && !black && !red && !green) return ColorIdentity.White;
-            if (!white && blue && !black && !red && !green) return ColorIdentity.Blue;
-            if (!white && !blue && black && !red && !green) return ColorIdentity.Black;
-            if (!white && !blue && !black && red && !green) return ColorIdentity.Red;
-            if (!white && !blue && !black && !red && green) return ColorIdentity.Green;
+            if ( white && !blue && !black && !red && !green) return ColorIdentity.White;
+            if (!white &&  blue && !black && !red && !green) return ColorIdentity.Blue;
+            if (!white && !blue &&  black && !red && !green) return ColorIdentity.Black;
+            if (!white && !blue && !black &&  red && !green) return ColorIdentity.Red;
+            if (!white && !blue && !black && !red &&  green) return ColorIdentity.Green;
             if (!white && !blue && !black && !red && !green) return ColorIdentity.Colorless;
 
-            if (white && blue && !black && !red && !green) return ColorIdentity.Azorius;
-            if (!white && blue && black && !red && !green) return ColorIdentity.Dimir;
-            if (!white && !blue && black && red && !green) return ColorIdentity.Rakdos;
-            if (!white && !blue && !black && red && green) return ColorIdentity.Gruul;
-            if (white && !blue && !black && !red && green) return ColorIdentity.Selesnya;
-            if (white && !blue && black && !red && !green) return ColorIdentity.Orzhov;
-            if (!white && blue && !black && red && !green) return ColorIdentity.Izzet;
-            if (!white && !blue && black && !red && green) return ColorIdentity.Golgari;
-            if (white && !blue && !black && red && !green) return ColorIdentity.Boros;
-            if (!white && blue && !black && !red && green) return ColorIdentity.Simic;
+            if  (white &&  blue && !black && !red && !green) return ColorIdentity.Azorius;
+            if (!white &&  blue &&  black && !red && !green) return ColorIdentity.Dimir;
+            if (!white && !blue &&  black &&  red && !green) return ColorIdentity.Rakdos;
+            if (!white && !blue && !black &&  red &&  green) return ColorIdentity.Gruul;
+            if ( white && !blue && !black && !red &&  green) return ColorIdentity.Selesnya;
+            if ( white && !blue &&  black && !red && !green) return ColorIdentity.Orzhov;
+            if (!white &&  blue && !black &&  red && !green) return ColorIdentity.Izzet;
+            if (!white && !blue &&  black && !red &&  green) return ColorIdentity.Golgari;
+            if ( white && !blue && !black &&  red && !green) return ColorIdentity.Boros;
+            if (!white &&  blue && !black && !red &&  green) return ColorIdentity.Simic;
 
             return ColorIdentity.ThreePlusColored;
         }

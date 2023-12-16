@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using MTG.CardGenerator.CosmosClients;
 using MTG.CardGenerator.Models;
 using Newtonsoft.Json;
 using System;
@@ -31,9 +32,8 @@ namespace MTG.CardGenerator
                     return new UnauthorizedResult();
                 }
 
-                var databaseId = Extensions.GetSettingOrThrow(Constants.CosmosDBDatabaseId);
-                var cosmosClient = new CosmosClient(databaseId, Constants.CosmosDBUsersCollectionName, log);
-                var user = await cosmosClient.GetUserRecord(userSubject);
+                var usersClient = new UsersClient(log);
+                var user = await usersClient.GetUserRecord(userSubject);
                 var json = JsonConvert.SerializeObject(new GetuserFunctionResponse() { User = user });
                 return new OkObjectResult(json);
             }

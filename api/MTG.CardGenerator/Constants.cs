@@ -1,6 +1,6 @@
 ﻿namespace MTG.CardGenerator
 {
-    internal class Constants
+    public class Constants
     {
         // Setting names.
         public const string ValidJWTAuthority = "ValidJWTAuthority";

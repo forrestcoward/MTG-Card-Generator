@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using MTG.CardGenerator.CosmosClients;
 using MTG.CardGenerator.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -16,7 +17,6 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using static OpenAI.ObjectModels.StaticValues.ImageStatics;
 
 namespace MTG.CardGenerator
 {
@@ -69,15 +69,16 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             var userName = Extensions.GetClaim(jwtToken, "name", defaultValue: "Anonymous");
             var userSubject = Extensions.GetClaim(jwtToken, "sub", defaultValue: "Anonymous");
             var userLoggedIn = !userSubject.Equals("Anonymous", StringComparison.OrdinalIgnoreCase);
-            var usersCosmosClient = new CosmosClient(cosmosDatabaseId, Constants.CosmosDBUsersCollectionName, log);
+            var usersCosmosClient = new UsersClient(log);
             var user = await usersCosmosClient.GetUserRecord(userSubject);
 
             // If the user is logged in and has not provided an API key, limit the number of free generations they can do per day.
             if (userLoggedIn && string.IsNullOrWhiteSpace(userSuppliedApiKey))
             {
-                if (user != null && user.id != "fd42ec51-676d-479a-bab4-b7e7b86887e8")
+                if (user != null && !user.isAdmin)
                 {
-                    if (user.lastActiveTime?.Date == DateTime.Now.ToUniversalTime().Date && user.numberOfFreeCardsGeneratedToday >= AllowedFreeGenerationsPerDay)
+                    var allowedFreeCardGenerationsPerDay = user.allowedFreeCardGenerationsPerDay == -1 ? AllowedFreeGenerationsPerDay : user.allowedFreeCardGenerationsPerDay;
+                    if (user.lastActiveTime?.Date == DateTime.Now.ToUniversalTime().Date && user.numberOfFreeCardsGeneratedToday >= allowedFreeCardGenerationsPerDay)
                     {
                         return new ContentResult
                         {
@@ -331,7 +332,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                             magicCards = cards,
                         };
 
-                        var cardsCosmosClient = new CosmosClient(cosmosDatabaseId, Constants.CosmosDBCardsCollectionName, log);
+                        var cardsCosmosClient = new BaseCosmosClient(cosmosDatabaseId, Constants.CosmosDBCardsCollectionName, logger: log);
                         await cardsCosmosClient.AddItemToContainerAsync(cardGenerationRecord);
                         log.LogInformation($"Wrote card generation record to database '{cosmosDatabaseId}'.");
 
