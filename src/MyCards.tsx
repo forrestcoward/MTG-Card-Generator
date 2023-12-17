@@ -15,7 +15,7 @@ export interface MyCardsProps{
 
 export interface MyCardsState {
  cards: MagicCard[],
- defaultCardWidth: number,
+ cardWidth: number,
  loading: boolean,
 }
 
@@ -27,7 +27,7 @@ export class MyCards extends React.Component<MyCardsProps, MyCardsState> {
     this.state = {
       cards: [],
       loading: true,
-      defaultCardWidth: width
+      cardWidth: width
     };
 
     this.getUserCards();
@@ -66,7 +66,7 @@ export class MyCards extends React.Component<MyCardsProps, MyCardsState> {
       {
         this.state.cards.map(card => (
           <div className="cardContainer" key={`card-container-${card.id}`}>
-            <CardDisplay key={`card-display-${card.id}`} card={card} showCardMenu={true} defaultCardWidth={this.state.defaultCardWidth} />
+            <CardDisplay key={`card-display-${card.id}`} card={card} showCardMenu={true} cardWidth={this.state.cardWidth} />
           </div>
         ))
       }

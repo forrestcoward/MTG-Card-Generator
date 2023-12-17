@@ -120,7 +120,7 @@ namespace MTG.CardGenerator
             try
             {
                 var cardsClient = new CardsClient(log);
-                var topCards = (await cardsClient.GetTopCards(top: 50, requiredNumberOfVotes: 1)).ToList();
+                var topCards = (await cardsClient.GetTopCards(top: 50, requiredNumberOfVotes: 2)).ToList();
                 var json = JsonConvert.SerializeObject(new TopCardsFunctionResponse() { Cards = topCards });
                 return new OkObjectResult(json);
             }

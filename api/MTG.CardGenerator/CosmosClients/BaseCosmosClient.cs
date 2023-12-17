@@ -1,6 +1,7 @@
 ﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -11,7 +12,7 @@ namespace MTG.CardGenerator.CosmosClients
 {
     public static class CosmosConnectionManager
     {
-        private static readonly Dictionary<string, CosmosClient> cosmosClients = new();
+        private static readonly ConcurrentDictionary<string, CosmosClient> cosmosClients = new();
 
         public static CosmosClient GetCosmosClient(string cosmosEndpointUrl = null, string accessKey = null)
         {
@@ -35,7 +36,7 @@ namespace MTG.CardGenerator.CosmosClients
 
             if (!cosmosClients.ContainsKey(cosmosEndpointUrl))
             {
-                cosmosClients.Add(cosmosEndpointUrl, new CosmosClient(cosmosEndpointUrl, accessKey));
+                cosmosClients[cosmosEndpointUrl] = new CosmosClient(cosmosEndpointUrl, accessKey);
             }
 
             return cosmosClients[cosmosEndpointUrl];

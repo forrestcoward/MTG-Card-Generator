@@ -43,9 +43,11 @@ You are an assistant who works as a Magic: The Gathering card designer. You like
 You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'text', 'flavorText', 'pt', 'rarity', 'explanation', and 'funnyExplanation' properties. The 'explanation' property should explain why the card was created the way it was. The 'funnyExplanation' property should be a hilarious explanation of why the card was created the way it was.
 Do not explain the cards or explain your reasoning. Only return the JSON of cards named 'cards'.";
 
-        const float temperature = 1;
+        const float Temperature = 1;
 
         const int AllowedFreeGenerationsPerDay = 25;
+
+        const int MaxPromptCharacters = 500;
 
         [FunctionName("GenerateMagicCard")]
         public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", Route = null)] HttpRequest req, ILogger log)
@@ -110,6 +112,12 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 }
             }
 
+            if (rawUserPrompt.Length > MaxPromptCharacters)
+            {
+                log.LogWarning($"Truncating user prompt to {MaxPromptCharacters} characters.");
+                rawUserPrompt = rawUserPrompt.Substring(0, MaxPromptCharacters);
+            }
+
             if (string.IsNullOrWhiteSpace(rawUserPrompt))
             {
                 rawUserPrompt = "that is from the Dominaria plane.";
@@ -160,7 +168,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                             ChatMessage.FromSystem(systemPrompt),
                         },
                         Model = gptModel,
-                        Temperature = temperature,
+                        Temperature = Temperature,
                         ChatResponseFormat = chatResponseFormat,
                     });
 
@@ -185,7 +193,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                             { "model", actualGPTModelUsed },
                             { "response", response },
                             { "systemPrompt", systemPrompt },
-                            { "temperature", temperature },
+                            { "temperature", Temperature },
                             { "tokensUsed", response.Usage.TotalTokens },
                             { "userSubject", userSubject },
                             { "userPrompt", userPromptToSubmit },
@@ -312,7 +320,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                                 userPrompt = userPromptToSubmit,
                                 systemPrompt = systemPrompt,
                                 imagePrompt = imageOptions.Prompt,
-                                temperature = temperature,
+                                temperature = Temperature,
                                 tokensUsed = tokensUsed,
                                 model = actualGPTModelUsed,
                                 imageSize = imageOptions.Size,
@@ -381,7 +389,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     { "model", actualGPTModelUsed },
                     { "numberOfChatCompletionAttempts", attemptsToGenerateCard },
                     { "systemPrompt", systemPrompt },
-                    { "temperature", temperature },
+                    { "temperature", Temperature },
                     { "userSubject", userSubject },
                     { "userPrompt", userPromptToSubmit },
                 });

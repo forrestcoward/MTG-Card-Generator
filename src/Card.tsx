@@ -162,10 +162,15 @@ export class MagicCard {
     this.funnyExplanation = card.funnyExplanation
   }
 
-  static clone(card: MagicCard): MagicCard {
+  static clone(card: MagicCard, sameId: boolean): MagicCard {
     let newCard = new MagicCard(card)
     newCard.setNumberDisplay = card.setNumberDisplay
-    newCard.id = card.id
+    if (sameId) {
+      newCard.id = card.id
+    } else {
+      newCard.id = getRandomInt(0, 1000000000)
+    }
+
     return newCard
   }
 
@@ -345,6 +350,9 @@ export class MagicCard {
 
   adjustCardSize(width: number = 440) {
     const container : HTMLElement | null = document.getElementById(`card-${this.id}`)
+    if (container == null) {
+      return
+    }
     const height = ((width * 3.6) / 2.5);
     container!.style.width  = `${width}px`;
     container!.style.height = `${height}px`;
@@ -480,8 +488,8 @@ export class MagicCard {
 
 interface CardDisplayProps {
   card: MagicCard;
+  cardWidth: number;
   showCardMenu: boolean;
-  defaultCardWidth: number;
 }
 
 interface CardDisplayState {
@@ -516,7 +524,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
       showCardMenu: props.showCardMenu,
       increaseSizeAllowed: true,
       decreaseSizeAllowed: true,
-      cardWidth: props.defaultCardWidth,
+      cardWidth: props.cardWidth,
       showSizeAdjustmentButtons: !isMobileDevice() || viewportWidth > 900,
     };
 
@@ -532,12 +540,8 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
       this.state.card.typeLine != prevState.card.typeLine ||
       this.state.card.name != prevState.card.name ||
       this.state.editMode != prevState.editMode) {
-      this.state.card.adjustFontSize()
+        this.state.card.adjustFontSize()
     }
-  }
-
-  componentDidMount(): void {
-    this.state.card.adjustCardSize(this.props.defaultCardWidth)
   }
 
   handleCardNameUpdate(event: React.ChangeEvent<HTMLInputElement>) {
@@ -561,7 +565,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
   }
 
   updateEditMode() {
-    var updatedCard = MagicCard.clone(this.state.card)
+    var updatedCard = MagicCard.clone(this.state.card, true)
     updatedCard.name = this.state.nameUpdate
     updatedCard.rawOracleText = this.state.rawOracleTextUpdate
     updatedCard.typeLine = this.state.typeUpdate
@@ -657,9 +661,11 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
       </Menu>
     );
 
-    return (
+    const height = ((this.props.cardWidth * 3.6) / 2.5);
+
+    let fullCard = (
       <div>
-        <div id={`card-${card.id}`} className="card-container">
+        <div id={`card-${card.id}`} className="card-container" style={{width: `${this.props.cardWidth}px`, height: `${height}px`}}>
           <div id={`card-background-${card.id}`} className={card.cardDivClassName}></div>
             <div className="card-frame">
               <div id={`title-container-${card.id}`} className={card.cardFrameHeaderClassName}>
@@ -670,7 +676,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
                   }
                 </div>
                 {!this.state.editMode ?
-                    <div id={`mana-${card.id}`} className="mana-symbols" style={{paddingLeft:"10px", paddingRight:"5px"}}>
+                    <div id={`mana-${card.id}`} className="mana-symbols">
                       {card.manaCostTokens.map((manaCostToken, i) => (
                         <i key={card.name + "-manaToken-"+ i} className={MagicCard.getManaClassNameForTitle(manaCostToken) + " manaCost " + `manaCost-${card.id}`} id="mana-icon"></i>
                       ))}
@@ -691,7 +697,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
                     <h1 id={`type-${card.id}`} className="type name-type-size">{card.typeLine}</h1> :
                     <input className="card-edit-type" type="text" value={this.state.typeUpdate} onChange={this.handleCardTypeUpdate} />
                   }
-                <div id={`set-${card.id}`} className="mana-symbols" style={{paddingRight:"5px", paddingLeft:"10px"}}>
+                <div id={`set-${card.id}`} className="mana-symbols">
                   <i className="ms ms-dfc-ignite" id="mana-icon"></i>
                 </div>
               </div>
@@ -777,5 +783,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
         }
       </div>
     )
+
+    return fullCard
   }
 }

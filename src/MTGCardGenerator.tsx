@@ -208,7 +208,7 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
           {
             this.state.cards.map(card => (
               <div className="cardContainer" key={`card-container-${card.id}`}>
-                <CardDisplay key={`card-display-${card.id}`} card={card} showCardMenu={true} defaultCardWidth={this.state.defaultCardWidth} />
+                <CardDisplay key={`card-display-${card.id}`} card={card} showCardMenu={true} cardWidth={this.state.defaultCardWidth} />
               </div>
             ))
           }

@@ -23,7 +23,7 @@ export interface SearchCardsState {
   cards: MagicCard[],
   currentError: string,
   userName: string,
-  defaultCardWidth: number
+  cardWidth: number
 }
 
 export class SearchCards extends React.Component<SearchCardsProps, SearchCardsState> {
@@ -37,7 +37,7 @@ export class SearchCards extends React.Component<SearchCardsProps, SearchCardsSt
       cards: [],
       currentError: '',
       userName: '',
-      defaultCardWidth: width
+      cardWidth: width
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -97,7 +97,7 @@ export class SearchCards extends React.Component<SearchCardsProps, SearchCardsSt
           {
             this.state.cards.map(card => (
               <div className="cardContainer" key={`card-container-${card.id}`}>
-                <CardDisplay key={`card-display-${card.id}`} card={card} showCardMenu={true} defaultCardWidth={this.state.defaultCardWidth} />
+                <CardDisplay key={`card-display-${card.id}`} card={card} showCardMenu={true} cardWidth={this.state.cardWidth} />
               </div>
             ))
           }

@@ -36,18 +36,18 @@ namespace MTG.CardGenerator.CosmosClients
 
         public async Task<CardGenerationRecord> GetRandomCardRecord(ILogger log)
         {
-            for (var attempt = 0; attempt < 20; attempt++)
+            for (var attempt = 0; attempt < 30; attempt++)
             {
                 var param = GetRandomAlphanumericCharacter();
-                if (attempt < 10)
+                if (attempt > 20)
                 {
                     param = GetRandomAlphanumericCharacter() + GetRandomAlphanumericCharacter();
                 }
 
+                // WHERE STARTSWITH(c.magicCards[0].imageUrl, 'https://mtgcardgen')
                 var queryDefinition = new QueryDefinitionWrapper(@$"
                     SELECT * FROM c
-                    WHERE STARTSWITH(c.magicCards[0].imageUrl, 'https://mtgcardgen')
-                    AND c.generationMetadata.imageModel = 'dall-e-3'
+                    WHERE c.generationMetadata.imageModel = 'dall-e-3'
                     AND c.generationMetadata.model = 'gpt-4-1106-preview'
                     AND STARTSWITH(c.id, @param)")
                .WithParameter("@param", param);
@@ -120,7 +120,7 @@ namespace MTG.CardGenerator.CosmosClients
                 SELECT *
                 FROM c
                 WHERE IS_DEFINED(c.rating)
-                AND c.rating.numberOfVotes > @requiredNumberOfVotes
+                AND c.rating.numberOfVotes >= @requiredNumberOfVotes
                 ORDER BY c.rating.averageScore DESC OFFSET 0 LIMIT @top")
                 .WithParameter("@top", top)
                 .WithParameter("@requiredNumberOfVotes", requiredNumberOfVotes);

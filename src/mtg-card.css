@@ -484,6 +484,8 @@ body* > {
     display: flex;
     /* Push mana symbols to the left within flex scheme. */
     margin-left:auto;
+    padding-left: 10px;
+    padding-right: 5px;
 }
 
 .power-and-toughness-frame {
@@ -641,4 +643,32 @@ p {
 
 .anticon:hover {
   color: #1890ff;
+}
+
+.leaderboard-table {
+  margin-top: 10px;
+}
+
+.leaderboard-table .ant-table-cell {
+  padding: 8px !important;
+}
+
+.leaderboard-table .ant-table-pagination {
+  text-align: center;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.antd-no-style-tooltip .ant-tooltip-inner {
+  background-color: transparent; /* Remove background color */
+  color: black; /* Text color */
+  box-shadow: none; /* Remove shadow */
+  border: none; /* Remove border */
+  font-family: 'Times New Roman', Times, serif;
+  line-height: 1;
+}
+
+.antd-no-style-tooltip .ant-tooltip-arrow {
+  display: none; /* Hide the arrow */
 }

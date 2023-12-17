@@ -11,6 +11,8 @@ import "./mtg-card.css";
 import "./app.css";
 import { setCardContainerSize } from './Utility';
 import { Bs1Circle, Bs2Circle, Bs3Circle, Bs4Circle, Bs5Circle } from "react-icons/bs";
+import { CardPreview } from './CardPreview';
+import { ColumnType } from 'antd/es/table';
 
 interface CardRatingProps {
   msalInstance: PublicClientApplication;
@@ -20,7 +22,7 @@ interface CardRatingState {
   card: MagicCard | undefined;
   cardId: string;
   loading: boolean;
-  defaultCardWidth: number;
+  cardWidth: number;
   topCards: CardGenerationRecord[];
 }
 
@@ -34,7 +36,7 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
       cardId: "",
       topCards: [],
       loading: true,
-      defaultCardWidth: width
+      cardWidth: width
     };
 
     this.props.msalInstance.addEventCallback((message: EventMessage) => {
@@ -88,43 +90,48 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
       <Loader />
     </div>
 
-type DataSourceItem = {
-  rank: number;
-  score: number; // or another appropriate type depending on what card.rating.averageScore returns
-  card: JSX.Element;
-};
+    type DataSourceItem = {
+      rank: JSX.Element;
+      score: string;
+      card: JSX.Element;
+    };
 
-const dataSource: DataSourceItem[] = [];
+    const dataSource: DataSourceItem[] = [];
 
-  const columns = [
-    {
-      title: 'Rank',
-      dataIndex: 'rank',
-      key: 'rank',
-    },
-    {
-      title: 'Score',
-      dataIndex: 'score',
-      key: 'score',
-    },
-    {
-      title: 'Card',
-      dataIndex: 'card',
-      key: 'card',
-    },
-  ];
+    const columns = [
+      {
+        title: 'Rank',
+        dataIndex: 'rank',
+        key: 'rank',
+        align: 'center' as ColumnType<DataSourceItem>['align'],
+      },
+      {
+        title: 'Rating',
+        dataIndex: 'score',
+        key: 'score',
+        align: 'center' as ColumnType<DataSourceItem>['align'],
+      },
+      {
+        title: 'Card',
+        dataIndex: 'card',
+        key: 'card',
+      },
+    ];
 
-  this.state.topCards.forEach((card, index) => {
-    let entry = {
-      rank: index,
-      score: card.rating.averageScore,
-      card: 
-        <div className="cardContainer" key={`card-container-${card.id}`}>
-          <CardDisplay key={`card-display-${card.id}`} card={new MagicCard(card.magicCards[0])} showCardMenu={false} defaultCardWidth={400} />
-       </div>
-    }
-    dataSource.push(entry);
-  })
+    this.state.topCards.forEach((card, index) => {
+      let entry = {
+        rank: <div><h3>{index + 1}</h3></div>,
+        score: card.rating.averageScore.toFixed(2),
+        card: 
+          <div key={`leaderboard-card-container-${card.id}`}>
+            <CardPreview key={`leaderboard-card-${card.id}`} card={new MagicCard(card.magicCards[0])} cardWidth={this.state.cardWidth} />
+        </div>
+      }
+      dataSource.push(entry);
+    })
+
+    const rateCardButtonStyle : React.CSSProperties= { marginTop: '10px', height:"50px", justifyContent: "center" }
+    const rateCardIconStyle : React.CSSProperties= { fontSize: '45px' }
 
     var userCardDisplay = <div></div>
     if (this.state.card)
@@ -134,54 +141,66 @@ const dataSource: DataSourceItem[] = [];
         <div style={{display: "flex", flexWrap: "wrap", justifyContent: "center"}}>
           <table>
             <tbody>
+              <tr style={{justifyContent:"center", display:"grid", marginBottom:"-25px"}}>
+                <td>
+                  <h3>Prompt: "<i>{this.state.card.userPrompt}</i>"</h3>
+                </td>
+              </tr>
               <tr>
                 <td>
-                  <div className="cardContainer" key={`card-container-${this.state.card.id}`}>
-                    <CardDisplay key={`card-display-${this.state.card.id}`} card={this.state.card} showCardMenu={false} defaultCardWidth={this.state.defaultCardWidth} />
+                  <div className="cardContainer" key={`card-container-${this.state.card.id}`} style={{marginTop:"15px"}}>
+                    <CardDisplay key={`card-display-${this.state.card.id}`} card={this.state.card} showCardMenu={false} cardWidth={this.state.cardWidth} />
                   </div>
                 </td>
               </tr>
               <tr style={{textAlign: "center"}}>
                 <td>
-                  <Button onClick={this.rateCard.bind(this, this.state.cardId, 1)} type="text" style={{ marginTop: '10px', height:"50px", justifyContent: "center" }}>
-                    <Bs1Circle className="anticon" style={{fontSize: '45px'}} />
+                  <Button onClick={this.rateCard.bind(this, this.state.cardId, 1)} type="text" style={rateCardButtonStyle}>
+                    <Bs1Circle className="anticon" style={rateCardIconStyle} />
                   </Button>
-                  <Button onClick={this.rateCard.bind(this, this.state.cardId, 2)} type="text" style={{ marginTop: '10px', height:"50px", justifyContent: "center" }}>
-                    <Bs2Circle className="anticon" style={{fontSize: '45px'}} />
+                  <Button onClick={this.rateCard.bind(this, this.state.cardId, 2)} type="text" style={rateCardButtonStyle}>
+                    <Bs2Circle className="anticon" style={rateCardIconStyle} />
                   </Button>
-                  <Button onClick={this.rateCard.bind(this, this.state.cardId, 3)} type="text" style={{ marginTop: '10px', height:"50px", justifyContent: "center" }}>
-                    <Bs3Circle className="anticon" style={{fontSize: '45px'}} />
+                  <Button onClick={this.rateCard.bind(this, this.state.cardId, 3)} type="text" style={rateCardButtonStyle}>
+                    <Bs3Circle className="anticon" style={rateCardIconStyle} />
                   </Button>
-                  <Button onClick={this.rateCard.bind(this, this.state.cardId, 4)} type="text" style={{ marginTop: '10px', height:"50px", justifyContent: "center" }}>
-                    <Bs4Circle className="anticon" style={{fontSize: '45px'}} />
+                  <Button onClick={this.rateCard.bind(this, this.state.cardId, 4)} type="text" style={rateCardButtonStyle}>
+                    <Bs4Circle className="anticon" style={rateCardIconStyle} />
                   </Button>
-                  <Button onClick={this.rateCard.bind(this, this.state.cardId, 5)} type="text" style={{ marginTop: '10px', height:"50px", justifyContent: "center" }}>
-                    <Bs5Circle className="anticon" style={{fontSize: '45px'}} />
+                  <Button onClick={this.rateCard.bind(this, this.state.cardId, 5)} type="text" style={rateCardButtonStyle}>
+                    <Bs5Circle className="anticon" style={rateCardIconStyle} />
                   </Button>
+                </td>
+              </tr>
+              <tr>
+
+              </tr>
+              <tr style={{justifyContent:"center", marginTop: "20px", display:"grid"}}>
+                <h2>Top Rated Cards</h2>
+              </tr>
+              <tr>
+                <td>
+                  <Table className='leaderboard-table' bordered={true} dataSource={dataSource} columns={columns} pagination={{pageSize: 20}} />;
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-
-        <div style={{textAlign: "center"}}>
-        <Table bordered={true} dataSource={dataSource} columns={columns} />;
-        </div>
       </div>
     }
 
-var pageDisplay = this.state.loading ? loading: userCardDisplay
-    return (
-      <div>
-        <AuthenticatedTemplate>
-          {pageDisplay}
-        </AuthenticatedTemplate>
-        <UnauthenticatedTemplate>
-          <div style={{margin: "10px"}}>
-            <h1>Please login.</h1>
+    var pageDisplay = this.state.loading ? loading: userCardDisplay
+        return (
+          <div>
+            <AuthenticatedTemplate>
+              {pageDisplay}
+            </AuthenticatedTemplate>
+            <UnauthenticatedTemplate>
+              <div style={{margin: "10px"}}>
+                <h1>Please login.</h1>
+              </div>
+            </UnauthenticatedTemplate>
           </div>
-        </UnauthenticatedTemplate>
-      </div>
-    )
+          )
   }
 }

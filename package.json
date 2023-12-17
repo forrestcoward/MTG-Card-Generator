@@ -34,7 +34,7 @@
     "@emotion/react": "^11.11.0",
     "@emotion/styled": "^11.11.0",
     "@rc-component/trigger": "^1.14.1",
-    "antd": "^5.7.0",
+    "antd": "^5.12.2",
     "file-saver": "^2.0.5",
     "html-to-image": "^1.11.11",
     "react": "^18.2.0",
