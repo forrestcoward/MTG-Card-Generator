@@ -125,7 +125,7 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
         card: 
           <div key={`leaderboard-card-container-${card.id}`}>
             <CardPreview key={`leaderboard-card-${card.id}`} card={new MagicCard(card.magicCards[0])} cardWidth={this.state.cardWidth} />
-        </div>
+          </div>
       }
       dataSource.push(entry);
     })
@@ -180,7 +180,7 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
               </tr>
               <tr>
                 <td>
-                  <Table className='leaderboard-table' bordered={true} dataSource={dataSource} columns={columns} pagination={{pageSize: 20}} />;
+                  <Table className='leaderboard-table' bordered={true} dataSource={dataSource} columns={columns} pagination={{pageSize: 20}} style={{width:this.state.cardWidth}} />;
                 </td>
               </tr>
             </tbody>
