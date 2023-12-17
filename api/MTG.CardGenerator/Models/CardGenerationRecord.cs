@@ -15,23 +15,14 @@ namespace MTG.CardGenerator.Models
         public DateTime MostRecent { get; set; }
     }
 
-    public class CardBattle
-    {
-        [JsonProperty("victories")]
-        public int Victories { get; set; }
-        [JsonProperty("defeats")]
-        public int Defeats { get; set; }
-        [JsonProperty("mostRecent")]
-        public DateTime MostRecent { get; set; }
-    }
-
     public class CardGenerationRecord
     {
         public string id { get; set; }
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
         public GenerationMetaData generationMetadata { get; set; }
         public UserMeta user { get; set; }
         public MagicCard[] magicCards { get; set; }
-        public CardBattle cardBattle { get; set; }
+        public MagicCard card => magicCards[0];
         public CardRating rating { get; set; }
     }
 

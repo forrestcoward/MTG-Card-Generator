@@ -8,6 +8,7 @@ namespace MTG.CardGenerator.Models
         public string userName { get; set; }
         public string userSubject { get; set; }
         public long numberOfCardsGenerated { get; set; } = 0;
+        public long numberOfCardsRated { get; set;} = 0;
         public DateTime? lastActiveTime { get; set; } = null;
         public double totalCostOfCardsGenerated { get; set; } = 0;
         public int numberOfFreeCardsGeneratedToday { get; set; } = 0;

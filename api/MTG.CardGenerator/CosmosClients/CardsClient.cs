@@ -34,7 +34,7 @@ namespace MTG.CardGenerator.CosmosClients
             return userCards;
         }
 
-        public async Task<CardGenerationRecord> GetRandomCardRecord(ILogger log)
+        public async Task<CardGenerationRecord> GetCardToRate(ILogger log)
         {
             for (var attempt = 0; attempt < 30; attempt++)
             {

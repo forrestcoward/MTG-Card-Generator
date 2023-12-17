@@ -1,10 +1,10 @@
 import React from 'react';
-import { Button, Table } from 'antd';
+import { Button, Rate, Table } from 'antd';
 import { EventMessage, EventType, PublicClientApplication } from '@azure/msal-browser';
 import { CardDisplay, CardGenerationRecord, MagicCard } from './Card';
 import { Loader } from './Loader';
 import { AuthenticatedTemplate, UnauthenticatedTemplate } from '@azure/msal-react';
-import { GetRandomCard, RateCard, TopCards } from './CallAPI';
+import { GetCardToRate, RateCard, GetTopCards } from './CallAPI';
 
 import "./mana.min.css";
 import "./mtg-card.css";
@@ -52,8 +52,8 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
   }
 
   getRandomCard() {
-    GetRandomCard(this.props.msalInstance).then((cards) => {
-      var card = new MagicCard(cards[0].magicCards[0]);
+    GetCardToRate(this.props.msalInstance).then((cards) => {
+      var card = new MagicCard(cards[0].card);
       card.temporaryImageUrl = card.imageUrl
       this.setState({card: card, cardId: cards[0].id, loading: false})
     }).catch((error) => {
@@ -62,9 +62,9 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
   }
 
   getTopCards() {
-    TopCards(this.props.msalInstance).then((cards) => {
+    GetTopCards(this.props.msalInstance).then((cards) => {
       cards.forEach(c => {
-        c.magicCards[0].temporaryImageUrl = c.magicCards[0].imageUrl
+        c.card.temporaryImageUrl = c.card.imageUrl
       })
       this.setState({topCards: cards})
     }).catch((error) => {
@@ -91,14 +91,15 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
     </div>
 
     type DataSourceItem = {
-      rank: JSX.Element;
-      score: string;
+      //rank: JSX.Element;
+      //score: string;
       card: JSX.Element;
     };
 
     const dataSource: DataSourceItem[] = [];
 
     const columns = [
+      /*
       {
         title: 'Rank',
         dataIndex: 'rank',
@@ -110,7 +111,7 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
         dataIndex: 'score',
         key: 'score',
         align: 'center' as ColumnType<DataSourceItem>['align'],
-      },
+      },*/
       {
         title: 'Card',
         dataIndex: 'card',
@@ -118,21 +119,35 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
       },
     ];
 
-    this.state.topCards.forEach((card, index) => {
+    this.state.topCards.forEach((cardRecord, index) => {
       let entry = {
-        rank: <div><h3>{index + 1}</h3></div>,
-        score: card.rating.averageScore.toFixed(2),
-        card: 
-          <div key={`leaderboard-card-container-${card.id}`}>
-            <CardPreview key={`leaderboard-card-${card.id}`} card={new MagicCard(card.magicCards[0])} cardWidth={this.state.cardWidth} />
-          </div>
+        //rank: <div><h3>{index + 1}</h3></div>,
+        //score: cardRecord.rating.averageScore.toFixed(2),
+                            //{cardRecord.rating.averageScore.toFixed(2)} / 5
+        card:
+          <table>
+            <tbody>
+              <tr>
+                <td>
+                  <div>
+                    <span style={{fontSize: "20px"}}>#{index+1} </span>
+                    <Rate defaultValue={cardRecord.rating.averageScore} disabled={true} allowHalf={true}></Rate>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div key={`leaderboard-card-container-${cardRecord.id}`}>
+                    <CardPreview key={`leaderboard-card-${cardRecord.id}`} card={new MagicCard(cardRecord.card)} cardWidth={this.state.cardWidth} />
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
       }
       dataSource.push(entry);
     })
-
-    const rateCardButtonStyle : React.CSSProperties= { marginTop: '10px', height:"50px", justifyContent: "center" }
-    const rateCardIconStyle : React.CSSProperties= { fontSize: '45px' }
-
+    
     var userCardDisplay = <div></div>
     if (this.state.card)
     {
@@ -155,32 +170,18 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
               </tr>
               <tr style={{textAlign: "center"}}>
                 <td>
-                  <Button onClick={this.rateCard.bind(this, this.state.cardId, 1)} type="text" style={rateCardButtonStyle}>
-                    <Bs1Circle className="anticon" style={rateCardIconStyle} />
-                  </Button>
-                  <Button onClick={this.rateCard.bind(this, this.state.cardId, 2)} type="text" style={rateCardButtonStyle}>
-                    <Bs2Circle className="anticon" style={rateCardIconStyle} />
-                  </Button>
-                  <Button onClick={this.rateCard.bind(this, this.state.cardId, 3)} type="text" style={rateCardButtonStyle}>
-                    <Bs3Circle className="anticon" style={rateCardIconStyle} />
-                  </Button>
-                  <Button onClick={this.rateCard.bind(this, this.state.cardId, 4)} type="text" style={rateCardButtonStyle}>
-                    <Bs4Circle className="anticon" style={rateCardIconStyle} />
-                  </Button>
-                  <Button onClick={this.rateCard.bind(this, this.state.cardId, 5)} type="text" style={rateCardButtonStyle}>
-                    <Bs5Circle className="anticon" style={rateCardIconStyle} />
-                  </Button>
+                  <Rate className='card-rating' style={{marginTop: "5px", width: `${this.state.cardWidth}px`}} onChange={(rating) => this.rateCard(this.state.cardId, rating)} ></Rate>
                 </td>
               </tr>
               <tr>
 
               </tr>
-              <tr style={{justifyContent:"center", marginTop: "20px", display:"grid"}}>
+              <tr style={{justifyContent:"center", marginTop: "10px", display:"grid"}}>
                 <h2>Top Rated Cards</h2>
               </tr>
               <tr>
                 <td>
-                  <Table className='leaderboard-table' bordered={true} dataSource={dataSource} columns={columns} pagination={{pageSize: 20}} style={{width:this.state.cardWidth}} />;
+                  <Table showHeader={false} className='leaderboard-table' bordered={true} dataSource={dataSource} columns={columns} pagination={{pageSize: 20}} style={{width:this.state.cardWidth}} />
                 </td>
               </tr>
             </tbody>

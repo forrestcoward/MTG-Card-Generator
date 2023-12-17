@@ -84,12 +84,6 @@ const manaTokenToCssCharacter : Record<string, string> = {
   "{T}": "tap",
   "{X}": "x",
 }
-
-export interface Cardbattle {
-  victories: number,
-  defeats: number,
-}
-
 export interface CardRating {
   numberOfVotes: number,
   totalScore: number,
@@ -111,8 +105,7 @@ export interface CardGenerationRecords {
 export interface CardGenerationRecord {
   id: string
   user: User
-  magicCards: BasicCard[]
-  cardBattle: Cardbattle
+  card: BasicCard
   rating: CardRating
   generationMetadata: GenerationMetadata
 }

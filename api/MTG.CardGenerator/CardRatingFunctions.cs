@@ -9,6 +9,7 @@ using MTG.CardGenerator.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -34,17 +35,24 @@ namespace MTG.CardGenerator
             public CardGenerationRecord[] Cards { get; set; }
         }
 
-        [FunctionName("GetRandomCard")]
+        [FunctionName("GetCardToRate")]
         [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
-        public static async Task<IActionResult> RunGetRandomCard([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log)
+        public static async Task<IActionResult> RunGetCardToRate([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log)
         {
             try
             {
+                var stopwatch = Stopwatch.StartNew();
                 var cardsClient = new CardsClient(log);
-                // var cards = await cosmosClient.GetRandomDocuments<CardGenerationRecord>(1);
-                var card = await cardsClient.GetRandomCardRecord(log);
+                var card = await cardsClient.GetCardToRate(log);
 
                 var json = JsonConvert.SerializeObject(new GetRandomCardFunctionResponse() { Cards = new[] { card } });
+
+                log.LogMetric("GetCardToRate_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
+                    properties: new Dictionary<string, object>()
+                    {
+                        { "cardId", card.id },
+                    });
+
                 return new OkObjectResult(json);
             }
             catch (Exception ex)
@@ -62,8 +70,15 @@ namespace MTG.CardGenerator
         [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
         public static async Task<IActionResult> RunRateCardFunction([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log)
         {
+            var stopwatch = Stopwatch.StartNew();
             var cardId = (string)req.Query["cardId"];
             var ratingString = (string)req.Query["rating"];
+
+            var userSubject = req.GetUserSubject(log);
+            if (string.IsNullOrWhiteSpace(userSubject))
+            {
+                return new UnauthorizedResult();
+            }
 
             if (!int.TryParse(ratingString, out int rating))
             {
@@ -86,6 +101,7 @@ namespace MTG.CardGenerator
             try
             {
                 var cardsClient = new CardsClient(log);
+                var usersClient = new UsersClient(log);
                 var card = await cardsClient.GetMagicCard(cardId);
 
                 if (card == null)
@@ -97,9 +113,20 @@ namespace MTG.CardGenerator
                     };
                 }
 
+                var updateTask = usersClient.UserRatedCard(userSubject);
                 await cardsClient.SetRatingResult(card, rating);
+                await updateTask;
                 var updatedCard = await cardsClient.GetMagicCard(cardId);
                 var json = JsonConvert.SerializeObject(new RateCardFunctionResponse() { Rating = updatedCard.rating });
+
+                log.LogMetric("RateCard_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
+                    properties: new Dictionary<string, object>()
+                    {
+                        { "rating", rating },
+                        { "cardId", card.id },
+                        { "userSubject", userSubject },
+                    });
+
                 return new OkObjectResult(json);
             }
             catch (Exception ex)
@@ -113,15 +140,17 @@ namespace MTG.CardGenerator
             }
         }
 
-        [FunctionName("TopCards")]
+        [FunctionName("GetTopCards")]
         [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
         public static async Task<IActionResult> RunTopCards([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log)
         {
             try
             {
+                var stopwatch = Stopwatch.StartNew();
                 var cardsClient = new CardsClient(log);
                 var topCards = (await cardsClient.GetTopCards(top: 50, requiredNumberOfVotes: 2)).ToList();
                 var json = JsonConvert.SerializeObject(new TopCardsFunctionResponse() { Cards = topCards });
+                log.LogMetric("GetTopCards_DurationSeconds", stopwatch.Elapsed.TotalSeconds);
                 return new OkObjectResult(json);
             }
             catch (Exception ex)

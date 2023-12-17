@@ -27,7 +27,7 @@ namespace MTG.CardGenerator.CosmosClients
             return user;
         }
 
-        public async Task<ItemResponse<User>> UpdateUserRecord(User user, string userSubject, int numberOfNewCards, double cardGenerationEstimatedCost, bool userSuppliedApiKey)
+        public async Task<ItemResponse<User>> UserGeneratedCard(User user, string userSubject, int numberOfNewCards, double cardGenerationEstimatedCost, bool userSuppliedApiKey)
         {
             var operations = new List<PatchOperation>
             {
@@ -50,6 +50,17 @@ namespace MTG.CardGenerator.CosmosClients
 
             return await PatchDocument<User>(userSubject, userSubject, operations);
         }
+
+        public async Task<ItemResponse<User>> UserRatedCard(string userSubject)
+        {
+            var operations = new List<PatchOperation>
+            {
+                PatchOperation.Increment("/numberOfCardsRated", 1),
+            };
+
+            return await PatchDocument<User>(userSubject, userSubject, operations);
+        }
+
 
         public async Task SetUserAsAdmin(string userSubject)
         {

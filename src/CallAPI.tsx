@@ -43,8 +43,8 @@ function getApiUrl(apiName : string): string {
   return `${baseUrl}/${apiName}`;
 }
 
-export async function GetRandomCard(msal: PublicClientApplication): Promise<CardGenerationRecord[]> {
-  let url = getApiUrl('GetRandomCard');
+export async function GetCardToRate(msal: PublicClientApplication): Promise<CardGenerationRecord[]> {
+  let url = getApiUrl('GetCardToRate');
   var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
 
   const params: Record<string, string> = { };
@@ -80,9 +80,9 @@ export async function RateCard(cardId: string, rating: number, msal: PublicClien
     return cardRating;
 }
 
-export async function TopCards(msal: PublicClientApplication): Promise<CardGenerationRecord[]> {
+export async function GetTopCards(msal: PublicClientApplication): Promise<CardGenerationRecord[]> {
 
-  let url = getApiUrl('TopCards');
+  let url = getApiUrl('GetTopCards');
   var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
 
   const params: Record<string, string> = { };

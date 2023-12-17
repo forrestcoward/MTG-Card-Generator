@@ -672,3 +672,7 @@ p {
 .antd-no-style-tooltip .ant-tooltip-arrow {
   display: none; /* Hide the arrow */
 }
+
+.card-rating .ant-rate-star {
+  font-size: 55px;
+}

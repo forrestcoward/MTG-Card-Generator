@@ -365,7 +365,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                             });
                         }
 
-                        await usersCosmosClient.UpdateUserRecord(user, userSubject, cards.Length, cost.TotalCost, !string.IsNullOrWhiteSpace(userSuppliedApiKey));
+                        await usersCosmosClient.UserGeneratedCard(user, userSubject, cards.Length, cost.TotalCost, !string.IsNullOrWhiteSpace(userSuppliedApiKey));
                         log.LogInformation($"Updated user record for user '{userSubject}' in database.");
                     }
                 }
