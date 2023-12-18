@@ -56,6 +56,7 @@ namespace MTG.CardGenerator.CosmosClients
 
                 if (records.Count != 0)
                 {
+                    log.LogInformation($"Found {records.Count} card records starting with '{param}'.");
                     var randomIndex = Random.Next(0, records.Count);
                     return records[randomIndex];
                 }

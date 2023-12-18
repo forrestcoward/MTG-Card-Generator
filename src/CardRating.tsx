@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Rate, Table } from 'antd';
+import { Rate, Table } from 'antd';
 import { EventMessage, EventType, PublicClientApplication } from '@azure/msal-browser';
 import { CardDisplay, CardGenerationRecord, MagicCard } from './Card';
 import { Loader } from './Loader';
@@ -10,9 +10,7 @@ import "./mana.min.css";
 import "./mtg-card.css";
 import "./app.css";
 import { setCardContainerSize } from './Utility';
-import { Bs1Circle, Bs2Circle, Bs3Circle, Bs4Circle, Bs5Circle } from "react-icons/bs";
 import { CardPreview } from './CardPreview';
-import { ColumnType } from 'antd/es/table';
 
 interface CardRatingProps {
   msalInstance: PublicClientApplication;
@@ -96,7 +94,7 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
       card: JSX.Element;
     };
 
-    const dataSource: DataSourceItem[] = [];
+    let dataSource: DataSourceItem[] = [];
 
     const columns = [
       /*
@@ -115,7 +113,6 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
       {
         title: 'Card',
         dataIndex: 'card',
-        key: 'card',
       },
     ];
 
@@ -124,6 +121,7 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
         //rank: <div><h3>{index + 1}</h3></div>,
         //score: cardRecord.rating.averageScore.toFixed(2),
                             //{cardRecord.rating.averageScore.toFixed(2)} / 5
+        key: cardRecord.id,
         card:
           <table>
             <tbody>
@@ -137,8 +135,8 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
               </tr>
               <tr>
                 <td>
-                  <div key={`leaderboard-card-container-${cardRecord.id}`}>
-                    <CardPreview key={`leaderboard-card-${cardRecord.id}`} card={new MagicCard(cardRecord.card)} cardWidth={this.state.cardWidth} />
+                  <div>
+                    <CardPreview card={new MagicCard(cardRecord.card)} cardWidth={this.state.cardWidth} />
                   </div>
                 </td>
               </tr>
@@ -163,8 +161,8 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
               </tr>
               <tr>
                 <td>
-                  <div className="cardContainer" key={`card-container-${this.state.card.id}`} style={{marginTop:"15px"}}>
-                    <CardDisplay key={`card-display-${this.state.card.id}`} card={this.state.card} showCardMenu={false} cardWidth={this.state.cardWidth} />
+                  <div className="cardContainer" key={`card-rate-container-${this.state.card.id}`} style={{marginTop:"15px"}}>
+                    <CardDisplay key={`card-rate-display-${this.state.card.id}`} card={this.state.card} showCardMenu={false} cardWidth={this.state.cardWidth} allowImagePreview={false} allowEdits={false} />
                   </div>
                 </td>
               </tr>
@@ -177,7 +175,9 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
 
               </tr>
               <tr style={{justifyContent:"center", marginTop: "10px", display:"grid"}}>
-                <h2>Top Rated Cards</h2>
+                <td>
+                  <h2>Top Rated Cards</h2>
+                </td>
               </tr>
               <tr>
                 <td>

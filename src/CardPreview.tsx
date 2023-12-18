@@ -8,14 +8,14 @@ interface CardPreviewProps {
 }
 
 interface CardPreviewState {
-  card: MagicCard
+  tooltipCard: MagicCard
 }
 
 export class CardPreview extends React.Component<CardPreviewProps, CardPreviewState> {
   constructor(props: CardPreviewProps) {
     super(props);
     this.state = {
-      card: MagicCard.clone(props.card, false)
+      tooltipCard: MagicCard.clone(props.card, false)
     };
   }
 
@@ -23,15 +23,15 @@ export class CardPreview extends React.Component<CardPreviewProps, CardPreviewSt
     const card = this.props.card;
     return (
       <div>
-        <Tooltip placement="left" mouseEnterDelay={0} mouseLeaveDelay={0} trigger={["hover", "click"]} overlayClassName="antd-no-style-tooltip" overlayInnerStyle={{width: `${this.props.cardWidth-20}px`, marginLeft: "20px"}}
-        title={<CardDisplay card={this.state.card} cardWidth={this.props.cardWidth-20} showCardMenu={false} />}>
+        <Tooltip trigger={["click", "hover", "contextMenu"]} placement="left" mouseEnterDelay={0} mouseLeaveDelay={0} overlayClassName="antd-no-style-tooltip" overlayInnerStyle={{width: `${this.props.cardWidth-20}px`, marginLeft: "20px"}}
+        title={<CardDisplay card={this.state.tooltipCard} cardWidth={this.props.cardWidth-20} showCardMenu={false} allowImagePreview={false} allowEdits={false} />}>
           <div id={`title-container-${card.id}`} className={card.cardFrameHeaderClassName} style={{padding: "0px", marginTop: "0px"}} >
             <div id={`name-${card.id}`} style={{alignSelf:"center"}} className="name name-type-size">
               <div>{card.name}</div>
             </div>
             <div id={`mana-${card.id}`} className="mana-symbols">
               {card.manaCostTokens.map((manaCostToken, i) => (
-                <i key={card.name + "-manaToken-"+ i} className={MagicCard.getManaClassNameForTitle(manaCostToken) + " manaCost " + `manaCost-${card.id}`} id="mana-icon"></i>
+                <i key={card.id + "-manaToken-"+ i} className={MagicCard.getManaClassNameForTitle(manaCostToken) + " manaCost " + `manaCost-${card.id}`} id="mana-icon"></i>
               ))}
             </div>
           </div>

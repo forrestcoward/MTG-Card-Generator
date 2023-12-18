@@ -483,6 +483,8 @@ interface CardDisplayProps {
   card: MagicCard;
   cardWidth: number;
   showCardMenu: boolean;
+  allowImagePreview: boolean;
+  allowEdits: boolean;
 }
 
 interface CardDisplayState {
@@ -562,6 +564,10 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
   }
 
   updateEditMode() {
+    if (!this.props.allowEdits) {
+      return
+    }
+
     var updatedCard = MagicCard.clone(this.state.card, true)
     updatedCard.name = this.state.nameUpdate
     updatedCard.rawOracleText = this.state.rawOracleTextUpdate
@@ -675,7 +681,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
                 {!this.state.editMode ?
                     <div id={`mana-${card.id}`} className="mana-symbols">
                       {card.manaCostTokens.map((manaCostToken, i) => (
-                        <i key={card.name + "-manaToken-"+ i} className={MagicCard.getManaClassNameForTitle(manaCostToken) + " manaCost " + `manaCost-${card.id}`} id="mana-icon"></i>
+                        <i key={card.id + "-manaToken-"+ i} className={MagicCard.getManaClassNameForTitle(manaCostToken) + " manaCost " + `manaCost-${card.id}`} id="mana-icon"></i>
                       ))}
                     </div> :
                     <div className="card-edit-manaCost-container">
@@ -685,8 +691,8 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
               </div>
               <div className={card.cardFrameArtClassName}>
               {this.state.showTemporaryImage ?
-                <Image onLoad={() => this.state.card.adjustFontSize()} loading="lazy" height={"100%"} width={"100%"} src={card.temporaryImageUrl ? card.temporaryImageUrl : card.imageUrl} /> :
-                <Image onLoad={() => this.state.card.adjustFontSize()} loading="lazy" height={"100%"} width={"100%"} src={card.imageUrl} />
+                <Image onLoad={() => this.state.card.adjustFontSize()} preview={this.props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.temporaryImageUrl ? card.temporaryImageUrl : card.imageUrl} /> :
+                <Image onLoad={() => this.state.card.adjustFontSize()} preview={this.props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.imageUrl} />
               }
               </div>
               <div id={`type-container-${card.id}`} className={card.cardFrameTypeLineClassName}>
@@ -704,7 +710,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
                     {!this.state.editMode ?
                       <div>
                         {card.textDisplay.map((line, i) => (
-                          <p key={card.name + "-text-" + i} dangerouslySetInnerHTML={{ __html: line }}></p>
+                          <p key={card.id + "-text-" + i} dangerouslySetInnerHTML={{ __html: line }}></p>
                         ))}
                       </div> 
                       :

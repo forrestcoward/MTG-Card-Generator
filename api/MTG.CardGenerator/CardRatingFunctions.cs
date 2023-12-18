@@ -23,13 +23,13 @@ namespace MTG.CardGenerator
             public CardRating Rating;
         }
 
-        internal class TopCardsFunctionResponse
+        internal class GetTopCardsFunctionResponse
         {
             [JsonProperty("cards")]
             public List<CardGenerationRecord> Cards { get; set; }
         }
 
-        internal class GetRandomCardFunctionResponse
+        internal class GetCardToRateFunctionResponse
         {
             [JsonProperty("cards")]
             public CardGenerationRecord[] Cards { get; set; }
@@ -45,7 +45,7 @@ namespace MTG.CardGenerator
                 var cardsClient = new CardsClient(log);
                 var card = await cardsClient.GetCardToRate(log);
 
-                var json = JsonConvert.SerializeObject(new GetRandomCardFunctionResponse() { Cards = new[] { card } });
+                var json = JsonConvert.SerializeObject(new GetCardToRateFunctionResponse() { Cards = new[] { card } });
 
                 log.LogMetric("GetCardToRate_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
                     properties: new Dictionary<string, object>()
@@ -149,7 +149,7 @@ namespace MTG.CardGenerator
                 var stopwatch = Stopwatch.StartNew();
                 var cardsClient = new CardsClient(log);
                 var topCards = (await cardsClient.GetTopCards(top: 50, requiredNumberOfVotes: 2)).ToList();
-                var json = JsonConvert.SerializeObject(new TopCardsFunctionResponse() { Cards = topCards });
+                var json = JsonConvert.SerializeObject(new GetTopCardsFunctionResponse() { Cards = topCards });
                 log.LogMetric("GetTopCards_DurationSeconds", stopwatch.Elapsed.TotalSeconds);
                 return new OkObjectResult(json);
             }
