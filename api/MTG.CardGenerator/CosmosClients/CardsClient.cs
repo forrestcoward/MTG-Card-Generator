@@ -26,9 +26,21 @@ namespace MTG.CardGenerator.CosmosClients
                 SELECT TOP @top *
                 FROM c
                 WHERE c.user.userSubject = @userSubject
-                ORDER BY c._ts DESC")
+                ORDER BY c.generationMetadata.timestamp DESC")
             .WithParameter("@userSubject", userSubject)
             .WithParameter("@top", top);
+
+            var userCards = await QueryCosmosDB<CardGenerationRecord>(queryDefinition.QueryDefinition);
+            return userCards;
+        }
+
+        public async Task<List<CardGenerationRecord>> GetMagicCardsByName(string name)
+        {
+            var queryDefinition = new QueryDefinitionWrapper(@"
+                SELECT *FROM c
+                WHERE c.magicCards[0].name = @name
+                ORDER BY c.generationMetadata.timestamp DESC")
+            .WithParameter("@name", name);
 
             var userCards = await QueryCosmosDB<CardGenerationRecord>(queryDefinition.QueryDefinition);
             return userCards;
@@ -101,18 +113,18 @@ namespace MTG.CardGenerator.CosmosClients
                 PatchOperation.Add("/rating/mostRecent", DateTime.Now.ToUniversalTime())
             };
 
-            if (card.rating != null)
+            if (card.Rating != null)
             {
-                operations.Add(PatchOperation.Set("/rating/averageScore", Math.Round((double)(card.rating.TotalScore + rating) / (card.rating.NumberOfVotes + 1), 4)));
+                operations.Add(PatchOperation.Set("/rating/averageScore", Math.Round((double)(card.Rating.TotalScore + rating) / (card.Rating.NumberOfVotes + 1), 4)));
             }
 
-            if (card.rating == null)
+            if (card.Rating == null)
             {
                 operations.Insert(0, PatchOperation.Add("/rating", new { numberOfVotes = 0, totalScore = 0, averageScore = 0 }));
                 operations.Add(PatchOperation.Set("/rating/averageScore", rating));
             }
 
-            await PatchDocument<CardGenerationRecord>(card.id, card.id, operations);
+            await PatchDocument<CardGenerationRecord>(card.Id, card.Id, operations);
         }
 
         public async Task<List<CardGenerationRecord>> GetTopCards(int top, int requiredNumberOfVotes)

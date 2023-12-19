@@ -36,7 +36,7 @@ namespace MTG.CardGenerator.CosmosClients
                 PatchOperation.Add("/lastActiveTime", DateTime.Now.ToUniversalTime())
             };
 
-            if (user.lastActiveTime?.Date != DateTime.Now.ToUniversalTime().Date)
+            if (user.LastActiveTime?.Date != DateTime.Now.ToUniversalTime().Date)
             {
                 // If this is the first time the user has generated today, reset their number of free card generations allowed in the day.
                 operations.Add(PatchOperation.Replace("/numberOfFreeCardsGeneratedToday", 0));

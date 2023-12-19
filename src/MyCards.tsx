@@ -17,6 +17,7 @@ export interface MyCardsState {
  cards: MagicCard[],
  cardWidth: number,
  loading: boolean,
+ errorMessage: string,
 }
 
 export class MyCards extends React.Component<MyCardsProps, MyCardsState> {
@@ -27,7 +28,8 @@ export class MyCards extends React.Component<MyCardsProps, MyCardsState> {
     this.state = {
       cards: [],
       loading: true,
-      cardWidth: width
+      cardWidth: width,
+      errorMessage: "",
     };
 
     this.getUserCards();
@@ -40,40 +42,47 @@ export class MyCards extends React.Component<MyCardsProps, MyCardsState> {
   }
 
   getUserCards() {
-    GetUserMagicCards(this.props.msalInstance).then((cards) => {
-      cards.forEach(card => {
-        // Never use the temporary image because it might not exist anymore. Can make this better in the future.
-        card.temporaryImageUrl = card.imageUrl
-      })
-      this.setState({cards: cards, loading: false})
+    GetUserMagicCards(this.props.msalInstance).then((records) => {
+      this.setState({cards: records.map(x => new MagicCard(x.card)), errorMessage: "", loading: false})
     }).catch((error) => {
+      this.setState({errorMessage: error.message, loading: false})
       console.log(error)
     })
   }
 
   render() {
-    var loading = 
-    <div style={{padding: "20px"}}>
-      <h1>
-        Loading your cards...
-      </h1>
-      <Loader />
-    </div>
+    var loadingElement = 
+      <div style={{padding: "20px"}}>
+        <h1>
+          Loading your cards...
+        </h1>
+        <Loader />
+      </div>
+
+    var errorElement =
+      <div style={{padding: "20px"}}>
+          {this.state.errorMessage}
+      </div>
 
     var userCardDisplay =
-    <div>
-      <div className="cardsContainer">
-      {
-        this.state.cards.map(card => (
-          <div className="cardContainer" key={`card-container-${card.id}`}>
-            <CardDisplay key={`card-display-${card.id}`} card={card} showCardMenu={true} cardWidth={this.state.cardWidth} allowImagePreview={true} allowEdits={true}/>
-          </div>
-        ))
-      }
+      <div>
+        <div className="cardsContainer">
+        {
+          this.state.cards.map(card => (
+            <div className="cardContainer" key={`card-container-${card.id}`}>
+              <CardDisplay key={`card-display-${card.id}`} card={card} showCardMenu={true} cardWidth={this.state.cardWidth} allowImagePreview={true} allowEdits={true}/>
+            </div>
+          ))
+        }
+        </div>
       </div>
-    </div>
 
-    var pageDisplay = this.state.loading ? loading : userCardDisplay;
+    var pageDisplay = userCardDisplay;
+    if (this.state.errorMessage) {
+      pageDisplay = errorElement
+    } else if (this.state.loading) {
+      pageDisplay = loadingElement
+    }
 
     return (
       <div>

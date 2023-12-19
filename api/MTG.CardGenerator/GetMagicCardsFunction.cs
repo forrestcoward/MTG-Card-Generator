@@ -5,20 +5,57 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using MTG.CardGenerator.CosmosClients;
-using Newtonsoft.Json;
+using MTG.CardGenerator.Models;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace MTG.CardGenerator
 {
     public static class GetMagicCardsFunction
     {
-        private class GetMagicCardFunctionResponse
+        [FunctionName("GetMagicCardByName")]
+        [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
+        public static async Task<IActionResult> RunGetMagicCardByName([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log)
         {
-            [JsonProperty("cards")]
-            public MagicCard[] Cards { get; set; }
+            try
+            {
+                var cardName = (string)req.Query["cardName"];
+                var cardsClient = new CardsClient(log);
+                var records = await cardsClient.GetMagicCardsByName(cardName);
+                return new OkObjectResult(APIResponses.GetCardsResponse(records));
+            }
+            catch (Exception ex)
+            {
+                log?.LogError(ex, ex.Message);
+                return new ContentResult
+                {
+                    StatusCode = 500,
+                    Content = ex.Message,
+                };
+            }
+        }
+
+        [FunctionName("GetMagicCard")]
+        [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
+        public static async Task<IActionResult> RunGetMagicCard([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log)
+        {
+            try
+            {
+                var cardId = (string)req.Query["cardId"];
+                var cardsClient = new CardsClient(log);
+                var record = await cardsClient.GetMagicCard(cardId);
+                return new OkObjectResult(APIResponses.GetCardResponse(record));
+            }
+            catch (Exception ex)
+            {
+                log?.LogError(ex, ex.Message);
+                return new ContentResult
+                {
+                    StatusCode = 500,
+                    Content = ex.Message,
+                };
+            }
         }
 
         [FunctionName("GetMagicCards")]
@@ -37,15 +74,12 @@ namespace MTG.CardGenerator
                 var userCards = await cardsClient.GetUsersMagicCards(userSubject);
                 log.LogInformation($"Found {userCards.Count} cards for user '{userSubject}'.");
 
-                var generatedCards = userCards.Select(x => x.magicCards.FirstOrDefault()).ToArray();
-                var json = JsonConvert.SerializeObject(new GetMagicCardFunctionResponse() { Cards = generatedCards });
-
                 log.LogMetric("GetMagicCards_Success", 1, new Dictionary<string, object>()
                 {
                     { "userSubject", req.GetUserSubject() }
                 });
 
-                return new OkObjectResult(json);
+                return new OkObjectResult(APIResponses.GetCardsResponse(userCards));
             }
             catch (Exception ex)
             {

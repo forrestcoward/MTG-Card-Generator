@@ -7,6 +7,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using MTG.CardGenerator.CosmosClients;
+using MTG.CardGenerator.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -20,7 +21,7 @@ namespace MTG.CardGenerator
         private class SearchMagicCardsFunctionResponse
         {
             [JsonProperty("cards")]
-            public MagicCard[] Cards { get; set; }
+            public MagicCardResponse[] Cards { get; set; }
         }
 
         /// <summary>
@@ -28,6 +29,7 @@ namespace MTG.CardGenerator
         /// </summary>
         private class CardIndexResult
         {
+#pragma warning disable IDE1006 // Naming Styles
             public string id { get; set; }
             public string prompt { get; set; }
             public string name { get; set; }
@@ -39,6 +41,7 @@ namespace MTG.CardGenerator
             public string colorIdentity { get; set; }
             public string explanation { get; set; }
             public string funnyExplanation { get; set; }
+#pragma warning restore IDE1006 // Naming Styles
         }
 
         [FunctionName("SearchMagicCards")]
@@ -73,8 +76,8 @@ namespace MTG.CardGenerator
                 var cardsClient = new CardsClient(log);
                 var cards = await cardsClient.GetMagicCardRecords(ids);
 
-                var generatedCards = cards.Select(x => x.magicCards.FirstOrDefault()).Take(30).ToArray();
-                var json = JsonConvert.SerializeObject(new SearchMagicCardsFunctionResponse() { Cards = generatedCards });
+                var generatedCards = cards.Select(x => x.MagicCards.FirstOrDefault()).Take(30).ToArray();
+                var json = JsonConvert.SerializeObject(new SearchMagicCardsFunctionResponse() { Cards = generatedCards.Select(x => new MagicCardResponse(x)).ToArray() });
                 return new OkObjectResult(json);
             }
             catch (Exception ex)

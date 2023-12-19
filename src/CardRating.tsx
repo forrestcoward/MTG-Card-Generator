@@ -20,6 +20,7 @@ interface CardRatingState {
   card: MagicCard | undefined;
   cardId: string;
   loading: boolean;
+  errorMessage: string;
   cardWidth: number;
   topCards: CardGenerationRecord[];
 }
@@ -32,6 +33,7 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
     this.state = {
       card: undefined,
       cardId: "",
+      errorMessage: "",
       topCards: [],
       loading: true,
       cardWidth: width
@@ -40,6 +42,7 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
     this.props.msalInstance.addEventCallback((message: EventMessage) => {
       if (message.eventType === EventType.LOGIN_SUCCESS) {
         this.getRandomCard();
+        this.getTopCards();
       }
     });
   }
@@ -50,23 +53,24 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
   }
 
   getRandomCard() {
-    GetCardToRate(this.props.msalInstance).then((cards) => {
-      var card = new MagicCard(cards[0].card);
-      card.temporaryImageUrl = card.imageUrl
-      this.setState({card: card, cardId: cards[0].id, loading: false})
+    GetCardToRate(this.props.msalInstance).then((record) => {
+      var card = new MagicCard(record!.card);
+      this.setState({card: card, cardId: record!.id, loading: false, errorMessage: ""})
     }).catch((error) => {
-      console.log(error)
+      this.setState({errorMessage: error.message, loading: false})
+      console.log("Error in getRandomCard: " + error)
     })
   }
 
   getTopCards() {
-    GetTopCards(this.props.msalInstance).then((cards) => {
-      cards.forEach(c => {
+    GetTopCards(this.props.msalInstance).then((records) => {
+      records.forEach(c => {
         c.card.temporaryImageUrl = c.card.imageUrl
       })
-      this.setState({topCards: cards})
+      this.setState({topCards: records})
     }).catch((error) => {
-      console.log(error)
+      this.setState({ loading: false })
+      console.log("Error in getTopCards: " + error)
     })
   }
 
@@ -75,22 +79,28 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
       this.setState({loading: true})
       this.getRandomCard()
     }).catch((error) => {
-      console.log(error)
+      this.setState({ loading: false })
+      console.log("Error in rateCard: " + error)
     })
   }
 
   render() {
-    var loading = 
-    <div style={{padding: "20px"}}>
-      <h1>
-        Retrieving card...
-      </h1>
-      <Loader />
-    </div>
+    var loadingElement = 
+      <div style={{padding: "20px"}}>
+        <h1>
+          Retrieving a card to rate...
+        </h1>
+        <Loader />
+      </div>
+
+    var errorElement =
+      <div style={{padding: "20px"}}>
+          {this.state.errorMessage}
+      </div>
 
     type DataSourceItem = {
-      //rank: JSX.Element;
-      //score: string;
+      // rank: JSX.Element;
+      // score: string;
       card: JSX.Element;
     };
 
@@ -101,14 +111,10 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
       {
         title: 'Rank',
         dataIndex: 'rank',
-        key: 'rank',
-        align: 'center' as ColumnType<DataSourceItem>['align'],
       },
       {
         title: 'Rating',
         dataIndex: 'score',
-        key: 'score',
-        align: 'center' as ColumnType<DataSourceItem>['align'],
       },*/
       {
         title: 'Card',
@@ -120,7 +126,6 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
       let entry = {
         //rank: <div><h3>{index + 1}</h3></div>,
         //score: cardRecord.rating.averageScore.toFixed(2),
-                            //{cardRecord.rating.averageScore.toFixed(2)} / 5
         key: cardRecord.id,
         card:
           <table>
@@ -190,18 +195,24 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
       </div>
     }
 
-    var pageDisplay = this.state.loading ? loading: userCardDisplay
-        return (
-          <div>
-            <AuthenticatedTemplate>
-              {pageDisplay}
-            </AuthenticatedTemplate>
-            <UnauthenticatedTemplate>
-              <div style={{margin: "10px"}}>
-                <h1>Please login.</h1>
-              </div>
-            </UnauthenticatedTemplate>
+    var pageDisplay = userCardDisplay;
+    if (this.state.errorMessage) {
+      pageDisplay = errorElement
+    } else if (this.state.loading) {
+      pageDisplay = loadingElement
+    }
+
+    return (
+      <div>
+        <AuthenticatedTemplate>
+          {pageDisplay}
+        </AuthenticatedTemplate>
+        <UnauthenticatedTemplate>
+          <div style={{margin: "10px"}}>
+            <h1>Please login.</h1>
           </div>
-          )
+        </UnauthenticatedTemplate>
+      </div>
+      )
   }
 }

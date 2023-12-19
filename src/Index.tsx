@@ -24,6 +24,8 @@ msalInstance.addEventCallback((event : any) => {
          event.eventType === EventType.ACQUIRE_TOKEN_SUCCESS || 
          event.eventType === EventType.SSO_SILENT_SUCCESS) && event.payload.account) {
         msalInstance.setActiveAccount(event.payload.account);
+    } else if (event.eventType === EventType.LOGIN_FAILURE) {
+        console.error("MSAL login failure: " + event);
     }
 });
 

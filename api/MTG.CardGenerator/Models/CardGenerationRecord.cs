@@ -15,38 +15,77 @@ namespace MTG.CardGenerator.Models
         public DateTime MostRecent { get; set; }
     }
 
-    public class CardGenerationRecord
-    {
-        public string id { get; set; }
-        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
-        public GenerationMetaData generationMetadata { get; set; }
-        public UserMeta user { get; set; }
-        public MagicCard[] magicCards { get; set; }
-        public MagicCard card => magicCards[0];
-        public CardRating rating { get; set; }
-    }
-
     public class GenerationMetaData
     {
-        public string userPrompt { get; set; }
-        public string systemPrompt { get; set; }
-        public string imagePrompt { get; set; }
-        public double temperature { get; set; }
-        public int tokensUsed { get; set; }
-        public string model { get; set; }
-        public string imageSize { get; set; }
-        public string imageModel { get; set; }
-        public string imageStyle { get; set; }
-        public string openAIResponse { get; set; }
-        public bool includeExplanation { get; set; }
-        public bool userSupliedKey { get; set; }
-        public double estimatedCost { get; set; }
-        public DateTime timestamp { get; set; }
+        [JsonProperty("userPrompt")]
+        public string UserPrompt { get; set; }
+        [JsonProperty("systemPrompt")]
+        public string SystemPrompt { get; set; }
+        [JsonProperty("imagePrompt")]
+        public string ImagePrompt { get; set; }
+        [JsonProperty("temperature")]
+        public double Temperature { get; set; }
+        [JsonProperty("tokensUsed")]
+        public int TokensUsed { get; set; }
+        [JsonProperty("model")]
+        public string Model { get; set; }
+        [JsonProperty("imageSize")]
+        public string ImageSize { get; set; }
+        [JsonProperty("imageModel")]
+        public string ImageModel { get; set; }
+        [JsonProperty("imageStyle")]
+        public string ImageStyle { get; set; }
+        [JsonProperty("openAIResponse")]
+        public string OpenAIResponse { get; set; }
+        [JsonProperty("includeExplanation")]
+        public bool IncludeExplanation { get; set; }
+        [JsonProperty("userSuppliedKey")]
+        public bool UserSupplied { get; set; }
+        [JsonProperty("estimatedCost")]
+        public double EstimatedCost { get; set; }
+        [JsonProperty("timestamp")]
+        public DateTime Timestamp { get; set; }
     }
 
-    public class UserMeta
+    /// <summary>
+    /// Represents a card record in the database.
+    /// </summary>
+    public class CardGenerationRecord
     {
-        public string userName { get; set; }
-        public string userSubject { get; set; }
+        [JsonProperty("id")]
+        public string Id { get; set; }
+        [JsonProperty("generationMetadata")]
+        public GenerationMetaData GenerationMetadata { get; set; }
+        [JsonProperty("user")]
+        public CardUserMetadata User { get; set; }
+        [JsonProperty("magicCards")]
+        public MagicCard[] MagicCards { get; set; }
+        [JsonProperty("card")]
+        public MagicCard Card => MagicCards[0];
+        [JsonProperty("rating")]
+        public CardRating Rating { get; set; }
+    }
+
+    /// <summary>
+    /// Represents a card record returned through the API.
+    /// </summary>
+    public class CardGenerationRecordResponse
+    {
+        [JsonProperty("id")]
+        public string Id { get; set; }
+        [JsonProperty("card")]
+        public MagicCardResponse Card { get; set; }
+        [JsonProperty("rating")]
+        public CardRating Rating { get; set; }
+
+        public static CardGenerationRecordResponse FromDatabaseRecord(CardGenerationRecord cardGenerationRecord)
+        {
+            return new CardGenerationRecordResponse
+            {
+                Id = cardGenerationRecord.Id,
+                Card = new MagicCardResponse(cardGenerationRecord.Card),
+                Rating = cardGenerationRecord.Rating,
+            };
+        }
     }
 }

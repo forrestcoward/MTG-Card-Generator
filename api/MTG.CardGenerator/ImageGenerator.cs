@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using MTG.CardGenerator.Models;
 using OpenAI;
 using OpenAI.Managers;
 using OpenAI.ObjectModels;
@@ -20,8 +21,13 @@ namespace MTG.CardGenerator
             public string Size { get; set; }
         }
 
-        private static string[] Artists = new string[]
+        // Choose randomly for each card.
+        private static readonly string[] Artists = new string[]
         {
+            "Greg Kutkowski style, digital, fantasy art.",
+            "Greg Kutkowski style, digital, fantasy art.",
+            "Greg Kutkowski style, digital, fantasy art.",
+            "Greg Kutkowski style, digital, fantasy art.",
             "Greg Kutkowski style, digital, fantasy art.",
             "Greg Kutkowski style, digital, fantasy art.",
             "Greg Kutkowski style, digital, fantasy art.",
@@ -70,11 +76,11 @@ namespace MTG.CardGenerator
             };
         }
 
-        public static async Task<string> GenerateImage(string prompt, string model, string size, string apiKey, ILogger log, Cost? cost = null)
+        public static async Task<string> GenerateImage(string prompt, string model, string size, string apiKey, ILogger log, Cost cost = null)
         {
             if (model != Constants.Dalle2ModelName && model != Constants.Dalle3ModelName)
             {
-                throw new System.Exception($"Invalid image model: {model}. Expecting '{Constants.Dalle2ModelName}' or '{Constants.Dalle3ModelName}'.");
+                throw new Exception($"Invalid image model: {model}. Expecting '{Constants.Dalle2ModelName}' or '{Constants.Dalle3ModelName}'.");
             }
 
             var openAIService = new OpenAIService(new OpenAiOptions()
@@ -104,7 +110,7 @@ namespace MTG.CardGenerator
             return imageResult.Results.First().Url;
         }
 
-        public static async Task<string> GenerateDetailedImagePrompt(ImageGenerationOptions options, string apiKey, ILogger log, Cost? cost = null)
+        public static async Task<string> GenerateDetailedImagePrompt(ImageGenerationOptions options, string apiKey, ILogger log, Cost cost = null)
         {
             var openAIService = new OpenAIService(new OpenAiOptions()
             {

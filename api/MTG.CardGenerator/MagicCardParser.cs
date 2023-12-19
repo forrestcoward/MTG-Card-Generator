@@ -1,11 +1,10 @@
 ﻿using MTG.CardGenerator.Models;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text.RegularExpressions;
+using static MTG.CardGenerator.MagicCardParser;
 
 namespace MTG.CardGenerator
 {
@@ -61,10 +60,10 @@ namespace MTG.CardGenerator
         public string[] ReminderText { get; set; } = Array.Empty<string>();
 
         // Adds a mechanic to the card, with a rule and line as context to the violation.
-        Action<MagicCard, CardRule, CardTextLine> AddMechanicToCard = null;
+        Action<MagicCardParseResult, CardRule, CardTextLine> AddMechanicToCard = null;
         
         // Fixes a card, given the rule it violated and line the violation occured.
-        public Action<MagicCard, CardRule, CardTextLine> FixViolation = null;
+        public Action<MagicCardParseResult, CardRule, CardTextLine> FixViolation = null;
 
         // The legal card types for this rule e.g. A card with flashback cannot be a creature.
         public CardType[] LegalTypes { get; set; } = Array.Empty<CardType>();
@@ -78,7 +77,7 @@ namespace MTG.CardGenerator
             foreach (var stringMatch in rule.IncludesRules)
             {
                 var match = stringMatch.Replace("{name}", cardTextLine.ParentCard.Name);
-                if (cardTextLine.ParentCard.RawOracleText.ToLower().Contains(match.ToLower(), StringComparison.OrdinalIgnoreCase))
+                if (cardTextLine.ParentCard.OracleText.ToLower().Contains(match.ToLower(), StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }
@@ -125,7 +124,7 @@ namespace MTG.CardGenerator
                 FixViolation = (card, rule, line) =>
                 {
                     // Cards which gain an effect when cast from the graveyard should have Flashback.
-                    if (card.Type == CardType.Instant || card.Type == CardType.Sorcery)
+                    if (card.Card.Type == CardType.Instant || card.Card.Type == CardType.Sorcery)
                     {
                         // Add Flashback.
                         CardRules.First(rule => rule.PropertyOrKeyword == CardPropertyOrKeyword.Flashback).AddMechanicToCard(card, rule, line);
@@ -162,8 +161,8 @@ namespace MTG.CardGenerator
                 },
                 AddMechanicToCard = (card, rule, line) =>
                 {
-                    var newText = $"Kicker {card.ManaCost}\n";
-                    card.RawOracleText = newText + card.RawOracleText;
+                    var newText = $"Kicker {card.Card.ManaCost}\n";
+                    card.Card.OracleText = newText + card.Card.OracleText;
                 },
             },
             new CardRule()
@@ -178,16 +177,16 @@ namespace MTG.CardGenerator
                 },
                 AddMechanicToCard = (card, rule, line) =>
                 {
-                    var newText = $"\nFlashback {card.ManaCost}";
-                    card.RawOracleText += newText;
+                    var newText = $"\nFlashback {card.Card.ManaCost}";
+                    card.Card.OracleText += newText;
                 },
                 FixViolation = (card, rule, line) =>
                 {
                     // If this is a creature or artifact that has Flashback, give it Unearth instead.
-                    if (card.Type == CardType.Creature || card.Type == CardType.Artifact)
+                    if (card.Card.Type == CardType.Creature || card.Card.Type == CardType.Artifact)
                     {
                         var textLines = card.ParsedOracleTextLines.Where(x => !x.Properties.Contains(CardPropertyOrKeyword.Flashback));
-                        card.RawOracleText = string.Join('\n', textLines.Select(x => x.ToString()));
+                        card.Card.OracleText = string.Join('\n', textLines.Select(x => x.ToString()));
                         CardRules.First(rule => rule.PropertyOrKeyword == CardPropertyOrKeyword.Unearth).AddMechanicToCard(card, rule, line);
                     }
                 }
@@ -204,17 +203,17 @@ namespace MTG.CardGenerator
                         if (rule.ReminderText.Any(reminder => line.CostAndEffectWithoutManaCost.Contains(reminder, StringComparison.OrdinalIgnoreCase)))
                         {
                             var newText = $"\nUnearth {line.Cost}";
-                            card.RawOracleText += newText;
+                            card.Card.OracleText += newText;
                         }
-                        else if (!string.IsNullOrWhiteSpace(line.Effect) && !line.Effect.StartsWith($"When {card.Name} enters the battlefield", StringComparison.OrdinalIgnoreCase))
+                        else if (!string.IsNullOrWhiteSpace(line.Effect) && !line.Effect.StartsWith($"When {card.Card.Name} enters the battlefield", StringComparison.OrdinalIgnoreCase))
                         {
-                            var newText = $"\nUnearth {line.Cost}\nWhen {card.Name} enters the battlefield, {line.Effect.FirstCharToLowerCase()}";
-                            card.RawOracleText += newText;
+                            var newText = $"\nUnearth {line.Cost}\nWhen {card.Card.Name} enters the battlefield, {line.Effect.FirstCharToLowerCase()}";
+                            card.Card.OracleText += newText;
                         }
                         else
                         {
                             var newText = $"\nUnearth {line.Cost}\n{line.Effect}";
-                            card.RawOracleText += newText;
+                            card.Card.OracleText += newText;
                         }
                     }
                 }
@@ -253,10 +252,12 @@ namespace MTG.CardGenerator
             }
         }
 
+#pragma warning disable CA2211 // Non-constant fields should not be visible
         public static Regex CardRulesRegex = new(@"(?<mechanicName>[a-zA-Z -.0-9/’']+)?[ ]?[—-]?(?<cost>((\{[0123456789UWGBRT]\}|[a-zA-Z 1-9]*)[,]?[ ]?)*)[:,.]?[ ]?(?<effect>.*)");
+#pragma warning restore CA2211 // Non-constant fields should not be visible
 
         public MagicCard ParentCard { get; }
-        public string RawOracleText { get; }
+        public string OracleText { get; }
         public string Mechanic { get; }
         public string Cost { get; }
         public string Effect { get; }
@@ -284,7 +285,7 @@ namespace MTG.CardGenerator
 
         public CardTextLine(string oracleTextLine, MagicCard parentCard = null)
         {
-            RawOracleText = oracleTextLine;
+            OracleText = oracleTextLine;
             ParentCard = parentCard;
             var match = CardRulesRegex.GetNamedGroupsMatches(oracleTextLine);
             Mechanic = match["mechanicName"].Trim();
@@ -297,65 +298,23 @@ namespace MTG.CardGenerator
 
         public override string ToString()
         {
-            return RawOracleText;
+            return OracleText;
         }
     }
 
     /// <summary>
-    /// Represents a modified Magic: The Gathering card we return to the user.
+    /// Represents a card we store in the database.
     /// </summary>
-    public class MagicCard
+    public class MagicCardParser
     {
-        [JsonProperty("name")]
-        public string Name { get; set; }
-        [JsonProperty("manaCost")]
-        public string ManaCost { get; set; }
-        [JsonProperty("typeLine")]
-        public string TypeLine { get; set; }
-        [JsonConverter(typeof(StringEnumConverter))]
-        [JsonProperty("type")]
-        public CardType Type { get; set; }
-        [JsonProperty("rawOracleText")]
-        public string RawOracleText { get; set; }
-        [JsonProperty("modifiedOracleText")]
-        public string ModifiedOracleText { get; set; }
-        [JsonProperty("flavorText")]
-        public string FlavorText { get; set; }
-        [JsonProperty("rarity")]
-        public string Rarity { get; set; }
-        [JsonProperty("pt")]
-        public string PowerAndToughness { get; set; }
-        [JsonProperty("power")]
-        public string Power { get; set; }
-        [JsonProperty("toughness")]
-        public string Toughness { get; set; }
-
-        [JsonProperty("colorIdentity")]
-        [JsonConverter(typeof(StringEnumConverter))]
-        public ColorIdentity ColorIdentity { get; set; }
-
-        [JsonProperty("imageUrl")]
-        public string ImageUrl { get; set; }
-
-        [JsonProperty("temporaryImageUrl")]
-        public string TemporaryImageUrl { get; set; }
-
-        [JsonProperty("userPrompt")]
-        public string UserPrompt { get; set; }
-        [JsonProperty("explanation")]
-        public string Explanation { get; set; }
-        [JsonProperty("funnyExplanation")]
-        public string FunnyExplanation { get; set; }
-
-        [JsonIgnore]
-        public CardTextLine[] ParsedOracleTextLines { get; }
-
-        [JsonIgnore]
-        // A list of keywords that were parsed. This is not exhaustive.
-        public CardPropertyOrKeyword[] Properties { get; }
-
-        [JsonIgnore]
-        public List<CardRule> ViolatedRules { get; }
+        public class MagicCardParseResult
+        {
+            public MagicCard Card { get; set; }
+            public CardTextLine[] ParsedOracleTextLines { get; set; }
+            // A list of keywords that were parsed. This is not exhaustive.
+            public CardPropertyOrKeyword[] Properties { get; set; }
+            public List<CardRule> ViolatedRules { get; set; }
+        }
 
         internal static Regex UnbracketedManaCostRegex = new(@"(?<cost>(\s|^)[123456789WUBRG]+(\s|$|:))");
 
@@ -377,27 +336,22 @@ namespace MTG.CardGenerator
             return oracleText;
         }
 
-        public MagicCard(BasicCard card)
+        public static MagicCardParseResult Parse(BasicCard card)
         {
-            if (card == null)
-            {
-                // When inserting this object into Cosmos DB, it tris to call this ctor with card=null.
-                return;
-            }
-
-            Name = card.Name;
-            TypeLine = card.Type;
-            Type = GetCardType(TypeLine);
-            ManaCost = !string.IsNullOrWhiteSpace(card.ManaCost) ? card.ManaCost : string.Empty;
-            ManaCost = FixManaCost(ManaCost);
-            RawOracleText = CorrectUnbracketedManaCosts(card.OracleText);
-            FlavorText = card.FlavorText;
-            Rarity = card.Rarity;
-            ColorIdentity = GetColorIdentity(ManaCost);
-            ImageUrl = string.Empty;
-            UserPrompt = card.UserPrompt;
-            Explanation = card.Explanation;
-            FunnyExplanation = card.FunnyExplanation;
+            var name = card.Name;
+            var typeLine = card.Type;
+            var type = GetCardType(typeLine);
+            var manaCost = !string.IsNullOrWhiteSpace(card.ManaCost) ? card.ManaCost : string.Empty;
+            manaCost = FixManaCost(manaCost, type);
+            var oracleText = CorrectUnbracketedManaCosts(card.OracleText);
+            oracleText = AddNewlineToActivatedAbilities(oracleText);
+            var flavorText = card.FlavorText;
+            var rarity = card.Rarity;
+            var colorIdentity = GetColorIdentity(manaCost);
+            var userPrompt = card.UserPrompt;
+            var explanation = card.Explanation;
+            var funnyExplanation = card.FunnyExplanation;
+            var powerAndToughness = string.Empty;
 
             if (card.PowerAndToughness != null)
             {
@@ -405,64 +359,85 @@ namespace MTG.CardGenerator
                 card.PowerAndToughness = card.PowerAndToughness.Replace(")", "");
             }
 
-            if (string.IsNullOrWhiteSpace(card.PowerAndToughness) &&
-                (!string.IsNullOrWhiteSpace(card.Power) && !string.IsNullOrWhiteSpace(card.Toughness)))
+            if (string.IsNullOrWhiteSpace(card.PowerAndToughness) && (!string.IsNullOrWhiteSpace(card.Power) && !string.IsNullOrWhiteSpace(card.Toughness)))
             {
-                PowerAndToughness = $"{card.Power}/{card.Toughness}";
+                powerAndToughness = $"{card.Power}/{card.Toughness}";
             }
             else if (!string.IsNullOrWhiteSpace(card.PowerAndToughness))
             {
-                PowerAndToughness = card.PowerAndToughness;
+                powerAndToughness = card.PowerAndToughness;
             }
 
-            if (!string.IsNullOrWhiteSpace(card.Power))
+            var parsedCard = new MagicCard()
             {
-                Power = card.Power;
-            }
+                Name = name,
+                ManaCost = manaCost,
+                TypeLine = typeLine,
+                Type = type,
+                OracleText = oracleText,
+                FlavorText = flavorText,
+                Rarity = rarity,
+                PowerAndToughness = powerAndToughness,
+                ColorIdentity = colorIdentity,
+                ImageUrl = string.Empty,
+                TemporaryImageUrl = string.Empty,
+                UserPrompt = userPrompt,
+                Explanation = explanation,
+                FunnyExplanation = funnyExplanation,
+            };
 
-            if (!string.IsNullOrWhiteSpace(card.Toughness))
+            var delimiters = new string[] { "\n", @"\\\\n", @"\\n", @"\n" };
+            var parsedOracleTextLines = ParseOracleTextLines(oracleText)
+                .Select(oracleTextLine => new CardTextLine(oracleTextLine, parsedCard)).ToArray();
+
+            var properties = parsedOracleTextLines.SelectMany(x => x.Properties).Distinct().ToArray();
+
+            var violatedRules = new List<CardRule>();
+
+            var parseResult = new MagicCardParseResult()
             {
-                Toughness = card.Toughness;
-            }
-
-            ParsedOracleTextLines = RawOracleText.Split('\n').Select(oracleTextLine => new CardTextLine(oracleTextLine, this)).ToArray();
-
-            Properties = ParsedOracleTextLines.SelectMany(x => x.Properties).Distinct().ToArray();
-
-            ViolatedRules = new List<CardRule>();
-
-            var violationToTextLine = new Dictionary<CardRule, CardTextLine>();
+                Card = parsedCard,
+                ViolatedRules = violatedRules,
+                ParsedOracleTextLines = parsedOracleTextLines,
+                Properties = properties,
+            };
 
             // Run the rules.
-            foreach (var parsedOracleTextLine in ParsedOracleTextLines)
+            var violationToTextLine = new Dictionary<CardRule, CardTextLine>();
+            foreach (var parsedOracleTextLine in parsedOracleTextLines)
             {
                 foreach (var rule in parsedOracleTextLine.Rules)
                 {
-                    if (rule.LegalTypes.Any() &&
-                        !rule.LegalTypes.Contains(Type))
+                    if (rule.LegalTypes.Any() && !rule.LegalTypes.Contains(type))
                     {
                         // Card contains a property that is not allowed on its type.
                         // e.g. flashback is not allowed on creatures.
-                        ViolatedRules.Add(rule);
+                        violatedRules.Add(rule);
                         violationToTextLine[rule] = parsedOracleTextLine;
                     }
 
-                    if (rule.MustHaveProperties.Any() && 
-                        rule.MustHaveProperties.Any(mustHaveProperty => !Properties.Contains(mustHaveProperty)))
+                    if (rule.MustHaveProperties.Any() && rule.MustHaveProperties.Any(mustHaveProperty => !properties.Contains(mustHaveProperty)))
                     {
                         // This rule requires a property not present on the rest of the card.
                         // e.g. a card gains an additional effect when cast from the graveyard but does not have flashback or unearth.
-                        ViolatedRules.Add(rule);
+                        violatedRules.Add(rule);
                         violationToTextLine[rule] = parsedOracleTextLine;
                     }
                 }
             }
 
             // Correct the rules.
-            foreach (var rule in ViolatedRules)
+            foreach (var rule in violatedRules)
             {
-                rule.FixViolation?.Invoke(this, rule, violationToTextLine[rule]);
+                rule.FixViolation?.Invoke(parseResult, rule, violationToTextLine[rule]);
             }
+
+            return parseResult;
+        }
+        private static string[] ParseOracleTextLines(string oracleText)
+        {
+            var delimiters = new string[] { "\n", @"\\\\n", @"\\n", @"\n" };
+            return oracleText.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
         }
 
         private static CardType GetCardType(string typeLine)
@@ -541,10 +516,10 @@ namespace MTG.CardGenerator
             return ColorIdentity.ThreePlusColored;
         }
 
-        private string FixManaCost(string manaCost)
+        private static string FixManaCost(string manaCost, CardType type)
         {
             // Lands should have no cost, and GPT frequently creates land cards with cost.
-            if (Type == CardType.Land)
+            if (type == CardType.Land)
             {
                 return string.Empty;
             }
@@ -563,6 +538,11 @@ namespace MTG.CardGenerator
             }
 
             return manaCost;
+        }
+
+        public static string AddNewlineToActivatedAbilities(string text)
+        {
+            return text.Replace(". {", ".\n{");
         }
     }
 }

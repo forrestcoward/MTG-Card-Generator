@@ -16,7 +16,7 @@ namespace MTG.CardGenerator
     {
         [FunctionName("GenerateImage")]
         [FunctionAuthorize]
-        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", Route = null)] HttpRequest req, ILogger log)
+        public static Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", Route = null)] HttpRequest req, ILogger log)
         {
             try
             {
@@ -29,17 +29,17 @@ namespace MTG.CardGenerator
                 log.LogMetric("CreateImageAsync_DurationSeconds", stopwatch.Elapsed.TotalSeconds);
 
                 var json = JsonConvert.SerializeObject(new[] {url});
-                return new OkObjectResult(json);
+                return Task.FromResult<IActionResult>(new OkObjectResult(json));
             }
             catch (Exception exception)
             {
                 var errorMessage = $"Unexpected exception: {exception}";
                 log?.LogError(exception, errorMessage);
-                return new ContentResult
+                return Task.FromResult<IActionResult>(new ContentResult
                 {
                     StatusCode = 500,
                     Content = errorMessage,
-                };
+                });
             }
         }
     }

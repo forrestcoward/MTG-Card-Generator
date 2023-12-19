@@ -30,17 +30,17 @@ namespace MTG.CardGenerator
         private class GenerateMagicCardFunctionResponse
         {
             [JsonProperty("cards")]
-            public MagicCard[] Cards { get; set; }
+            public IEnumerable<MagicCardResponse> Cards { get; set; }
         }
 
         const string GenerateCardSystemPrompt = $@"
 You are an assistant who works as a Magic: The Gathering card designer. You like complex cards with interesting mechanics. The cards you generate should obey the Magic 'color pie' design rules and obey the the Magic: The Gathering comprehensive rules.
-You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'text', 'flavorText', 'pt', and 'rarity'.
+You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'oracleText', 'flavorText', 'pt', and 'rarity'.
 Do not explain the cards or explain your reasoning. Only return the JSON of cards named 'cards'.";
 
         const string GenerateCardSystemPromptWithExplanation = $@"
 You are an assistant who works as a Magic: The Gathering card designer. You like complex cards with interesting mechanics. The cards you generate should obey the Magic 'color pie' design rules. The cards you generate should also obey the the Magic: The Gathering comprehensive rules as much as possible.
-You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'text', 'flavorText', 'pt', 'rarity', 'explanation', and 'funnyExplanation' properties. The 'explanation' property should explain why the card was created the way it was. The 'funnyExplanation' property should be a hilarious explanation of why the card was created the way it was.
+You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'oracleText', 'flavorText', 'pt', 'rarity', 'explanation', and 'funnyExplanation' properties. The 'explanation' property should explain why the card was created the way it was. The 'funnyExplanation' property should be a hilarious explanation of why the card was created the way it was.
 Do not explain the cards or explain your reasoning. Only return the JSON of cards named 'cards'.";
 
         const float Temperature = 1;
@@ -77,10 +77,10 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             // If the user is logged in and has not provided an API key, limit the number of free generations they can do per day.
             if (userLoggedIn && string.IsNullOrWhiteSpace(userSuppliedApiKey))
             {
-                if (user != null && !user.isAdmin)
+                if (user != null && !user.IsAdmin)
                 {
-                    var allowedFreeCardGenerationsPerDay = user.allowedFreeCardGenerationsPerDay == -1 ? AllowedFreeGenerationsPerDay : user.allowedFreeCardGenerationsPerDay;
-                    if (user.lastActiveTime?.Date == DateTime.Now.ToUniversalTime().Date && user.numberOfFreeCardsGeneratedToday >= allowedFreeCardGenerationsPerDay)
+                    var allowedFreeCardGenerationsPerDay = user.AllowedFreeCardGenerationsPerDay == -1 ? AllowedFreeGenerationsPerDay : user.AllowedFreeCardGenerationsPerDay;
+                    if (user.LastActiveTime?.Date == DateTime.Now.ToUniversalTime().Date && user.NumberOfFreeCardsGeneratedToday >= allowedFreeCardGenerationsPerDay)
                     {
                         return new ContentResult
                         {
@@ -115,7 +115,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             if (rawUserPrompt.Length > MaxPromptCharacters)
             {
                 log.LogWarning($"Truncating user prompt to {MaxPromptCharacters} characters.");
-                rawUserPrompt = rawUserPrompt.Substring(0, MaxPromptCharacters);
+                rawUserPrompt = rawUserPrompt[..MaxPromptCharacters];
             }
 
             if (string.IsNullOrWhiteSpace(rawUserPrompt))
@@ -260,7 +260,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 }
 
                 // Parse the cards. If multiple were generated, only process and image for and return one the first one.
-                var cards = openAICards.Select(x => new MagicCard(x)).ToArray().Take(1).ToArray();
+                var cards = openAICards.Select(x => MagicCardParser.Parse(x).Card).ToArray().Take(1).ToArray();
 
                 var imageModel = Constants.Dalle2ModelName;
                 if (new Random().Next(1, 4) == 1)
@@ -296,7 +296,6 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                         {
                             { "imagePrompt", imageOptions.Prompt },
                             { "imageModel", imageOptions.Model },
-                            { "imageUrl", card.ImageUrl },
                             { "imageSize", imageOptions.Size },
                             { "userSubject", userSubject },
                         });
@@ -314,30 +313,30 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                         // Insert this record into the database.
                         var cardGenerationRecord = new CardGenerationRecord()
                         {
-                            id = Guid.NewGuid().ToString(),
-                            generationMetadata = new GenerationMetaData()
+                            Id = Guid.NewGuid().ToString(),
+                            GenerationMetadata = new GenerationMetaData()
                             {
-                                userPrompt = userPromptToSubmit,
-                                systemPrompt = systemPrompt,
-                                imagePrompt = imageOptions.Prompt,
-                                temperature = Temperature,
-                                tokensUsed = tokensUsed,
-                                model = actualGPTModelUsed,
-                                imageSize = imageOptions.Size,
-                                imageStyle = imageOptions.Style,
-                                imageModel = imageOptions.Model,
-                                openAIResponse = openAIResponse,
-                                includeExplanation = includeExplanation,
-                                userSupliedKey = userSuppliedKey,
-                                estimatedCost = cost.TotalCost,
-                                timestamp = DateTime.Now.ToUniversalTime(),
+                                UserPrompt = userPromptToSubmit,
+                                SystemPrompt = systemPrompt,
+                                ImagePrompt = imageOptions.Prompt,
+                                Temperature = Temperature,
+                                TokensUsed = tokensUsed,
+                                Model = actualGPTModelUsed,
+                                ImageSize = imageOptions.Size,
+                                ImageStyle = imageOptions.Style,
+                                ImageModel = imageOptions.Model,
+                                OpenAIResponse = openAIResponse,
+                                IncludeExplanation = includeExplanation,
+                                UserSupplied = userSuppliedKey,
+                                EstimatedCost = cost.TotalCost,
+                                Timestamp = DateTime.Now.ToUniversalTime(),
                             },
-                            user = new UserMeta()
+                            User = new CardUserMetadata()
                             {
-                                userName = userName,
-                                userSubject = userSubject,
+                                UserName = userName,
+                                UserSubject = userSubject,
                             },
-                            magicCards = cards,
+                            MagicCards = new[] { card }
                         };
 
                         var cardsCosmosClient = new BaseCosmosClient(cosmosDatabaseId, Constants.CosmosDBCardsCollectionName, logger: log);
@@ -360,8 +359,8 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                         {
                             user = await usersCosmosClient.AddItemToContainerAsync(new User()
                             {
-                                userName = userName,
-                                userSubject = userSubject,
+                                UserName = userName,
+                                UserSubject = userSubject,
                             });
                         }
 
@@ -375,7 +374,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     log.LogError($"Failed to create or update user record: {ex}");
                 }
 
-                var json = JsonConvert.SerializeObject(new GenerateMagicCardFunctionResponse() { Cards = cards });
+                var json = JsonConvert.SerializeObject(new GenerateMagicCardFunctionResponse() { Cards = cards.Select(x => new MagicCardResponse(x, includeTemporaryImage: true)) });
                 log?.LogInformation($"API JSON response:{Environment.NewLine}{JToken.Parse(json)}");
 
                 log?.LogInformation($"Estimated cost: ${cost.TotalCost}");

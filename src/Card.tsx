@@ -14,8 +14,7 @@ export interface BasicCard {
   typeLine: string,
   type: string,
   text: string,
-  rawOracleText: string,
-  modifiedOracleText: string,
+  oracleText: string,
   power: number,
   toughness: number,
   colorIdentity: string
@@ -116,8 +115,7 @@ export class MagicCard {
   typeLine: string
   type: string
   text: string
-  rawOracleText: string
-  modifiedOracleText: string
+  oracleText: string
   power: number
   toughness: number
   _colorIdentity: string
@@ -138,8 +136,7 @@ export class MagicCard {
     this.type = card.type
     this.typeLine = card.typeLine
     this.text = card.text
-    this.rawOracleText = card.rawOracleText
-    this.modifiedOracleText = card.modifiedOracleText
+    this.oracleText = card.oracleText
     this.power = 0
     this.toughness = 0
     this._colorIdentity = ""
@@ -265,7 +262,7 @@ export class MagicCard {
   }
 
   get textDisplay() {
-    return this.rawOracleText.split('\n').map(line => this.addManaHtmlToCardTextLine(line));
+    return this.oracleText.split('\n').map(line => this.addManaHtmlToCardTextLine(line));
   }
 
   // Gets the CSS postfix to create class names that are differentiated by color identity.
@@ -309,18 +306,6 @@ export class MagicCard {
     catch (error) {
       return Promise.reject(error)
     }
-  }
-
-  getCardContainer() {
-    return document.getElementById(`card-${this.id}`)
-  }
-
-  getWidth() {
-    var node = document.getElementById(`card-${this.id}`)
-    if (node == null) {
-      return 0
-    }
-    return node!.clientWidth
   }
 
   // Adjusts the font sizes on the card to fit within the card dimensions.
@@ -400,8 +385,9 @@ export class MagicCard {
     const calculateWidth = function() { return nameContainer.scrollWidth + manaContainer.scrollWidth }
     let prevWidth = 0;
     let fontSize = parseFloat(window.getComputedStyle(nameContainer, null).getPropertyValue('font-size'));
+    let offset = 4; // Adjust so mana does not go off card.
 
-    while (calculateWidth() > container.offsetWidth && calculateWidth() != prevWidth) {
+    while (calculateWidth() > container.offsetWidth - offset && calculateWidth() != prevWidth) {
       prevWidth = calculateWidth()
       fontSize--;
       nameContainer.style.fontSize = fontSize + "px";
@@ -490,12 +476,12 @@ interface CardDisplayProps {
 interface CardDisplayState {
   card: MagicCard;
   editMode: boolean;
-  rawOracleTextUpdate: string;
+  oracleTextUpdate: string;
   nameUpdate: string;
   typeUpdate : string;
   manaCostUpdate: string;
   powerAndToughnessUpdate: string;
-  showTemporaryImage: boolean;
+  tryShowTemporaryImage: boolean;
   showCardMenu: boolean;
   showSizeAdjustmentButtons: boolean;
   increaseSizeAllowed: boolean;
@@ -511,11 +497,11 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
       card: props.card,
       editMode: false,
       nameUpdate: props.card.name,
-      rawOracleTextUpdate: props.card.rawOracleText,
+      oracleTextUpdate: props.card.oracleText,
       typeUpdate: props.card.typeLine,
       manaCostUpdate: props.card.manaCost,
       powerAndToughnessUpdate: props.card.pt,
-      showTemporaryImage: true,
+      tryShowTemporaryImage: true,
       showCardMenu: props.showCardMenu,
       increaseSizeAllowed: true,
       decreaseSizeAllowed: true,
@@ -531,7 +517,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
   }
 
   componentDidUpdate(prevProps: Readonly<CardDisplayProps>, prevState: Readonly<CardDisplayState>, snapshot?: any): void {
-    if (this.state.card.rawOracleText != prevState.card.rawOracleText || 
+    if (this.state.card.oracleText != prevState.card.oracleText || 
       this.state.card.typeLine != prevState.card.typeLine ||
       this.state.card.name != prevState.card.name ||
       this.state.editMode != prevState.editMode) {
@@ -552,7 +538,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
   }
 
   handleCardOracleTextUpdate(event: React.ChangeEvent<HTMLTextAreaElement>) {
-    this.setState({ rawOracleTextUpdate: event.target.value });
+    this.setState({ oracleTextUpdate: event.target.value });
   }
 
   handleCardManaCostUpdate(event: React.ChangeEvent<HTMLInputElement>) {
@@ -570,7 +556,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
 
     var updatedCard = MagicCard.clone(this.state.card, true)
     updatedCard.name = this.state.nameUpdate
-    updatedCard.rawOracleText = this.state.rawOracleTextUpdate
+    updatedCard.oracleText = this.state.oracleTextUpdate
     updatedCard.typeLine = this.state.typeUpdate
     updatedCard.manaCost = this.state.manaCostUpdate
     updatedCard.pt = this.state.powerAndToughnessUpdate
@@ -578,7 +564,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
   }
 
   toggleShowTemporaryImage() {
-    this.setState({ showTemporaryImage: !this.state.showTemporaryImage })
+    this.setState({ tryShowTemporaryImage: !this.state.tryShowTemporaryImage })
   }
 
   handleCardDownload() {
@@ -598,6 +584,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
   }
 
   handleArtDownload() {
+    // Temporary art is higher quality, so prefer that if we have it.
     var img = this.state.card.temporaryImageUrl ? this.state.card.temporaryImageUrl : this.state.card.imageUrl
     window.open(img, '_blank');
   }
@@ -631,38 +618,50 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     const cardMenuIconFontSize = "40px";
     const optionsMenuItemStyle : React.CSSProperties = {marginLeft: "5px"}
     const optionsMenuIconStyle : React.CSSProperties = {fontSize: "30px"}
-    const menu = (
-      <Menu>
-        <Menu.Item  onClick={this.handleCardDownload.bind(this)}>
+
+    const menuItems = [
+      {
+        key: '1',
+        label: (
           <Tooltip placement="left">
-              <CloudDownloadOutlined style={optionsMenuIconStyle} />
-              <span style={optionsMenuItemStyle} >Download Card</span>
+            <CloudDownloadOutlined style={optionsMenuIconStyle} />
+            <span style={optionsMenuItemStyle}>Download Card</span>
           </Tooltip>
-        </Menu.Item>
-        <Menu.Item onClick={this.handleArtDownload.bind(this)}>
+        ),
+        onClick: this.handleCardDownload.bind(this)
+      },
+      {
+        key: '2',
+        label: (
           <Tooltip placement="left">
-              <CloudDownloadOutlined style={optionsMenuIconStyle} />
-              <span style={optionsMenuItemStyle} >Download Art</span>
+            <CloudDownloadOutlined style={optionsMenuIconStyle} />
+            <span style={optionsMenuItemStyle}>Download Art</span>
           </Tooltip>
-        </Menu.Item>
-        {
-        this.state.editMode ? 
-          <Menu.Item onClick={this.updateEditMode.bind(this)}>
-            <Tooltip title="Save the card text" placement='left'>
-              <SaveFilled style={optionsMenuIconStyle} />
-              <span style={optionsMenuItemStyle} >Save</span>
-            </Tooltip>
-          </Menu.Item>
-        : 
-          <Menu.Item onClick={this.updateEditMode.bind(this)}>
-            <Tooltip title="Modify the card text" placement='left'>
-              <EditOutlined style={optionsMenuIconStyle} />
-              <span style={optionsMenuItemStyle} >Edit</span>
-            </Tooltip>
-          </Menu.Item>
-        }
-      </Menu>
-    );
+        ),
+        onClick: this.handleArtDownload.bind(this)
+      },
+      this.state.editMode
+        ? {
+            key: '3',
+            label: (
+              <Tooltip title="Save the card text" placement='left'>
+                <SaveFilled style={optionsMenuIconStyle} />
+                <span style={optionsMenuItemStyle}>Save</span>
+              </Tooltip>
+            ),
+            onClick: this.updateEditMode.bind(this)
+          }
+        : {
+            key: '4',
+            label: (
+              <Tooltip title="Modify the card text" placement='left'>
+                <EditOutlined style={optionsMenuIconStyle} />
+                <span style={optionsMenuItemStyle}>Edit</span>
+              </Tooltip>
+            ),
+            onClick: this.updateEditMode.bind(this)
+          }
+    ];
 
     const height = ((this.props.cardWidth * 3.6) / 2.5);
 
@@ -690,7 +689,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
                 }
               </div>
               <div className={card.cardFrameArtClassName}>
-              {this.state.showTemporaryImage ?
+              {this.state.tryShowTemporaryImage && card.temporaryImageUrl ?
                 <Image onLoad={() => this.state.card.adjustFontSize()} preview={this.props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.temporaryImageUrl ? card.temporaryImageUrl : card.imageUrl} /> :
                 <Image onLoad={() => this.state.card.adjustFontSize()} preview={this.props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.imageUrl} />
               }
@@ -714,7 +713,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
                         ))}
                       </div> 
                       :
-                      <textarea className="card-edit-text" value={this.state.rawOracleTextUpdate} rows={oracleEditTextAreaRows} onChange={this.handleCardOracleTextUpdate} />
+                      <textarea className="card-edit-text" value={this.state.oracleTextUpdate} rows={oracleEditTextAreaRows} onChange={this.handleCardOracleTextUpdate} />
                     }
                   </div>
                   <p className="description">
@@ -777,7 +776,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
               <ZoomOutOutlined onClick={() => this.decreaseCardSize(30)} style={{fontSize: cardMenuIconFontSize, marginRight: "-7px"}} />
           </Button>
           }
-          <Dropdown overlay={menu}>
+          <Dropdown menu={{items: menuItems}}>
             <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
               <CaretDownFilled style={{fontSize: cardMenuIconFontSize}} />
             </a>

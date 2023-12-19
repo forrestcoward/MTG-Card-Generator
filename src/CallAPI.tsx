@@ -12,14 +12,15 @@ export async function RetrieveMsalToken(msal: PublicClientApplication, scopes: s
     account: account,
   };
 
+  await msal.initialize()
   return await msal.acquireTokenSilent(accessTokenRequest).then(async function (response) {
     return response;
   }).catch(async function (error) {
     if (error instanceof InteractionRequiredAuthError) {
-      // fallback to interaction when silent call fails
+      // Fallback to interaction when silent call fails.
       return msal.acquireTokenPopup(accessTokenRequest);
     }
-    console.error("Error retrieving MSAL token:" + error)
+    console.error("Error retrieving MSAL token: " + error)
     return undefined;
   });
 }
@@ -43,22 +44,44 @@ function getApiUrl(apiName : string): string {
   return `${baseUrl}/${apiName}`;
 }
 
-export async function GetCardToRate(msal: PublicClientApplication): Promise<CardGenerationRecord[]> {
-  let url = getApiUrl('GetCardToRate');
+async function GetCardAPICall(apiName: string, msal: PublicClientApplication): Promise<CardGenerationRecord | undefined> {
+  let url = getApiUrl(apiName);
+  var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
+
+  const params: Record<string, string> = { };
+  let record:CardGenerationRecord | undefined = undefined
+  await httpGet(url, token, params)
+    .then(data => {
+      record = JSON.parse(data);
+    })
+    .catch(error => {
+      console.error(`There was an error calling '${apiName}': `, error);
+      throw error
+    })
+
+    return record;
+}
+
+async function GetCardsAPICall(apiName: string, msal: PublicClientApplication): Promise<CardGenerationRecord[]> {
+  let url = getApiUrl(apiName);
   var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
 
   const params: Record<string, string> = { };
   let cardGenerationRecords:CardGenerationRecord[] = []
   await httpGet(url, token, params)
     .then(data => {
-      cardGenerationRecords = JSON.parse(data).cards;
+      cardGenerationRecords = JSON.parse(data);
     })
     .catch(error => {
-      console.error('There was an error getting a random card:', error);
+      console.error(`There was an error calling '${apiName}': `, error);
       throw error
     });
 
     return cardGenerationRecords;
+}
+
+export async function GetCardToRate(msal: PublicClientApplication): Promise<CardGenerationRecord | undefined> {
+  return GetCardAPICall('GetCardToRate', msal);
 }
 
 export async function RateCard(cardId: string, rating: number, msal: PublicClientApplication): Promise<CardRating | undefined> {
@@ -76,81 +99,16 @@ export async function RateCard(cardId: string, rating: number, msal: PublicClien
       console.error('There was an error rating a card:', error);
       throw error
     });
-
+    
     return cardRating;
 }
 
 export async function GetTopCards(msal: PublicClientApplication): Promise<CardGenerationRecord[]> {
-
-  let url = getApiUrl('GetTopCards');
-  var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
-
-  const params: Record<string, string> = { };
-  let cardGenerationRecords:CardGenerationRecord[] = []
-  await httpGet(url, token, params)
-    .then(data => {
-      cardGenerationRecords = JSON.parse(data).cards;
-    })
-    .catch(error => {
-      console.error('There was an error getting top cards:', error);
-      throw error
-    });
-
-    return cardGenerationRecords;
+  return GetCardsAPICall('GetTopCards', msal);
 }
 
-export async function GenerateCardBattle(msal: PublicClientApplication): Promise<CardGenerationRecord[]> {
-
-  let url = getApiUrl('GenerateCardBattle');
-  var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
-
-  const params: Record<string, string> = { };
-  let cardGenerationRecords:CardGenerationRecord[] = []
-  await httpGet(url, token, params)
-    .then(data => {
-      cardGenerationRecords = JSON.parse(data).cards;
-    })
-    .catch(error => {
-      console.error('There was an error generating a card battle:', error);
-      throw error
-    });
-
-    return cardGenerationRecords;
-}
-
-export async function CardBattleResult(winnerId: string, loserId: string, msal: PublicClientApplication) {
-
-  let url = getApiUrl('CardBattleResult');
-  var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
-
-  const params: Record<string, string> = { "winnerId": winnerId, "loserId": loserId};
-  await httpGet(url, token, params)
-    .then(data => {
-    })
-    .catch(error => {
-      console.error('There was an error declaring card battle result:', error);
-      throw error
-    });
-}
-
-
-export async function GetUserMagicCards(msal: PublicClientApplication): Promise<MagicCard[]> {
-
-  let url = getApiUrl('GetMagicCards');
-  var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
-
-  const params: Record<string, string> = { };
-  let cards:BasicCard[] = []
-  await httpGet(url, token, params)
-    .then(data => {
-      cards = JSON.parse(data).cards;
-    })
-    .catch(error => {
-      console.error('There was an error getting magic cards for user:', error);
-      throw error
-    });
-
-    return cards.map(card => new MagicCard(card));
+export async function GetUserMagicCards(msal: PublicClientApplication): Promise<CardGenerationRecord[]> {
+  return GetCardsAPICall('GetMagicCards', msal);
 }
 
 export async function GenerateMagicCardRequest(userPrompt: string, model: string, includeExplanation: boolean, highQualityImages: boolean, openAIApiKey: string, msal: PublicClientApplication): Promise<MagicCard[]> {
@@ -201,7 +159,6 @@ export async function SearchMagicCardsRequest(query: string, msal: PublicClientA
 
     return cards.map(card => new MagicCard(card));
 }
-
 
 async function httpGet(url: string, msalResult: AuthenticationResult | undefined, params?: Record<string, string>): Promise<any> {
   const sanitizedParams: Record<string, string> = {};
