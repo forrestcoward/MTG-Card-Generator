@@ -1,5 +1,6 @@
 import { BasicCard, CardGenerationRecord, CardRating, MagicCard } from "./Card";
 import { AuthenticationResult, InteractionRequiredAuthError, PublicClientApplication } from "@azure/msal-browser";
+import { User } from "./User";
 
 export async function RetrieveMsalToken(msal: PublicClientApplication, scopes: string[]): Promise<AuthenticationResult | undefined> {
   const account = msal.getAllAccounts()[0];
@@ -85,7 +86,6 @@ export async function GetCardToRate(msal: PublicClientApplication): Promise<Card
 }
 
 export async function RateCard(cardId: string, rating: number, msal: PublicClientApplication): Promise<CardRating | undefined> {
-
   let url = getApiUrl('RateCard');
   var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
 
@@ -101,6 +101,24 @@ export async function RateCard(cardId: string, rating: number, msal: PublicClien
     });
     
     return cardRating;
+}
+
+export async function GetUserInfo(msal: PublicClientApplication): Promise<User | undefined> {
+  let url = getApiUrl('GetUser');
+  var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
+
+  const params: Record<string, string> = { };
+  let user:User | undefined = undefined
+  await httpGet(url, token, params)
+    .then(data => {
+      user = JSON.parse(data);
+    })
+    .catch(error => {
+      console.error('There was an error getting user information:', error);
+      throw error
+    });
+    
+    return user;
 }
 
 export async function GetTopCards(msal: PublicClientApplication): Promise<CardGenerationRecord[]> {

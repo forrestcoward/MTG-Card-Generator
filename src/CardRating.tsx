@@ -1,16 +1,17 @@
 import React from 'react';
-import { Rate, Table } from 'antd';
+import { Badge, Card, Rate, Table, Tag } from 'antd';
 import { EventMessage, EventType, PublicClientApplication } from '@azure/msal-browser';
 import { CardDisplay, CardGenerationRecord, MagicCard } from './Card';
 import { Loader } from './Loader';
 import { AuthenticatedTemplate, UnauthenticatedTemplate } from '@azure/msal-react';
-import { GetCardToRate, RateCard, GetTopCards } from './CallAPI';
+import { GetCardToRate, RateCard, GetTopCards, GetUserInfo } from './CallAPI';
 
 import "./mana.min.css";
 import "./mtg-card.css";
 import "./app.css";
 import { setCardContainerSize } from './Utility';
 import { CardPreview } from './CardPreview';
+import { User } from './User';
 
 interface CardRatingProps {
   msalInstance: PublicClientApplication;
@@ -23,6 +24,7 @@ interface CardRatingState {
   errorMessage: string;
   cardWidth: number;
   topCards: CardGenerationRecord[];
+  user: User | undefined;
 }
 
 export class CardRating extends React.Component<CardRatingProps, CardRatingState> {
@@ -36,7 +38,8 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
       errorMessage: "",
       topCards: [],
       loading: true,
-      cardWidth: width
+      cardWidth: width,
+      user: undefined,
     };
 
     this.props.msalInstance.addEventCallback((message: EventMessage) => {
@@ -52,7 +55,17 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
     this.getTopCards();
   }
 
+  getUserInfo() {
+    GetUserInfo(this.props.msalInstance).then((user) => {
+      this.setState({user: user})
+    }).catch((error) => {
+      this.setState({errorMessage: error.message})
+      console.log("Error in getUserInfo: " + error)
+    })
+  }
+
   getRandomCard() {
+    this.getUserInfo();
     GetCardToRate(this.props.msalInstance).then((record) => {
       var card = new MagicCard(record!.card);
       this.setState({card: card, cardId: record!.id, loading: false, errorMessage: ""})
@@ -64,9 +77,6 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
 
   getTopCards() {
     GetTopCards(this.props.msalInstance).then((records) => {
-      records.forEach(c => {
-        c.card.temporaryImageUrl = c.card.imageUrl
-      })
       this.setState({topCards: records})
     }).catch((error) => {
       this.setState({ loading: false })
@@ -99,23 +109,12 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
       </div>
 
     type DataSourceItem = {
-      // rank: JSX.Element;
-      // score: string;
       card: JSX.Element;
     };
 
     let dataSource: DataSourceItem[] = [];
 
     const columns = [
-      /*
-      {
-        title: 'Rank',
-        dataIndex: 'rank',
-      },
-      {
-        title: 'Rating',
-        dataIndex: 'score',
-      },*/
       {
         title: 'Card',
         dataIndex: 'card',
@@ -124,8 +123,6 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
 
     this.state.topCards.forEach((cardRecord, index) => {
       let entry = {
-        //rank: <div><h3>{index + 1}</h3></div>,
-        //score: cardRecord.rating.averageScore.toFixed(2),
         key: cardRecord.id,
         card:
           <table>
@@ -150,17 +147,16 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
       }
       dataSource.push(entry);
     })
-    
     var userCardDisplay = <div></div>
     if (this.state.card)
     {
       userCardDisplay = 
       <div>
-        <div style={{display: "flex", flexWrap: "wrap", justifyContent: "center"}}>
+        <div style={{display: "flex", flexWrap: "wrap", justifyContent: "center", backgroundColor:"whitesmoke"}}>
           <table>
             <tbody>
               <tr style={{justifyContent:"center", display:"grid", marginBottom:"-25px"}}>
-                <td>
+                <td style={{maxWidth:"500px", margin:"5px"}}>
                   <h3>Prompt: "<i>{this.state.card.userPrompt}</i>"</h3>
                 </td>
               </tr>
@@ -173,20 +169,29 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
               </tr>
               <tr style={{textAlign: "center"}}>
                 <td>
-                  <Rate className='card-rating' style={{marginTop: "5px", width: `${this.state.cardWidth}px`}} onChange={(rating) => this.rateCard(this.state.cardId, rating)} ></Rate>
+                  <h4>Submit Your Rating:</h4>
+                </td>
+              </tr>
+              { this.state.user &&
+              <tr style={{textAlign: "center"}}>
+                <td>
+                  <Rate className='card-rating' style={{marginTop: "0px", width: `${this.state.cardWidth}px`}} onChange={(rating) => this.rateCard(this.state.cardId, rating)} ></Rate>
+                </td>
+              </tr>
+              }
+              <tr style={{display:"grid", marginTop:"10px"}}>
+                <td style={{textAlign:"right"}}>
+                  <Tag style={{fontSize: "10px", marginLeft:"0"}} color="geekblue">You've Rated {this.state.user != undefined ? this.state.user.numberOfCardsRated : 0} Cards</Tag>
+                </td>
+              </tr>
+              <tr style={{justifyContent:"center", marginTop: "5px", display:"grid", backgroundColor: "#857dff0f"}}>
+                <td>
+                  <h2>Top 100 User Cards</h2>
                 </td>
               </tr>
               <tr>
-
-              </tr>
-              <tr style={{justifyContent:"center", marginTop: "10px", display:"grid"}}>
                 <td>
-                  <h2>Top Rated Cards</h2>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <Table showHeader={false} className='leaderboard-table' bordered={true} dataSource={dataSource} columns={columns} pagination={{pageSize: 20}} style={{width:this.state.cardWidth}} />
+                  <Table showHeader={false} className='leaderboard-table' bordered={true} dataSource={dataSource} columns={columns} pagination={{pageSize: 20, showSizeChanger:false}} />
                 </td>
               </tr>
             </tbody>

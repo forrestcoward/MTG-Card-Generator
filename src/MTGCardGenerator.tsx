@@ -1,7 +1,7 @@
 import React from 'react';
 import { CardDisplay, MagicCard  } from './Card';
 import { GenerateMagicCardRequest } from './CallAPI';
-import { setCardContainerSize } from './Utility';
+import { isMobileDevice, setCardContainerSize } from './Utility';
 import { TutorialCard } from './TutorialCard';
 import PopOutSettingsMenu from './PopOutSettingsMenu';
 import { PublicClientApplication } from '@azure/msal-browser';
@@ -175,7 +175,17 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
     return (
       <div>
         <div className="outerContainer">
-          <div className="container">
+          <div className="container" style={{position: "relative"}}>
+            <div className="notification">
+              <b>
+                <span style={{marginRight:"5px"}}>
+                  New:
+                </span>
+              </b>
+              <a className="pulsingLink" href="/RateCards">
+                { !isMobileDevice() ? "Rate Other User's Cards!" : "Rate Cards!" } 
+              </a>
+            </div>
             <p>Generate a Magic: The Gathering card...</p>
             <label>
               <input type="text" className="userInputPrompt" placeholder={defaultPrompt} onChange={this.handleChangeInput} value={this.state.prompt} />

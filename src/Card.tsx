@@ -93,7 +93,7 @@ export interface GenerationMetadata {
   model: string,
 }
 
-export interface User {
+export interface UserRecord {
   username: string,
 }
 
@@ -103,7 +103,7 @@ export interface CardGenerationRecords {
 
 export interface CardGenerationRecord {
   id: string
-  user: User
+  user: UserRecord
   card: BasicCard
   rating: CardRating
   generationMetadata: GenerationMetadata

@@ -311,3 +311,46 @@ input:checked + .slider:before {
   box-shadow: 0 0 10px #719ECE;
   background-color: #b1b1b1a4;
 }
+
+.notification {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: 14px;
+  color: rgb(236, 75, 75);
+  margin: 5px;
+  padding: 3px;
+  background-color: rgba(25, 25, 29, 0.504);
+}
+
+.notification a {
+  color:rgb(255, 255, 255);
+  text-decoration: none;
+}
+
+.notification a:hover {
+  color:rgb(148, 153, 160);
+  text-decoration: underline;
+}
+
+.pulsingLink {
+  animation: pulse 4s 20s;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+
+

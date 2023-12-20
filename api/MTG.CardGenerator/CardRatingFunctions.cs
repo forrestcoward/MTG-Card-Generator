@@ -134,7 +134,7 @@ namespace MTG.CardGenerator
             {
                 var stopwatch = Stopwatch.StartNew();
                 var cardsClient = new CardsClient(log);
-                var topCards = (await cardsClient.GetTopCards(top: 50, requiredNumberOfVotes: 2)).ToList();
+                var topCards = (await cardsClient.GetTopCards(top: 100, requiredNumberOfVotes: 2)).ToList();
                 log.LogMetric("GetTopCards_DurationSeconds", stopwatch.Elapsed.TotalSeconds);
                 return new OkObjectResult(APIResponses.GetCardsResponse(topCards));
             }

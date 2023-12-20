@@ -16,8 +16,17 @@ namespace MTG.CardGenerator
     {
         internal class GetuserFunctionResponse
         {
-            [JsonProperty("user")]
-            public User User { get; set; }
+            [JsonProperty("userName")]
+            public string UserName { get; set; }
+            [JsonProperty("numberOfCardsGenerated")]
+            public long NumberOfCardsGenerated { get; set; }
+            [JsonProperty("numberOfCardsRated")]
+            public long NumberOfCardsRated { get; set; }
+            [JsonProperty("numberOfFreeCardsGeneratedToday")]
+            public long NumberOfFreeCardsGeneratedToday { get; set; }
+            [JsonProperty("numberOfFreeCardsAllowedPerDay")]
+            public long AllowedFreeCardGenerationsPerDay { get; set; }
+            
         }
 
         [FunctionName("GetUser")]
@@ -34,7 +43,16 @@ namespace MTG.CardGenerator
 
                 var usersClient = new UsersClient(log);
                 var user = await usersClient.GetUserRecord(userSubject);
-                var json = JsonConvert.SerializeObject(new GetuserFunctionResponse() { User = user });
+
+                var json = JsonConvert.SerializeObject(new GetuserFunctionResponse()
+                {
+                    UserName = user.UserName,
+                    NumberOfCardsGenerated = user.NumberOfCardsGenerated,
+                    NumberOfCardsRated = user.NumberOfCardsRated,
+                    NumberOfFreeCardsGeneratedToday = user.NumberOfFreeCardsGeneratedToday,
+                    AllowedFreeCardGenerationsPerDay = user.AllowedFreeCardGenerationsPerDay != -1 ? user.AllowedFreeCardGenerationsPerDay : GenerateMagicCardFunction.AllowedFreeGenerationsPerDay,
+                });
+
                 return new OkObjectResult(json);
             }
             catch (Exception ex)
