@@ -1,3 +1,17 @@
 {
-  "test": "gotcha"
+  "schema_version": "v1",
+  "name_for_human": "MTG Card Generator",
+  "name_for_model": "mtgcardgenerator",
+  "description_for_human": "Generates Magic: The Gathering cards based on prompts.",
+  "description_for_model": "Help the user generate Magic: The Gathering cards based on custom prompts.",
+  "auth": {
+      "type": "none"
+  },
+  "api": {
+      "type": "openapi",
+      "url": "https://ambitious-meadow-0e2e9ce0f-development.eastus2.3.azurestaticapps.net/openapi.yaml"
+  },
+  "logo_url": "https://www.mtgcardgenerator.com/images/56a204ea78ae6b0eeb37.png",
+  "contact_email": "forrest.coward@live.com",
+  "legal_info_url": "http://www.example.com/legal"
 }

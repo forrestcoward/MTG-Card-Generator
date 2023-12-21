@@ -18,7 +18,8 @@ module.exports = {
   plugins: [
     new CopyWebpackPlugin({
       patterns: [
-        { from: './ai-plugin.json', to: '.well-known/ai-plugin.json' }
+        { from: './ai-plugin.json', to: '.well-known/ai-plugin.json' },
+        { from: './openai.yaml', to: 'openapi.yaml' }
       ]
     })
   ],

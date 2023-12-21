@@ -1,0 +1,98 @@
+openapi: 3.0.1
+info:
+  title: Magic The Gathering Card (MTG) Generator
+  description: An API that generates unique MTG cards using OpenAI's language model, based on user-defined prompts.
+  version: 'v1'
+servers:
+  - url: https://mtgcardgenerator.azurewebsites.net/api
+paths:
+  /GenerateMagicCard:
+    get:
+      operationId: generateMagicCard
+      summary: Generates a Magic The Gathering card based on a user prompt.
+      parameters:
+        - name: userPrompt
+          in: query
+          required: false
+          schema:
+            type: string
+          description: A user-defined prompt describing the desired attributes of the MTG card.
+        - name: model
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - gpt-4
+              - gpt-3.5
+          description: The OpenAI model to use. Defaults to 'gpt-3.5'.
+        - name: includeExplanation
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Whether to include a detailed explanation and a humorous explanation for the card.
+        - name: highQualityImage
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Specifies if a high-quality image should be generated.
+        - name: openAIApiKey
+          in: query
+          required: false
+          schema:
+            type: string
+          description: User-supplied OpenAI API key. Optional.
+      responses:
+        "200":
+          description: A successfully generated MTG card.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateMagicCardResponse'
+        "429":
+          description: Exceeded free generation limit.
+        "500":
+          description: Internal server error or generation issue.
+components:
+  schemas:
+    GenerateMagicCardResponse:
+      type: object
+      properties:
+        cards:
+          type: array
+          items:
+            $ref: '#/components/schemas/MagicCardResponse'
+          description: An array of generated MTG cards.
+    MagicCardResponse:
+      type: object
+      properties:
+        name:
+          type: string
+        manaCost:
+          type: string
+        type:
+          type: string
+        typeLine:
+          type: string
+        oracleText:
+          type: string
+        flavorText:
+          type: string
+        colorIdentity:
+          type: string
+        rarity:
+          type: string
+        pt:
+          type: string
+        explanation:
+          type: string
+        funnyExplanation:
+          type: string
+        userPrompt:
+          type: string
+        imageUrl:
+          type: string
+        temporaryImageUrl:
+          type: string
