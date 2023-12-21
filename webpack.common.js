@@ -1,4 +1,5 @@
 const path = require('path')
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 module.exports = {
   entry: './src/Index.tsx',
   output: {
@@ -14,6 +15,13 @@ module.exports = {
       progress: true,
     },
   },
+  plugins: [
+    new CopyWebpackPlugin({
+      patterns: [
+        { from: './ai-plugin.json', to: '.well-known/ai-plugin.json' }
+      ]
+    })
+  ],
   module: {
     rules: [
       {

@@ -1,9 +1,15 @@
 {
   "navigationFallback": {
      "rewrite": "index.html",
-     "exclude": ["/static/media/*.{png,jpg,jpeg,gif,bmp}", "/static/css/*"]
+     "exclude": ["/static/media/*.{png,jpg,jpeg,gif,bmp}", "/static/css/*", "/.well-known/*"]
   },
   "mimeTypes": {
       ".json": "text/json"
-  }
+  },
+  "routes": [
+    {
+      "route": "/.well-known/*",
+      "allowedRoles": ["anonymous"]
+    }
+  ]
 }
