@@ -126,17 +126,19 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             var systemPrompt = includeExplanation ? GenerateCardSystemPromptWithExplanation : GenerateCardSystemPrompt;
             var userPromptToSubmit = $"Please generate me one 'Magic: The Gathering card' that has the following description: {rawUserPrompt}";
 
-            var gptModel = OpenAI.ObjectModels.Models.Gpt_4;
-            var chatResponseFormat = ChatCompletionCreateRequest.ResponseFormats.Json;
+            var gptModel = OpenAI.ObjectModels.Models.Gpt_3_5_Turbo;
+            var chatResponseFormat = ChatCompletionCreateRequest.ResponseFormats.Text;
             if (!string.IsNullOrWhiteSpace(model))
             {
                 if (model.Equals("gpt-4", StringComparison.OrdinalIgnoreCase))
                 {
                     gptModel = OpenAI.ObjectModels.Models.Gpt_4;
+                    chatResponseFormat = ChatCompletionCreateRequest.ResponseFormats.Text;
                 }
                 else if (model.Equals("gpt-4-1106-preview", StringComparison.OrdinalIgnoreCase))
                 {
                     gptModel = OpenAI.ObjectModels.Models.Gpt_4_1106_preview;
+                    chatResponseFormat = ChatCompletionCreateRequest.ResponseFormats.Json;
                 }
                 else if (model.Equals("gpt-3.5", StringComparison.OrdinalIgnoreCase))
                 {
