@@ -688,12 +688,14 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
         ),
         onClick: this.updateEditMode.bind(this)
       },
+      /*
       {
         key: '4',
         label: (
           <SharingButton card={card}></SharingButton>
         ),
       },
+      */
       ];
 
     const copyLinkMenuItem = { 
