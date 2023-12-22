@@ -19,7 +19,7 @@ module.exports = {
     new CopyWebpackPlugin({
       patterns: [
         { from: './openapi.yaml', to: '.well-known/openapi.yaml' },
-        { from: './privacy-policy.txt', to: '.well-known/privacy-policy.htxtml'}
+        { from: './privacy-policy.txt', to: '.well-known/privacy-policy.txt'}
       ]
     })
   ],
