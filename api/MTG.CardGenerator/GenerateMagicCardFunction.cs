@@ -278,6 +278,8 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
 
                 ImageGenerator.ImageGenerationOptions imageOptions = null;
 
+                var recordId = Guid.NewGuid().ToString();
+
                 foreach (var card in cards)
                 {
                     var stopwatch = Stopwatch.StartNew();
@@ -315,7 +317,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                         // Insert this record into the database.
                         var cardGenerationRecord = new CardGenerationRecord()
                         {
-                            Id = Guid.NewGuid().ToString(),
+                            Id = recordId,
                             GenerationMetadata = new GenerationMetaData()
                             {
                                 UserPrompt = userPromptToSubmit,
@@ -376,7 +378,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     log.LogError($"Failed to create or update user record: {ex}");
                 }
 
-                var json = JsonConvert.SerializeObject(new GenerateMagicCardFunctionResponse() { Cards = cards.Select(x => new MagicCardResponse(x, includeTemporaryImage: true)) });
+                var json = JsonConvert.SerializeObject(new GenerateMagicCardFunctionResponse() { Cards = cards.Select(x => new MagicCardResponse(x, recordId, includeTemporaryImage: true)) });
                 log?.LogInformation($"API JSON response:{Environment.NewLine}{JToken.Parse(json)}");
 
                 log?.LogInformation($"Estimated cost: ${cost.TotalCost}");

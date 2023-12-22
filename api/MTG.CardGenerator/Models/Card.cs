@@ -78,6 +78,8 @@ namespace MTG.CardGenerator.Models
     /// </summary>
     public class MagicCardResponse
     {
+        [JsonProperty("id")]
+        public string Id { get; set; }
         [JsonProperty("name")]
         public string Name { get; set; }
         [JsonProperty("manaCost")]
@@ -109,8 +111,9 @@ namespace MTG.CardGenerator.Models
         [JsonProperty("temporaryImageUrl")]
         public string TemporaryImageUrl { get; set; }
 
-        public MagicCardResponse(MagicCard card, bool includeTemporaryImage = false)
+        public MagicCardResponse(MagicCard card, string id, bool includeTemporaryImage = false)
         {
+            this.Id = id;
             this.Name = card.Name;
             this.ManaCost = card.ManaCost;
             this.Type = card.Type;

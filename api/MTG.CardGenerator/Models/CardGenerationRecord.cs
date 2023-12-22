@@ -83,7 +83,8 @@ namespace MTG.CardGenerator.Models
             return new CardGenerationRecordResponse
             {
                 Id = cardGenerationRecord.Id,
-                Card = new MagicCardResponse(cardGenerationRecord.Card),
+                // Pass the id onto each card, too.
+                Card = new MagicCardResponse(cardGenerationRecord.Card, cardGenerationRecord.Id),
                 Rating = cardGenerationRecord.Rating,
             };
         }

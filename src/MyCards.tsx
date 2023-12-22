@@ -51,7 +51,7 @@ export class MyCards extends React.Component<MyCardsProps, MyCardsState> {
   }
 
   render() {
-    var loadingElement = 
+    const loadingElement = 
       <div style={{padding: "20px"}}>
         <h1>
           Loading your cards...
@@ -59,12 +59,12 @@ export class MyCards extends React.Component<MyCardsProps, MyCardsState> {
         <Loader />
       </div>
 
-    var errorElement =
+    const errorElement =
       <div style={{padding: "20px"}}>
           {this.state.errorMessage}
       </div>
 
-    var userCardDisplay =
+    const userCardDisplay =
       <div>
         <div className="cardsContainer">
         {
@@ -77,7 +77,7 @@ export class MyCards extends React.Component<MyCardsProps, MyCardsState> {
         </div>
       </div>
 
-    var pageDisplay = userCardDisplay;
+    let pageDisplay = userCardDisplay;
     if (this.state.errorMessage) {
       pageDisplay = errorElement
     } else if (this.state.loading) {
@@ -86,15 +86,15 @@ export class MyCards extends React.Component<MyCardsProps, MyCardsState> {
 
     return (
       <div>
-          <AuthenticatedTemplate>
-            {pageDisplay}
-          </AuthenticatedTemplate>
-          <UnauthenticatedTemplate>
-            <div style={{margin: "10px"}}>
-              <h1>Please login to see the history of your generated cards.</h1>
-            </div>
-          </UnauthenticatedTemplate>
-        </div>
+        <AuthenticatedTemplate>
+          {pageDisplay}
+        </AuthenticatedTemplate>
+        <UnauthenticatedTemplate>
+          <div style={{margin: "10px"}}>
+            <h1>Please login to see the history of your generated cards.</h1>
+          </div>
+        </UnauthenticatedTemplate>
+      </div>
     )
   }
 }

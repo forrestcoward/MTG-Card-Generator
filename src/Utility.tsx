@@ -1,4 +1,4 @@
-// Dynamically adjust card sizes
+// Dynamically adjust card sizes.
 export function setCardContainerSize(minWidth: number = 440) {
   const cardContainerClass = '.card-container'
   const cardContainerRule = findCSSRule(cardContainerClass)
@@ -115,4 +115,16 @@ export function adjustTextHeightBasedOnChildrenClientOffsetHeight(container: HTM
       break
     }
   }
+}
+
+export async function copyTextToClipboard(text: string): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (err) {
+    console.error('Failed to copy text to clipboard', err);
+  }
+}
+
+export function getBaseUrl(): string {
+  return `${window.location.protocol}//${window.location.host}`;
 }

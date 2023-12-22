@@ -1,12 +1,15 @@
 import React from "react";
-import { Image, Menu, Dropdown, Tooltip, Button } from 'antd';
-import { CaretDownFilled, CloudDownloadOutlined, EditOutlined, InfoCircleOutlined, QuestionCircleOutlined, SaveFilled, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons';
-import { adjustTextHeightBasedOnChildrenClientOffsetHeight, adjustTextHeightBasedOnClientHeight, getChildrenClientOffsetHeight, getRandomInt, isMobileDevice } from "./Utility";
+import { Image, Dropdown, Tooltip, Button } from 'antd';
+import { CaretDownFilled, CloudDownloadOutlined, CopyOutlined, EditOutlined, InfoCircleOutlined, QuestionCircleOutlined, SaveFilled, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons';
+import { adjustTextHeightBasedOnChildrenClientOffsetHeight, adjustTextHeightBasedOnClientHeight, copyTextToClipboard, getBaseUrl, getChildrenClientOffsetHeight, getRandomInt, isMobileDevice } from "./Utility";
 import { saveAs } from 'file-saver';
 
 // @ts-ignore
 import whitePaintBrush from './card-backgrounds/paintbrush-white.png'
 import { toBlob } from 'html-to-image';
+import { UploadImageToAzure } from "./CallAPI";
+import { msalInstance } from "./Index";
+import { SharingButton } from "./SharingButton";
 
 export interface BasicCard {
   name: string,
@@ -25,7 +28,8 @@ export interface BasicCard {
   temporaryImageUrl: string,
   userPrompt: string,
   explanation: string,
-  funnyExplanation: string
+  funnyExplanation: string,
+  id: string // Database id for lookup.
 }
 
 enum ColorIdentity {
@@ -102,7 +106,7 @@ export interface CardGenerationRecords {
 }
 
 export interface CardGenerationRecord {
-  id: string
+  id: string // Database id for lookup.
   user: UserRecord
   card: BasicCard
   rating: CardRating
@@ -125,7 +129,8 @@ export class MagicCard {
   imageUrl: string
   temporaryImageUrl: string
   setNumberDisplay: string
-  id: number
+  id: string // DOM id.
+  internalId: string // Database id for lookup.
   userPrompt: string
   explanation: string
   funnyExplanation: string
@@ -146,10 +151,11 @@ export class MagicCard {
     this.imageUrl = card.imageUrl
     this.temporaryImageUrl = card.temporaryImageUrl
     this.setNumberDisplay = getRandomInt(0, 451) + "/" + 451
-    this.id = getRandomInt(0, 1000000000)
+    this.id = getRandomInt(0, 1000000000).toString()
     this.userPrompt = card.userPrompt
     this.explanation = card.explanation
     this.funnyExplanation = card.funnyExplanation
+    this.internalId = card.id
   }
 
   static clone(card: MagicCard, sameId: boolean): MagicCard {
@@ -158,7 +164,7 @@ export class MagicCard {
     if (sameId) {
       newCard.id = card.id
     } else {
-      newCard.id = getRandomInt(0, 1000000000)
+      newCard.id = getRandomInt(0, 1000000000).toString()
     }
 
     return newCard
@@ -288,6 +294,10 @@ export class MagicCard {
     return `ms ms-${manaTokenToCssCharacter[manaToken]} ms-padding-title`
   }
 
+  getCardUrl() {
+    return getBaseUrl() + "/Card?id=" + this.internalId
+  }
+
   toImage(): Promise<Blob | null> {
     var node = document.getElementById(`card-${this.id}`)
     if (!node) {
@@ -305,6 +315,21 @@ export class MagicCard {
     }
     catch (error) {
       return Promise.reject(error)
+    }
+  }
+
+  async uploadCardBlob(): Promise<string | undefined> {
+    try {
+      const blob = await this.toImage();
+      if (blob) {
+        const url = await UploadImageToAzure(msalInstance, blob, this.id.toString());
+        return url
+      } else {
+        console.log('No image blob available to upload.');
+      }
+    } catch (error) {
+      console.error('Error in image conversion or upload:', error);
+      return undefined
     }
   }
 
@@ -490,6 +515,7 @@ interface CardDisplayState {
 }
 
 export class CardDisplay extends React.Component<CardDisplayProps, CardDisplayState> {
+
   constructor(props: CardDisplayProps) {
     super(props);
     const viewportWidth = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
@@ -613,8 +639,8 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
 
   render() {
     const card = this.state.card;
-    const oracleEditTextAreaRows = card.textDisplay.length * 3;
 
+    const oracleEditTextAreaRows = card.textDisplay.length * 3;
     const cardMenuIconFontSize = "40px";
     const optionsMenuItemStyle : React.CSSProperties = {marginLeft: "5px"}
     const optionsMenuIconStyle : React.CSSProperties = {fontSize: "30px"}
@@ -640,28 +666,52 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
         ),
         onClick: this.handleArtDownload.bind(this)
       },
-      this.state.editMode
-        ? {
-            key: '3',
-            label: (
-              <Tooltip title="Save the card text" placement='left'>
-                <SaveFilled style={optionsMenuIconStyle} />
-                <span style={optionsMenuItemStyle}>Save</span>
-              </Tooltip>
-            ),
-            onClick: this.updateEditMode.bind(this)
-          }
-        : {
-            key: '4',
-            label: (
-              <Tooltip title="Modify the card text" placement='left'>
-                <EditOutlined style={optionsMenuIconStyle} />
-                <span style={optionsMenuItemStyle}>Edit</span>
-              </Tooltip>
-            ),
-            onClick: this.updateEditMode.bind(this)
-          }
-    ];
+      this.state.editMode ? 
+      {
+        key: '3',
+        label: (
+          <Tooltip title="Save the card text" placement='left'>
+            <SaveFilled style={optionsMenuIconStyle} />
+            <span style={optionsMenuItemStyle}>Save</span>
+          </Tooltip>
+        ),
+        onClick: this.updateEditMode.bind(this)
+      }
+      : 
+      {
+        key: '3',
+        label: (
+          <Tooltip title="Modify the card text" placement='left'>
+            <EditOutlined style={optionsMenuIconStyle} />
+            <span style={optionsMenuItemStyle}>Edit</span>
+          </Tooltip>
+        ),
+        onClick: this.updateEditMode.bind(this)
+      },
+      {
+        key: '4',
+        label: (
+          <SharingButton card={card}></SharingButton>
+        ),
+      },
+      ];
+
+    const copyLinkMenuItem = { 
+      key: '5',
+      label: (
+        <div>
+          <CopyOutlined style={optionsMenuIconStyle} />
+          <span style={optionsMenuItemStyle}>Copy Link</span>
+        </div>
+      ),
+      onClick: async () => {
+        await copyTextToClipboard(card.getCardUrl())
+      }
+    }
+
+    if (card.internalId) {
+      menuItems.push(copyLinkMenuItem)
+    }
 
     const height = ((this.props.cardWidth * 3.6) / 2.5);
 

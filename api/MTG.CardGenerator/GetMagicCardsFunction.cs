@@ -37,7 +37,6 @@ namespace MTG.CardGenerator
         }
 
         [FunctionName("GetMagicCard")]
-        [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
         public static async Task<IActionResult> RunGetMagicCard([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log)
         {
             try

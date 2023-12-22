@@ -19,7 +19,8 @@ const _tutorialCard:BasicCard = {
   temporaryImageUrl: '',
   userPrompt: "Enter a prompt above to start generating!",
   explanation: "",
-  funnyExplanation: ""
+  funnyExplanation: "",
+  id: "",
 }
 
 export const TutorialCard:MagicCard = new MagicCard(_tutorialCard);

@@ -8,6 +8,7 @@ import { NavigationBar } from './NavigationBar';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { MyCards } from './MyCards';
 import { CardRating } from './CardRating';
+import { ViewCard } from './ViewCard';
 
 // MSAL should be instantiated outside of the component tree to prevent it from being re-instantiated on re-renders.
 // For more, visit: https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/lib/msal-react/docs/getting-started.md
@@ -40,6 +41,7 @@ if (rootNode) {
             <Route path="/" element={ <MTGCardGenerator msalInstance={msalInstance} /> } />
             <Route path="MyCards" element={ <MyCards msalInstance={msalInstance} /> } />
             <Route path="RateCards" element={ <CardRating msalInstance={msalInstance} /> } />
+            <Route path="Card" element={ <ViewCard msalInstance={msalInstance} /> } />
           </Routes>
           </MsalProvider>
         </BrowserRouter>

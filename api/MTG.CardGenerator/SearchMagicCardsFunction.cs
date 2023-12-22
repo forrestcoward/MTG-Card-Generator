@@ -76,9 +76,9 @@ namespace MTG.CardGenerator
                 var cardsClient = new CardsClient(log);
                 var cards = await cardsClient.GetMagicCardRecords(ids);
 
-                var generatedCards = cards.Select(x => x.MagicCards.FirstOrDefault()).Take(30).ToArray();
-                var json = JsonConvert.SerializeObject(new SearchMagicCardsFunctionResponse() { Cards = generatedCards.Select(x => new MagicCardResponse(x)).ToArray() });
-                return new OkObjectResult(json);
+                // var generatedCards = cards.Select(x => x.MagicCards.FirstOrDefault()).Take(30).ToArray();
+                // var json = JsonConvert.SerializeObject(new SearchMagicCardsFunctionResponse() { Cards = generatedCards.Select(x => new MagicCardResponse(x)).ToArray() });
+                return new OkObjectResult("");
             }
             catch (Exception ex)
             {
