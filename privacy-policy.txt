@@ -1,0 +1,23 @@
+Privacy Policy for https://www.mtgcardgenerator.com
+Last Updated: 12/22/2023
+
+This privacy policy explains how this website will collect, use, and protect your personal information. Please read this policy to understand our practices regarding your personal information.
+
+1. Information We Collect
+
+The only personal information we collect is a user name (your choice i.e. not your name) and email address when you choose to sign up with the website. Portions of the website can be used without signing up at all.
+
+2. Use of Your Information
+
+Your email address is only used to verify your account (make sure you are a real human!) and log into the website.
+We do not share, sell, rent, or trade your email address with third parties for any commercial purposes.
+
+No other personal information is collected or used in any way.
+
+3. Data Security
+
+Azure B2C (https://learn.microsoft.com/en-us/azure/active-directory-b2c/overview) is used to manage user accounts. Thus, your email is stored in secure fashion. Your email is not available for other users to see or use.
+
+4. Contact Us
+
+If you have any questions about this privacy policy, please contact forrest.coward@live.com.

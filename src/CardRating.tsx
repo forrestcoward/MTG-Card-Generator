@@ -1,5 +1,5 @@
 import React from 'react';
-import { Badge, Card, Rate, Table, Tag } from 'antd';
+import { Rate, Table, Tag } from 'antd';
 import { EventMessage, EventType, PublicClientApplication } from '@azure/msal-browser';
 import { CardDisplay, CardGenerationRecord, MagicCard } from './Card';
 import { Loader } from './Loader';

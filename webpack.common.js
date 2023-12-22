@@ -18,8 +18,8 @@ module.exports = {
   plugins: [
     new CopyWebpackPlugin({
       patterns: [
-        { from: './ai-plugin.json', to: '.well-known/ai-plugin.json' },
-        { from: './openapi.yaml', to: 'openapi.yaml' }
+        { from: './openapi.yaml', to: '.well-known/openapi.yaml' },
+        { from: './privacy-policy.txt', to: '.well-known/privacy-policy.htxtml'}
       ]
     })
   ],
