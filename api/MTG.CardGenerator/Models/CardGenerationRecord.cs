@@ -47,6 +47,8 @@ namespace MTG.CardGenerator.Models
         public DateTime Timestamp { get; set; }
         [JsonProperty("host")]
         public string Host { get; set; }
+        [JsonProperty("origin")]
+        public string Origin { get; set; }
     }
 
     /// <summary>
