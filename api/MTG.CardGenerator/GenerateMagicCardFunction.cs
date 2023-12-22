@@ -334,6 +334,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                                 UserSupplied = userSuppliedKey,
                                 EstimatedCost = cost.TotalCost,
                                 Timestamp = DateTime.Now.ToUniversalTime(),
+                                Host = req?.Host.Value
                             },
                             User = new CardUserMetadata()
                             {

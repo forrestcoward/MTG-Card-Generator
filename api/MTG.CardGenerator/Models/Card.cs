@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using System;
 
 namespace MTG.CardGenerator.Models
 {
@@ -110,6 +111,20 @@ namespace MTG.CardGenerator.Models
         public string ImageUrl { get; set; }
         [JsonProperty("temporaryImageUrl")]
         public string TemporaryImageUrl { get; set; }
+        [JsonProperty("url")]
+        public string Url
+        {
+            get
+            {
+                var websiteUrl = Environment.GetEnvironmentVariable(Constants.WebsiteUrl);
+                if (string.IsNullOrWhiteSpace(websiteUrl))
+                {
+                    return string.Empty;
+                }
+
+                return $"{websiteUrl}Card?id={Id}";
+            }
+        }
 
         public MagicCardResponse(MagicCard card, string id, bool includeTemporaryImage = false)
         {

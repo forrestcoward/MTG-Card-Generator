@@ -21,6 +21,7 @@
         public const string CognitiveSearchEndpoint = "CognitiveSearchEndpoint";
         public const string CognitiveSearchConnectionKey = "CognitiveSearchConnectionKey";
         public const string CognitiveSearchCardSearchIndexName = "CognitiveSearchCardSearchIndexName";
+        public const string WebsiteUrl = "WebsiteUrl";
         // Constants.
         public const string APIAuthorizationScope = "generate.mtg.card";
         public const string CosmosDBCardsCollectionName = "generated-cards";

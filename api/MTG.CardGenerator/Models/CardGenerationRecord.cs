@@ -45,6 +45,8 @@ namespace MTG.CardGenerator.Models
         public double EstimatedCost { get; set; }
         [JsonProperty("timestamp")]
         public DateTime Timestamp { get; set; }
+        [JsonProperty("host")]
+        public string Host { get; set; }
     }
 
     /// <summary>

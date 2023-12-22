@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: Magic The Gathering Card (MTG) Generator
-  description: An API that generates unique MTG cards using OpenAI's language model, based on user-defined prompts.
+  description: An API that generates unique MTG cards using OpenAI's language models, based on user-defined prompts.
   version: 'v1'
 servers:
   - url: https://mtgcardgenerator.azurewebsites.net/api
