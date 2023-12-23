@@ -123,6 +123,8 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 rawUserPrompt = "that is from the Dominaria plane.";
             }
 
+            rawUserPrompt = rawUserPrompt.Replace(@"%20", " ");
+
             var systemPrompt = includeExplanation ? GenerateCardSystemPromptWithExplanation : GenerateCardSystemPrompt;
             var userPromptToSubmit = $"Please generate me one 'Magic: The Gathering card' that has the following description: {rawUserPrompt}";
 
