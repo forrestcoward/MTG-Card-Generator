@@ -31,10 +31,17 @@ namespace MTG.CardGenerator
             "Greg Kutkowski style, digital, fantasy art.",
             "Greg Kutkowski style, digital, fantasy art.",
             "Greg Kutkowski style, digital, fantasy art.",
+            "Greg Kutkowski style, digital, fantasy art.",
+            "Greg Kutkowski style, digital, fantasy art.",
+            "Greg Kutkowski style, digital, fantasy art.",
+            "Greg Kutkowski style, digital, fantasy art.",
+            "Greg Kutkowski style, digital, fantasy art.",
             "Terese Nielsen style, digital, fantasy art. ",
+            "Veronique Meignaud style, digital, fantasy art.",
             "Veronique Meignaud style, digital, fantasy art.",
             "Wassily Kandinsky, abstract art.",
             "Vincent van Gogh, impressionist style.",
+            "Salvador Dali, surrealism style",
             "Salvador Dali, surrealism style"
         };
 
