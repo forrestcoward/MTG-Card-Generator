@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -123,7 +124,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 rawUserPrompt = "that is from the Dominaria plane.";
             }
 
-            rawUserPrompt = rawUserPrompt.Replace(@"%20", " ");
+            rawUserPrompt = WebUtility.UrlDecode(rawUserPrompt);
 
             var systemPrompt = includeExplanation ? GenerateCardSystemPromptWithExplanation : GenerateCardSystemPrompt;
             var userPromptToSubmit = $"Please generate me one 'Magic: The Gathering card' that has the following description: {rawUserPrompt}";

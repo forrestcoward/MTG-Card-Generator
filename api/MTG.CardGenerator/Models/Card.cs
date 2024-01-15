@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System;
+using System.Net;
 
 namespace MTG.CardGenerator.Models
 {
@@ -139,7 +140,7 @@ namespace MTG.CardGenerator.Models
             this.PowerAndToughness = card.PowerAndToughness;
             this.Explanation = card.Explanation;
             this.FunnyExplanation = card.FunnyExplanation;
-            this.UserPrompt = card.UserPrompt.Replace(@"%20", " ");
+            this.UserPrompt = WebUtility.UrlDecode(card.UserPrompt);
 
             // The temporary image is the one provided by OpenAI and only lasts a short amount of time.
             // For all use cases except the initial generate, use the permanent image we store ourselves.
