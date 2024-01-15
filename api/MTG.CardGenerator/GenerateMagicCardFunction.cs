@@ -54,6 +54,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
         public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", Route = null)] HttpRequest req, ILogger log)
         {
             var rawUserPrompt = (string)req.Query["userPrompt"];
+            rawUserPrompt = WebUtility.UrlDecode(rawUserPrompt);
             log?.LogInformation($"User prompt: {rawUserPrompt.Replace("\n", "")}");
             var model = (string)req.Query["model"];
             var includeExplanation = bool.TryParse(req.Query["includeExplanation"], out bool result) && result;
@@ -123,8 +124,6 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             {
                 rawUserPrompt = "that is from the Dominaria plane.";
             }
-
-            rawUserPrompt = WebUtility.UrlDecode(rawUserPrompt);
 
             var systemPrompt = includeExplanation ? GenerateCardSystemPromptWithExplanation : GenerateCardSystemPrompt;
             var userPromptToSubmit = $"Please generate me one 'Magic: The Gathering card' that has the following description: {rawUserPrompt}";
