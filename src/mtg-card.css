@@ -6,7 +6,7 @@
   margin: 0;
 }
 
-/* HTML5 display-role reset for older browsers */
+/* HTML5 display-role reset for older browsers. */
 article, aside, details, figcaption, figure, 
 footer, header, hgroup, menu, nav, section {
   display: block;
@@ -42,8 +42,6 @@ body* > {
 
 /**************************/
 /* Core card sizes that we will scale.
-.card-container width is set in App.tsx, other lengths are determined by that.
-*/
 /**************************/
 
 .card-container {
@@ -94,8 +92,42 @@ body* > {
   height: 42%;
 }
 
+.frame-header,
+.frame-type-line {
+    background: 
+        linear-gradient(0deg, rgba(201, 216, 201, .3), rgba(201, 216, 209, .3)), 
+        url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
+    display: flex;
+    margin-top: 3%;
+    margin-left: 2%;
+    margin-right: 2%;
+    height: 2.4%;
+    padding: 2% 0;
+    display: flex;
+    justify-content: space-between;
+    border-radius: 18px/40px;
+}
+
+.frame-margin {
+  margin: 0 3.1%;
+}
+
 .power-and-toughness-size {
   font-size: 1.3em;
+}
+
+#mana-icon{
+  font-size: 100%;
+  border-radius: 50%;
+  margin-right: 3px;
+  align-self: center;
+}
+
+#set-icon {
+    width: 6%;
+    overflow: hidden;
+    margin-right: 10px;
+    align-self: center;
 }
 
 .name-type-size {
@@ -129,6 +161,7 @@ body* > {
 /**************************/
 /* Card frame background. */
 /**************************/
+
 /* Single color backgrounds. */
 .card-background-g {
   background-image: url(./card-backgrounds/g.png)
@@ -351,21 +384,6 @@ body* > {
 /**************************/
 /*      Card Frames       */
 /**************************/
-.frame-header,
-.frame-type-line {
-    background: 
-        linear-gradient(0deg, rgba(201, 216, 201, .3), rgba(201, 216, 209, .3)), 
-        url(https://image.ibb.co/jKByZn/tile_bg_1.jpg);
-    display: flex;
-    margin-top: 3%;
-    margin-left: 2%;
-    margin-right: 2%;
-    height:2.4%;
-    padding: 2% 0;
-    display: flex;
-    justify-content: space-between;
-    border-radius: 18px/40px;
-}
 
 /* Backgrounds for the card header and card type line.
 /* Single color frame backgrounds. */
@@ -503,13 +521,6 @@ body* > {
     padding-left: 20px;
 }
 
-#mana-icon{
-    font-size: 100%;
-    border-radius: 50%;
-    margin-right: 3px;
-    align-self: center;
-}
-
 .manaCost {
   box-shadow: -0.05em 0.12em 0px 0 black;
 }
@@ -568,18 +579,8 @@ body* > {
   -moz-osx-font-smoothing: grayscale;
 }
 
-#set-icon {
-    width: 6%;
-    overflow: hidden;
-    margin-right: 10px;
-    align-self: center;
-} 
 .frame-type-line {
     margin-top: 0;
-} 
-
-.frame-margin {
-    margin: 0 3.1%;
 }
 
 .frame-text-box-inner {

@@ -9,7 +9,6 @@ import whitePaintBrush from './card-backgrounds/paintbrush-white.png'
 import { toBlob } from 'html-to-image';
 import { UploadImageToAzure } from "./CallAPI";
 import { msalInstance } from "./Index";
-import { SharingButton } from "./SharingButton";
 
 export interface BasicCard {
   name: string,
@@ -576,9 +575,8 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
   }
 
   updateEditMode() {
-    if (!this.props.allowEdits) {
+    if (!this.props.allowEdits)
       return
-    }
 
     var updatedCard = MagicCard.clone(this.state.card, true)
     updatedCard.name = this.state.nameUpdate
@@ -688,18 +686,10 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
         ),
         onClick: this.updateEditMode.bind(this)
       },
-      /*
-      {
-        key: '4',
-        label: (
-          <SharingButton card={card}></SharingButton>
-        ),
-      },
-      */
       ];
 
     const copyLinkMenuItem = { 
-      key: '5',
+      key: '4',
       label: (
         <div>
           <CopyOutlined style={optionsMenuIconStyle} />
