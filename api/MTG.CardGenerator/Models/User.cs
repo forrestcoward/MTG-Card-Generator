@@ -8,6 +8,7 @@ namespace MTG.CardGenerator.Models
     /// </summary>
     public class User
     {
+        [JsonProperty("id")]
         public string Id => UserSubject;
         [JsonProperty("userName")]
         public string UserName { get; set; }
