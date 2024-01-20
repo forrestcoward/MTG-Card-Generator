@@ -3,21 +3,27 @@
 ## [https://www.mtgcardgenerator.com](https://www.mtgcardgenerator.com/)
 The Magic: The Gathering Card Generator is a project that uses AI (particuarlly, OpenAI's offerings) to generate realistic Magic: The Gathering cards. Generated cards are rendered beautifully using CSS.
 
-Users can enter a prompt describing the type of Magic card they would like to generate, and the response will be a be a rendered image of a realistic card that matches the prompt. Here is an example card generation:
+Users can enter a prompt describing the type of Magic card they would like to generate, and the response will be a be a rendered image of a realistic card that matches the prompt. Here is an [example card generation](https://www.mtgcardgenerator.com/Card?id=732874ce-468e-4823-8605-2cceea9626c5):
 
 <p align="center">
-  <img src="cards\gpt-generator.png" width="480px" height="700px">
+  <img src="cards\Cutlery-Cohort.png">
 </p> 
 
 # Features
 
 * User's supply an open ended prompt describing the Magic card they'd like to see. User's may choose the AI model (GPT 3.5, GPT 4 etc.) and optionally choose to have the AI's reasoning included, too.
 
-* Generated cards are rendered beautifully using CSS and designed to look like real Magic cards. Realistic card background and symbols are used, and card text is scaled appropriately to fill the content.
+* Generated cards are rendered beautifully using CSS and look like real Magic cards. Realistic card background and symbols are used, and card text is scaled appropriately to fill the content.
 
 * High quality images may optionally be generated using dall-e-3 iterative prompt approach.
 
 * User's may optionally login (via an SSO provider) to have their card generation history stored for viewing later.
+
+* A rating page is available to score and view top cards.
+
+# GPT Integration
+
+The MTG Card Generator is now available an [OpenAI GPT](https://openai.com/blog/introducing-gpts). Check it out [here](https://chat.openai.com/g/g-gyWs4hFFS-mtg-card-generator).
 
 # Development Guide
 
