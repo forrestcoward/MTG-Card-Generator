@@ -25,6 +25,49 @@ Users can enter a prompt describing the type of Magic card they would like to ge
 
 The MTG Card Generator is now available an [OpenAI GPT](https://openai.com/blog/introducing-gpts). Check it out [here](https://chat.openai.com/g/g-gyWs4hFFS-mtg-card-generator).
 
+# API
+
+You can use the public API to generate cards, but you will need to supply your own OpenAI API key. 
+
+The API is located at https://mtgcardgenerator.azurewebsites.net/api/GenerateMagicCard.
+
+### Parameters
+
+| Name | Type | Description |
+|---|---|---|
+| prompt | string | The prompt to use to generate the card. |
+| model | string | The OpenAI model to use. Use `gpt-3.5`, `gpt-4` or `gpt-4-1106-preview`. |
+| includeExplanation | bool | Whether to include the AI's reasoning in the card text. If `true`, `explanation` and `funnyExplanation` will be included in the response. |
+| highQualityImage | bool | Whether to generate a high quality image using dall-e-3. |
+| openAIApiKey | string | Your OpenAI API key. |
+
+### Sample Response
+
+```
+{
+   "cards":[
+      {
+         "id": "969f10c2-66f4-40e4-be96-8dd0341fd0c4",
+         "name": "Djurge, the Timebender",
+         "manaCost": "{3}{U}{U}{U}",
+         "type": "Creature",
+         "typeLine": "Legendary Creature - Human Wizard",
+         "oracleText": "When Djurge, the Timebender enters the battlefield, you may exile target nonland permanent. Its controller puts it into their library second from the top.\nAt the beginning of your upkeep, you may exile the top card of your library. If you do, you may cast it without paying its mana cost.",
+         "flavorText": "Time is but a mere thread for Djurge, the weaver of history.",
+         "colorIdentity": "Blue",
+         "rarity": "Mythic Rare",
+         "pt": "4/4",
+         "explanation": null,
+         "funnyExplanation": null,
+         "userPrompt": "A card from the Dominaria plane.",
+         "imageUrl": "<link>",
+         "temporaryImageUrl": "<link>",
+         "url":"https://www.mtgcardgenerator.com/Card?id=969f10c2-66f4-40e4-be96-8dd0341fd0c4"
+      }
+   ]
+}
+``````
+
 # Development Guide
 
 This section gives an overview for how to contribute to this project.
