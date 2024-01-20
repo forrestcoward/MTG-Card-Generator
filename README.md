@@ -6,7 +6,7 @@ The Magic: The Gathering Card Generator is a project that uses AI (particuarlly,
 Users can enter a prompt describing the type of Magic card they would like to generate, and the response will be a be a rendered image of a realistic card that matches the prompt. Here is an [example card generation](https://www.mtgcardgenerator.com/Card?id=732874ce-468e-4823-8605-2cceea9626c5):
 
 <p align="center">
-  <img src="cards\Cutlery-Cohort.png">
+  <img src="cards\Cutlery-Cohort.png" width=420>
 </p> 
 
 # Features
