@@ -46,7 +46,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
 
         const float Temperature = 1;
 
-        public static int AllowedFreeGenerationsPerDay = 25;
+        public static int AllowedFreeGenerationsPerDay = 20;
 
         const int MaxPromptCharacters = 500;
 
