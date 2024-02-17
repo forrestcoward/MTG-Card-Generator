@@ -431,6 +431,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     { "imageModel", imageModel },
                     { "includeExplanation", includeExplanation.ToString() },
                     { "highQualityImage", highQualityImage.ToString() },
+                    { "extraCreative", extraCreative.ToString() },
                     { "model", actualGPTModelUsed },
                     { "numberOfChatCompletionAttempts", attemptsToGenerateCard },
                     { "systemPrompt", systemPrompt },
