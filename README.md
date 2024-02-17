@@ -70,7 +70,7 @@ The API is located at https://mtgcardgenerator.azurewebsites.net/api/GenerateMag
 
 # Development Guide
 
-This section gives an overview for how to contribute to this project.
+This section gives an overview for how to contribute to this project. 
 
 ## Components
 
