@@ -81,7 +81,7 @@ There are two components to this project:
     * If the user is logged on, a history is stored for the user so generated cards can be viewed later.
 2. A React, Typescript single-page application (SPA). The front end allows the user to login, enter a prompt and then renders the generated card on the page once the API response is received.
 
-## Build & Run the Backend
+## Build & Run the Backend 
 
 1. Open `api\MTG.CardGenerator.sln` in Visual Studio 2022 and build the solution. 
 
