@@ -134,12 +134,12 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             {
                 if (model.Equals("gpt-4", StringComparison.OrdinalIgnoreCase))
                 {
-                    gptModel = OpenAI.ObjectModels.Models.Gpt_4;
+                    gptModel = OpenAI.ObjectModels.Models.Gpt_4_turbo_preview;
                     chatResponseFormat = ChatCompletionCreateRequest.ResponseFormats.Text;
                 }
-                else if (model.Equals("gpt-4-1106-preview", StringComparison.OrdinalIgnoreCase))
+                else if (model.Equals("gpt-4-turbo-preview", StringComparison.OrdinalIgnoreCase))
                 {
-                    gptModel = OpenAI.ObjectModels.Models.Gpt_4_1106_preview;
+                    gptModel = OpenAI.ObjectModels.Models.Gpt_4_turbo_preview;
                     chatResponseFormat = ChatCompletionCreateRequest.ResponseFormats.Json;
                 }
                 else if (model.Equals("gpt-3.5", StringComparison.OrdinalIgnoreCase))

@@ -34,10 +34,14 @@ namespace MTG.CardGenerator
             // GPT 3.5
             new ModelCost() { Model = "gpt-3.5-turbo-0301", InputPrice = .0015 / 1000, OutputPrice = .002 / 1000 },
             new ModelCost() { Model = "gpt-3.5-turbo-0613", InputPrice = .0015 / 1000, OutputPrice = .002 / 1000 },
+            new ModelCost() { Model = "gpt-3.5-turbo-0125", InputPrice = .0005 / 1000, OutputPrice = .0015 / 1000 },
+
             // GPT 4
             new ModelCost() { Model = "gpt-4-0314", InputPrice = .03 / 1000, OutputPrice = .06 / 1000 },
             new ModelCost() { Model = "gpt-4-0613", InputPrice = .03 / 1000, OutputPrice = .06 / 1000 },
             new ModelCost() { Model = "gpt-4-1106-preview", InputPrice = .01 / 1000, OutputPrice = .03 / 1000 },
+            new ModelCost() { Model = "gpt-4-0125-preview", InputPrice = .01 / 1000, OutputPrice = .03 / 1000 },
+            new ModelCost() { Model = "gpt-4-turbo-preview", InputPrice = .01 / 1000, OutputPrice = .03 / 1000 },
         };
 
         public static double GetCost(ChatCompletionCreateResponse result)
