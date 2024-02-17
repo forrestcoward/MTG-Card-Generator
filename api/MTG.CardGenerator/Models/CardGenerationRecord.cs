@@ -39,6 +39,8 @@ namespace MTG.CardGenerator.Models
         public string OpenAIResponse { get; set; }
         [JsonProperty("includeExplanation")]
         public bool IncludeExplanation { get; set; }
+        [JsonProperty("extraCreative")]
+        public bool ExtraCreative { get; set; }
         [JsonProperty("userSuppliedKey")]
         public bool UserSupplied { get; set; }
         [JsonProperty("estimatedCost")]

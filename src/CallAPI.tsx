@@ -141,7 +141,7 @@ export async function GetUserMagicCards(msal: PublicClientApplication): Promise<
   return GetCardsAPICall('GetMagicCards', msal);
 }
 
-export async function GenerateMagicCardRequest(userPrompt:string, model:string, includeExplanation:boolean, highQualityImages:boolean, openAIApiKey:string, msal:PublicClientApplication): Promise<MagicCard[]> {
+export async function GenerateMagicCardRequest(userPrompt:string, model:string, includeExplanation:boolean, highQualityImages:boolean, extraCreative:boolean, openAIApiKey:string, msal:PublicClientApplication): Promise<MagicCard[]> {
   let url = getApiUrl('GenerateMagicCard');
   var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
 
@@ -150,6 +150,7 @@ export async function GenerateMagicCardRequest(userPrompt:string, model:string, 
     model: model,
     includeExplanation: includeExplanation.toString(),
     highQualityImage: highQualityImages.toString(),
+    extraCreative: extraCreative.toString()
   };
 
   if (openAIApiKey) {

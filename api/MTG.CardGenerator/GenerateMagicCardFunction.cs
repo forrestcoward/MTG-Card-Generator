@@ -34,6 +34,16 @@ namespace MTG.CardGenerator
             public IEnumerable<MagicCardResponse> Cards { get; set; }
         }
 
+        const string GenerateCreativeCardSystemPrompt = $@"
+You are an assistant who works as a Magic: The Gathering card designer. The cards you generate should be as creative as possible and utilize Magic: The Gathering card mechanics in unique and interesting ways, ideally mixing multiple mechanics and keywords together in novel ways. The cards you are known to generate elicit a 'wow, cool, that's a great idea!' response from players.
+You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'oracleText', 'flavorText', 'pt', and 'rarity'.
+Do not explain the cards or explain your reasoning. Only return the JSON of cards named 'cards'.";
+
+        const string GenerateCreativeCardSystemPromptWithExplanation = $@"
+You are an assistant who works as a Magic: The Gathering card designer. The cards you generate should be as creative as possible and utilize Magic: The Gathering card mechanics in unique and interesting ways, ideally mixing multiple mechanics and keywords together in novel ways. The cards you are known to generate elicit a 'wow, cool, that's a great idea!' response from players.
+You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'oracleText', 'flavorText', 'pt', 'rarity', 'explanation', and 'funnyExplanation' properties. The 'explanation' property should explain why the card was created the way it was. The 'funnyExplanation' property should be a hilarious explanation of why the card was created the way it was.
+Do not explain the cards or explain your reasoning. Only return the JSON of cards named 'cards'.";
+
         const string GenerateCardSystemPrompt = $@"
 You are an assistant who works as a Magic: The Gathering card designer. You like complex cards with interesting mechanics. The cards you generate should obey the Magic 'color pie' design rules and obey the the Magic: The Gathering comprehensive rules.
 You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'oracleText', 'flavorText', 'pt', and 'rarity'.
@@ -44,7 +54,8 @@ You are an assistant who works as a Magic: The Gathering card designer. You like
 You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'oracleText', 'flavorText', 'pt', 'rarity', 'explanation', and 'funnyExplanation' properties. The 'explanation' property should explain why the card was created the way it was. The 'funnyExplanation' property should be a hilarious explanation of why the card was created the way it was.
 Do not explain the cards or explain your reasoning. Only return the JSON of cards named 'cards'.";
 
-        const float Temperature = 1;
+        const float DefaultTemperature = 1;
+        const float CreativeTemperature = 1.3F;
 
         public static int AllowedFreeGenerationsPerDay = 20;
 
@@ -59,12 +70,15 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             var model = (string)req.Query["model"];
             var includeExplanation = bool.TryParse(req.Query["includeExplanation"], out bool result) && result;
             var highQualityImage = bool.TryParse(req.Query["highQualityImage"], out bool hd) && hd;
+            var extraCreative = bool.TryParse(req.Query["extraCreative"], out bool ec) && ec;
             var userSuppliedApiKey = (string)req.Query["openAIApiKey"];
             var cosmosDatabaseId = Extensions.GetSettingOrThrow(Constants.CosmosDBDatabaseId);
             var userSuppliedKey = true;
             var tokensUsed = 0;
             var cost = new Cost();
             var openAIResponse = "";
+
+            var temperature = extraCreative ? CreativeTemperature : DefaultTemperature;
 
             var attemptsToGenerateCard = 0;
             var actualGPTModelUsed = "";
@@ -125,7 +139,29 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 rawUserPrompt = "that is from the Dominaria plane.";
             }
 
-            var systemPrompt = includeExplanation ? GenerateCardSystemPromptWithExplanation : GenerateCardSystemPrompt;
+            var systemPrompt = string.Empty;
+            if (extraCreative && includeExplanation)
+            {
+                systemPrompt = GenerateCreativeCardSystemPromptWithExplanation;
+            }
+            else if (extraCreative && !includeExplanation)
+            {
+                systemPrompt = GenerateCreativeCardSystemPrompt;
+            }
+            else if (!extraCreative && includeExplanation)
+            {
+                systemPrompt = GenerateCardSystemPromptWithExplanation;
+            }
+            else
+            {
+                // Not creative, no explanation.
+                systemPrompt = GenerateCardSystemPrompt;
+            }
+
+            log.LogInformation($"highQualityImage: {highQualityImage}");
+            log.LogInformation($"includeExplanation: {includeExplanation}");
+            log.LogInformation($"extraCreative: {extraCreative}");
+ 
             var userPromptToSubmit = $"Please generate me one 'Magic: The Gathering card' that has the following description: {rawUserPrompt}";
 
             var gptModel = OpenAI.ObjectModels.Models.Gpt_3_5_Turbo;
@@ -172,7 +208,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                             ChatMessage.FromSystem(systemPrompt),
                         },
                         Model = gptModel,
-                        Temperature = Temperature,
+                        Temperature = temperature,
                         ChatResponseFormat = chatResponseFormat,
                     });
 
@@ -194,10 +230,11 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                             { "attemptNumber", attemptsToGenerateCard },
                             { "estimatedCost", Pricing.GetCost(response) },
                             { "includeExplanation", includeExplanation.ToString() },
+                            { "extraCreative", extraCreative },
                             { "model", actualGPTModelUsed },
                             { "response", response },
                             { "systemPrompt", systemPrompt },
-                            { "temperature", Temperature },
+                            { "temperature", temperature },
                             { "tokensUsed", response.Usage.TotalTokens },
                             { "userSubject", userSubject },
                             { "userPrompt", userPromptToSubmit },
@@ -325,7 +362,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                                 UserPrompt = userPromptToSubmit,
                                 SystemPrompt = systemPrompt,
                                 ImagePrompt = imageOptions.Prompt,
-                                Temperature = Temperature,
+                                Temperature = temperature,
                                 TokensUsed = tokensUsed,
                                 Model = actualGPTModelUsed,
                                 ImageSize = imageOptions.Size,
@@ -333,6 +370,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                                 ImageModel = imageOptions.Model,
                                 OpenAIResponse = openAIResponse,
                                 IncludeExplanation = includeExplanation,
+                                ExtraCreative = extraCreative,
                                 UserSupplied = userSuppliedKey,
                                 EstimatedCost = cost.TotalCost,
                                 Timestamp = DateTime.Now.ToUniversalTime(),
@@ -396,7 +434,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     { "model", actualGPTModelUsed },
                     { "numberOfChatCompletionAttempts", attemptsToGenerateCard },
                     { "systemPrompt", systemPrompt },
-                    { "temperature", Temperature },
+                    { "temperature", temperature },
                     { "userSubject", userSubject },
                     { "userPrompt", userPromptToSubmit },
                 });
