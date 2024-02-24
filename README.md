@@ -38,6 +38,7 @@ The API is located at https://mtgcardgenerator.azurewebsites.net/api/GenerateMag
 | prompt | string | The prompt to use to generate the card. |
 | model | string | The OpenAI model to use. Use `gpt-3.5`, `gpt-4` or `gpt-4-1106-preview`. |
 | includeExplanation | bool | Whether to include the AI's reasoning in the card text. If `true`, `explanation` and `funnyExplanation` will be included in the response. |
+| extraCreative | bool | If `true`, uses a different prompt and higher temperature to generate more creative cards with more interesting usage of keywords and mechanics. |
 | highQualityImage | bool | Whether to generate a high quality image using dall-e-3. |
 | openAIApiKey | string | Your OpenAI API key. |
 
