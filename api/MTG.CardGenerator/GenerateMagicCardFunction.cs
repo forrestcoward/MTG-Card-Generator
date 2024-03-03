@@ -72,6 +72,14 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             var highQualityImage = bool.TryParse(req.Query["highQualityImage"], out bool hd) && hd;
             var extraCreative = bool.TryParse(req.Query["extraCreative"], out bool ec) && ec;
             var userSuppliedApiKey = (string)req.Query["openAIApiKey"];
+            var generateImage = !bool.TryParse(req.Query["generateImage"], out bool gi) || gi;
+
+            var numCards = 1;
+            if (int.TryParse(req.Query["numCards"], out int parsedNumCards))
+            {
+                numCards = Math.Clamp(parsedNumCards, 1, 3);
+            }
+
             var cosmosDatabaseId = Extensions.GetSettingOrThrow(Constants.CosmosDBDatabaseId);
             var userSuppliedKey = true;
             var tokensUsed = 0;
@@ -162,7 +170,11 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             log.LogInformation($"includeExplanation: {includeExplanation}");
             log.LogInformation($"extraCreative: {extraCreative}");
  
-            var userPromptToSubmit = $"Please generate me one 'Magic: The Gathering card' that has the following description: {rawUserPrompt}";
+            var userPromptToSubmit = $"Please generate me one Magic: The Gathering card that has the following description: {rawUserPrompt}";
+            if (numCards > 1)
+            {
+                userPromptToSubmit = $"Please generate me {numCards} different Magic: The Gathering cards based on the following description: {rawUserPrompt}";
+            }
 
             var gptModel = OpenAI.ObjectModels.Models.Gpt_3_5_Turbo;
             var chatResponseFormat = ChatCompletionCreateRequest.ResponseFormats.Text;
@@ -301,89 +313,90 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 }
 
                 // Parse the cards. If multiple were generated, only process and image for and return one the first one.
-                var cards = openAICards.Select(x => MagicCardParser.Parse(x).Card).ToArray().Take(1).ToArray();
+                var cards = openAICards.Select(x => MagicCardParser.Parse(x).Card).ToArray().Take(numCards).ToArray();
 
                 var imageModel = highQualityImage ? Constants.Dalle3ModelName : Constants.Dalle2ModelName;
-
                 ImageGenerator.ImageGenerationOptions imageOptions = null;
-
                 var recordId = Guid.NewGuid().ToString();
 
-                foreach (var card in cards)
+                if (generateImage)
                 {
-                    var stopwatch = Stopwatch.StartNew();
-                    imageOptions = ImageGenerator.GetImageOptionsForCard(card, imageModel);
-
-                    if (highQualityImage)
+                    foreach (var card in cards)
                     {
-                        var detailedPrompt = await ImageGenerator.GenerateDetailedImagePrompt(imageOptions, apiKeyToUse, log, cost);
-                        imageOptions.Prompt = detailedPrompt;
-                    }
+                        var stopwatch = Stopwatch.StartNew();
+                        imageOptions = ImageGenerator.GetImageOptionsForCard(card, imageModel);
 
-                    var url = await ImageGenerator.GenerateImage(imageOptions.Prompt, imageOptions.Model, imageOptions.Size, apiKeyToUse, log, cost);
-                    card.TemporaryImageUrl = url;
-                    stopwatch.Stop();
-
-                    log.LogMetric("CreateImageAsync_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
-                        properties: new Dictionary<string, object>()
+                        if (highQualityImage)
                         {
+                            var detailedPrompt = await ImageGenerator.GenerateDetailedImagePrompt(imageOptions, apiKeyToUse, log, cost);
+                            imageOptions.Prompt = detailedPrompt;
+                        }
+
+                        var url = await ImageGenerator.GenerateImage(imageOptions.Prompt, imageOptions.Model, imageOptions.Size, apiKeyToUse, log, cost);
+                        card.TemporaryImageUrl = url;
+                        stopwatch.Stop();
+
+                        log.LogMetric("CreateImageAsync_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
+                            properties: new Dictionary<string, object>()
+                            {
                             { "imagePrompt", imageOptions.Prompt },
                             { "imageModel", imageOptions.Model },
                             { "imageSize", imageOptions.Size },
                             { "userSubject", userSubject },
-                        });
+                            });
 
-                    try
-                    {
-                        var blobStorageName = Extensions.GetSettingOrThrow(Constants.BlobStorageName);
-                        var blobStorageEndpoint = Extensions.GetSettingOrThrow(Constants.BlobStorageEndpoint);
-                        var blobStorageContainerName = Extensions.GetSettingOrThrow(Constants.BlobStorageContainerName);
-                        var blobStorageAccessKey = Extensions.GetSettingOrThrow(Constants.BlobStorageAccessKey);
-
-                        var blobUrl = await Extensions.StoreImageInBlobAsync(card.TemporaryImageUrl, blobStorageName, blobStorageEndpoint, blobStorageContainerName, blobStorageAccessKey, log: log);
-                        card.ImageUrl = blobUrl;
-
-                        // Insert this record into the database.
-                        var cardGenerationRecord = new CardGenerationRecord()
+                        try
                         {
-                            Id = recordId,
-                            GenerationMetadata = new GenerationMetaData()
-                            {
-                                UserPrompt = userPromptToSubmit,
-                                SystemPrompt = systemPrompt,
-                                ImagePrompt = imageOptions.Prompt,
-                                Temperature = temperature,
-                                TokensUsed = tokensUsed,
-                                Model = actualGPTModelUsed,
-                                ImageSize = imageOptions.Size,
-                                ImageStyle = imageOptions.Style,
-                                ImageModel = imageOptions.Model,
-                                OpenAIResponse = openAIResponse,
-                                IncludeExplanation = includeExplanation,
-                                ExtraCreative = extraCreative,
-                                UserSupplied = userSuppliedKey,
-                                EstimatedCost = cost.TotalCost,
-                                Timestamp = DateTime.Now.ToUniversalTime(),
-                                Host = req?.Host.Value,
-                                Origin = req?.Headers["Origin"].ToString()
-                            },
-                            User = new CardUserMetadata()
-                            {
-                                UserName = userName,
-                                UserSubject = userSubject,
-                            },
-                            MagicCards = new[] { card }
-                        };
+                            var blobStorageName = Extensions.GetSettingOrThrow(Constants.BlobStorageName);
+                            var blobStorageEndpoint = Extensions.GetSettingOrThrow(Constants.BlobStorageEndpoint);
+                            var blobStorageContainerName = Extensions.GetSettingOrThrow(Constants.BlobStorageContainerName);
+                            var blobStorageAccessKey = Extensions.GetSettingOrThrow(Constants.BlobStorageAccessKey);
 
-                        var cardsCosmosClient = new BaseCosmosClient(cosmosDatabaseId, Constants.CosmosDBCardsCollectionName, logger: log);
-                        await cardsCosmosClient.AddItemToContainerAsync(cardGenerationRecord);
-                        log.LogInformation($"Wrote card generation record to database '{cosmosDatabaseId}'.");
+                            var blobUrl = await Extensions.StoreImageInBlobAsync(card.TemporaryImageUrl, blobStorageName, blobStorageEndpoint, blobStorageContainerName, blobStorageAccessKey, log: log);
+                            card.ImageUrl = blobUrl;
 
-                    }
-                    catch (Exception ex)
-                    {
-                        // Non-fatal to overall operation.
-                        log.LogError($"Failed to store generated card: {ex}");
+                            // Insert this record into the database.
+                            var cardGenerationRecord = new CardGenerationRecord()
+                            {
+                                Id = recordId,
+                                GenerationMetadata = new GenerationMetaData()
+                                {
+                                    UserPrompt = userPromptToSubmit,
+                                    SystemPrompt = systemPrompt,
+                                    ImagePrompt = imageOptions.Prompt,
+                                    Temperature = temperature,
+                                    TokensUsed = tokensUsed,
+                                    Model = actualGPTModelUsed,
+                                    ImageSize = imageOptions.Size,
+                                    ImageStyle = imageOptions.Style,
+                                    ImageModel = imageOptions.Model,
+                                    OpenAIResponse = openAIResponse,
+                                    IncludeExplanation = includeExplanation,
+                                    ExtraCreative = extraCreative,
+                                    UserSupplied = userSuppliedKey,
+                                    EstimatedCost = cost.TotalCost,
+                                    Timestamp = DateTime.Now.ToUniversalTime(),
+                                    Host = req?.Host.Value,
+                                    Origin = req?.Headers["Origin"].ToString()
+                                },
+                                User = new CardUserMetadata()
+                                {
+                                    UserName = userName,
+                                    UserSubject = userSubject,
+                                },
+                                MagicCards = new[] { card }
+                            };
+
+                            var cardsCosmosClient = new BaseCosmosClient(cosmosDatabaseId, Constants.CosmosDBCardsCollectionName, logger: log);
+                            await cardsCosmosClient.AddItemToContainerAsync(cardGenerationRecord);
+                            log.LogInformation($"Wrote card generation record to database '{cosmosDatabaseId}'.");
+
+                        }
+                        catch (Exception ex)
+                        {
+                            // Non-fatal to overall operation.
+                            log.LogError($"Failed to store generated card: {ex}");
+                        }
                     }
                 }
 
@@ -417,8 +430,9 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 log?.LogMetric("GenerateMagicCard_EstimatedCost", cost.TotalCost, new Dictionary<string, object>()
                 {
                     { "estimatedCost", cost.TotalCost },
-                    { "imageSize", imageOptions.Size },
+                    { "imageSize", imageOptions?.Size },
                     { "imageModel", imageModel },
+                    { "generateImage", generateImage },
                     { "includeExplanation", includeExplanation.ToString() },
                     { "highQualityImage", highQualityImage.ToString() },
                     { "extraCreative", extraCreative.ToString() },
