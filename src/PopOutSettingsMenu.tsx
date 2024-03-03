@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import styled from '@emotion/styled';
 import { CSSTransition } from 'react-transition-group';
 import { SettingGroup } from './MTGCardGenerator';
+import { Radio, RadioChangeEvent, Switch } from 'antd';
+import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { UserContext } from './UserContext';
 
 const MenuContainer = styled.div`
   position: fixed;
@@ -26,28 +29,35 @@ const Overlay = styled.div`
   z-index: 1000;
 `;
 
+const SettingDescription = styled.p`
+  margin-top: 10px;
+  margin-left: 10px;
+  margin-right: 10px;
+`;
+
 interface PopOutSettingsMenuProps {
   isOpen: boolean;
   onClose: () => void;
   settings: SettingGroup[];
   onModelSettingsChange: (setting: string, newValue: boolean) => void;
-  userOpenAIKey: string;
-  onOpenAIKeyChange: (apiKey: string) => void;
 }
 
-const PopOutSettingsMenu: React.FC<PopOutSettingsMenuProps> = ({ 
-  isOpen,
-  onClose,
-  settings,
-  onOpenAIKeyChange,
-  userOpenAIKey,
-  onModelSettingsChange,
-}) => {
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>, id: string) => {
+const PopOutSettingsMenu: React.FC<PopOutSettingsMenuProps> = ({ isOpen, onClose, settings, onModelSettingsChange}) => {
+  
+  const userContext = useContext(UserContext);
+  if (!userContext) {
+    throw new Error('UserContext not found');
+  }
+  const { openAIAPIKey, setOpenAIAPIKey } = userContext;
+
+  const handleRadioChanged = (event: RadioChangeEvent, id: string) => {
     onModelSettingsChange(id, event.target.checked);
   };
+  const handleSwitchChanged = (event: boolean, id: string) => {
+    onModelSettingsChange(id, event);
+  };
   const handleOpenAIKeyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onOpenAIKeyChange(event.target.value);
+    setOpenAIAPIKey(event.target.value);
   }
   return (
     <>
@@ -59,51 +69,44 @@ const PopOutSettingsMenu: React.FC<PopOutSettingsMenuProps> = ({
             {settings.map((settingGroup) => (
               <React.Fragment key={`setting-group-${settingGroup.name}`}>
                 <h2>{settingGroup.name}</h2>
-                <div>
-                  {settingGroup.description}
-                </div>
-                <div>
-                  <table>
-                    <tbody>
-                      {settingGroup.settings.map((setting) => (
-                        <React.Fragment key={`setting-${setting.id}`}>
-                          <tr>
-                            <td>
-                              <h3>{setting.name}</h3>
-                            </td>
-                            <td  className="settingSlider">
-                              <label className="switch">
-                                <input
-                                  type="checkbox"
-                                  id={`${setting.name}`}
-                                  checked={setting.value}
-                                  onChange={(event) => handleInputChange(event, setting.name)}
-                                />
-                                <span className="slider round"></span>
-                              </label>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>
-                              <div className="settingsDescription">
-                                {setting.description}
-                              </div>
-                            </td>
-                          </tr>
-                        </React.Fragment>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                { settingGroup.type == "radio" &&
+                <Radio.Group defaultValue={settingGroup.settings.find(setting => setting.value)?.name} buttonStyle="solid">
+                  {settingGroup.settings.map((setting) => (
+                    <Radio.Button key={`setting-${setting.id}`} value={setting.name} onChange={(event) => handleRadioChanged(event, setting.name)}>
+                      {setting.name}
+                    </Radio.Button>
+                  ))}
+                </Radio.Group>
+                }
+                { /* Show the setting description if chosen for radio options. */ }
+                {settingGroup.type == "radio" && settingGroup.settings.map((setting) => (
+                  <React.Fragment key={`setting-radio-description-${setting.id}`}>
+                    {setting.value && <SettingDescription>{setting.description}</SettingDescription>}
+                  </React.Fragment>
+                ))}
+                { settingGroup.type == "switch" &&
+                  <div>
+                    { settingGroup.settings.map((setting) => (
+                      <div key={`setting-${setting.id}`} style={{marginBottom:20}}>
+                        <Switch checked={setting.value} onChange={(event) => { handleSwitchChanged(event, setting.name) }} style={{marginLeft:5, marginRight:15, transform: "scale(1.2)"}} 
+                        checkedChildren={<CheckOutlined />} unCheckedChildren={<CloseOutlined />} size='default' />
+                        <b style={{fontSize:"large"}}>{setting.name}</b>
+                        <SettingDescription>
+                          {setting.description}
+                        </SettingDescription>
+                      </div>
+                    ))}
+                  </div>
+                }
               </React.Fragment>
             ))}
             <h2>OpenAI API Key</h2>
             <div> 
               Your OpenAI API key. Create or view your keys at <a href="https://beta.openai.com/account/api-keys">OpenAI API Keys</a>. 
-              <b>This website will never store your key; it is only sent to OpenAI to generate card text and images.</b>
+              <b>This website will never store your key. It is only sent to OpenAI to generate card text and images.</b>
             </div>
             <label>
-              <input type="password" className="userOpenAIKeyInput" onChange={(event) => handleOpenAIKeyChange(event)} value={userOpenAIKey} />
+            <input type="password" className="userOpenAIKeyInput" onChange={handleOpenAIKeyChange} value={openAIAPIKey} />
             </label>
           </div>
         </MenuContainer>

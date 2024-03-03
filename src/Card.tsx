@@ -1,14 +1,19 @@
 import React from "react";
+import { UserContext, UserContextType } from './UserContext';
 import { Image, Dropdown, Tooltip, Button } from 'antd';
-import { CaretDownFilled, CloudDownloadOutlined, CopyOutlined, EditOutlined, InfoCircleOutlined, QuestionCircleOutlined, SaveFilled, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons';
+import { BulbOutlined, CaretDownFilled, CaretRightOutlined, CloseOutlined, CloudDownloadOutlined, CopyOutlined, EditOutlined, 
+  FileImageOutlined, InfoCircleOutlined, QuestionCircleOutlined, RightCircleOutlined, SaveFilled, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons';
 import { adjustTextHeightBasedOnChildrenClientOffsetHeight, adjustTextHeightBasedOnClientHeight, copyTextToClipboard, getBaseUrl, getChildrenClientOffsetHeight, getRandomInt, isMobileDevice } from "./Utility";
 import { saveAs } from 'file-saver';
 
 // @ts-ignore
 import whitePaintBrush from './card-backgrounds/paintbrush-white.png'
 import { toBlob } from 'html-to-image';
-import { UploadImageToAzure } from "./CallAPI";
+import { GenerateImageResponse, GenerateNewCardImage, GetImagePrompt, UploadImageToAzure } from "./CallAPI";
 import { msalInstance } from "./Index";
+
+// @ts-ignore
+import loadingIcon from './card-backgrounds/staff.png'
 
 export interface BasicCard {
   name: string,
@@ -29,6 +34,7 @@ export interface BasicCard {
   explanation: string,
   funnyExplanation: string,
   id: string // Database id for lookup.
+  alternativeImageUrls: string[]
 }
 
 enum ColorIdentity {
@@ -86,6 +92,7 @@ const manaTokenToCssCharacter : Record<string, string> = {
   "{T}": "tap",
   "{X}": "x",
 }
+
 export interface CardRating {
   numberOfVotes: number,
   totalScore: number,
@@ -129,10 +136,11 @@ export class MagicCard {
   temporaryImageUrl: string
   setNumberDisplay: string
   id: string // DOM id.
-  internalId: string // Database id for lookup.
+  databaseId: string // Database id for lookup.
   userPrompt: string
   explanation: string
   funnyExplanation: string
+  alternativeImageUrls: string[]
 
   constructor(card: BasicCard) {
     this.name = card.name
@@ -154,7 +162,8 @@ export class MagicCard {
     this.userPrompt = card.userPrompt
     this.explanation = card.explanation
     this.funnyExplanation = card.funnyExplanation
-    this.internalId = card.id
+    this.databaseId = card.id
+    this.alternativeImageUrls = card.alternativeImageUrls
   }
 
   static clone(card: MagicCard, sameId: boolean): MagicCard {
@@ -166,6 +175,7 @@ export class MagicCard {
       newCard.id = getRandomInt(0, 1000000000).toString()
     }
 
+    newCard.databaseId = card.databaseId
     return newCard
   }
 
@@ -294,7 +304,7 @@ export class MagicCard {
   }
 
   getCardUrl() {
-    return getBaseUrl() + "/Card?id=" + this.internalId
+    return getBaseUrl() + "/Card?id=" + this.databaseId
   }
 
   toImage(): Promise<Blob | null> {
@@ -355,9 +365,15 @@ export class MagicCard {
     if (container == null) {
       return
     }
+
     const height = ((width * 3.6) / 2.5);
     container!.style.width  = `${width}px`;
     container!.style.height = `${height}px`;
+
+    const i : HTMLElement | null = document.getElementById(`card-image-flow-${this.id}`)
+    //i!.style.width  = `${width}px`;
+    //i!.style.height = `${height/2}px`;
+
     this.adjustFontSize();
   }
 
@@ -490,10 +506,17 @@ export class MagicCard {
 }
 
 interface CardDisplayProps {
+  // The underlying card.
   card: MagicCard;
+  // The initial card width.
   cardWidth: number;
+  // Display the card menu (resize, download etc.)
   showCardMenu: boolean;
+  // Allow user to regenerate card image with custom prompts.
+  allowImageUpdate: boolean;
+  // Allow the user to click on the card image to show a zoomed preview.
   allowImagePreview: boolean;
+  // Allow the user to update the card text through clicking the holofoil or using the menu.
   allowEdits: boolean;
 }
 
@@ -505,19 +528,39 @@ interface CardDisplayState {
   typeUpdate : string;
   manaCostUpdate: string;
   powerAndToughnessUpdate: string;
-  tryShowTemporaryImage: boolean;
+
+  useTemporaryImage: boolean;
   showCardMenu: boolean;
   showSizeAdjustmentButtons: boolean;
   increaseSizeAllowed: boolean;
   decreaseSizeAllowed: boolean;
   cardWidth: number;
+
+  // Image editor state.
+  showImageEditor: boolean;
+  imageEditorPrompt: string;
+  imageEditorError: string;
+  isImageLoading: boolean;
+  availableImageUrls: GenerateImageResponse[];
 }
 
 export class CardDisplay extends React.Component<CardDisplayProps, CardDisplayState> {
 
   constructor(props: CardDisplayProps) {
     super(props);
+
     const viewportWidth = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
+
+    let availableCardImagesUrls:GenerateImageResponse[] = []
+
+    if (this.props.card.imageUrl || this.props.card.temporaryImageUrl) {
+      availableCardImagesUrls.push({"imageUrl": this.props.card.imageUrl, "temporaryUrl": this.props.card.temporaryImageUrl})
+    }
+
+    this.props.card.alternativeImageUrls?.forEach(url => {
+      availableCardImagesUrls.push({"imageUrl": url, "temporaryUrl": url})
+    })
+
     this.state = {
       card: props.card,
       editMode: false,
@@ -526,12 +569,17 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
       typeUpdate: props.card.typeLine,
       manaCostUpdate: props.card.manaCost,
       powerAndToughnessUpdate: props.card.pt,
-      tryShowTemporaryImage: true,
+      useTemporaryImage: true,
       showCardMenu: props.showCardMenu,
       increaseSizeAllowed: true,
       decreaseSizeAllowed: true,
       cardWidth: props.cardWidth,
       showSizeAdjustmentButtons: !isMobileDevice() || viewportWidth > 900,
+      imageEditorPrompt: "",
+      imageEditorError: "",
+      showImageEditor: false,
+      isImageLoading: false,
+      availableImageUrls: availableCardImagesUrls,
     };
 
     this.handleCardNameUpdate = this.handleCardNameUpdate.bind(this);
@@ -539,6 +587,10 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     this.handleCardTypeUpdate = this.handleCardTypeUpdate.bind(this);
     this.handleCardManaCostUpdate = this.handleCardManaCostUpdate.bind(this);
     this.handleCardPowerAndToughnessUpdate = this.handleCardPowerAndToughnessUpdate.bind(this);
+    this.handleImagePromptUpdate = this.handleImagePromptUpdate.bind(this);
+    this.updateImageUrl = this.updateImageUrl.bind(this);
+    this.getImagePrompt = this.getImagePrompt.bind(this);
+    this.toggleShowImageEditor = this.toggleShowImageEditor.bind(this);
   }
 
   componentDidUpdate(prevProps: Readonly<CardDisplayProps>, prevState: Readonly<CardDisplayState>, snapshot?: any): void {
@@ -552,6 +604,10 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
 
   componentDidMount(): void {
     this.state.card.adjustFontSize()
+  }
+
+  handleImagePromptUpdate(event: React.ChangeEvent<HTMLTextAreaElement>) {
+    this.setState({ imageEditorPrompt: event.target.value });
   }
 
   handleCardNameUpdate(event: React.ChangeEvent<HTMLInputElement>) {
@@ -575,8 +631,9 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
   }
 
   updateEditMode() {
-    if (!this.props.allowEdits)
+    if (!this.props.allowEdits) {
       return
+    }
 
     var updatedCard = MagicCard.clone(this.state.card, true)
     updatedCard.name = this.state.nameUpdate
@@ -587,23 +644,20 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     this.setState({ editMode: !this.state.editMode, card: updatedCard })
   }
 
-  toggleShowTemporaryImage() {
-    this.setState({ tryShowTemporaryImage: !this.state.tryShowTemporaryImage })
-  }
-
   handleCardDownload() {
-    // Bit of a hack but html-to-image cannot render the card if the image url is directly from dalle due to CORS.
-    // Note that the dalle image is short lived and will not last ever, we just display it initially because it is higher resolution.
+    // Bit of a hack, but html-to-image cannot render the card if the image url is directly from Dall-e due to CORS.
+    // We need to serve up the compressed images we stored in our own backend instead.
+    // Note that the Dall-e image URL is short lived and will not last ever, we just display it initially because it is higher resolution.
     // So when the user wants to download, we need to temporarily display our compressed version of the image.
-    this.toggleShowTemporaryImage();
+    this.setState({ useTemporaryImage: false })
     this.state.card.toImage().then(blob => {
       if (blob != null) {
         saveAs(blob, `${this.state.card.name}.png`);
       }
     }).catch(error => {
-      console.error("Error downloading card as image.")
+      console.error("Error downloading card as image: " + error.message)
     }).finally(() => {
-      this.toggleShowTemporaryImage();
+      this.setState({ useTemporaryImage: true })
     })
   }
 
@@ -625,6 +679,50 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     this.updateSizeToggles(newWidth)
   }
 
+  updateImageUrl(imageUrls: GenerateImageResponse) {
+    var updatedCard = MagicCard.clone(this.state.card, true)
+    updatedCard.imageUrl = imageUrls.imageUrl
+    updatedCard.temporaryImageUrl = imageUrls.temporaryUrl
+    this.setState({ card: updatedCard })
+  }
+
+  toggleShowImageEditor() {
+    this.setState({showImageEditor: !this.state.showImageEditor})
+  }
+
+  getImagePrompt() {
+    this.setState({ isImageLoading: true, imageEditorError: "" })
+    GetImagePrompt(this.state.card, msalInstance).then(prompt => {
+      this.setState({ isImageLoading:false, imageEditorError: "", imageEditorPrompt: prompt})
+    }).catch((error: Error) => {
+      let msg = error.message;
+      this.setState({ isImageLoading: false, imageEditorError: msg })
+    });
+  }
+
+  generateNewImage() {
+    this.setState({ isImageLoading: true, imageEditorError: "" })
+    const openAIApiKey = (this.context as UserContextType).openAIAPIKey;
+    GenerateNewCardImage(this.state.imageEditorPrompt, this.state.card.databaseId, openAIApiKey, msalInstance).then(imageUrls => {
+      var updatedCard = MagicCard.clone(this.state.card, true)
+      updatedCard.imageUrl = imageUrls.imageUrl
+      updatedCard.temporaryImageUrl = imageUrls.temporaryUrl
+      this.state.availableImageUrls.push(imageUrls)
+      this.setState({ 
+        card: updatedCard, 
+        isImageLoading:false, 
+        imageEditorError: "", 
+        availableImageUrls: this.state.availableImageUrls })
+    }).catch((error: Error) => {
+      let msg = error.message;
+      if (msg.includes("This request has been blocked by our content filters") ||
+      msg.includes("Your request was rejected as a result of our safety system")) {
+        msg = "Your prompt was deemed inappropriate and blocked by automated safety systems."
+      }
+      this.setState({ isImageLoading: false, imageEditorError: msg })
+    });
+  }
+
   private updateSizeToggles(newWidth: number) {
     if (newWidth <= 330) {
       this.setState({ increaseSizeAllowed: true, decreaseSizeAllowed: false, cardWidth: newWidth })
@@ -637,11 +735,12 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
 
   render() {
     const card = this.state.card;
+    const cardIsTutorialCard = card.databaseId == "-1" // Tutorial card.
 
     const oracleEditTextAreaRows = card.textDisplay.length * 3;
     const cardMenuIconFontSize = "40px";
-    const optionsMenuItemStyle : React.CSSProperties = {marginLeft: "5px"}
-    const optionsMenuIconStyle : React.CSSProperties = {fontSize: "30px"}
+    const optionsMenuItemStyle : React.CSSProperties = {marginLeft:5}
+    const optionsMenuIconStyle : React.CSSProperties = {fontSize:30}
 
     const menuItems = [
       {
@@ -681,11 +780,11 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
         label: (
           <Tooltip title="Modify the card text" placement='left'>
             <EditOutlined style={optionsMenuIconStyle} />
-            <span style={optionsMenuItemStyle}>Edit</span>
+            <span style={optionsMenuItemStyle}>Edit Text</span>
           </Tooltip>
         ),
         onClick: this.updateEditMode.bind(this)
-      },
+      }
       ];
 
     const copyLinkMenuItem = { 
@@ -701,129 +800,248 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
       }
     }
 
-    if (card.internalId) {
+    const updateImageItem = {
+      key: '5',
+      label: (
+        <Tooltip title="Regenerate the card image" placement='left'>
+          <FileImageOutlined style={optionsMenuIconStyle} />
+          <span style={optionsMenuItemStyle}>Image Editor</span>
+        </Tooltip>
+      ),
+      onClick: async () => {
+        this.toggleShowImageEditor()
+      }
+    }
+
+    if (card.databaseId) {
       menuItems.push(copyLinkMenuItem)
     }
 
-    const height = ((this.props.cardWidth * 3.6) / 2.5);
+    if (this.props.allowImageUpdate && !cardIsTutorialCard)
+    {
+      menuItems.push(updateImageItem)
+    }
+
+    const height = ((this.props.cardWidth * 3.6) / 2.5)
+    const imageEditorWidth = isMobileDevice() ? this.props.cardWidth : this.props.cardWidth - 100
+    const haveCardImage = card.imageUrl || card.temporaryImageUrl
 
     let fullCard = (
-      <div>
-        <div id={`card-${card.id}`} className="card-container" style={{width: `${this.props.cardWidth}px`, height: `${height}px`}}>
-          <div id={`card-background-${card.id}`} className={card.cardDivClassName}></div>
-            <div className="card-frame">
-              <div id={`title-container-${card.id}`} className={card.cardFrameHeaderClassName}>
-                <div id={`name-${card.id}`} style={{alignSelf:"center"}} className="name name-type-size">
-                  {!this.state.editMode ?
-                    <div>{card.name}</div> :
-                    <input className="card-edit-name" type="text" value={this.state.nameUpdate} onChange={this.handleCardNameUpdate} />
-                  }
-                </div>
-                {!this.state.editMode ?
-                    <div id={`mana-${card.id}`} className="mana-symbols">
-                      {card.manaCostTokens.map((manaCostToken, i) => (
-                        <i key={card.id + "-manaToken-"+ i} className={MagicCard.getManaClassNameForTitle(manaCostToken) + " manaCost " + `manaCost-${card.id}`} id="mana-icon"></i>
-                      ))}
-                    </div> :
-                    <div className="card-edit-manaCost-container">
-                      <input className="card-edit-manaCost" type="text" value={this.state.manaCostUpdate} onChange={this.handleCardManaCostUpdate} />
-                    </div>
-                }
-              </div>
-              <div className={card.cardFrameArtClassName}>
-              {this.state.tryShowTemporaryImage && card.temporaryImageUrl ?
-                <Image onLoad={() => this.state.card.adjustFontSize()} preview={this.props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.temporaryImageUrl ? card.temporaryImageUrl : card.imageUrl} /> :
-                <Image onLoad={() => this.state.card.adjustFontSize()} preview={this.props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.imageUrl} />
-              }
-              </div>
-              <div id={`type-container-${card.id}`} className={card.cardFrameTypeLineClassName}>
-                 {!this.state.editMode ?
-                    <h1 id={`type-${card.id}`} className="type name-type-size">{card.typeLine}</h1> :
-                    <input className="card-edit-type" type="text" value={this.state.typeUpdate} onChange={this.handleCardTypeUpdate} />
-                  }
-                <div id={`set-${card.id}`} className="mana-symbols">
-                  <i className="ms ms-dfc-ignite" id="mana-icon"></i>
-                </div>
-              </div>
-              <div className={card.cardFrameTextBoxClassName}>
-                <div className={card.cardFrameContentClassName}>
-                  <div className="description ftb-inner-margin">
+      <div style={{display:"flex", flexWrap:"wrap"}}>
+        <div>
+          <div id={`card-${card.id}`} className="card-container" style={{width: `${this.props.cardWidth}px`, height: `${height}px`}}>
+            <div id={`card-background-${card.id}`} className={card.cardDivClassName}></div>
+              <div className="card-frame">
+                <div id={`title-container-${card.id}`} className={card.cardFrameHeaderClassName}>
+                  <div id={`name-${card.id}`} style={{alignSelf:"center"}} className="name name-type-size">
                     {!this.state.editMode ?
-                      <div>
-                        {card.textDisplay.map((line, i) => (
-                          <p key={card.id + "-text-" + i} dangerouslySetInnerHTML={{ __html: line }}></p>
-                        ))}
-                      </div> 
-                      :
-                      <textarea className="card-edit-text" value={this.state.oracleTextUpdate} rows={oracleEditTextAreaRows} onChange={this.handleCardOracleTextUpdate} />
+                      <div>{card.name}</div> :
+                      <input className="card-edit-name" type="text" value={this.state.nameUpdate} onChange={this.handleCardNameUpdate} />
                     }
                   </div>
-                  <p className="description">
-                  </p>
-                  <p className="flavour-text">
-                    {card.flavorText}
-                  </p>
-                  {card.pt &&
-                    <div className="power-and-toughness-frame">
-                      <div id={`pt-${card.id}`} className="power-and-toughness power-and-toughness-size">
-                        {!this.state.editMode ?
-                          <div>{card.pt}</div> :
-                          <input className="card-edit-pt" type="text" value={this.state.powerAndToughnessUpdate} onChange={this.handleCardPowerAndToughnessUpdate} />
-                        }
+                  {!this.state.editMode ?
+                      <div id={`mana-${card.id}`} className="mana-symbols">
+                        {card.manaCostTokens.map((manaCostToken, i) => (
+                          <i key={card.id + "-manaToken-"+ i} className={MagicCard.getManaClassNameForTitle(manaCostToken) + " manaCost " + `manaCost-${card.id}`} id="mana-icon"></i>
+                        ))}
+                      </div> :
+                      <div className="card-edit-manaCost-container">
+                        <input className="card-edit-manaCost" type="text" value={this.state.manaCostUpdate} onChange={this.handleCardManaCostUpdate} />
                       </div>
-                    </div>
                   }
+                </div>
+                <div className={card.cardFrameArtClassName}>
+                  {!haveCardImage ? 
+                    <div style={{width:"100%", height:"100%", backgroundColor:"black", color:"white", position:"relative"}}>
+                      <Button style={{position:"absolute", bottom:0, right:0, margin:5, display: (this.state.showImageEditor || !this.props.allowImageUpdate || !this.state.useTemporaryImage) ? 'none' : 'inline-block' }} 
+                      type="primary" 
+                      icon={<RightCircleOutlined />} 
+                      size="small" 
+                      onClick={() => {this.setState({showImageEditor: true})}}>
+                        Create Image
+                      </Button>
+                    </div>
+                  : (this.state.useTemporaryImage && card.temporaryImageUrl) ?
+                    <Image onLoad={() => this.state.card.adjustFontSize()} preview={this.props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.temporaryImageUrl ? card.temporaryImageUrl : card.imageUrl} /> :
+                    <Image onLoad={() => this.state.card.adjustFontSize()} preview={this.props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.imageUrl} />
+                  }
+                </div>
+                <div id={`type-container-${card.id}`} className={card.cardFrameTypeLineClassName}>
+                  {!this.state.editMode ?
+                      <h1 id={`type-${card.id}`} className="type name-type-size">{card.typeLine}</h1> :
+                      <input className="card-edit-type" type="text" value={this.state.typeUpdate} onChange={this.handleCardTypeUpdate} />
+                    }
+                  <div id={`set-${card.id}`} className="mana-symbols">
+                    <i className="ms ms-dfc-ignite" id="mana-icon"></i>
                   </div>
-              </div>
-              <div id={`frame-bottom-${card.id}`} className="frame-bottom-info inner-margin">
-                <div className="fbi-left">
-                  <p>{card.setNumberDisplay} {card.rarityDisplay}</p>
-                  <p>OpenAI &#x2022; <img className="paintbrush" src={whitePaintBrush} alt="paintbrush icon" />Custom Magic</p>
                 </div>
-                <div className="fbi-center" onClick={(e) => { this.updateEditMode()}}></div>
-                <div className="fbi-right">
-                    &#x99; &amp; &#169; 2023 Chat GPT Turbo
+                <div className={card.cardFrameTextBoxClassName}>
+                  <div className={card.cardFrameContentClassName}>
+                    <div className="description ftb-inner-margin">
+                      {!this.state.editMode ?
+                        <div>
+                          {card.textDisplay.map((line, i) => (
+                            <p key={card.id + "-text-" + i} dangerouslySetInnerHTML={{ __html: line }}></p>
+                          ))}
+                        </div> 
+                        :
+                        <textarea className="card-edit-text" value={this.state.oracleTextUpdate} rows={oracleEditTextAreaRows} onChange={this.handleCardOracleTextUpdate} />
+                      }
+                    </div>
+                    <p className="description">
+                    </p>
+                    <p className="flavour-text">
+                      {card.flavorText}
+                    </p>
+                    {card.pt &&
+                      <div className="power-and-toughness-frame">
+                        <div id={`pt-${card.id}`} className="power-and-toughness power-and-toughness-size">
+                          {!this.state.editMode ?
+                            <div>{card.pt}</div> :
+                            <input className="card-edit-pt" type="text" value={this.state.powerAndToughnessUpdate} onChange={this.handleCardPowerAndToughnessUpdate} />
+                          }
+                        </div>
+                      </div>
+                    }
+                    </div>
+                </div>
+                <div id={`frame-bottom-${card.id}`} className="frame-bottom-info inner-margin">
+                  <div className="fbi-left">
+                    <p>{card.setNumberDisplay} {card.rarityDisplay}</p>
+                    <p>OpenAI &#x2022; <img className="paintbrush" src={whitePaintBrush} alt="paintbrush icon" />Custom Magic</p>
+                  </div>
+                  <div className="fbi-center" onClick={(e) => { this.updateEditMode()}}></div>
+                  <div className="fbi-right">
+                      &#x99; &amp; &#169; 2023 Chat GPT Turbo
+                  </div>
                 </div>
               </div>
-            </div>
+          </div>
+          { this.state.showCardMenu &&
+          <div className="card-menu">
+            <Tooltip title={<div><b>Prompt: </b>{this.state.card.userPrompt}</div>} placement="left">
+              <QuestionCircleOutlined style={{fontSize: cardMenuIconFontSize, marginLeft:3}} />
+            </Tooltip>
+            { card.explanation ?
+            <Tooltip title={
+              <div>
+                <b>About This Card</b>
+                <br/>
+                <br/>
+                {card.explanation}
+                <br/>
+                <br/>
+                {card.funnyExplanation}
+              </div>
+            } overlayInnerStyle={{width:320, backgroundColor:'rgba(0, 0, 0, 0.93)' }} placement="left" >
+              <InfoCircleOutlined style={{fontSize: cardMenuIconFontSize, marginLeft:3}} />
+            </Tooltip>
+            : null
+            }
+            { this.state.showSizeAdjustmentButtons &&
+            <Button type="text" size="middle" shape="circle" disabled={!this.state.increaseSizeAllowed}>
+              <ZoomInOutlined onClick={() => this.increaseCardSize(30)} style={{fontSize: cardMenuIconFontSize, marginRight:-4}} />
+            </Button>
+            }
+            { this.state.showSizeAdjustmentButtons &&
+            <Button type="text" size="middle" shape="circle" disabled={!this.state.decreaseSizeAllowed}>
+              <ZoomOutOutlined onClick={() => this.decreaseCardSize(30)} style={{fontSize: cardMenuIconFontSize, marginRight:-7}} />
+            </Button>
+            }
+            <Dropdown menu={{items: menuItems}}>
+              <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
+                <CaretDownFilled style={{fontSize: cardMenuIconFontSize}} />
+              </a>
+            </Dropdown>
+          </div>
+          }
         </div>
-        { this.state.showCardMenu &&
-        <div className="card-menu">
-          <Tooltip title={<div><b>Prompt: </b>{this.state.card.userPrompt}</div>} placement="left">
-            <QuestionCircleOutlined style={{fontSize: cardMenuIconFontSize, marginLeft: "3px"}} />
-          </Tooltip>
-          { card.explanation ?
-          <Tooltip title={
+        { /* Image editor. */ }
+        { (this.props.allowImageUpdate && this.state.showImageEditor && !cardIsTutorialCard) &&
+          <div id={`card-image-flow-${card.id}`} className="card-image-update-container" style={{width: `${imageEditorWidth}px`, display:"flex", alignItems:"center", flexDirection:"column" }}>
+            <table style={{width: "100%"}}>
+              <tbody>
+                <tr>
+                  <td style={{display: "flex", position: "relative"}}>
+                    { /* Invisible spacer to maintain center alignment. */ }
+                    <div style={{visibility: 'hidden', flex: 1}} />
+                    { /* Centered content. */ }
+                    <p style={{color: "white", margin:0, position: 'absolute', top: '50%', transform: 'translateY(-50%)', width: '100%', textAlign: 'center'}}>Image Prompt</p>
+                    { /* Right-aligned button. */ }
+                    <div style={{flex: 1, display: 'flex', justifyContent: 'flex-end', margin:8}}>
+                      <Button size="small" type="default" icon={<CloseOutlined />} onClick={() => {this.setState({showImageEditor: false})}} />
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            { /* Image prompt text area. */ }
+            <table style={{marginLeft:10, marginRight:10, width:"-webkit-fill-available"}}>
+              <tbody>
+                <tr>
+                  <td>
+                    <textarea disabled={this.state.isImageLoading} maxLength={1500} onChange={this.handleImagePromptUpdate} value={this.state.imageEditorPrompt} 
+                    style={{height:120, width:"100%", resize:"none"}} />
+                  </td>
+                  <td>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            { /* Generate buttons and loading icon. */ }
+            <table>
+              <tbody>
+                <tr>
+                  <td>
+                    <Button 
+                      className={this.state.isImageLoading ? "custom-disabled-btn" : ""} 
+                      size="small" 
+                      type="primary" 
+                      disabled={this.state.isImageLoading} 
+                      style={{ marginTop:3}} 
+                      icon={<CaretRightOutlined />}
+                      onClick={() => this.generateNewImage()}>
+                      Generate Image
+                    </Button>
+                    <Button 
+                      className={this.state.isImageLoading ? "custom-disabled-btn" : ""} 
+                      size="small" 
+                      type="primary" 
+                      disabled={this.state.isImageLoading} 
+                      style={{marginLeft:10, marginTop:10}} 
+                      icon={<BulbOutlined />}
+                      onClick={() => this.getImagePrompt()}>
+                      Generate Prompt
+                    </Button>
+                  </td>
+                </tr>
+                { this.state.isImageLoading &&
+                <tr style={{display:"grid", justifyContent:"center", marginTop:5}}>
+                  <td>
+                    <img className={this.state.isImageLoading ? "loadingAnimation loadingIcon" : "loadingIcon"} src={loadingIcon} />
+                  </td>
+                </tr>
+                }
+              </tbody>
+            </table>
+            { this.state.imageEditorError &&
+            <div style={{marginLeft: 10}}>
+              <h3 style={{ color: 'red' }}>{this.state.imageEditorError}</h3>
+            </div>
+            }
+            { /* Card image gallery. */ }
             <div>
-              <b>About This Card</b>
-              <br/>
-              <br/>
-              {card.explanation}
-              <br/>
-              <br/>
-              {card.funnyExplanation}
+              <div style={{margin:10, display:"flex", flexWrap:"wrap", justifyContent:"center"}}>
+              {
+                this.state.availableImageUrls.map(imageUrl => (
+                  <div style={{margin:3}}  className="image-hover-animation">
+                    <Image style={{border:"1px solid #cbcaca"}} height={90} width={90} preview={false} src={imageUrl.imageUrl ?? imageUrl.temporaryUrl} onClick={() => {this.updateImageUrl(imageUrl)}} />
+                  </div>
+                ))
+              }
+              </div>
             </div>
-          } overlayInnerStyle={{width: '320px', backgroundColor:'rgba(0, 0, 0, 0.93)' }} placement="left" >
-            <InfoCircleOutlined style={{fontSize: cardMenuIconFontSize, marginLeft: "3px"}} />
-          </Tooltip>
-          : null
-          }
-          { this.state.showSizeAdjustmentButtons &&
-          <Button type="text" size="middle" shape="circle" disabled={!this.state.increaseSizeAllowed}>
-              <ZoomInOutlined onClick={() => this.increaseCardSize(30)} style={{fontSize: cardMenuIconFontSize, marginRight: "-4px"}} />
-          </Button>
-          }
-          { this.state.showSizeAdjustmentButtons &&
-          <Button type="text" size="middle" shape="circle" disabled={!this.state.decreaseSizeAllowed}>
-              <ZoomOutOutlined onClick={() => this.decreaseCardSize(30)} style={{fontSize: cardMenuIconFontSize, marginRight: "-7px"}} />
-          </Button>
-          }
-          <Dropdown menu={{items: menuItems}}>
-            <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
-              <CaretDownFilled style={{fontSize: cardMenuIconFontSize}} />
-            </a>
-          </Dropdown>
-        </div>
+          </div>
         }
       </div>
     )
@@ -831,3 +1049,4 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     return fullCard
   }
 }
+CardDisplay.contextType = UserContext;

@@ -124,7 +124,8 @@ namespace MTG.CardGenerator
                 ApiKey = apiKey
             });
 
-            var prompt = $"Please generate an image prompt for the following text (the prompt should reflect the artists style listed in the text): {options.Prompt}";
+            var prompt = @$"Please generate a descriptive description that could be used to depict an image of the following text (the description should reflect the artists style listed in the text). 
+The text is the following: {options.Prompt}";
 
             var result = await openAIService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
             {

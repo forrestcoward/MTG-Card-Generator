@@ -3,7 +3,9 @@
     <TargetFramework>net6.0</TargetFramework>
     <AzureFunctionsVersion>v4</AzureFunctionsVersion>
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+    <!--
     <UserSecretsId>b8a636c1-8453-4afa-a9e5-ae9d18fe7352</UserSecretsId>
+    -->
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
   <ItemGroup>

@@ -20,7 +20,8 @@ const _tutorialCard:BasicCard = {
   userPrompt: "Enter a prompt above to start generating!",
   explanation: "",
   funnyExplanation: "",
-  id: "",
+  id: "-1",
+  alternativeImageUrls: [],
 }
 
 export const TutorialCard:MagicCard = new MagicCard(_tutorialCard);

@@ -124,7 +124,13 @@ namespace MTG.CardGenerator
             return memoryStream;
         }
 
-        public static async Task<string> StoreImageInBlobAsync(string imageUrl, string blobStorageName, string blobStorageEndpoint, string blobStorageContainerName, string blobStorageAccessKey, bool uploadUncompressedImage = false, ILogger log = null)
+        public class StoreImageInBlobResult
+        {
+            public Guid ImageId { get; set; }
+            public string Url { get; set; }
+        }
+
+        public static async Task<StoreImageInBlobResult> StoreImageInBlobAsync(string imageUrl, string blobStorageName, string blobStorageEndpoint, string blobStorageContainerName, string blobStorageAccessKey, bool uploadUncompressedImage = false, ILogger log = null)
         {
             using var response = await client.GetAsync(imageUrl, HttpCompletionOption.ResponseHeadersRead);
             response.EnsureSuccessStatusCode();
@@ -150,7 +156,12 @@ namespace MTG.CardGenerator
             }
 
             log?.LogInformation($"Image '{imageUrl}' uploaded to blob '{blobClient.Uri}'.");
-            return blobClient.Uri.ToString();
+
+            return new StoreImageInBlobResult()
+            {
+                ImageId = guid,
+                Url = blobClient.Uri.ToString(),
+            };
         }
 
         public static Dictionary<string, string> GetNamedGroupsMatches(this Regex regex, string input)

@@ -43,7 +43,7 @@ namespace MTG.CardGenerator
             {
                 var cardId = (string)req.Query["cardId"];
                 var cardsClient = new CardsClient(log);
-                var record = await cardsClient.GetMagicCard(cardId);
+                var record = await cardsClient.GetMagicCardRecord(cardId);
                 return new OkObjectResult(APIResponses.GetCardResponse(record));
             }
             catch (Exception ex)

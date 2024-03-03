@@ -1,39 +1,24 @@
-import React from 'react';
-import { CardDisplay, MagicCard  } from './Card';
+import React, { useContext, useEffect, useState } from 'react';
+import { UserContext } from './UserContext';
+import { CardDisplay  } from './Card';
 import { GenerateMagicCardRequest } from './CallAPI';
 import { isMobileDevice, setCardContainerSize } from './Utility';
 import { TutorialCard } from './TutorialCard';
 import PopOutSettingsMenu from './PopOutSettingsMenu';
-import { PublicClientApplication } from '@azure/msal-browser';
 
-import "./mana.min.css";
-import "./mtg-card.css";
-import "./app.css";
+import './mana.min.css';
+import './mtg-card.css';
+import './app.css';
 
 // @ts-ignore
 import loadingIcon from './card-backgrounds/staff.png'
-// @ts-ignore
-import settingsIcon from './card-backgrounds/settings.png'
-
-export interface MTGCardGeneratorProps { 
-  msalInstance: PublicClientApplication;
-}
-
-export interface MTGCardGeneratorState {
-  prompt: string,
-  response: string,
-  isLoading: boolean,
-  isSettingsOpen: boolean,
-  settings: SettingGroup[],
-  userOpenAIKey: string,
-  cards: MagicCard[],
-  currentError: string,
-  userName: string,
-  defaultCardWidth: number,
-}
+import { useMsal } from '@azure/msal-react';
+import { SettingFilled } from '@ant-design/icons';
+import { Button, Tooltip } from 'antd';
 
 export interface SettingGroup {
   name: string;
+  type: string;
   description: string;
   settings: Setting[];
 }
@@ -46,197 +31,203 @@ export interface Setting {
   group?: string;
 }
 
-const defaultPrompt:string = "is from the Dominaria plane."
-const defaultModel:string= "gpt-4-turbo-preview"
+const defaultPrompt:string = 'is from the Dominaria plane.'
+const defaultLanguageModel:string= 'gpt-4-turbo-preview'
+const defaultImageModel:string = 'dall-e-2'
 
 const modelSettings = [
-  { name: "GPT 4", id: "gpt-4-turbo-preview", value: false, group: "model-settings", description: "The most advanced model, but slower." },
-  { name: "GPT 3.5", id: "gpt-3.5", value: true, group: "model-settings", description: "Less intelligent than GPT 4, but faster."},
+  { name: 'GPT 3.5', id: 'gpt-3.5', value: true, description: 'GPT 3.5 is a fast and capable general purpose model.', group: 'model-settings'},
+  { name: 'GPT 4', id: 'gpt-4-turbo-preview', value: false, description: 'GPT 4 is the most intelligent model to date, but is slower and more expensive.', group: 'model-settings' },
 ]
 
 const modelSettingsGroup : SettingGroup = {
-  name: "Model",
-  description: "Language model to use.",
+  name: 'Language Model',
+  description: 'Language model to use.',
+  type: 'radio',
   settings: modelSettings,
 }
 
+const imageSettings = [
+  { name: 'Dalle-2', id: 'dall-e-2', value: true, description: 'Dalle-2 is a fast, cheap and great for prototyping.', group: 'image-settings' },
+  { name: 'Dalle-3', id: 'dall-e-3', value: false, description: 'Dalle-3 produces the highest quality images, but is slower and more expensive.', group: 'image-settings' },
+  { name: 'No Image', id: 'none', value: false, description: 'Do not generate an image (the Image Editor tool can be used afterwards).', group: 'image-settings' },
+]
+
+const imageSettingsGroup : SettingGroup = {
+  name: 'Image Model',
+  description: 'Image model to use.',
+  type: 'radio',
+  settings: imageSettings
+}
+
 const cardGenerationSettings = [
-  { name: "Extra Creative", id: "setting-extra-creative", value: false, description: "By extra creative when generating the card, trying to mix and match mechanics and keywords in more interesting ways." },
-  { name: "Explain Yourself", id: "setting-provide-explanation", value: false, description: "Explain why the card was generated. The AI can be even be quite funny! May slow down card generation." },
-  { name: "High Quality Images", id: "setting-high-quality-images", value: false, description: "Generate the highest quality art using the state of the art. May slow down card generation considerably." },
+  { name: 'Generative Image Prompt', id: 'setting-generate-image-prompt', value: true, description: 'Use an intelligently generated image prompt to produce more unique and interesting art.' },
+  { name: 'Extra Creative', id: 'setting-extra-creative', value: false, description: 'Mix and match mechanics and keywords in more interesting ways.' },
+  { name: 'Explain Yourself', id: 'setting-provide-explanation', value: false, description: 'Provide an explanation why the card was generated. The AI can be even be quite funny!' },
 ]
 
 const cardGenerationSettingsGroup : SettingGroup = {
-  name: "Card Generation",
-  description: "Customize card generation.",
+  name: 'Card Generation',
+  description: 'Customize card generation.',
+  type: 'switch',
   settings: cardGenerationSettings,
 }
 
-export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTGCardGeneratorState> {
-  constructor(props: MTGCardGeneratorProps) {
-    super(props);
-    let width = setCardContainerSize();
-    this.state = {
-      prompt: '',
-      response: '',
-      isLoading: false,
-      isSettingsOpen: false,
-      settings: [modelSettingsGroup, cardGenerationSettingsGroup],
-      userOpenAIKey: '',
-      cards: [TutorialCard],
-      currentError: '',
-      userName: '',
-      defaultCardWidth: width
+export function MTGCardGenerator() {
+  const [prompt, setPrompt] = useState('');
+  const [response, setResponse] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [settings, setSettings] = useState([modelSettingsGroup, imageSettingsGroup, cardGenerationSettingsGroup]);
+  const [cards, setCards] = useState([TutorialCard]);
+  const [currentError, setCurrentError] = useState('');
+  const [defaultCardWidth, setDefaultCardWidth] = useState(setCardContainerSize());
+  const [showNewFeatureNotification] = useState(false);
+
+  const userContext = useContext(UserContext);
+  const { instance: msalInstance } = useMsal();
+
+  useEffect(() => {
+    const updateCardSize = () => {
+      setDefaultCardWidth(setCardContainerSize());
     };
+    window.addEventListener('resize', updateCardSize);
+    return () => window.removeEventListener('resize', updateCardSize);
+  }, []);
 
-    this.handleSubmit = this.handleSubmit.bind(this);
-    this.handleChangeInput = this.handleChangeInput.bind(this);
-    this.handleCardWidthChanged = this.handleCardWidthChanged.bind(this);
-    setCardContainerSize();
+  function allSettings(): Setting[] {
+    return settings.map(settingGroup => settingGroup.settings).flat();
   }
 
-  allSettings() : Setting[] {
-    return this.state.settings.map(settingGroup => settingGroup.settings).flat();
+  function showCardExplanations(): boolean {
+    return allSettings().find(setting => setting.id == 'setting-provide-explanation')?.value ?? true;
   }
 
-  showCardExplanations() : boolean {
-    return this.allSettings().find(setting => setting.id == "setting-provide-explanation")?.value ?? true;
+  function extraCreative(): boolean {
+    return allSettings().find(setting => setting.id == 'setting-extra-creative')?.value ?? true;
   }
 
-  extraCreative() : boolean {
-    return this.allSettings().find(setting => setting.id == "setting-extra-creative")?.value ?? true;
+  function highQualityImages(): boolean {
+    return allSettings().find(setting => setting.id == 'setting-generate-image-prompt')?.value ?? false;
   }
 
-  highQualityImages() : boolean {
-    return this.allSettings().find(setting => setting.id == "setting-high-quality-images")?.value ?? false;
+  function getModelSetting(): string {
+    let setting = allSettings().find(setting => setting.value == true && setting?.group == 'model-settings')
+    return setting?.id ?? defaultLanguageModel
   }
 
-  toggleIsSettingsOpen = () => {
-    this.setState({ isSettingsOpen: !this.state.isSettingsOpen });
-  };
+  function getImageSetting(): string {
+    let setting = allSettings().find(setting => setting.value == true && setting?.group == 'image-settings')
+    return setting?.id ?? defaultImageModel
+  }
 
-  handleSettingUpdate = (updatedSetting: string, newValue: boolean) => {
+
+  function handleSettingUpdate(updatedSetting: string, newValue: boolean) {
     // Flatten all settings.
-    let allSettings = this.allSettings();
+    var newSettings = [...settings]
+    var allSettings = newSettings.map(settingGroup => settingGroup.settings).flat();
 
     // Update the matching setting.
     let matchingSetting = allSettings.find(setting => setting.name == updatedSetting)
     if (matchingSetting && (matchingSetting.value != true || !matchingSetting.group)) {
-      matchingSetting.value = newValue;
+      matchingSetting.value = newValue
     }
 
     // Set all other settings with the same group to false (if a group is specified).
     // For example, use this to allow only a single model setting.
     allSettings.forEach((setting) => {
       if (setting.name != updatedSetting && setting.group && setting.group == matchingSetting?.group) {
-        setting.value = false;
+        setting.value = false
       }
     });
 
-    this.setState({ settings: this.state.settings });
+    setSettings(newSettings);
   };
 
-  handleOpenAIKeyChange = (newUserOpenAIKey: string) => {
-    this.setState({ userOpenAIKey: newUserOpenAIKey });
-  }
+  function handleSubmit() {
+    setIsLoading(true)
+    setCurrentError('')
 
-  getLoadingClassName() : string{
-    return this.state.isLoading ? "loadingAnimation loadingIcon" : "loadingIcon";
-  }
+    let model = getModelSetting()
+    let imageModel = getImageSetting()
 
-  handleChangeInput(event: React.ChangeEvent<HTMLInputElement>) {
-    this.setState({ prompt: event.target.value });
-  }
-
-  handleCardWidthChanged(event: React.ChangeEvent<HTMLInputElement>) {
-    var newWidth = parseInt(event.target.value)
-    setCardContainerSize(newWidth);
-    this.state.cards[0].adjustFontSize();
-  }
-
-  handleSubmit() {
-    this.setState({ isLoading: true, currentError: "" })
-    let userPrompt = this.state.prompt
-
-    let model = defaultModel
-    let modelSetting = this.allSettings().find(setting => setting.value == true && setting?.group == "model-settings")
-    if (modelSetting) {
-      model = modelSetting.id
-    }
-
-    GenerateMagicCardRequest(userPrompt, model, this.showCardExplanations(), this.highQualityImages(), this.extraCreative(), this.state.userOpenAIKey, this.props.msalInstance).then(cards => {
-      this.setState({
-        response: JSON.stringify(cards),
-        cards: [...cards, ...this.state.cards],
-        isLoading: false
-      })
-
+    const numCards = 1
+    const openAIAPIKey = userContext?.openAIAPIKey
+    GenerateMagicCardRequest(prompt, model, imageModel, showCardExplanations(), highQualityImages(), numCards, extraCreative(), openAIAPIKey!, msalInstance).then(generatedCards => {
+      setResponse(JSON.stringify(generatedCards))
+      setCards([...generatedCards, ...cards])
+      setIsLoading(false)
     }).catch((error: Error) => {
-      this.setState({ isLoading: false, currentError: error.message })
+      setCurrentError(error.message)
+      setIsLoading(false)
     });
   }
 
-  render() {
-    return (
-      <div>
-        <div className="outerContainer">
-          <div className="container" style={{position: "relative"}}>
-            <div className="notification">
-              <b>
-                <span style={{marginRight:"5px"}}>
-                  New:
-                </span>
-              </b>
-              <a className="pulsingLink" href="/RateCards">
-                { !isMobileDevice() ? "Rate Other User's Cards!" : "Rate Cards!" } 
-              </a>
-            </div>
-            <p>Generate a Magic: The Gathering card...</p>
-            <label>
-              <input type="text" className="userInputPrompt" placeholder={defaultPrompt} onChange={this.handleChangeInput} value={this.state.prompt} />
-            </label>
-            <p></p>
-            <table>
-              <tbody>
-                <tr>
-                  <td>
-                    <button className="generateButton" type="submit" onClick={() => this.handleSubmit()} disabled={this.state.isLoading}>Generate!</button>
-                  </td>
-                  <td>
-                  <input type="text" className="cardWidthPrompt" onChange={this.handleCardWidthChanged} defaultValue={this.state.defaultCardWidth} style={{display: "none"}}/>
-                  </td>
-                  <td>
-                    <img className={this.getLoadingClassName()} src={loadingIcon} />
-                  </td>
-                  <td>
-                    <div title="Click to open the settings." className="settingsIconDiv">
-                      <img  src={settingsIcon} className="settingsIcon" width={40} height={40} onClick={this.toggleIsSettingsOpen} />
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <h2 style={{ color: 'red' }}>{this.state.currentError}</h2>
-            <textarea value={this.state.response} readOnly={true} rows={30} cols={120} hidden={true} />
+  return (
+    <div>
+      <div className='outerContainer'>
+        <div className='container' style={{position: 'relative'}}>
+          { showNewFeatureNotification &&
+          <div className='newFeatureNotification'>
+            <b>
+              <span style={{marginRight:5}}>
+                New:
+              </span>
+            </b>
+            <a className='pulsingLink' href='/RateCards'>
+              { !isMobileDevice() ? "Rate Other User's Cards!" : 'Rate Cards!' } 
+            </a>
           </div>
-          <div className="cardsContainer">
-          {
-            this.state.cards.map(card => (
-              <div className="cardContainer" key={`card-container-${card.id}`}>
-                <CardDisplay key={`card-display-${card.id}`} card={card} showCardMenu={true} cardWidth={this.state.defaultCardWidth} allowImagePreview={true} allowEdits={true} />
-              </div>
-            ))
           }
-          </div>
-          <PopOutSettingsMenu 
-            settings={this.state.settings}
-            onModelSettingsChange={this.handleSettingUpdate}
-            userOpenAIKey={this.state.userOpenAIKey}
-            onOpenAIKeyChange={this.handleOpenAIKeyChange}
-            isOpen={this.state.isSettingsOpen} 
-            onClose={this.toggleIsSettingsOpen} />
+          <p>Generate a Magic: The Gathering card...</p>
+          <label>
+            <input type='text' className='userInputPrompt' placeholder={defaultPrompt} onChange={(event) => {setPrompt(event.target.value)}} value={prompt} />
+          </label>
+          <p></p>
+          <table>
+            <tbody>
+              <tr>
+                <td>
+                  <button className='generateButton' type='submit' onClick={() => handleSubmit()} disabled={isLoading}>Generate!</button>
+                </td>
+                <td>
+                </td>
+                <td>
+                  <img className={isLoading ? 'loadingAnimation loadingIcon' : 'loadingIcon'} src={loadingIcon} />
+                </td>
+                <td>
+                  <Tooltip title="Settings">
+                    <Button icon={<SettingFilled className="spinningIcon" />} type="text" onClick={() => setIsSettingsOpen(true)} className='settingButton' />
+                  </Tooltip>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <h2 style={{ color: 'red' }}>{currentError}</h2>
+          <textarea value={response} readOnly={true} rows={30} cols={120} hidden={true} />
         </div>
+        <div className='cardsContainer'>
+        {
+          cards.map(card => (
+            <div className='cardContainer' key={`card-container-${card.id}`}>
+              <CardDisplay 
+                key={`card-display-${card.id}`} 
+                card={card} 
+                showCardMenu={true} 
+                cardWidth={defaultCardWidth} 
+                allowImagePreview={true} 
+                allowEdits={true} 
+                allowImageUpdate={true} />
+            </div>
+          ))
+        }
+        </div>
+        <PopOutSettingsMenu 
+          settings={settings}
+          onModelSettingsChange={handleSettingUpdate}
+          isOpen={isSettingsOpen} 
+          onClose={() => setIsSettingsOpen(false)} />
       </div>
-    );
-  }
+    </div>
+  );
 }

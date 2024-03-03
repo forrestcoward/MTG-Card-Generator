@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { CardDisplay, MagicCard } from "./Card";
 import Tooltip from "antd/es/tooltip";
 import { adjustTextHeightBasedOnChildrenClientOffsetHeight, adjustTextHeightBasedOnClientHeight } from "./Utility";
@@ -8,27 +8,16 @@ interface CardPreviewProps {
   cardWidth: number;
 }
 
-interface CardPreviewState {
-  tooltipCard: MagicCard
-}
-
-export class CardPreview extends React.Component<CardPreviewProps, CardPreviewState> {
-  constructor(props: CardPreviewProps) {
-    super(props);
-    this.state = {
-      tooltipCard: MagicCard.clone(props.card, false)
-    };
-  }
-
-  componentDidMount(): void {
-    this.adjustNameSize();
-  }
+export function CardPreview(props: CardPreviewProps) {
+  useEffect(() => {
+    adjustNameSize();
+  }, []);
 
   // Adjust name and mana cost size relative to the height of their container.
-  private adjustNameSize(nameToContainerRatio:number = .9, manaToContainerRatio:number = .75) {
-    const container : HTMLElement | null = document.getElementById(`title-container-${this.props.card.id}`)
-    const nameContainer : HTMLElement | null = document.getElementById(`name-${this.props.card.id}`)
-    const manaContainer : HTMLElement | null = document.getElementById(`mana-${this.props.card.id}`)
+  function adjustNameSize(nameToContainerRatio:number = .9, manaToContainerRatio:number = .75) {
+    const container : HTMLElement | null = document.getElementById(`title-container-${props.card.id}`)
+    const nameContainer : HTMLElement | null = document.getElementById(`name-${props.card.id}`)
+    const manaContainer : HTMLElement | null = document.getElementById(`mana-${props.card.id}`)
 
     if (!container || !nameContainer || !manaContainer) {
       return
@@ -57,24 +46,29 @@ export class CardPreview extends React.Component<CardPreviewProps, CardPreviewSt
     }
   }
 
-  render() {
-    const card = this.props.card;
-    return (
-      <div>
-        <Tooltip trigger={["click", "hover", "contextMenu"]} placement="left" mouseEnterDelay={0} mouseLeaveDelay={0} overlayClassName="antd-no-style-tooltip" overlayInnerStyle={{width: `${this.props.cardWidth-20}px`, marginLeft: "20px"}}
-        title={<CardDisplay card={this.state.tooltipCard} cardWidth={this.props.cardWidth-20} showCardMenu={false} allowImagePreview={false} allowEdits={false} />}>
-          <div id={`title-container-${card.id}`} className={card.cardFrameHeaderClassName} style={{padding: "0px", marginTop: "0px", height:"28px"}} >
-            <div id={`name-${card.id}`} style={{alignSelf:"center"}} className="name name-type-size">
-              <div>{card.name}</div>
-            </div>
-            <div id={`mana-${card.id}`} className="mana-symbols">
-              {card.manaCostTokens.map((manaCostToken, i) => (
-                <i key={card.id + "-manaToken-"+ i} className={MagicCard.getManaClassNameForTitle(manaCostToken) + " manaCost " + `manaCost-${card.id}`} id="mana-icon"></i>
-              ))}
-            </div>
+  const sameId = false;
+  const tooltipCard = MagicCard.clone(props.card, sameId);
+  return (
+    <div>
+      <Tooltip 
+        trigger={["click", "hover", "contextMenu"]} 
+        placement="left" 
+        mouseEnterDelay={0} 
+        mouseLeaveDelay={0} 
+        overlayClassName="antd-no-style-tooltip" 
+        overlayInnerStyle={{width: `${props.cardWidth-20}px`, marginLeft:20}} 
+        title={<CardDisplay card={tooltipCard} cardWidth={props.cardWidth-20} showCardMenu={false} allowImagePreview={false} allowEdits={false} allowImageUpdate={false} />}>
+        <div id={`title-container-${props.card.id}`} className={props.card.cardFrameHeaderClassName} style={{padding:0, marginTop:0, height:28}} >
+          <div id={`name-${props.card.id}`} style={{alignSelf:"center"}} className="name name-type-size">
+            <div>{props.card.name}</div>
           </div>
-        </Tooltip>
-      </div>
-    )
-  }
+          <div id={`mana-${props.card.id}`} className="mana-symbols">
+            {props.card.manaCostTokens.map((manaCostToken, i) => (
+              <i key={props.card.id + "-manaToken-"+ i} className={MagicCard.getManaClassNameForTitle(manaCostToken) + " manaCost " + `manaCost-${props.card.id}`} id="mana-icon"></i>
+            ))}
+          </div>
+        </div>
+      </Tooltip>
+    </div>
+  )
 }

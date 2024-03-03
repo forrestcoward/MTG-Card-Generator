@@ -1,53 +1,42 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { CardDisplay, CardGenerationRecord, MagicCard } from './Card';
-import { PublicClientApplication } from '@azure/msal-browser';
 import { GetCard } from './CallAPI';
 import { setCardContainerSize } from './Utility';
+import { useMsal } from '@azure/msal-react';
 
-interface ViewCardProps {
-  msalInstance: PublicClientApplication;
-}
+export function ViewCard() {
+  const [card, setCard] = React.useState<CardGenerationRecord | null>(null);
+  const [cardWidth] = React.useState(setCardContainerSize());
+  const [cardId] = React.useState<string | null>(new URLSearchParams(location.search).get('id'));
+  const { instance: msalInstance } = useMsal();
 
-interface ViewCardState {
-  card: CardGenerationRecord | null
-  cardWidth: number
-  cardId: string | null
-}
+  useEffect(() => {
+    fetchCard()
+  }, []);
 
-export class ViewCard extends React.Component<ViewCardProps, ViewCardState> {
-  constructor(props:ViewCardProps) {
-    super(props);
-    const width = setCardContainerSize();
-    const queryParams = new URLSearchParams(location.search);
-    const cardId = queryParams.get('id'); 
-    this.state = {
-      card: null,
-      cardWidth: width,
-      cardId: cardId
-    };
-
-    this.fetchCard()
-  }
-
-  fetchCard() {
-    if (this.state.cardId) {
-      GetCard(this.props.msalInstance, this.state.cardId).then((card) => {
+  function fetchCard() {
+    if (cardId) {
+      GetCard(msalInstance, cardId).then((card) => {
         if (card) {
-          this.setState({card: card})
+          setCard(card);
         }
       });
     }
   }
 
-  render() {
-    return (
-      <div>
-        { this.state.card &&
-          <div className="cardsContainer">
-            <CardDisplay card={new MagicCard(this.state.card.card)} allowEdits={true} allowImagePreview={true} cardWidth={this.state.cardWidth} showCardMenu={true} />
-          </div>
-        }
-      </div>
-    )
-  }
+  return (
+    <div>
+      { card &&
+        <div className="cardsContainer">
+          <CardDisplay 
+            card={new MagicCard(card.card)} 
+            allowEdits={true} 
+            allowImagePreview={true} 
+            cardWidth={cardWidth} 
+            showCardMenu={true} 
+            allowImageUpdate={false} />
+        </div>
+      }
+    </div>
+  )
 }

@@ -4,6 +4,7 @@ import { MTGCardGenerator } from './MTGCardGenerator';
 import { EventType, PublicClientApplication } from '@azure/msal-browser';
 import { msalConfig } from './AuthConfig';
 import { MsalProvider } from '@azure/msal-react';
+import { UserProvider } from './UserContext';
 import { NavigationBar } from './NavigationBar';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { MyCards } from './MyCards';
@@ -36,13 +37,15 @@ if (rootNode) {
     .render(
         <BrowserRouter>
           <MsalProvider instance={msalInstance}>
-          <NavigationBar />
-          <Routes>
-            <Route path="/" element={ <MTGCardGenerator msalInstance={msalInstance} /> } />
-            <Route path="MyCards" element={ <MyCards msalInstance={msalInstance} /> } />
-            <Route path="RateCards" element={ <CardRating msalInstance={msalInstance} /> } />
-            <Route path="Card" element={ <ViewCard msalInstance={msalInstance} /> } />
-          </Routes>
+            <UserProvider>
+              <NavigationBar />
+              <Routes>
+                <Route path="/" element={<MTGCardGenerator />} />
+                <Route path="MyCards" element={<MyCards />} />
+                <Route path="RateCards" element={<CardRating />} />
+                <Route path="Card" element={<ViewCard />} />
+              </Routes>
+            </UserProvider>
           </MsalProvider>
         </BrowserRouter>
   );

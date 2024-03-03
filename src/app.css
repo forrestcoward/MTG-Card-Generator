@@ -312,7 +312,7 @@ input:checked + .slider:before {
   background-color: #b1b1b1a4;
 }
 
-.notification {
+.newFeatureNotification {
   position: absolute;
   top: 0;
   right: 0;
@@ -323,12 +323,12 @@ input:checked + .slider:before {
   background-color: rgba(25, 25, 29, 0.504);
 }
 
-.notification a {
+.newFeatureNotification a {
   color:rgb(255, 255, 255);
   text-decoration: none;
 }
 
-.notification a:hover {
+.newFeatureNotification a:hover {
   color:rgb(148, 153, 160);
   text-decoration: underline;
 }

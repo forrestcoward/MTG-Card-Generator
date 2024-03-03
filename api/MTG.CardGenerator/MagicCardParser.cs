@@ -348,7 +348,6 @@ namespace MTG.CardGenerator
             var flavorText = card.FlavorText;
             var rarity = card.Rarity;
             var colorIdentity = GetColorIdentity(manaCost);
-            var userPrompt = card.UserPrompt;
             var explanation = card.Explanation;
             var funnyExplanation = card.FunnyExplanation;
             var powerAndToughness = string.Empty;
@@ -381,7 +380,6 @@ namespace MTG.CardGenerator
                 ColorIdentity = colorIdentity,
                 ImageUrl = string.Empty,
                 TemporaryImageUrl = string.Empty,
-                UserPrompt = userPrompt,
                 Explanation = explanation,
                 FunnyExplanation = funnyExplanation,
             };

@@ -88,7 +88,7 @@ namespace MTG.CardGenerator
             {
                 var cardsClient = new CardsClient(log);
                 var usersClient = new UsersClient(log);
-                var card = await cardsClient.GetMagicCard(cardId);
+                var card = await cardsClient.GetMagicCardRecord(cardId);
 
                 if (card == null)
                 {
@@ -102,7 +102,7 @@ namespace MTG.CardGenerator
                 var updateTask = usersClient.UserRatedCard(userSubject);
                 await cardsClient.SetRatingResult(card, rating);
                 await updateTask;
-                var updatedCard = await cardsClient.GetMagicCard(cardId);
+                var updatedCard = await cardsClient.GetMagicCardRecord(cardId);
                 var json = JsonConvert.SerializeObject(new CardRatingFunctionResponse() { Rating = updatedCard.Rating });
 
                 log.LogMetric("RateCard_DurationSeconds", stopwatch.Elapsed.TotalSeconds,

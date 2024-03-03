@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System;
+using System.Linq;
 using System.Net;
 
 namespace MTG.CardGenerator.Models
@@ -34,13 +35,14 @@ namespace MTG.CardGenerator.Models
         public string Explanation { get; set; }
         [JsonProperty("funnyExplanation")]
         public string FunnyExplanation { get; set; }
-        [JsonProperty("userPrompt")]
-        public string UserPrompt { get; set; }
     }
 
     // Represents a generated card in the database.
     public class MagicCard
     {
+        // Id not stored in database on this record, just use this field for the GenerateMagicCard function response.
+        [JsonIgnore]
+        public string Id { get; set; }
         [JsonProperty("name")]
         public string Name { get; set; }
         [JsonProperty("manaCost")]
@@ -67,6 +69,8 @@ namespace MTG.CardGenerator.Models
         public string ImageUrl { get; set; }
         [JsonProperty("temporaryImageUrl")]
         public string TemporaryImageUrl { get; set; }
+        [JsonProperty("alternativeImageIds")]
+        public string[] AlternativeImageIds { get; set; }
         [JsonProperty("userPrompt")]
         public string UserPrompt { get; set; }
         [JsonProperty("explanation")]
@@ -112,6 +116,9 @@ namespace MTG.CardGenerator.Models
         public string ImageUrl { get; set; }
         [JsonProperty("temporaryImageUrl")]
         public string TemporaryImageUrl { get; set; }
+        [JsonProperty("alternativeImageUrls")]
+        public string[] AlternativeImageUrls { get; set; }
+
         [JsonProperty("url")]
         public string Url
         {
@@ -149,6 +156,18 @@ namespace MTG.CardGenerator.Models
             if (includeTemporaryImage || string.IsNullOrWhiteSpace(card.ImageUrl))
             {
                 this.TemporaryImageUrl = card.TemporaryImageUrl;
+            }
+
+            // In the database we store the IDs of the alternative images, not the URLs.
+            // The front end does not know the back end URLs, so we convert.
+            var blobStorageEndpoint = Environment.GetEnvironmentVariable(Constants.BlobStorageEndpoint);
+            if (card.AlternativeImageIds != null)
+            {
+                this.AlternativeImageUrls = card.AlternativeImageIds.Select(id => $"{blobStorageEndpoint}card-images/{id}.png").ToArray();
+            }
+            else
+            {
+                this.AlternativeImageUrls = Array.Empty<string>();
             }
 
             this.OracleText = !string.IsNullOrWhiteSpace(card.OracleText) ? card.OracleText : card.RawOracleText;

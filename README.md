@@ -11,13 +11,15 @@ Users can enter a prompt describing the type of Magic card they would like to ge
 
 # Features
 
-* User's supply an open ended prompt describing the Magic card they'd like to see. User's may choose the AI model (GPT 3.5, GPT 4 etc.) and optionally choose to have the AI's reasoning included, too.
+* Users supply an open ended prompt describing the Magic card they would like to generate. Users may:
+    * Choose the language model (GPT 3.5, GPT 4 etc.)
+    * Choose the image model (dall-e 2, dall-e 3 etc.) or supply their own image prompt.
+    * Select a number of other fun options such as asking the AI explain itself or asking for extra creative cards.
+    * Resize, download, or share generated card links.
 
 * Generated cards are rendered beautifully using CSS and look like real Magic cards. Realistic card background and symbols are used, and card text is scaled appropriately to fill the content.
 
-* High quality images may optionally be generated using dall-e-3 iterative prompt approach.
-
-* User's may optionally login (via an SSO provider) to have their card generation history stored for viewing later.
+* Users may optionally login to have their card generation history stored for viewing later.
 
 * A rating page is available to score and view top cards.
 
@@ -36,10 +38,11 @@ The API is located at https://mtgcardgenerator.azurewebsites.net/api/GenerateMag
 | Name | Type | Description |
 |---|---|---|
 | prompt | string | The prompt to use to generate the card. |
-| model | string | The OpenAI model to use. Use `gpt-3.5`, `gpt-4` or `gpt-4-1106-preview`. |
+| model | string | The OpenAI language model to use. Use `gpt-3.5`, `gpt-4` or `gpt-4-1106-preview`. |
+| imageModel | string | The OpenAI model to use for generating the card image. Use `dall-e-3` or `dall-e-2`. |
 | includeExplanation | bool | Whether to include the AI's reasoning in the card text. If `true`, `explanation` and `funnyExplanation` will be included in the response. |
 | extraCreative | bool | If `true`, uses a different prompt and higher temperature to generate more creative cards with more interesting usage of keywords and mechanics. |
-| highQualityImage | bool | Whether to generate a high quality image using dall-e-3. |
+| generateImagePrompt | bool | If `true`, use an intelligently generated image prompt to produce more unique and interesting art. |
 | openAIApiKey | string | Your OpenAI API key. |
 
 ### Sample Response

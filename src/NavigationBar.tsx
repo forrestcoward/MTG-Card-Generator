@@ -2,18 +2,15 @@ import { AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from '@azure/
 import { loginRequest } from './AuthConfig';
 import React from 'react';
 import "./nav-bar.css";
+import { useUserAccount } from './UserContext';
 // @ts-ignore
 import githubIcon from "./card-backgrounds/github-mark-white.png"
 import { Dropdown, Space } from 'antd';
-import { CaretDownFilled, DatabaseOutlined, FireOutlined, HomeOutlined, LogoutOutlined, SearchOutlined } from '@ant-design/icons';
+import { CaretDownFilled, DatabaseOutlined, FireOutlined, HomeOutlined, LogoutOutlined } from '@ant-design/icons';
 
 export const NavigationBar = () => {
-    const { instance, inProgress } = useMsal();
-    let activeAccount;
-
-    if (instance) {
-        activeAccount = instance.getActiveAccount();
-    }
+    const { instance } = useMsal();
+    const userAccount = useUserAccount();
 
     const handleLogin = () => {
       let mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
@@ -105,7 +102,7 @@ export const NavigationBar = () => {
                     <div className='navbar-item'>
                       <Space>
                         <div>
-                          {activeAccount && activeAccount.name ? activeAccount.name : 'Unknown'}
+                          {userAccount?.name ? userAccount.name : 'Unknown'}
                         </div>
                         <CaretDownFilled />
                       </Space>

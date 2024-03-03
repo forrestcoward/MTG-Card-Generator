@@ -64,12 +64,13 @@ namespace MTG.CardGenerator.Models
         public GenerationMetaData GenerationMetadata { get; set; }
         [JsonProperty("user")]
         public CardUserMetadata User { get; set; }
-        [JsonProperty("magicCards")]
-        public MagicCard[] MagicCards { get; set; }
         [JsonProperty("card")]
-        public MagicCard Card => MagicCards[0];
+        public MagicCard Card { get; set; }
         [JsonProperty("rating")]
         public CardRating Rating { get; set; }
+        [Obsolete("No longer used but exists on old records. Newer records will have Card set.")]
+        [JsonProperty("magicCards")]
+        public MagicCard[] MagicCards { get; set; }
     }
 
     /// <summary>
@@ -86,11 +87,24 @@ namespace MTG.CardGenerator.Models
 
         public static CardGenerationRecordResponse FromDatabaseRecord(CardGenerationRecord cardGenerationRecord)
         {
+            MagicCardResponse card;
+            if (cardGenerationRecord.Card == null)
+            {
+#pragma warning disable CS0618 // Type or member is obsolete
+                card = new MagicCardResponse(cardGenerationRecord.MagicCards[0], cardGenerationRecord.Id);
+#pragma warning restore CS0618 // Type or member is obsolete
+            }
+            else
+            {
+                // All newer records will have just a single card set.
+                card = new MagicCardResponse(cardGenerationRecord.Card, cardGenerationRecord.Id);
+            }
+
             return new CardGenerationRecordResponse
             {
-                Id = cardGenerationRecord.Id,
                 // Pass the id onto each card, too.
-                Card = new MagicCardResponse(cardGenerationRecord.Card, cardGenerationRecord.Id),
+                Id = cardGenerationRecord.Id,
+                Card = card,
                 Rating = cardGenerationRecord.Rating,
             };
         }

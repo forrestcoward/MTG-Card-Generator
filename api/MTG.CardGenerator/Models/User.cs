@@ -28,6 +28,8 @@ namespace MTG.CardGenerator.Models
         public int AllowedFreeCardGenerationsPerDay { get; set; } = -1;
         [JsonProperty("isAdmin")]
         public bool IsAdmin { get; set; } = false;
+        [JsonProperty("openAIApiKey")]
+        public string OpenAIAPIKey { get; set; }
     }
 
     /// <summary>

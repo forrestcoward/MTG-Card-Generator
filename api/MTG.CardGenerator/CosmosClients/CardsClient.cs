@@ -60,6 +60,7 @@ namespace MTG.CardGenerator.CosmosClients
                 var queryDefinition = new QueryDefinitionWrapper(@$"
                     SELECT * FROM c
                     WHERE c.generationMetadata.imageModel = 'dall-e-3'
+                    AND c.card.imageUrl != ''
                     AND c.generationMetadata.model = 'gpt-4-1106-preview'
                     AND STARTSWITH(c.id, @param)")
                .WithParameter("@param", param);
@@ -99,7 +100,7 @@ namespace MTG.CardGenerator.CosmosClients
             return userCards;
         }
 
-        public async Task<CardGenerationRecord> GetMagicCard(string id)
+        public async Task<CardGenerationRecord> GetMagicCardRecord(string id)
         {
             return await GetDocument<CardGenerationRecord>(id);
         }
@@ -124,6 +125,30 @@ namespace MTG.CardGenerator.CosmosClients
                 operations.Add(PatchOperation.Set("/rating/averageScore", rating));
             }
 
+            await PatchDocument<CardGenerationRecord>(card.Id, card.Id, operations);
+        }
+
+        public async Task AddAlternativeImageId(CardGenerationRecord card, string alternativeImageId)
+        {
+            var operations = new List<PatchOperation>();
+            if (card.Card.AlternativeImageIds == null)
+            {
+                operations.Add(PatchOperation.Set($"/card/alternativeImageIds", new string[] { alternativeImageId }));
+            }
+            else
+            {
+                operations.Add(PatchOperation.Add("/card/alternativeImageIds/-", alternativeImageId));
+            }
+
+            await PatchDocument<CardGenerationRecord>(card.Id, card.Id, operations);
+        }
+
+        public async Task SetCardImageUrl(CardGenerationRecord card, string imageUrl)
+        {
+            var operations = new List<PatchOperation>
+            {
+                PatchOperation.Set($"/card/imageUrl", imageUrl)
+            };
             await PatchDocument<CardGenerationRecord>(card.Id, card.Id, operations);
         }
 

@@ -1,8 +1,8 @@
 import { BasicCard, CardGenerationRecord, CardRating, MagicCard } from "./Card";
-import { AuthenticationResult, InteractionRequiredAuthError, PublicClientApplication } from "@azure/msal-browser";
+import { AuthenticationResult, IPublicClientApplication, InteractionRequiredAuthError, PublicClientApplication } from "@azure/msal-browser";
 import { User } from "./User";
 
-export async function RetrieveMsalToken(msal: PublicClientApplication, scopes: string[]): Promise<AuthenticationResult | undefined> {
+export async function RetrieveMsalToken(msal: IPublicClientApplication, scopes: string[]): Promise<AuthenticationResult | undefined> {
   const account = msal.getAllAccounts()[0];
   if (!account) {
     return undefined;
@@ -46,11 +46,11 @@ function getApiUrl(apiName:string): string {
 }
 
 // Call an API that returns a CardGenerationRecord.
-async function GetCardAPICall(apiName:string, msal:PublicClientApplication, params?:Record<string, string>): Promise<CardGenerationRecord|undefined> {
+async function GetCardAPICall(apiName:string, msal:IPublicClientApplication, params?:Record<string, string>): Promise<CardGenerationRecord> {
   let url = getApiUrl(apiName);
   var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
 
-  let record:CardGenerationRecord | undefined = undefined
+  let record:CardGenerationRecord
   await HttpGet(url, token, params)
     .then(data => {
       record = JSON.parse(data);
@@ -60,11 +60,11 @@ async function GetCardAPICall(apiName:string, msal:PublicClientApplication, para
       throw error
     })
 
-    return record;
+    return record!;
 }
 
 // Call an API that retruns a CardGenerationRecord[].
-async function GetCardsAPICall(apiName:string, msal:PublicClientApplication): Promise<CardGenerationRecord[]> {
+async function GetCardsAPICall(apiName:string, msal:IPublicClientApplication): Promise<CardGenerationRecord[]> {
   let url = getApiUrl(apiName);
   var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
 
@@ -82,15 +82,15 @@ async function GetCardsAPICall(apiName:string, msal:PublicClientApplication): Pr
     return cardGenerationRecords;
 }
 
-export async function GetCardToRate(msal:PublicClientApplication): Promise<CardGenerationRecord|undefined> {
+export async function GetCardToRate(msal:IPublicClientApplication): Promise<CardGenerationRecord> {
   return GetCardAPICall('GetCardToRate', msal);
 }
 
-export async function GetCard(msal:PublicClientApplication, cardId:string): Promise<CardGenerationRecord|undefined> {
+export async function GetCard(msal:IPublicClientApplication, cardId:string): Promise<CardGenerationRecord> {
   return GetCardAPICall('GetMagicCard', msal, { "cardId": cardId });
 }
 
-export async function RateCard(cardId:string, rating:number, msal:PublicClientApplication): Promise<CardRating|undefined> {
+export async function RateCard(cardId:string, rating:number, msal:IPublicClientApplication): Promise<CardRating|undefined> {
   let url = getApiUrl('RateCard');
   var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
 
@@ -108,7 +108,7 @@ export async function RateCard(cardId:string, rating:number, msal:PublicClientAp
     return cardRating;
 }
 
-export async function GetUserInfo(msal:PublicClientApplication): Promise<User | undefined> {
+export async function GetUserInfo(msal:IPublicClientApplication): Promise<User> {
   let url = getApiUrl('GetUser');
   var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
 
@@ -123,8 +123,62 @@ export async function GetUserInfo(msal:PublicClientApplication): Promise<User | 
       throw error
     });
     
-    return user;
+    return user!;
 }
+
+export interface GenerateImageResponse {
+  imageUrl: string,
+  temporaryUrl: string,
+}
+
+export async function GenerateNewCardImage(imagePrompt: string, cardId: string, openAIApiKey:string, msal:PublicClientApplication): Promise<GenerateImageResponse> {
+  let url = getApiUrl('GenerateNewCardImage');
+  var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
+
+  const params: Record<string, string> = {
+    prompt: imagePrompt,
+    cardId: cardId,
+    openAIApiKey: openAIApiKey
+   };
+
+  let response:GenerateImageResponse = 
+  {
+    "imageUrl": "",
+    "temporaryUrl": ""
+  }
+
+  await HttpGet(url, token, params)
+    .then(imageUrls => {
+      response = JSON.parse(imageUrls);
+    })
+    .catch(error => {
+      console.error('There was an error generating an image:', error);
+      throw error
+    });
+    
+    return response;
+}
+
+export async function GetImagePrompt(card: MagicCard, msal:PublicClientApplication): Promise<string> {
+  let url = getApiUrl('GetImagePrompt');
+  var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
+
+  var body = JSON.stringify(card);
+  const params: Record<string, string> = { };
+
+  let prompt = '';
+  await MakeHttpCall("POST", url, body, params, token)
+    .then(response => {
+      prompt = JSON.parse(response).suggestedPrompt;
+    })
+    .catch(error => {
+      console.error('There was an error generating an image prompt:', error);
+      throw error
+    });
+    
+    return prompt;
+}
+
 
 export async function UploadImageToAzure(msal:PublicClientApplication, blob:Blob, cardId:string): Promise<string> {
   var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
@@ -133,23 +187,35 @@ export async function UploadImageToAzure(msal:PublicClientApplication, blob:Blob
   return JSON.parse(result).url
 }
 
-export async function GetTopCards(msal: PublicClientApplication): Promise<CardGenerationRecord[]> {
+export async function GetTopCards(msal: IPublicClientApplication): Promise<CardGenerationRecord[]> {
   return GetCardsAPICall('GetTopCards', msal);
 }
 
-export async function GetUserMagicCards(msal: PublicClientApplication): Promise<CardGenerationRecord[]> {
+export async function GetUserMagicCards(msal: IPublicClientApplication): Promise<CardGenerationRecord[]> {
   return GetCardsAPICall('GetMagicCards', msal);
 }
 
-export async function GenerateMagicCardRequest(userPrompt:string, model:string, includeExplanation:boolean, highQualityImages:boolean, extraCreative:boolean, openAIApiKey:string, msal:PublicClientApplication): Promise<MagicCard[]> {
+export async function GenerateMagicCardRequest(
+  userPrompt:string, 
+  model:string, 
+  imageModel:string,
+  includeExplanation:boolean, 
+  generateImagePrompt:boolean,
+  numCards:number,
+  extraCreative:boolean,
+  openAIApiKey:string,
+  msal:IPublicClientApplication): Promise<MagicCard[]> {
+
   let url = getApiUrl('GenerateMagicCard');
   var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
 
   const params: Record<string, string> = {
     userPrompt: userPrompt,
     model: model,
+    imageModel: imageModel,
+    numCards: numCards.toString(),
     includeExplanation: includeExplanation.toString(),
-    highQualityImage: highQualityImages.toString(),
+    generateImagePrompt: generateImagePrompt.toString(),
     extraCreative: extraCreative.toString()
   };
 
@@ -180,7 +246,7 @@ async function HttpGet(url: string, msalResult: AuthenticationResult | undefined
   return MakeHttpCall("GET", url, undefined, params, msalResult)
 }
 
-async function MakeHttpCall(method:string, url:string, body?:FormData, params?:Record<string, string>, msalResult?:AuthenticationResult): Promise<any> {
+async function MakeHttpCall(method:string, url:string, body?:any, params?:Record<string, string>, msalResult?:AuthenticationResult): Promise<any> {
   const encodedParams:Record<string,string> = {};
   if (params) {
     Object.keys(params).forEach((key) => {

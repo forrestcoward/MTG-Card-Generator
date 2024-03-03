@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using User = MTG.CardGenerator.Models.User;
@@ -25,6 +26,16 @@ namespace MTG.CardGenerator.CosmosClients
 
             User user = (await QueryCosmosDB<User>(queryDefinition.QueryDefinition)).FirstOrDefault();
             return user;
+        }
+
+        public async Task<ItemResponse<User>> SetUserOpenAIAPIKey(string userSubject, string openAIAPIkey)
+        {
+            var operations = new List<PatchOperation>
+            {
+                PatchOperation.Set("/openAIApiKey", openAIAPIkey),
+            };
+
+            return await PatchDocument<User>(userSubject, userSubject, operations);
         }
 
         public async Task<ItemResponse<User>> UserGeneratedCard(User user, string userSubject, int numberOfNewCards, double cardGenerationEstimatedCost, bool userSuppliedApiKey)
@@ -60,7 +71,6 @@ namespace MTG.CardGenerator.CosmosClients
 
             return await PatchDocument<User>(userSubject, userSubject, operations);
         }
-
 
         public async Task SetUserAsAdmin(string userSubject)
         {
