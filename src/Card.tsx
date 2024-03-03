@@ -7,9 +7,13 @@ import { saveAs } from 'file-saver';
 // @ts-ignore
 import whitePaintBrush from './card-backgrounds/paintbrush-white.png'
 import { toBlob } from 'html-to-image';
-import { UploadImageToAzure } from "./CallAPI";
+import { GenerateImage, UploadImageToAzure } from "./CallAPI";
 import { msalInstance } from "./Index";
 import ImageGenerationModal from "./ImageFlow";
+import { withTheme } from "@emotion/react";
+
+// @ts-ignore
+import loadingIcon from './card-backgrounds/staff.png'
 
 export interface BasicCard {
   name: string,
@@ -356,9 +360,15 @@ export class MagicCard {
     if (container == null) {
       return
     }
+
     const height = ((width * 3.6) / 2.5);
     container!.style.width  = `${width}px`;
     container!.style.height = `${height}px`;
+
+    const i : HTMLElement | null = document.getElementById(`card-image-flow-${this.id}`)
+    i!.style.width  = `${width}px`;
+    i!.style.height = `${height/2}px`;
+
     this.adjustFontSize();
   }
 
@@ -506,6 +516,8 @@ interface CardDisplayState {
   typeUpdate : string;
   manaCostUpdate: string;
   powerAndToughnessUpdate: string;
+  imageUrlUpdate: string;
+
   tryShowTemporaryImage: boolean;
   showCardMenu: boolean;
   showSizeAdjustmentButtons: boolean;
@@ -513,7 +525,9 @@ interface CardDisplayState {
   decreaseSizeAllowed: boolean;
   cardWidth: number;
 
+  imagePrompt: string;
   showImageFlow: boolean;
+  isImageLoading: boolean;
 }
 
 export class CardDisplay extends React.Component<CardDisplayProps, CardDisplayState> {
@@ -529,13 +543,17 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
       typeUpdate: props.card.typeLine,
       manaCostUpdate: props.card.manaCost,
       powerAndToughnessUpdate: props.card.pt,
+      imageUrlUpdate: props.card.imageUrl,
       tryShowTemporaryImage: true,
       showCardMenu: props.showCardMenu,
       increaseSizeAllowed: true,
       decreaseSizeAllowed: true,
       cardWidth: props.cardWidth,
       showSizeAdjustmentButtons: !isMobileDevice() || viewportWidth > 900,
+
+      imagePrompt:"A cat with blue eyes",
       showImageFlow: true,
+      isImageLoading: false,
     };
 
     this.handleCardNameUpdate = this.handleCardNameUpdate.bind(this);
@@ -543,6 +561,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     this.handleCardTypeUpdate = this.handleCardTypeUpdate.bind(this);
     this.handleCardManaCostUpdate = this.handleCardManaCostUpdate.bind(this);
     this.handleCardPowerAndToughnessUpdate = this.handleCardPowerAndToughnessUpdate.bind(this);
+    this.handleImagePromptUpdate = this.handleImagePromptUpdate.bind(this);
   }
 
   componentDidUpdate(prevProps: Readonly<CardDisplayProps>, prevState: Readonly<CardDisplayState>, snapshot?: any): void {
@@ -556,6 +575,10 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
 
   componentDidMount(): void {
     this.state.card.adjustFontSize()
+  }
+
+  handleImagePromptUpdate(event: React.ChangeEvent<HTMLInputElement>) {
+    this.setState({ imagePrompt: event.target.value });
   }
 
   handleCardNameUpdate(event: React.ChangeEvent<HTMLInputElement>) {
@@ -601,6 +624,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     updatedCard.typeLine = this.state.typeUpdate
     updatedCard.manaCost = this.state.manaCostUpdate
     updatedCard.pt = this.state.powerAndToughnessUpdate
+    updatedCard.imageUrl = this.state.imageUrlUpdate
     this.setState({ editMode: !this.state.editMode, card: updatedCard })
   }
 
@@ -640,6 +664,22 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     var newWidth = this.state.cardWidth - decrease
     this.state.card.adjustCardSize(newWidth)
     this.updateSizeToggles(newWidth)
+  }
+
+  generateNewImage() {
+    this.setState({ isImageLoading: true })
+    GenerateImage(this.state.imagePrompt, msalInstance).then(url => {
+      var updatedCard = MagicCard.clone(this.state.card, true)
+      updatedCard.imageUrl = url
+      updatedCard.temporaryImageUrl = url
+      this.setState({ card: updatedCard, imageUrlUpdate: url, isImageLoading:false })
+    }).catch((error: Error) => {
+      this.setState({ isImageLoading: false })
+    });
+  }
+
+  getLoadingClassName() : string{
+    return this.state.isImageLoading ? "loadingAnimation loadingIcon" : "loadingIcon";
   }
 
   private updateSizeToggles(newWidth: number) {
@@ -725,123 +765,142 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     const height = ((this.props.cardWidth * 3.6) / 2.5);
 
     let fullCard = (
-      <div>
-        <div id={`card-${card.id}`} className="card-container" style={{width: `${this.props.cardWidth}px`, height: `${height}px`}}>
-          <div id={`card-background-${card.id}`} className={card.cardDivClassName}></div>
-            <div className="card-frame">
-              <div id={`title-container-${card.id}`} className={card.cardFrameHeaderClassName}>
-                <div id={`name-${card.id}`} style={{alignSelf:"center"}} className="name name-type-size">
-                  {!this.state.editMode ?
-                    <div>{card.name}</div> :
-                    <input className="card-edit-name" type="text" value={this.state.nameUpdate} onChange={this.handleCardNameUpdate} />
-                  }
-                </div>
-                {!this.state.editMode ?
-                    <div id={`mana-${card.id}`} className="mana-symbols">
-                      {card.manaCostTokens.map((manaCostToken, i) => (
-                        <i key={card.id + "-manaToken-"+ i} className={MagicCard.getManaClassNameForTitle(manaCostToken) + " manaCost " + `manaCost-${card.id}`} id="mana-icon"></i>
-                      ))}
-                    </div> :
-                    <div className="card-edit-manaCost-container">
-                      <input className="card-edit-manaCost" type="text" value={this.state.manaCostUpdate} onChange={this.handleCardManaCostUpdate} />
-                    </div>
-                }
-              </div>
-              <div className={card.cardFrameArtClassName}>
-              {this.state.tryShowTemporaryImage && card.temporaryImageUrl ?
-                  <Image onLoad={() => this.state.card.adjustFontSize()} preview={this.props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.temporaryImageUrl ? card.temporaryImageUrl : card.imageUrl} /> :
-                  <Image onLoad={() => this.state.card.adjustFontSize()} preview={this.props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.imageUrl} />
-                }
-              </div>
-              <div id={`type-container-${card.id}`} className={card.cardFrameTypeLineClassName}>
-                 {!this.state.editMode ?
-                    <h1 id={`type-${card.id}`} className="type name-type-size">{card.typeLine}</h1> :
-                    <input className="card-edit-type" type="text" value={this.state.typeUpdate} onChange={this.handleCardTypeUpdate} />
-                  }
-                <div id={`set-${card.id}`} className="mana-symbols">
-                  <i className="ms ms-dfc-ignite" id="mana-icon"></i>
-                </div>
-              </div>
-              <div className={card.cardFrameTextBoxClassName}>
-                <div className={card.cardFrameContentClassName}>
-                  <div className="description ftb-inner-margin">
+      <div style={{display:"flex"}}>
+        <div>
+          <div id={`card-${card.id}`} className="card-container" style={{width: `${this.props.cardWidth}px`, height: `${height}px`}}>
+            <div id={`card-background-${card.id}`} className={card.cardDivClassName}></div>
+              <div className="card-frame">
+                <div id={`title-container-${card.id}`} className={card.cardFrameHeaderClassName}>
+                  <div id={`name-${card.id}`} style={{alignSelf:"center"}} className="name name-type-size">
                     {!this.state.editMode ?
-                      <div>
-                        {card.textDisplay.map((line, i) => (
-                          <p key={card.id + "-text-" + i} dangerouslySetInnerHTML={{ __html: line }}></p>
-                        ))}
-                      </div> 
-                      :
-                      <textarea className="card-edit-text" value={this.state.oracleTextUpdate} rows={oracleEditTextAreaRows} onChange={this.handleCardOracleTextUpdate} />
+                      <div>{card.name}</div> :
+                      <input className="card-edit-name" type="text" value={this.state.nameUpdate} onChange={this.handleCardNameUpdate} />
                     }
                   </div>
-                  <p className="description">
-                  </p>
-                  <p className="flavour-text">
-                    {card.flavorText}
-                  </p>
-                  {card.pt &&
-                    <div className="power-and-toughness-frame">
-                      <div id={`pt-${card.id}`} className="power-and-toughness power-and-toughness-size">
-                        {!this.state.editMode ?
-                          <div>{card.pt}</div> :
-                          <input className="card-edit-pt" type="text" value={this.state.powerAndToughnessUpdate} onChange={this.handleCardPowerAndToughnessUpdate} />
-                        }
+                  {!this.state.editMode ?
+                      <div id={`mana-${card.id}`} className="mana-symbols">
+                        {card.manaCostTokens.map((manaCostToken, i) => (
+                          <i key={card.id + "-manaToken-"+ i} className={MagicCard.getManaClassNameForTitle(manaCostToken) + " manaCost " + `manaCost-${card.id}`} id="mana-icon"></i>
+                        ))}
+                      </div> :
+                      <div className="card-edit-manaCost-container">
+                        <input className="card-edit-manaCost" type="text" value={this.state.manaCostUpdate} onChange={this.handleCardManaCostUpdate} />
                       </div>
-                    </div>
                   }
+                </div>
+                <div className={card.cardFrameArtClassName}>
+                  {this.state.tryShowTemporaryImage && card.temporaryImageUrl ?
+                    <Image onLoad={() => this.state.card.adjustFontSize()} preview={this.props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.temporaryImageUrl ? card.temporaryImageUrl : card.imageUrl} /> :
+                    <Image onLoad={() => this.state.card.adjustFontSize()} preview={this.props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.imageUrl} />
+                  }
+                </div>
+                <div id={`type-container-${card.id}`} className={card.cardFrameTypeLineClassName}>
+                  {!this.state.editMode ?
+                      <h1 id={`type-${card.id}`} className="type name-type-size">{card.typeLine}</h1> :
+                      <input className="card-edit-type" type="text" value={this.state.typeUpdate} onChange={this.handleCardTypeUpdate} />
+                    }
+                  <div id={`set-${card.id}`} className="mana-symbols">
+                    <i className="ms ms-dfc-ignite" id="mana-icon"></i>
                   </div>
-              </div>
-              <div id={`frame-bottom-${card.id}`} className="frame-bottom-info inner-margin">
-                <div className="fbi-left">
-                  <p>{card.setNumberDisplay} {card.rarityDisplay}</p>
-                  <p>OpenAI &#x2022; <img className="paintbrush" src={whitePaintBrush} alt="paintbrush icon" />Custom Magic</p>
                 </div>
-                <div className="fbi-center" onClick={(e) => { this.updateEditMode()}}></div>
-                <div className="fbi-right">
-                    &#x99; &amp; &#169; 2023 Chat GPT Turbo
+                <div className={card.cardFrameTextBoxClassName}>
+                  <div className={card.cardFrameContentClassName}>
+                    <div className="description ftb-inner-margin">
+                      {!this.state.editMode ?
+                        <div>
+                          {card.textDisplay.map((line, i) => (
+                            <p key={card.id + "-text-" + i} dangerouslySetInnerHTML={{ __html: line }}></p>
+                          ))}
+                        </div> 
+                        :
+                        <textarea className="card-edit-text" value={this.state.oracleTextUpdate} rows={oracleEditTextAreaRows} onChange={this.handleCardOracleTextUpdate} />
+                      }
+                    </div>
+                    <p className="description">
+                    </p>
+                    <p className="flavour-text">
+                      {card.flavorText}
+                    </p>
+                    {card.pt &&
+                      <div className="power-and-toughness-frame">
+                        <div id={`pt-${card.id}`} className="power-and-toughness power-and-toughness-size">
+                          {!this.state.editMode ?
+                            <div>{card.pt}</div> :
+                            <input className="card-edit-pt" type="text" value={this.state.powerAndToughnessUpdate} onChange={this.handleCardPowerAndToughnessUpdate} />
+                          }
+                        </div>
+                      </div>
+                    }
+                    </div>
+                </div>
+                <div id={`frame-bottom-${card.id}`} className="frame-bottom-info inner-margin">
+                  <div className="fbi-left">
+                    <p>{card.setNumberDisplay} {card.rarityDisplay}</p>
+                    <p>OpenAI &#x2022; <img className="paintbrush" src={whitePaintBrush} alt="paintbrush icon" />Custom Magic</p>
+                  </div>
+                  <div className="fbi-center" onClick={(e) => { this.updateEditMode()}}></div>
+                  <div className="fbi-right">
+                      &#x99; &amp; &#169; 2023 Chat GPT Turbo
+                  </div>
                 </div>
               </div>
-            </div>
+          </div>
+          { this.state.showCardMenu &&
+          <div className="card-menu">
+            <Tooltip title={<div><b>Prompt: </b>{this.state.card.userPrompt}</div>} placement="left">
+              <QuestionCircleOutlined style={{fontSize: cardMenuIconFontSize, marginLeft: "3px"}} />
+            </Tooltip>
+            { card.explanation ?
+            <Tooltip title={
+              <div>
+                <b>About This Card</b>
+                <br/>
+                <br/>
+                {card.explanation}
+                <br/>
+                <br/>
+                {card.funnyExplanation}
+              </div>
+            } overlayInnerStyle={{width: '320px', backgroundColor:'rgba(0, 0, 0, 0.93)' }} placement="left" >
+              <InfoCircleOutlined style={{fontSize: cardMenuIconFontSize, marginLeft: "3px"}} />
+            </Tooltip>
+            : null
+            }
+            { this.state.showSizeAdjustmentButtons &&
+            <Button type="text" size="middle" shape="circle" disabled={!this.state.increaseSizeAllowed}>
+                <ZoomInOutlined onClick={() => this.increaseCardSize(30)} style={{fontSize: cardMenuIconFontSize, marginRight: "-4px"}} />
+            </Button>
+            }
+            { this.state.showSizeAdjustmentButtons &&
+            <Button type="text" size="middle" shape="circle" disabled={!this.state.decreaseSizeAllowed}>
+                <ZoomOutOutlined onClick={() => this.decreaseCardSize(30)} style={{fontSize: cardMenuIconFontSize, marginRight: "-7px"}} />
+            </Button>
+            }
+            <Dropdown menu={{items: menuItems}}>
+              <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
+                <CaretDownFilled style={{fontSize: cardMenuIconFontSize}} />
+              </a>
+            </Dropdown>
+          </div>
+          }
         </div>
-        { this.state.showCardMenu &&
-        <div className="card-menu">
-          <Tooltip title={<div><b>Prompt: </b>{this.state.card.userPrompt}</div>} placement="left">
-            <QuestionCircleOutlined style={{fontSize: cardMenuIconFontSize, marginLeft: "3px"}} />
-          </Tooltip>
-          { card.explanation ?
-          <Tooltip title={
-            <div>
-              <b>About This Card</b>
-              <br/>
-              <br/>
-              {card.explanation}
-              <br/>
-              <br/>
-              {card.funnyExplanation}
-            </div>
-          } overlayInnerStyle={{width: '320px', backgroundColor:'rgba(0, 0, 0, 0.93)' }} placement="left" >
-            <InfoCircleOutlined style={{fontSize: cardMenuIconFontSize, marginLeft: "3px"}} />
-          </Tooltip>
-          : null
-          }
-          { this.state.showSizeAdjustmentButtons &&
-          <Button type="text" size="middle" shape="circle" disabled={!this.state.increaseSizeAllowed}>
-              <ZoomInOutlined onClick={() => this.increaseCardSize(30)} style={{fontSize: cardMenuIconFontSize, marginRight: "-4px"}} />
-          </Button>
-          }
-          { this.state.showSizeAdjustmentButtons &&
-          <Button type="text" size="middle" shape="circle" disabled={!this.state.decreaseSizeAllowed}>
-              <ZoomOutOutlined onClick={() => this.decreaseCardSize(30)} style={{fontSize: cardMenuIconFontSize, marginRight: "-7px"}} />
-          </Button>
-          }
-          <Dropdown menu={{items: menuItems}}>
-            <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
-              <CaretDownFilled style={{fontSize: cardMenuIconFontSize}} />
-            </a>
-          </Dropdown>
+        <div id={`card-image-flow-${card.id}`} className="card-image-update-container" style={{width: `${this.props.cardWidth}px`, height: `${height/2}px`, display:"flex", alignItems:"center", flexDirection:"column", justifyContent:"center" }}>
+          <p style={{color:"white"}}>Image Prompt</p>
+          <input disabled={this.state.isImageLoading} type="text" onChange={this.handleImagePromptUpdate} value={this.state.imagePrompt} style={{width:"90%", height:"60%", marginTop:"10px"}} />
+
+          <table>
+              <tbody>
+                <tr>
+                  <td>
+                  <button disabled={this.state.isImageLoading} style={{marginTop:"10px"}} onClick={() => this.generateNewImage()}>Generate Image</button>
+                  </td>
+                  <td>
+                    <img className={this.getLoadingClassName()} src={loadingIcon} />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
         </div>
-        }
       </div>
     )
 

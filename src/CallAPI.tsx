@@ -126,6 +126,27 @@ export async function GetUserInfo(msal:PublicClientApplication): Promise<User | 
     return user;
 }
 
+export async function GenerateImage(imagePrompt: string, msal:PublicClientApplication): Promise<string> {
+  let url = getApiUrl('GenerateImage');
+  var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
+
+  const params: Record<string, string> = {
+    userPrompt: imagePrompt
+   };
+
+  let urlReturn = '';
+  await HttpGet(url, token, params)
+    .then(imageUrl => {
+      urlReturn = JSON.parse(imageUrl)[0];
+    })
+    .catch(error => {
+      console.error('There was an error generating an image:', error);
+      throw error
+    });
+    
+    return urlReturn;
+}
+
 export async function UploadImageToAzure(msal:PublicClientApplication, blob:Blob, cardId:string): Promise<string> {
   var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
   let url = getApiUrl('UploadCardImage')
