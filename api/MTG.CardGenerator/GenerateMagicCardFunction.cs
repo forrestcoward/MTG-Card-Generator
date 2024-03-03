@@ -303,17 +303,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 // Parse the cards. If multiple were generated, only process and image for and return one the first one.
                 var cards = openAICards.Select(x => MagicCardParser.Parse(x).Card).ToArray().Take(1).ToArray();
 
-                var imageModel = Constants.Dalle2ModelName;
-                if (new Random().Next(1, 4) == 1)
-                {
-                    // 1/3 of the time use Dalle3.
-                    imageModel = Constants.Dalle3ModelName;
-                }
-
-                if (highQualityImage)
-                {
-                    imageModel = Constants.Dalle3ModelName;
-                }
+                var imageModel = highQualityImage ? Constants.Dalle3ModelName : Constants.Dalle2ModelName;
 
                 ImageGenerator.ImageGenerationOptions imageOptions = null;
 
