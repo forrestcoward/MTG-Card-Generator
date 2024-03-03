@@ -677,3 +677,23 @@ p {
 .card-rating .ant-rate-star {
   font-size: 55px;
 }
+
+.card-editor-layout {
+  display: flex;
+  align-items: start;
+  gap: 20px; /* Adjust the gap between the card display and the image generation button/modal as needed */
+}
+
+.card-display, .card-placeholder {
+  width: 300px; /* Adjust based on your card size */
+  height: 420px; /* Adjust based on your card size */
+  border: 1px solid #ccc; /* Optional, for visualization */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.generate-image-btn {
+  align-self: center;
+}

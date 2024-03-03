@@ -164,7 +164,8 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
       model = modelSetting.id
     }
 
-    GenerateMagicCardRequest(userPrompt, model, this.showCardExplanations(), this.highQualityImages(), this.extraCreative(), this.state.userOpenAIKey, this.props.msalInstance).then(cards => {
+    const numCards = 3
+    GenerateMagicCardRequest(userPrompt, model, this.showCardExplanations(), this.highQualityImages(), numCards, this.extraCreative(), this.state.userOpenAIKey, this.props.msalInstance).then(cards => {
       this.setState({
         response: JSON.stringify(cards),
         cards: [...cards, ...this.state.cards],

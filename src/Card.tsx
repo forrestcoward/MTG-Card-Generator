@@ -9,6 +9,7 @@ import whitePaintBrush from './card-backgrounds/paintbrush-white.png'
 import { toBlob } from 'html-to-image';
 import { UploadImageToAzure } from "./CallAPI";
 import { msalInstance } from "./Index";
+import ImageGenerationModal from "./ImageFlow";
 
 export interface BasicCard {
   name: string,
@@ -511,6 +512,8 @@ interface CardDisplayState {
   increaseSizeAllowed: boolean;
   decreaseSizeAllowed: boolean;
   cardWidth: number;
+
+  showImageFlow: boolean;
 }
 
 export class CardDisplay extends React.Component<CardDisplayProps, CardDisplayState> {
@@ -532,6 +535,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
       decreaseSizeAllowed: true,
       cardWidth: props.cardWidth,
       showSizeAdjustmentButtons: !isMobileDevice() || viewportWidth > 900,
+      showImageFlow: true,
     };
 
     this.handleCardNameUpdate = this.handleCardNameUpdate.bind(this);
@@ -573,6 +577,19 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
   handleCardPowerAndToughnessUpdate(event: React.ChangeEvent<HTMLInputElement>) {
     this.setState({ powerAndToughnessUpdate: event.target.value.trim() });
   }
+
+  handleOpenModal = () => {
+    this.setState({ showImageFlow: true });
+  };
+
+  handleCloseModal = () => {
+    this.setState({ showImageFlow: true });
+  };
+
+  handleAcceptImage = (imageUrl: string) => {
+    //setCardImage(imageUrl);
+    //setShowModal(false); // Close the modal after image acceptance
+  };
 
   updateEditMode() {
     if (!this.props.allowEdits)
@@ -732,9 +749,9 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
               </div>
               <div className={card.cardFrameArtClassName}>
               {this.state.tryShowTemporaryImage && card.temporaryImageUrl ?
-                <Image onLoad={() => this.state.card.adjustFontSize()} preview={this.props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.temporaryImageUrl ? card.temporaryImageUrl : card.imageUrl} /> :
-                <Image onLoad={() => this.state.card.adjustFontSize()} preview={this.props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.imageUrl} />
-              }
+                  <Image onLoad={() => this.state.card.adjustFontSize()} preview={this.props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.temporaryImageUrl ? card.temporaryImageUrl : card.imageUrl} /> :
+                  <Image onLoad={() => this.state.card.adjustFontSize()} preview={this.props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.imageUrl} />
+                }
               </div>
               <div id={`type-container-${card.id}`} className={card.cardFrameTypeLineClassName}>
                  {!this.state.editMode ?
