@@ -56,14 +56,13 @@ body* > {
 }
 
 .card-image-update-container {
-  contain: size layout;
-  border: 1px solid black;
   margin: 0 auto;
   margin-top: 60px;
   border-radius: 15px;
   box-sizing: border-box;
   background: #342c2e;
   margin-left: 5px;
+  height: fit-content;
 }
 
 .card-background {

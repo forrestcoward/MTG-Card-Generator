@@ -70,7 +70,7 @@ export class MyCards extends React.Component<MyCardsProps, MyCardsState> {
         {
           this.state.cards.map(card => (
             <div className="cardContainer" key={`card-container-${card.id}`}>
-              <CardDisplay key={`card-display-${card.id}`} card={card} showCardMenu={true} cardWidth={this.state.cardWidth} allowImagePreview={true} allowEdits={true}/>
+              <CardDisplay key={`card-display-${card.id}`} card={card} showCardMenu={true} cardWidth={this.state.cardWidth} allowImagePreview={true} allowEdits={true} allowImageUpdate={false} />
             </div>
           ))
         }

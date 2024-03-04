@@ -1,6 +1,6 @@
 import React from "react";
-import { Image, Dropdown, Tooltip, Button } from 'antd';
-import { CaretDownFilled, CloudDownloadOutlined, CopyOutlined, EditOutlined, InfoCircleOutlined, QuestionCircleOutlined, SaveFilled, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons';
+import { Image, Dropdown, Tooltip, Button, List, Avatar, Space } from 'antd';
+import { CaretDownFilled, CloudDownloadOutlined, CopyOutlined, EditOutlined, FileImageOutlined, InfoCircleOutlined, LikeOutlined, MessageOutlined, QuestionCircleOutlined, SaveFilled, StarOutlined, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons';
 import { adjustTextHeightBasedOnChildrenClientOffsetHeight, adjustTextHeightBasedOnClientHeight, copyTextToClipboard, getBaseUrl, getChildrenClientOffsetHeight, getRandomInt, isMobileDevice } from "./Utility";
 import { saveAs } from 'file-saver';
 
@@ -366,8 +366,8 @@ export class MagicCard {
     container!.style.height = `${height}px`;
 
     const i : HTMLElement | null = document.getElementById(`card-image-flow-${this.id}`)
-    i!.style.width  = `${width}px`;
-    i!.style.height = `${height/2}px`;
+    //i!.style.width  = `${width}px`;
+    //i!.style.height = `${height/2}px`;
 
     this.adjustFontSize();
   }
@@ -501,10 +501,17 @@ export class MagicCard {
 }
 
 interface CardDisplayProps {
+  // The underlying card.
   card: MagicCard;
+  // The initial card width.
   cardWidth: number;
+  // Display the card menu (resize, download etc.)
   showCardMenu: boolean;
+  // Allow user to regenerate card image with custom prompts.
+  allowImageUpdate: boolean;
+  // Allow the user to click on the card image to show a zoomed preview.
   allowImagePreview: boolean;
+  // Allow the user to update the card text through clicking the holofoil or using the menu.
   allowEdits: boolean;
 }
 
@@ -526,15 +533,23 @@ interface CardDisplayState {
   cardWidth: number;
 
   imagePrompt: string;
-  showImageFlow: boolean;
+  showImageUpdateDialog: boolean;
+  updateImageErrorMessage: string;
   isImageLoading: boolean;
+  availableImageUrls: string[];
 }
 
 export class CardDisplay extends React.Component<CardDisplayProps, CardDisplayState> {
 
   constructor(props: CardDisplayProps) {
     super(props);
+
     const viewportWidth = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
+    var currentImage = this.props.card.imageUrl
+    if (!currentImage) {
+      currentImage = this.props.card.temporaryImageUrl
+    }
+
     this.state = {
       card: props.card,
       editMode: false,
@@ -551,9 +566,11 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
       cardWidth: props.cardWidth,
       showSizeAdjustmentButtons: !isMobileDevice() || viewportWidth > 900,
 
-      imagePrompt:"A cat with blue eyes",
-      showImageFlow: true,
+      imagePrompt: "A cat with blue eyes",
+      updateImageErrorMessage: "",
+      showImageUpdateDialog: false,
       isImageLoading: false,
+      availableImageUrls: [currentImage],
     };
 
     this.handleCardNameUpdate = this.handleCardNameUpdate.bind(this);
@@ -562,6 +579,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     this.handleCardManaCostUpdate = this.handleCardManaCostUpdate.bind(this);
     this.handleCardPowerAndToughnessUpdate = this.handleCardPowerAndToughnessUpdate.bind(this);
     this.handleImagePromptUpdate = this.handleImagePromptUpdate.bind(this);
+    this.updateImageUrl = this.updateImageUrl.bind(this);
   }
 
   componentDidUpdate(prevProps: Readonly<CardDisplayProps>, prevState: Readonly<CardDisplayState>, snapshot?: any): void {
@@ -577,7 +595,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     this.state.card.adjustFontSize()
   }
 
-  handleImagePromptUpdate(event: React.ChangeEvent<HTMLInputElement>) {
+  handleImagePromptUpdate(event: React.ChangeEvent<HTMLTextAreaElement>) {
     this.setState({ imagePrompt: event.target.value });
   }
 
@@ -600,19 +618,6 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
   handleCardPowerAndToughnessUpdate(event: React.ChangeEvent<HTMLInputElement>) {
     this.setState({ powerAndToughnessUpdate: event.target.value.trim() });
   }
-
-  handleOpenModal = () => {
-    this.setState({ showImageFlow: true });
-  };
-
-  handleCloseModal = () => {
-    this.setState({ showImageFlow: true });
-  };
-
-  handleAcceptImage = (imageUrl: string) => {
-    //setCardImage(imageUrl);
-    //setShowModal(false); // Close the modal after image acceptance
-  };
 
   updateEditMode() {
     if (!this.props.allowEdits)
@@ -666,15 +671,29 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     this.updateSizeToggles(newWidth)
   }
 
+  updateImageUrl(url: string) {
+    var updatedCard = MagicCard.clone(this.state.card, true)
+    updatedCard.imageUrl = url
+    updatedCard.temporaryImageUrl = url
+    //this.state.availableImageUrls.push(url)
+    this.setState({ card: updatedCard, imageUrlUpdate: url })
+  }
+
   generateNewImage() {
-    this.setState({ isImageLoading: true })
+    this.setState({ isImageLoading: true, updateImageErrorMessage: "" })
     GenerateImage(this.state.imagePrompt, msalInstance).then(url => {
       var updatedCard = MagicCard.clone(this.state.card, true)
       updatedCard.imageUrl = url
       updatedCard.temporaryImageUrl = url
-      this.setState({ card: updatedCard, imageUrlUpdate: url, isImageLoading:false })
+      this.state.availableImageUrls.push(url)
+      this.setState({ card: updatedCard, imageUrlUpdate: url, isImageLoading:false, updateImageErrorMessage: "", availableImageUrls: this.state.availableImageUrls })
     }).catch((error: Error) => {
-      this.setState({ isImageLoading: false })
+      let msg = error.message;
+      if (msg.includes("This request has been blocked by our content filters") ||
+      msg.includes("Your request was rejected as a result of our safety system")) {
+        msg = "Your prompt was deemed inappropriate and blocked by automated safety systems."
+      }
+      this.setState({ isImageLoading: false, updateImageErrorMessage: msg })
     });
   }
 
@@ -738,11 +757,11 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
         label: (
           <Tooltip title="Modify the card text" placement='left'>
             <EditOutlined style={optionsMenuIconStyle} />
-            <span style={optionsMenuItemStyle}>Edit</span>
+            <span style={optionsMenuItemStyle}>Edit Text</span>
           </Tooltip>
         ),
         onClick: this.updateEditMode.bind(this)
-      },
+      }
       ];
 
     const copyLinkMenuItem = { 
@@ -758,8 +777,26 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
       }
     }
 
+    const updateImageItem = {
+      key: '5',
+      label: (
+        <Tooltip title="Regenerate the card image" placement='left'>
+          <FileImageOutlined style={optionsMenuIconStyle} />
+          <span style={optionsMenuItemStyle}>Edit Image</span>
+        </Tooltip>
+      ),
+      onClick: async () => {
+        this.setState({showImageUpdateDialog: !this.state.showImageUpdateDialog})
+      }
+    }
+
     if (card.internalId) {
       menuItems.push(copyLinkMenuItem)
+    }
+
+    if (this.props.allowImageUpdate)
+    {
+      menuItems.push(updateImageItem)
     }
 
     const height = ((this.props.cardWidth * 3.6) / 2.5);
@@ -884,23 +921,55 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
           </div>
           }
         </div>
-        <div id={`card-image-flow-${card.id}`} className="card-image-update-container" style={{width: `${this.props.cardWidth}px`, height: `${height/2}px`, display:"flex", alignItems:"center", flexDirection:"column", justifyContent:"center" }}>
-          <p style={{color:"white"}}>Image Prompt</p>
-          <input disabled={this.state.isImageLoading} type="text" onChange={this.handleImagePromptUpdate} value={this.state.imagePrompt} style={{width:"90%", height:"60%", marginTop:"10px"}} />
+        { (this.props.allowImageUpdate && this.state.showImageUpdateDialog) &&
+          <div id={`card-image-flow-${card.id}`} className="card-image-update-container" style={{width: `${this.props.cardWidth-100}px`, display:"flex", alignItems:"center", flexDirection:"column" }}>
+            <h4 style={{color: "white"}}>Image Editor</h4>
+            <p style={{color:"white"}}>Prompt</p>
 
-          <table>
+            <table style={{marginLeft:"10px"}}>
               <tbody>
                 <tr>
                   <td>
-                  <button disabled={this.state.isImageLoading} style={{marginTop:"10px"}} onClick={() => this.generateNewImage()}>Generate Image</button>
+                    <textarea disabled={this.state.isImageLoading} onChange={this.handleImagePromptUpdate} value={this.state.imagePrompt} 
+                    style={{height:"100px", resize:"none"}} />
                   </td>
                   <td>
-                    <img className={this.getLoadingClassName()} src={loadingIcon} />
+
                   </td>
                 </tr>
               </tbody>
             </table>
-        </div>
+
+
+            <table>
+                <tbody>
+                  <tr>
+                    <td>
+                    <button disabled={this.state.isImageLoading} style={{marginTop:"10px", borderRadius:"15px"}} onClick={() => this.generateNewImage()}>Generate Image</button>
+                    </td>
+                    <td>
+                      <img className={this.getLoadingClassName()} src={loadingIcon} />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <div style={{marginLeft:"10px"}}>
+                <h3 style={{ color: 'red' }}>{this.state.updateImageErrorMessage}</h3>
+              </div>
+              <div>
+              <div style={{marginLeft:"10px", marginRight:"10px", marginBottom:"10px", display:"flex", flexWrap:"wrap", justifyContent:"center"}}>
+              {
+                this.state.availableImageUrls.map(imageUrl => (
+                  <div style={{margin:"3px"}}>
+                  <Image height={"90px"} width={"90px"} preview={false} src={imageUrl} onClick={() => {this.updateImageUrl(imageUrl)}} />
+                  </div>
+                ))
+              }
+              </div>
+              </div>
+          </div>
+
+        }
       </div>
     )
 

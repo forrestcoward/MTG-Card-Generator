@@ -62,7 +62,7 @@ export class CardPreview extends React.Component<CardPreviewProps, CardPreviewSt
     return (
       <div>
         <Tooltip trigger={["click", "hover", "contextMenu"]} placement="left" mouseEnterDelay={0} mouseLeaveDelay={0} overlayClassName="antd-no-style-tooltip" overlayInnerStyle={{width: `${this.props.cardWidth-20}px`, marginLeft: "20px"}}
-        title={<CardDisplay card={this.state.tooltipCard} cardWidth={this.props.cardWidth-20} showCardMenu={false} allowImagePreview={false} allowEdits={false} />}>
+        title={<CardDisplay card={this.state.tooltipCard} cardWidth={this.props.cardWidth-20} showCardMenu={false} allowImagePreview={false} allowEdits={false} allowImageUpdate={false} />}>
           <div id={`title-container-${card.id}`} className={card.cardFrameHeaderClassName} style={{padding: "0px", marginTop: "0px", height:"28px"}} >
             <div id={`name-${card.id}`} style={{alignSelf:"center"}} className="name name-type-size">
               <div>{card.name}</div>

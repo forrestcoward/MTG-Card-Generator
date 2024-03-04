@@ -15,7 +15,7 @@ namespace MTG.CardGenerator
     public static class GenerateImageFunction
     {
         [FunctionName("GenerateImage")]
-        [FunctionAuthorize]
+        [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
         public static Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "GET", Route = null)] HttpRequest req, ILogger log)
         {
             try
@@ -24,7 +24,7 @@ namespace MTG.CardGenerator
                 log?.LogInformation($"User prompt: {userPrompt.Replace("\n", "")}");
                 var apiKey = Environment.GetEnvironmentVariable(Constants.OpenAIApiKey);
                 var stopwatch = Stopwatch.StartNew();
-                var url = ImageGenerator.GenerateImage(userPrompt, Constants.Dalle3ModelName, StaticValues.ImageStatics.Size.Size1024, apiKey, log).Result;
+                var url = ImageGenerator.GenerateImage(userPrompt, Constants.Dalle2ModelName, StaticValues.ImageStatics.Size.Size1024, apiKey, log).Result;
                 stopwatch.Stop();
                 log.LogMetric("CreateImageAsync_DurationSeconds", stopwatch.Elapsed.TotalSeconds);
 

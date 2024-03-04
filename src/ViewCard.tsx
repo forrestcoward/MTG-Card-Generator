@@ -44,7 +44,7 @@ export class ViewCard extends React.Component<ViewCardProps, ViewCardState> {
       <div>
         { this.state.card &&
           <div className="cardsContainer">
-            <CardDisplay card={new MagicCard(this.state.card.card)} allowEdits={true} allowImagePreview={true} cardWidth={this.state.cardWidth} showCardMenu={true} />
+            <CardDisplay card={new MagicCard(this.state.card.card)} allowEdits={true} allowImagePreview={true} cardWidth={this.state.cardWidth} showCardMenu={true} allowImageUpdate={false} />
           </div>
         }
       </div>

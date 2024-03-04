@@ -163,7 +163,14 @@ export class CardRating extends React.Component<CardRatingProps, CardRatingState
               <tr>
                 <td>
                   <div className="cardContainer" key={`card-rate-container-${this.state.card.id}`} style={{marginTop:"15px"}}>
-                    <CardDisplay key={`card-rate-display-${this.state.card.id}`} card={this.state.card} showCardMenu={false} cardWidth={this.state.cardWidth} allowImagePreview={false} allowEdits={false} />
+                    <CardDisplay 
+                      key={`card-rate-display-${this.state.card.id}`} 
+                      card={this.state.card} 
+                      showCardMenu={false} 
+                      cardWidth={this.state.cardWidth} 
+                      allowImagePreview={false} 
+                      allowEdits={false} 
+                      allowImageUpdate={false} />
                   </div>
                 </td>
               </tr>
