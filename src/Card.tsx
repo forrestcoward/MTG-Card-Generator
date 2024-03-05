@@ -1,19 +1,18 @@
 import React from "react";
-import { Image, Dropdown, Tooltip, Button, List, Avatar, Space } from 'antd';
-import { CaretDownFilled, CloudDownloadOutlined, CopyOutlined, EditOutlined, FileImageOutlined, InfoCircleOutlined, LikeOutlined, MessageOutlined, QuestionCircleOutlined, SaveFilled, StarOutlined, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons';
+import { Image, Dropdown, Tooltip, Button } from 'antd';
+import { AimOutlined, BulbOutlined, CaretDownFilled, CaretRightOutlined, CloseOutlined, CloudDownloadOutlined, CopyOutlined, DownloadOutlined, EditOutlined, FileImageOutlined, InfoCircleOutlined, LikeOutlined, MessageOutlined, QuestionCircleOutlined, RightCircleOutlined, SaveFilled, StarOutlined, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons';
 import { adjustTextHeightBasedOnChildrenClientOffsetHeight, adjustTextHeightBasedOnClientHeight, copyTextToClipboard, getBaseUrl, getChildrenClientOffsetHeight, getRandomInt, isMobileDevice } from "./Utility";
 import { saveAs } from 'file-saver';
 
 // @ts-ignore
 import whitePaintBrush from './card-backgrounds/paintbrush-white.png'
 import { toBlob } from 'html-to-image';
-import { GenerateImage, UploadImageToAzure } from "./CallAPI";
+import { GenerateImage, GetImagePrompt, UploadImageToAzure } from "./CallAPI";
 import { msalInstance } from "./Index";
-import ImageGenerationModal from "./ImageFlow";
-import { withTheme } from "@emotion/react";
 
 // @ts-ignore
 import loadingIcon from './card-backgrounds/staff.png'
+import { nativePromptNotSupported } from "@azure/msal-browser/dist/error/BrowserAuthErrorCodes";
 
 export interface BasicCard {
   name: string,
@@ -525,16 +524,17 @@ interface CardDisplayState {
   powerAndToughnessUpdate: string;
   imageUrlUpdate: string;
 
-  tryShowTemporaryImage: boolean;
+  useTemporaryImage: boolean;
   showCardMenu: boolean;
   showSizeAdjustmentButtons: boolean;
   increaseSizeAllowed: boolean;
   decreaseSizeAllowed: boolean;
   cardWidth: number;
 
-  imagePrompt: string;
-  showImageUpdateDialog: boolean;
-  updateImageErrorMessage: string;
+  // Image editor state.
+  showImageEditor: boolean;
+  imageEditorPrompt: string;
+  imageEditorError: string;
   isImageLoading: boolean;
   availableImageUrls: string[];
 }
@@ -545,9 +545,11 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     super(props);
 
     const viewportWidth = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
-    var currentImage = this.props.card.imageUrl
-    if (!currentImage) {
-      currentImage = this.props.card.temporaryImageUrl
+
+    const cardImageUrl = this.props.card.imageUrl ?? this.props.card.temporaryImageUrl
+    let availableCardImagesUrls = []
+    if (cardImageUrl) {
+      availableCardImagesUrls.push(cardImageUrl)
     }
 
     this.state = {
@@ -559,18 +561,17 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
       manaCostUpdate: props.card.manaCost,
       powerAndToughnessUpdate: props.card.pt,
       imageUrlUpdate: props.card.imageUrl,
-      tryShowTemporaryImage: true,
+      useTemporaryImage: true,
       showCardMenu: props.showCardMenu,
       increaseSizeAllowed: true,
       decreaseSizeAllowed: true,
       cardWidth: props.cardWidth,
       showSizeAdjustmentButtons: !isMobileDevice() || viewportWidth > 900,
-
-      imagePrompt: "A cat with blue eyes",
-      updateImageErrorMessage: "",
-      showImageUpdateDialog: false,
+      imageEditorPrompt: "",
+      imageEditorError: "",
+      showImageEditor: false,
       isImageLoading: false,
-      availableImageUrls: [currentImage],
+      availableImageUrls: availableCardImagesUrls,
     };
 
     this.handleCardNameUpdate = this.handleCardNameUpdate.bind(this);
@@ -580,6 +581,8 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     this.handleCardPowerAndToughnessUpdate = this.handleCardPowerAndToughnessUpdate.bind(this);
     this.handleImagePromptUpdate = this.handleImagePromptUpdate.bind(this);
     this.updateImageUrl = this.updateImageUrl.bind(this);
+    this.getImagePrompt = this.getImagePrompt.bind(this);
+    this.toggleShowImageEditor = this.toggleShowImageEditor.bind(this);
   }
 
   componentDidUpdate(prevProps: Readonly<CardDisplayProps>, prevState: Readonly<CardDisplayState>, snapshot?: any): void {
@@ -596,7 +599,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
   }
 
   handleImagePromptUpdate(event: React.ChangeEvent<HTMLTextAreaElement>) {
-    this.setState({ imagePrompt: event.target.value });
+    this.setState({ imageEditorPrompt: event.target.value });
   }
 
   handleCardNameUpdate(event: React.ChangeEvent<HTMLInputElement>) {
@@ -620,8 +623,9 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
   }
 
   updateEditMode() {
-    if (!this.props.allowEdits)
+    if (!this.props.allowEdits) {
       return
+    }
 
     var updatedCard = MagicCard.clone(this.state.card, true)
     updatedCard.name = this.state.nameUpdate
@@ -633,23 +637,20 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     this.setState({ editMode: !this.state.editMode, card: updatedCard })
   }
 
-  toggleShowTemporaryImage() {
-    this.setState({ tryShowTemporaryImage: !this.state.tryShowTemporaryImage })
-  }
-
   handleCardDownload() {
-    // Bit of a hack but html-to-image cannot render the card if the image url is directly from dalle due to CORS.
-    // Note that the dalle image is short lived and will not last ever, we just display it initially because it is higher resolution.
+    // Bit of a hack, but html-to-image cannot render the card if the image url is directly from Dall-e due to CORS.
+    // We need to serve up the compressed images we stored in our own backend instead.
+    // Note that the Dall-e image URL is short lived and will not last ever, we just display it initially because it is higher resolution.
     // So when the user wants to download, we need to temporarily display our compressed version of the image.
-    this.toggleShowTemporaryImage();
+    this.setState({ useTemporaryImage: false })
     this.state.card.toImage().then(blob => {
       if (blob != null) {
         saveAs(blob, `${this.state.card.name}.png`);
       }
     }).catch(error => {
-      console.error("Error downloading card as image.")
+      console.error("Error downloading card as image: " + error.message)
     }).finally(() => {
-      this.toggleShowTemporaryImage();
+      this.setState({ useTemporaryImage: true })
     })
   }
 
@@ -679,21 +680,35 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     this.setState({ card: updatedCard, imageUrlUpdate: url })
   }
 
+  toggleShowImageEditor() {
+    this.setState({showImageEditor: !this.state.showImageEditor})
+  }
+
+  getImagePrompt() {
+    this.setState({ isImageLoading: true, imageEditorError: "" })
+    GetImagePrompt(this.state.card, msalInstance).then(prompt => {
+      this.setState({ isImageLoading:false, imageEditorError: "", imageEditorPrompt: prompt})
+    }).catch((error: Error) => {
+      let msg = error.message;
+      this.setState({ isImageLoading: false, imageEditorError: msg })
+    });
+  }
+
   generateNewImage() {
-    this.setState({ isImageLoading: true, updateImageErrorMessage: "" })
-    GenerateImage(this.state.imagePrompt, msalInstance).then(url => {
+    this.setState({ isImageLoading: true, imageEditorError: "" })
+    GenerateImage(this.state.imageEditorPrompt, msalInstance).then(url => {
       var updatedCard = MagicCard.clone(this.state.card, true)
       updatedCard.imageUrl = url
       updatedCard.temporaryImageUrl = url
       this.state.availableImageUrls.push(url)
-      this.setState({ card: updatedCard, imageUrlUpdate: url, isImageLoading:false, updateImageErrorMessage: "", availableImageUrls: this.state.availableImageUrls })
+      this.setState({ card: updatedCard, imageUrlUpdate: url, isImageLoading:false, imageEditorError: "", availableImageUrls: this.state.availableImageUrls })
     }).catch((error: Error) => {
       let msg = error.message;
       if (msg.includes("This request has been blocked by our content filters") ||
       msg.includes("Your request was rejected as a result of our safety system")) {
         msg = "Your prompt was deemed inappropriate and blocked by automated safety systems."
       }
-      this.setState({ isImageLoading: false, updateImageErrorMessage: msg })
+      this.setState({ isImageLoading: false, imageEditorError: msg })
     });
   }
 
@@ -782,11 +797,11 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
       label: (
         <Tooltip title="Regenerate the card image" placement='left'>
           <FileImageOutlined style={optionsMenuIconStyle} />
-          <span style={optionsMenuItemStyle}>Edit Image</span>
+          <span style={optionsMenuItemStyle}>Image Editor</span>
         </Tooltip>
       ),
       onClick: async () => {
-        this.setState({showImageUpdateDialog: !this.state.showImageUpdateDialog})
+        this.toggleShowImageEditor()
       }
     }
 
@@ -799,7 +814,8 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
       menuItems.push(updateImageItem)
     }
 
-    const height = ((this.props.cardWidth * 3.6) / 2.5);
+    const height = ((this.props.cardWidth * 3.6) / 2.5)
+    const haveCardImage = card.imageUrl || card.temporaryImageUrl
 
     let fullCard = (
       <div style={{display:"flex"}}>
@@ -826,7 +842,13 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
                   }
                 </div>
                 <div className={card.cardFrameArtClassName}>
-                  {this.state.tryShowTemporaryImage && card.temporaryImageUrl ?
+                  {!haveCardImage ? 
+                    <div style={{width:"100%", height:"100%", backgroundColor:"black", color:"white", position:"relative"}}>
+                      <Button style={{position:"absolute", bottom:"0", right:"0", margin:"5px", display: this.state.showImageEditor ? 'none' : 'inline-block' }} type="primary" icon={<RightCircleOutlined />} size="small" onClick={() => {this.setState({showImageEditor: true})}}>
+                        Create Image
+                      </Button>
+                    </div>
+                  : (this.state.useTemporaryImage && card.temporaryImageUrl) ?
                     <Image onLoad={() => this.state.card.adjustFontSize()} preview={this.props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.temporaryImageUrl ? card.temporaryImageUrl : card.imageUrl} /> :
                     <Image onLoad={() => this.state.card.adjustFontSize()} preview={this.props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.imageUrl} />
                   }
@@ -921,54 +943,70 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
           </div>
           }
         </div>
-        { (this.props.allowImageUpdate && this.state.showImageUpdateDialog) &&
+        { (this.props.allowImageUpdate && this.state.showImageEditor) &&
           <div id={`card-image-flow-${card.id}`} className="card-image-update-container" style={{width: `${this.props.cardWidth-100}px`, display:"flex", alignItems:"center", flexDirection:"column" }}>
-            <h4 style={{color: "white"}}>Image Editor</h4>
-            <p style={{color:"white"}}>Prompt</p>
-
-            <table style={{marginLeft:"10px"}}>
+            <table style={{width: "100%"}}>
               <tbody>
                 <tr>
-                  <td>
-                    <textarea disabled={this.state.isImageLoading} onChange={this.handleImagePromptUpdate} value={this.state.imagePrompt} 
-                    style={{height:"100px", resize:"none"}} />
-                  </td>
-                  <td>
-
+                  <td style={{display: "flex", position: "relative"}}>
+                    {/* Invisible spacer to maintain center alignment. */}
+                    <div style={{visibility: 'hidden', flex: 1}} />
+                    {/* Centered content. */}
+                    <p style={{color: "white", margin: 0, position: 'absolute', top: '50%', transform: 'translateY(-50%)', width: '100%', textAlign: 'center'}}>Image Prompt</p>
+                    {/* Right-aligned button. */}
+                    <div style={{flex: 1, display: 'flex', justifyContent: 'flex-end', margin: '8px'}}>
+                      <Button size="small" type="default" icon={<CloseOutlined />} onClick={() => {this.setState({showImageEditor: false})}} />
+                    </div>
                   </td>
                 </tr>
               </tbody>
             </table>
-
-
+            <table style={{marginLeft:"10px", marginRight:"10px", width:"-webkit-fill-available"}}>
+              <tbody>
+                <tr>
+                  <td>
+                    <textarea disabled={this.state.isImageLoading} onChange={this.handleImagePromptUpdate} value={this.state.imageEditorPrompt} 
+                    style={{height:"120px", width:"100%", resize:"none"}} />
+                  </td>
+                  <td>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
             <table>
-                <tbody>
-                  <tr>
-                    <td>
-                    <button disabled={this.state.isImageLoading} style={{marginTop:"10px", borderRadius:"15px"}} onClick={() => this.generateNewImage()}>Generate Image</button>
-                    </td>
-                    <td>
-                      <img className={this.getLoadingClassName()} src={loadingIcon} />
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-              <div style={{marginLeft:"10px"}}>
-                <h3 style={{ color: 'red' }}>{this.state.updateImageErrorMessage}</h3>
-              </div>
-              <div>
-              <div style={{marginLeft:"10px", marginRight:"10px", marginBottom:"10px", display:"flex", flexWrap:"wrap", justifyContent:"center"}}>
+              <tbody>
+                <tr>
+                  <td>
+                    <Button className={this.state.isImageLoading ? "custom-disabled-btn" : ""} size="small" type="primary" icon={<CaretRightOutlined />} disabled={this.state.isImageLoading} style={{ marginTop:"3px"}} onClick={() => this.generateNewImage()}>Generate Image</Button>
+                    <Button className={this.state.isImageLoading ? "custom-disabled-btn" : ""} size="small" type="primary" icon={<BulbOutlined />} disabled={this.state.isImageLoading} style={{marginLeft:"10px", marginTop:"10px"}} onClick={() => this.getImagePrompt()}>Generate Prompt</Button>
+                  </td>
+                </tr>
+                { this.state.isImageLoading &&
+                <tr style={{display:"grid", justifyContent:"center", marginTop:"5px"}}>
+                  <td>
+                    <img className={this.getLoadingClassName()} src={loadingIcon} />
+                  </td>
+                </tr>
+                }
+              </tbody>
+            </table>
+            { this.state.imageEditorError &&
+            <div style={{marginLeft:"10px"}}>
+              <h3 style={{ color: 'red' }}>{this.state.imageEditorError}</h3>
+            </div>
+            }
+            <div>
+              <div style={{marginTop:"10px", marginLeft:"10px", marginRight:"10px", marginBottom:"10px", display:"flex", flexWrap:"wrap", justifyContent:"center"}}>
               {
                 this.state.availableImageUrls.map(imageUrl => (
-                  <div style={{margin:"3px"}}>
-                  <Image height={"90px"} width={"90px"} preview={false} src={imageUrl} onClick={() => {this.updateImageUrl(imageUrl)}} />
+                  <div style={{margin:"3px"}}  className="image-hover-animation">
+                    <Image style={{border:"1px solid #cbcaca"}} height={"90px"} width={"90px"} preview={false} src={imageUrl} onClick={() => {this.updateImageUrl(imageUrl)}} />
                   </div>
                 ))
               }
               </div>
-              </div>
+            </div>
           </div>
-
         }
       </div>
     )

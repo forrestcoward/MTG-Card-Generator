@@ -147,6 +147,27 @@ export async function GenerateImage(imagePrompt: string, msal:PublicClientApplic
     return urlReturn;
 }
 
+export async function GetImagePrompt(card: MagicCard, msal:PublicClientApplication): Promise<string> {
+  let url = getApiUrl('GetImagePrompt');
+  var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
+
+  var body = JSON.stringify(card);
+  const params: Record<string, string> = { };
+
+  let prompt = '';
+  await MakeHttpCall("POST", url, body, params, token)
+    .then(response => {
+      prompt = JSON.parse(response).suggestedPrompt;
+    })
+    .catch(error => {
+      console.error('There was an error generating an image prompt:', error);
+      throw error
+    });
+    
+    return prompt;
+}
+
+
 export async function UploadImageToAzure(msal:PublicClientApplication, blob:Blob, cardId:string): Promise<string> {
   var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
   let url = getApiUrl('UploadCardImage')
@@ -213,7 +234,7 @@ async function HttpGet(url: string, msalResult: AuthenticationResult | undefined
   return MakeHttpCall("GET", url, undefined, params, msalResult)
 }
 
-async function MakeHttpCall(method:string, url:string, body?:FormData, params?:Record<string, string>, msalResult?:AuthenticationResult): Promise<any> {
+async function MakeHttpCall(method:string, url:string, body?:any, params?:Record<string, string>, msalResult?:AuthenticationResult): Promise<any> {
   const encodedParams:Record<string,string> = {};
   if (params) {
     Object.keys(params).forEach((key) => {

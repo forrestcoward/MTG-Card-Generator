@@ -30,6 +30,7 @@ export interface MTGCardGeneratorState {
   currentError: string,
   userName: string,
   defaultCardWidth: number,
+  showNewFeatureNotification: boolean,
 }
 
 export interface SettingGroup {
@@ -86,7 +87,8 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
       cards: [TutorialCard],
       currentError: '',
       userName: '',
-      defaultCardWidth: width
+      defaultCardWidth: width,
+      showNewFeatureNotification: false
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -182,6 +184,7 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
       <div>
         <div className="outerContainer">
           <div className="container" style={{position: "relative"}}>
+            { this.state.showNewFeatureNotification &&
             <div className="notification">
               <b>
                 <span style={{marginRight:"5px"}}>
@@ -192,6 +195,7 @@ export class MTGCardGenerator extends React.Component<MTGCardGeneratorProps, MTG
                 { !isMobileDevice() ? "Rate Other User's Cards!" : "Rate Cards!" } 
               </a>
             </div>
+            }
             <p>Generate a Magic: The Gathering card...</p>
             <label>
               <input type="text" className="userInputPrompt" placeholder={defaultPrompt} onChange={this.handleChangeInput} value={this.state.prompt} />
