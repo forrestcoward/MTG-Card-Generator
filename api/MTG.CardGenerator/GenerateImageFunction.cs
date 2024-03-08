@@ -93,7 +93,7 @@ namespace MTG.CardGenerator
                 // If no key is provided, use the one from the environment if the card has not had an image generated before (or the user is an admin).
                 else if (string.IsNullOrEmpty(openAIApiKey) && (!cardHasAnImage || user.IsAdmin))
                 {
-                    openAIApiKey = Environment.GetEnvironmentVariable(Constants.OpenAIApiKey);
+                    openAIApiKey = Environment.GetEnvironmentVariable(Constants.OpenAIApiKeyLoggedIn);
 
                     if (string.IsNullOrWhiteSpace(openAIApiKey))
                     {
