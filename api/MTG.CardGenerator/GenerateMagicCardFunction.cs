@@ -135,7 +135,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
 
                     if (string.IsNullOrWhiteSpace(apiKeyToUse))
                     {
-                        return new BadRequestObjectResult("No valid OpenAI API key was provided. Please set your OpenAI API key in the settings and try again.");
+                        return new BadRequestObjectResult($"Error: Please log in or supply your own Open AI API key in the settings to generate Magic: The Gathering cards!");
                     }
                 }
             }
