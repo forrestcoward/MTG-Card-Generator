@@ -199,7 +199,7 @@ namespace MTG.CardGenerator
                 }
 
                 var options = ImageGenerator.GetImageOptionsForCard(card, Constants.Dalle3ModelName);
-                var apiKey = Environment.GetEnvironmentVariable(Constants.OpenAIApiKey);
+                var apiKey = Environment.GetEnvironmentVariable(Constants.OpenAIApiKeyLoggedIn);
                 var prompt = await ImageGenerator.GenerateDetailedImagePrompt(options, apiKey, log);
 
                 stopwatch.Stop();
