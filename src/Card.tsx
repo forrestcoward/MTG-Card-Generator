@@ -11,9 +11,7 @@ import whitePaintBrush from './card-backgrounds/paintbrush-white.png'
 import { toBlob } from 'html-to-image';
 import { GenerateImageResponse, GenerateNewCardImage, GetImagePrompt, UploadImageToAzure } from "./CallAPI";
 import { msalInstance } from "./Index";
-
-// @ts-ignore
-import loadingIcon from './card-backgrounds/staff.png'
+import { LoadingSpinner } from "./LoadingSpinner";
 
 export interface BasicCard {
   name: string,
@@ -1018,7 +1016,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
                 { this.state.isImageLoading &&
                 <tr style={{display:"grid", justifyContent:"center", marginTop:5}}>
                   <td>
-                    <img className={this.state.isImageLoading ? "loadingAnimation loadingIcon" : "loadingIcon"} src={loadingIcon} />
+                    <LoadingSpinner isLoading={this.state.isImageLoading} />
                   </td>
                 </tr>
                 }

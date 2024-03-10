@@ -5,16 +5,13 @@ import { GenerateMagicCardRequest } from './CallAPI';
 import { isMobileDevice, setCardContainerSize } from './Utility';
 import { TutorialCard } from './TutorialCard';
 import PopOutSettingsMenu from './PopOutSettingsMenu';
+import { useMsal } from '@azure/msal-react';
+import { SettingsButton } from './SettingsButton';
 
 import './mana.min.css';
 import './mtg-card.css';
 import './app.css';
-
-// @ts-ignore
-import loadingIcon from './card-backgrounds/staff.png'
-import { useMsal } from '@azure/msal-react';
-import { SettingFilled } from '@ant-design/icons';
-import { Button, Tooltip } from 'antd';
+import { LoadingSpinner } from './LoadingSpinner';
 
 export interface SettingGroup {
   name: string;
@@ -193,12 +190,10 @@ export function MTGCardGenerator() {
                 <td>
                 </td>
                 <td>
-                  <img className={isLoading ? 'loadingAnimation loadingIcon' : 'loadingIcon'} src={loadingIcon} />
+                  <LoadingSpinner isLoading={isLoading} />
                 </td>
                 <td>
-                  <Tooltip title="Settings">
-                    <Button icon={<SettingFilled className="spinningIcon" />} type="text" onClick={() => setIsSettingsOpen(true)} className='settingButton' />
-                  </Tooltip>
+                  <SettingsButton onClick={() => setIsSettingsOpen(true)} />
                 </td>
               </tr>
             </tbody>

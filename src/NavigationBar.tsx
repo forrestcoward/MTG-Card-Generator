@@ -91,7 +91,7 @@ export const NavigationBar = () => {
               <div style={{display:'flex', padding:'none', textAlign:'center'}}>
                 <a style={{textDecoration:"none", textAlign:'center'}} href="/">MTG Card Generator</a>
                 <a href="https://github.com/forrestcoward/MTG-Card-Generator" target="_blank">
-                  <img title="View source code on GitHub" src={githubIcon} width="17" height="17" style={{paddingLeft:"7px"}}></img>
+                  <img title="View source code on GitHub" src={githubIcon} width={17} height={17} style={{paddingLeft:7}}></img>
                 </a>
               </div>
             </li>

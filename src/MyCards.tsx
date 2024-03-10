@@ -5,12 +5,11 @@ import { GetUserMagicCards } from "./CallAPI";
 
 import "./mtg-card.css";
 import "./app.css";
-import { setCardContainerSize } from "./Utility";
+import { isMobileDevice, setCardContainerSize } from "./Utility";
 import { AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from "@azure/msal-react";
 import { Loader } from "./Loader";
-import { SettingFilled } from "@ant-design/icons";
-import { Button, Tooltip } from "antd";
 import PopOutSettingsMenu from "./PopOutSettingsMenu";
+import { SettingsButton } from "./SettingsButton";
 
 export function MyCards() {
   const [cards, setCards] = React.useState<MagicCard[]>([]);
@@ -58,10 +57,8 @@ export function MyCards() {
 
   const userCardDisplay =
     <div>
-      <div style={{position:'absolute', right:0, margin:10, marginRight:20}}>
-        <Tooltip title="Settings">
-          <Button icon={<SettingFilled className="spinningIcon" />} type="text" onClick={() => setIsSettingsOpen(true)} className='settingButton' />
-        </Tooltip>
+      <div style={{position:'absolute', right:0, margin:10, marginRight:20, display: !isMobileDevice() ? 'block' : 'none'}}>
+        <SettingsButton onClick={() => setIsSettingsOpen(true)} />
       </div>
 
       <div className="cardsContainer">
@@ -74,7 +71,7 @@ export function MyCards() {
               cardWidth={cardWidth} 
               allowImagePreview={true} 
               allowEdits={true} 
-              allowImageUpdate={true} />
+              allowImageUpdate={!isMobileDevice()} />
           </div>
         ))
       }
