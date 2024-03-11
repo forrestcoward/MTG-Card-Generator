@@ -33,6 +33,7 @@ export interface BasicCard {
   funnyExplanation: string,
   id: string // Database id for lookup.
   alternativeImageUrls: string[]
+  url: string
 }
 
 enum ColorIdentity {
@@ -139,6 +140,7 @@ export class MagicCard {
   explanation: string
   funnyExplanation: string
   alternativeImageUrls: string[]
+  url: string
 
   constructor(card: BasicCard) {
     this.name = card.name
@@ -162,6 +164,7 @@ export class MagicCard {
     this.funnyExplanation = card.funnyExplanation
     this.databaseId = card.id
     this.alternativeImageUrls = card.alternativeImageUrls
+    this.url = card.url
   }
 
   static clone(card: MagicCard, sameId: boolean): MagicCard {
