@@ -6,7 +6,7 @@ import { useUserAccount } from './UserContext';
 // @ts-ignore
 import githubIcon from "./card-backgrounds/github-mark-white.png"
 import { Dropdown, Space } from 'antd';
-import { CaretDownFilled, DatabaseOutlined, FireOutlined, HomeOutlined, LogoutOutlined } from '@ant-design/icons';
+import { CaretDownFilled, DatabaseOutlined, FireOutlined, HomeOutlined, InstagramOutlined, LogoutOutlined } from '@ant-design/icons';
 
 export const NavigationBar = () => {
     const { instance } = useMsal();
@@ -90,8 +90,11 @@ export const NavigationBar = () => {
             <li className="navbar-item navbar-brand">
               <div style={{display:'flex', padding:'none', textAlign:'center'}}>
                 <a style={{textDecoration:"none", textAlign:'center'}} href="/">MTG Card Generator</a>
+                <a href="https://www.instagram.com/mtg.cardgenerator/" target="_blank" style={{paddingLeft:3}}>
+                  <InstagramOutlined />
+                </a>
                 <a href="https://github.com/forrestcoward/MTG-Card-Generator" target="_blank">
-                  <img title="View source code on GitHub" src={githubIcon} width={17} height={17} style={{paddingLeft:7}}></img>
+                  <img title="View source code on GitHub" src={githubIcon} width={15} height={15} style={{paddingLeft:7}}></img>
                 </a>
               </div>
             </li>
