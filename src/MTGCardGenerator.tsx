@@ -25,6 +25,7 @@ export interface Setting {
   id: string;
   value: boolean;
   description: string;
+  mobileDescription?: string;
   group?: string;
 }
 
@@ -58,9 +59,9 @@ const imageSettingsGroup : SettingGroup = {
 }
 
 const cardGenerationSettings = [
-  { name: 'Generative Image Prompt', id: 'setting-generate-image-prompt', value: true, description: 'Use an intelligently generated image prompt to produce more unique and interesting art.' },
-  { name: 'Extra Creative', id: 'setting-extra-creative', value: false, description: 'Mix and match mechanics and keywords in more interesting ways.' },
-  { name: 'Explain Yourself', id: 'setting-provide-explanation', value: false, description: 'Provide an explanation why the card was generated. The AI can be even be quite funny!' },
+  { name: 'Generative Image Prompt', id: 'setting-generate-image-prompt', value: true, description: 'Use an intelligently generated image prompt to produce more unique and interesting art.', mobileDescription: 'Use a dynamically generated image prompt.' },
+  { name: 'Extra Creative', id: 'setting-extra-creative', value: false, description: 'Mix and match mechanics and keywords in more interesting ways.', mobileDescription: 'Utilize a unique blend of mechanics and keywords.' },
+  { name: 'Explain Yourself', id: 'setting-provide-explanation', value: false, description: 'Provide an explanation why the card was generated. The AI can be even be quite funny!', mobileDescription: 'Provide an explanation for the card.' },
 ]
 
 const cardGenerationSettingsGroup : SettingGroup = {

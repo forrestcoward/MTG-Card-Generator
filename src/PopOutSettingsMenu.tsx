@@ -95,8 +95,8 @@ const PopOutSettingsMenu: React.FC<PopOutSettingsMenuProps> = ({ isOpen, onClose
                         <Switch checked={setting.value} onChange={(event) => { handleSwitchChanged(event, setting.name) }} style={{marginLeft:5, marginRight:15, transform: "scale(1.2)"}} 
                         checkedChildren={<CheckOutlined />} unCheckedChildren={<CloseOutlined />} size='default' />
                         <b style={{fontSize:"large"}}>{setting.name}</b>
-                        <SettingDescription style={{display:isMobileDisplay}}>
-                          {setting.description}
+                        <SettingDescription>
+                          {isMobile ? setting.mobileDescription : setting.description}
                         </SettingDescription>
                       </div>
                     ))}
