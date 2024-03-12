@@ -5,6 +5,7 @@ import { SettingGroup } from './MTGCardGenerator';
 import { Radio, RadioChangeEvent, Switch } from 'antd';
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { UserContext } from './UserContext';
+import { isMobileDevice } from './Utility';
 
 const MenuContainer = styled.div`
   position: fixed;
@@ -59,6 +60,9 @@ const PopOutSettingsMenu: React.FC<PopOutSettingsMenuProps> = ({ isOpen, onClose
   const handleOpenAIKeyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setOpenAIAPIKey(event.target.value);
   }
+
+  const isMobile = isMobileDevice();
+  const isMobileDisplay = isMobile ? "none" : "inline"
   return (
     <>
       <CSSTransition in={isOpen} timeout={300} classNames="pop-out-settings-menu" unmountOnExit>
@@ -79,7 +83,7 @@ const PopOutSettingsMenu: React.FC<PopOutSettingsMenuProps> = ({ isOpen, onClose
                 </Radio.Group>
                 }
                 { /* Show the setting description if chosen for radio options. */ }
-                {settingGroup.type == "radio" && settingGroup.settings.map((setting) => (
+                {settingGroup.type == "radio" && !isMobile && settingGroup.settings.map((setting) => (
                   <React.Fragment key={`setting-radio-description-${setting.id}`}>
                     {setting.value && <SettingDescription>{setting.description}</SettingDescription>}
                   </React.Fragment>
@@ -91,7 +95,7 @@ const PopOutSettingsMenu: React.FC<PopOutSettingsMenuProps> = ({ isOpen, onClose
                         <Switch checked={setting.value} onChange={(event) => { handleSwitchChanged(event, setting.name) }} style={{marginLeft:5, marginRight:15, transform: "scale(1.2)"}} 
                         checkedChildren={<CheckOutlined />} unCheckedChildren={<CloseOutlined />} size='default' />
                         <b style={{fontSize:"large"}}>{setting.name}</b>
-                        <SettingDescription>
+                        <SettingDescription style={{display:isMobileDisplay}}>
                           {setting.description}
                         </SettingDescription>
                       </div>
