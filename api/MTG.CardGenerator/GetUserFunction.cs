@@ -1,11 +1,14 @@
 using DarkLoop.Azure.Functions.Authorize;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Cosmos.Spatial;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using MTG.CardGenerator.CosmosClients;
+using MTG.CardGenerator.Models;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Threading.Tasks;
 
@@ -28,6 +31,7 @@ namespace MTG.CardGenerator
             
         }
 
+        // Gets the user information (or creates a new user if a record does not exist yet).
         [FunctionName("GetUser")]
         [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
         public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log)
@@ -42,6 +46,19 @@ namespace MTG.CardGenerator
 
                 var usersClient = new UsersClient(log);
                 var user = await usersClient.GetUserRecord(userSubject);
+
+                if (user == null)
+                {
+                    var jwtToken = req.ReadJwtToken();
+                    var userName = Extensions.GetClaim(jwtToken, "name", defaultValue: "Anonymous");
+                    user = await usersClient.AddItemToContainerAsync(new User()
+                    {
+                        UserName = userName,
+                        UserSubject = userSubject,
+                    });
+
+                    log.LogInformation($"Created user record for user '{userSubject}' in database.");
+                }
 
                 var json = JsonConvert.SerializeObject(new GetuserFunctionResponse()
                 {
