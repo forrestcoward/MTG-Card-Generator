@@ -71,7 +71,7 @@ export function MyCards() {
               cardWidth={cardWidth} 
               allowImagePreview={true} 
               allowEdits={true} 
-              allowImageUpdate={!isMobileDevice()} />
+              allowImageUpdate={true} />
           </div>
         ))
       }
