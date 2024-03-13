@@ -56,7 +56,7 @@ namespace MTG.CardGenerator
             }
             catch (Exception ex)
             {
-                log?.LogError(ex, ex.Message);
+                log?.LogError(ex, ex.ToString());
                 return new ContentResult
                 {
                     StatusCode = 500,
