@@ -57,7 +57,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
         const float DefaultTemperature = 1;
         const float CreativeTemperature = 1.3F;
 
-        public static int AllowedFreeGenerationsPerDay = 20;
+        public static int AllowedFreeGenerationsPerDay = 10;
 
         const int MaxPromptCharacters = 500;
 
@@ -113,7 +113,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                         return new ContentResult
                         {
                             StatusCode = 429,
-                            Content = $"You have exceeded your number of free generations for the day ({AllowedFreeGenerationsPerDay}). Try again tomorrow or enter your own Open AI API key in the settings to continue generating!",
+                            Content = $"You have exceeded your number of free generations per day ({AllowedFreeGenerationsPerDay}). Try again tomorrow or enter your own Open AI API key now in the settings to continue generating. Sorry, this is a cost saving measure :(",
                         };
                     }
                 }
