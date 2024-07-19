@@ -189,14 +189,9 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             var chatResponseFormat = ChatCompletionCreateRequest.ResponseFormats.Text;
             if (!string.IsNullOrWhiteSpace(model))
             {
-                if (model.Equals("gpt-4", StringComparison.OrdinalIgnoreCase))
+                if (model.StartsWith("gpt-4", StringComparison.OrdinalIgnoreCase))
                 {
-                    gptModel = OpenAI.ObjectModels.Models.Gpt_4_turbo_preview;
-                    chatResponseFormat = ChatCompletionCreateRequest.ResponseFormats.Text;
-                }
-                else if (model.Equals("gpt-4-turbo-preview", StringComparison.OrdinalIgnoreCase))
-                {
-                    gptModel = OpenAI.ObjectModels.Models.Gpt_4_turbo_preview;
+                    gptModel = OpenAI.ObjectModels.Models.Gpt_4o_mini;
                     chatResponseFormat = ChatCompletionCreateRequest.ResponseFormats.Json;
                 }
                 else if (model.Equals("gpt-3.5", StringComparison.OrdinalIgnoreCase))

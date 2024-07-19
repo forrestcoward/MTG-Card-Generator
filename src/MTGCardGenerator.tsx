@@ -30,12 +30,11 @@ export interface Setting {
 }
 
 const defaultPrompt:string = 'is from the Dominaria plane.'
-const defaultLanguageModel:string= 'gpt-4-turbo-preview'
+const defaultLanguageModel:string= 'gpt-4o-mini'
 const defaultImageModel:string = 'dall-e-2'
 
 const modelSettings = [
-  { name: 'GPT 3.5', id: 'gpt-3.5', value: true, description: 'GPT 3.5 is a fast and capable general purpose model.', group: 'model-settings'},
-  { name: 'GPT 4', id: 'gpt-4-turbo-preview', value: false, description: 'GPT 4 is the most intelligent model to date, but is slower and more expensive.', group: 'model-settings' },
+  { name: 'GPT 4-o', id: 'gpt-4o-mini', value: true, description: 'GPT 4-o is the most intelligent model to date.', group: 'model-settings' },
 ]
 
 const modelSettingsGroup : SettingGroup = {

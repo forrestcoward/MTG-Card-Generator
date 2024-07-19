@@ -32,21 +32,15 @@ namespace MTG.CardGenerator
         private static readonly List<ModelCost> ModelCosts = new()
         {
             // GPT 3.5
-            new ModelCost() { Model = "gpt-3.5-turbo-0301", InputPrice = .0015 / 1000, OutputPrice = .002 / 1000 },
-            new ModelCost() { Model = "gpt-3.5-turbo-0613", InputPrice = .0015 / 1000, OutputPrice = .002 / 1000 },
-            new ModelCost() { Model = "gpt-3.5-turbo-0125", InputPrice = .0005 / 1000, OutputPrice = .0015 / 1000 },
-
+            new ModelCost() { Model = "gpt-3.5-turbo-instruct", InputPrice = 1.5 / 1000000, OutputPrice = 2 / 1000000 },
             // GPT 4
-            new ModelCost() { Model = "gpt-4-0314", InputPrice = .03 / 1000, OutputPrice = .06 / 1000 },
-            new ModelCost() { Model = "gpt-4-0613", InputPrice = .03 / 1000, OutputPrice = .06 / 1000 },
-            new ModelCost() { Model = "gpt-4-1106-preview", InputPrice = .01 / 1000, OutputPrice = .03 / 1000 },
-            new ModelCost() { Model = "gpt-4-0125-preview", InputPrice = .01 / 1000, OutputPrice = .03 / 1000 },
-            new ModelCost() { Model = "gpt-4-turbo-preview", InputPrice = .01 / 1000, OutputPrice = .03 / 1000 },
+            new ModelCost() { Model = "gpt-4o-mini", InputPrice = .15 / 1000000, OutputPrice = .6 / 1000000 },
+            new ModelCost() { Model = "gpt-4o", InputPrice = 5 / 1000000, OutputPrice = 15 / 1000000 },
         };
 
         public static double GetCost(ChatCompletionCreateResponse result)
         {
-            var cost = ModelCosts.Find(x => x.Model == result.Model);
+            var cost = ModelCosts.Find(x => result.Model.StartsWith(x.Model, System.StringComparison.OrdinalIgnoreCase));
 
             if (cost == null)
             {
