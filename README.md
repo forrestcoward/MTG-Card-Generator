@@ -9,11 +9,16 @@ Users can enter a prompt describing the type of Magic card they would like to ge
   <img src="cards\Cutlery-Cohort.png" width=420>
 </p> 
 
+# Chat GPT Integration
+
+The MTG Card Generator is now available as an [OpenAI GPT](https://chatgpt.com/gpts). Check it out [here](https://chatgpt.com/g/g-gyWs4hFFS-mtg-card-generator).
+
+
 # Features
 
 * Users supply an open ended prompt describing the Magic card they would like to generate. Users may:
-    * Choose the language model (GPT 3.5, GPT 4 etc.)
-    * Choose the image model (dall-e 2, dall-e 3 etc.) or supply their own image prompt.
+    * Choose the language model (current only `gpt-4o-mini` is supported)
+    * Choose the image model (`dall-e 2`, `dall-e 3` etc.) or supply their own image prompt.
     * Select a number of other fun options such as asking the AI explain itself or asking for extra creative cards.
     * Resize, download, or share generated card links.
 
@@ -23,9 +28,6 @@ Users can enter a prompt describing the type of Magic card they would like to ge
 
 * A rating page is available to score and view top cards.
 
-# Chat GPT Integration
-
-The MTG Card Generator is now available as an [OpenAI GPT](https://chatgpt.com/gpts). Check it out [here](https://chatgpt.com/g/g-gyWs4hFFS-mtg-card-generator).
 
 # API
 
@@ -38,7 +40,7 @@ The API is located at https://mtgcardgenerator.azurewebsites.net/api/GenerateMag
 | Name | Type | Description |
 |---|---|---|
 | prompt | string | The prompt to use to generate the card. |
-| model | string | The OpenAI language model to use. Use `gpt-3.5`, `gpt-4` or `gpt-4-1106-preview`. |
+| model | string | The OpenAI language model to use. Use `gpt-4o-mini`. |
 | imageModel | string | The OpenAI model to use for generating the card image. Use `dall-e-3` or `dall-e-2`. |
 | includeExplanation | bool | Whether to include the AI's reasoning in the card text. If `true`, `explanation` and `funnyExplanation` will be included in the response. |
 | extraCreative | bool | If `true`, uses a different prompt and higher temperature to generate more creative cards with more interesting usage of keywords and mechanics. |
