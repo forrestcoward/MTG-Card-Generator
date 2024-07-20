@@ -23,9 +23,9 @@ Users can enter a prompt describing the type of Magic card they would like to ge
 
 * A rating page is available to score and view top cards.
 
-# GPT Integration
+# Chat GPT Integration
 
-The MTG Card Generator is now available as an [OpenAI GPT](https://openai.com/blog/introducing-gpts). Check it out [here](https://chat.openai.com/g/g-gyWs4hFFS-mtg-card-generator).
+The MTG Card Generator is now available as an [OpenAI GPT](https://chatgpt.com/gpts). Check it out [here](https://chatgpt.com/g/g-gyWs4hFFS-mtg-card-generator).
 
 # API
 

@@ -133,8 +133,7 @@ The text is the following: {options.Prompt}";
                 {
                     ChatMessage.FromUser(prompt),
                 },
-                // Model = OpenAI.ObjectModels.Models.Gpt_4_1106_preview,
-                Model = OpenAI.ObjectModels.Models.Gpt_3_5_Turbo,
+                Model = OpenAI.ObjectModels.Models.Gpt_4o_mini,
             });
 
             cost?.AddChatCost(result);
