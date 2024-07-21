@@ -171,6 +171,10 @@ namespace MTG.CardGenerator.Models
             }
 
             this.OracleText = !string.IsNullOrWhiteSpace(card.OracleText) ? card.OracleText : card.RawOracleText;
+            if (this.OracleText == null)
+            {
+                this.OracleText = string.Empty;
+            }
             PostProcessOracleText();
         }
 

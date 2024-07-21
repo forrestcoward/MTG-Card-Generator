@@ -194,7 +194,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     gptModel = OpenAI.ObjectModels.Models.Gpt_4o_mini;
                     chatResponseFormat = ChatCompletionCreateRequest.ResponseFormats.Json;
                 }
-                else if (model.Equals("gpt-3.5", StringComparison.OrdinalIgnoreCase))
+                else if (model.StartsWith("gpt-3.5", StringComparison.OrdinalIgnoreCase))
                 {
                     gptModel = OpenAI.ObjectModels.Models.Gpt_3_5_Turbo;
                     // JSON not supported in gpt-3.5.
