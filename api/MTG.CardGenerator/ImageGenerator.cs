@@ -97,6 +97,18 @@ namespace MTG.CardGenerator
 
             log.LogInformation($"{model} image prompt: {prompt}");
 
+            if (model == Constants.Dalle2ModelName && prompt.Length > 1000)
+            {
+                log.LogInformation("Truncating prompt to 1000 characters because this is the dall-e-2 limit.");
+                prompt = prompt[..1000];
+            }
+
+            if (model == Constants.Dalle3ModelName && prompt.Length > 4000)
+            {
+                log.LogInformation("Truncating prompt to 4000 characters because this is the dall-e-3 limit.");
+                prompt = prompt[..4000];
+            }
+
             var imageResult = await openAIService.Image.CreateImage(new ImageCreateRequest
             {
                 Prompt = prompt,
@@ -133,6 +145,7 @@ The text is the following: {options.Prompt}";
                 {
                     ChatMessage.FromUser(prompt),
                 },
+
                 Model = OpenAI.ObjectModels.Models.Gpt_4o_mini,
             });
 
