@@ -216,7 +216,8 @@ export async function GenerateMagicCardRequest(
     numCards: numCards.toString(),
     includeExplanation: includeExplanation.toString(),
     generateImagePrompt: generateImagePrompt.toString(),
-    extraCreative: extraCreative.toString()
+    extraCreative: extraCreative.toString(),
+    source: "MTGCardGeneratorWebsite"
   };
 
   if (openAIApiKey) {
