@@ -90,9 +90,6 @@ export const NavigationBar = () => {
             <li className="navbar-item navbar-brand">
               <div style={{display:'flex', padding:'none', textAlign:'center'}}>
                 <a style={{textDecoration:"none", textAlign:'center'}} href="/">MTG Card Generator</a>
-                <a href="https://www.instagram.com/mtg.cardgenerator/" target="_blank" style={{paddingLeft:6}}>
-                  <InstagramOutlined />
-                </a>
                 <a href="https://github.com/forrestcoward/MTG-Card-Generator" target="_blank">
                   <img title="View source code on GitHub" src={githubIcon} width={15} height={15} style={{paddingLeft:7}}></img>
                 </a>

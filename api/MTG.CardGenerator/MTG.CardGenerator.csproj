@@ -1,11 +1,8 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <AzureFunctionsVersion>v4</AzureFunctionsVersion>
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
-    <!--
-    <UserSecretsId>b8a636c1-8453-4afa-a9e5-ae9d18fe7352</UserSecretsId>
-    -->
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
   <ItemGroup>
@@ -14,7 +11,7 @@
   <ItemGroup>
     <PackageReference Include="Azure.Search.Documents" Version="11.5.1" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.19.1" />
-    <PackageReference Include="Betalgo.OpenAI" Version="8.6.1" />
+    <PackageReference Include="Betalgo.OpenAI" Version="8.6.2" />
     <PackageReference Include="DarkLoop.Azure.Functions.Authorize" Version="3.1.3" />
     <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="13.6.0" />
     <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.38.1" />

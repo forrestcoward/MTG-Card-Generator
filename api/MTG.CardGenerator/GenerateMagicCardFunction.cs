@@ -57,7 +57,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
         const float DefaultTemperature = 1;
         const float CreativeTemperature = 1.3F;
 
-        public static int AllowedFreeGenerationsPerDay = 10;
+        public static int AllowedFreeGenerationsPerDay = 3;
 
         const int MaxPromptCharacters = 500;
 
@@ -73,6 +73,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             var generateImagePrompt = bool.TryParse(req.Query["generateImagePrompt"], out bool hd) && hd;
             var extraCreative = bool.TryParse(req.Query["extraCreative"], out bool ec) && ec;
             var userSuppliedApiKey = (string)req.Query["openAIApiKey"];
+            var source = (string)req.Query["source"];
 
             // Cards only get stored in the DB when generateImage=true. Defaults to true.
             var generateImages = imageModel != "none";
@@ -113,7 +114,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                         return new ContentResult
                         {
                             StatusCode = 429,
-                            Content = $"You have exceeded your number of free generations per day ({AllowedFreeGenerationsPerDay}). Try again tomorrow or enter your own Open AI API key now in the settings to continue generating. Sorry, this is a cost saving measure :(",
+                            Content = $"You have exceeded your number of free generations per day ({AllowedFreeGenerationsPerDay}). Please enter your own OpenAI API key (https://platform.openai.com/api-keys) to continue generating. Sorry, this is a cost saving measure that I continue to scale back on :(",
                         };
                     }
                 }
@@ -453,6 +454,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     { "temperature", temperature },
                     { "userSubject", userSubject },
                     { "userPrompt", userPromptToSubmit },
+                    { "source", source }
                 });
 
                 return new OkObjectResult(json);
