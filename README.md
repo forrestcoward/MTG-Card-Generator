@@ -1,5 +1,7 @@
 # Magic: The Gathering Card Generator
 
+# Site is currently not functional; temporarily shut down to save costs. Sorry all!
+
 ## [https://www.mtgcardgenerator.com](https://www.mtgcardgenerator.com/)
 The Magic: The Gathering Card Generator is a project that uses AI (particuarlly, OpenAI's offerings) to generate realistic Magic: The Gathering cards. Generated cards are beautifully rendered using CSS.
 
