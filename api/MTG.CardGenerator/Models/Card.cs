@@ -41,7 +41,7 @@ namespace MTG.CardGenerator.Models
     public class MagicCard
     {
         // Id not stored in database on this record, just use this field for the GenerateMagicCard function response.
-        [JsonIgnore]
+        // [JsonIgnore]
         public string Id { get; set; }
         [JsonProperty("name")]
         public string Name { get; set; }

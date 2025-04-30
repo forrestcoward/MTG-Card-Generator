@@ -1,9 +1,9 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Betalgo.Ranul.OpenAI;
+using Betalgo.Ranul.OpenAI.Managers;
+using Betalgo.Ranul.OpenAI.ObjectModels;
+using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
+using Microsoft.Extensions.Logging;
 using MTG.CardGenerator.Models;
-using OpenAI;
-using OpenAI.Managers;
-using OpenAI.ObjectModels;
-using OpenAI.ObjectModels.RequestModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -90,7 +90,7 @@ namespace MTG.CardGenerator
                 throw new Exception($"Invalid image model: {model}. Expecting '{Constants.Dalle2ModelName}' or '{Constants.Dalle3ModelName}'.");
             }
 
-            var openAIService = new OpenAIService(new OpenAiOptions()
+            var openAIService = new OpenAIService(new OpenAIOptions()
             {
                 ApiKey = apiKey
             });
@@ -115,9 +115,10 @@ namespace MTG.CardGenerator
                 N = 1,
                 Size = size,
                 Model = model,
-                Quality = "standard",
+                Quality =  model == Constants.Dalle2ModelName ? null : "standard",
                 ResponseFormat = StaticValues.ImageStatics.ResponseFormat.Url
             });
+
 
             cost?.AddImageCost(size, model);
 
@@ -129,9 +130,9 @@ namespace MTG.CardGenerator
             return imageResult.Results.First().Url;
         }
 
-        public static async Task<string> GenerateDetailedImagePrompt(ImageGenerationOptions options, string apiKey, ILogger log, Cost cost = null)
+        public static async Task<string> GenerateDetailedImagePrompt(ImageGenerationOptions options, string apiKey, ILogger log)
         {
-            var openAIService = new OpenAIService(new OpenAiOptions()
+            var openAIService = new OpenAIService(new OpenAIOptions()
             {
                 ApiKey = apiKey
             });
@@ -146,10 +147,8 @@ The text is the following: {options.Prompt}";
                     ChatMessage.FromUser(prompt),
                 },
 
-                Model = OpenAI.ObjectModels.Models.Gpt_4o_mini,
+                Model = Betalgo.Ranul.OpenAI.ObjectModels.Models.Gpt_4o_mini,
             });
-
-            cost?.AddChatCost(result);
 
             return result.Choices.First().Message.Content;
         }

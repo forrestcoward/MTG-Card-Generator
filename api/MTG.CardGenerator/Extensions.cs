@@ -94,7 +94,7 @@ namespace MTG.CardGenerator
             return userSubject;
         }
 
-        private static Stream CompressImage(Stream imageStream, int quality, int width)
+        private static Stream CompressImage(Stream imageStream, uint quality, uint width)
         {
             if (quality <= 0 || quality > 100)
             {

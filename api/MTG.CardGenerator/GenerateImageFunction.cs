@@ -1,4 +1,5 @@
-﻿using DarkLoop.Azure.Functions.Authorize;
+﻿using Betalgo.Ranul.OpenAI.ObjectModels;
+using DarkLoop.Azure.Functions.Authorize;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -7,7 +8,6 @@ using Microsoft.Extensions.Logging;
 using MTG.CardGenerator.CosmosClients;
 using MTG.CardGenerator.Models;
 using Newtonsoft.Json;
-using OpenAI.ObjectModels;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
