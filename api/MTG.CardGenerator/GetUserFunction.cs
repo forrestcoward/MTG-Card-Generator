@@ -28,10 +28,10 @@ namespace MTG.CardGenerator
         // Gets the user information (or creates a new user if a record does not exist yet).
         [Function("GetUser")]
         [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
-        public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req, FunctionContext context)
+        public static async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req, FunctionContext context)
         {
             var log = context.GetLogger<GetUserFunction>();
-            
+
             try
             {
                 var userSubject = req.GetUserSubject(log);

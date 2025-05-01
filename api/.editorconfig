@@ -59,6 +59,23 @@ dotnet_diagnostic.SA1216.severity = error
 dotnet_diagnostic.SA1217.severity = error
 csharp_style_unused_value_assignment_preference = discard_variable:suggestion
 dotnet_diagnostic.SA1101.severity = none
+dotnet_diagnostic.SA1117.severity = none
+dotnet_diagnostic.SA1201.severity = none
+dotnet_diagnostic.SA1402.severity = none
+dotnet_diagnostic.SA1413.severity = none
+dotnet_diagnostic.SA1516.severity = none
+dotnet_diagnostic.SA1600.severity = none
+dotnet_diagnostic.SA1602.severity = none
+dotnet_diagnostic.SA1633.severity = none
+dotnet_diagnostic.SA1649.severity = none
+dotnet_diagnostic.SA1202.severity = none
+dotnet_diagnostic.SA1515.severity = none
+dotnet_diagnostic.SA1204.severity = none
+dotnet_diagnostic.SA1503.severity = none
+dotnet_diagnostic.SA1127.severity = none
+dotnet_diagnostic.SA1300.severity = none
+dotnet_diagnostic.SA1401.severity = none
+dotnet_diagnostic.SA1306.severity = none
 [*.{cs,vb}]
 #### Naming styles ####
 

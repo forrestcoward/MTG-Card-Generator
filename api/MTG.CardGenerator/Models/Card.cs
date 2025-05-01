@@ -173,6 +173,7 @@ namespace MTG.CardGenerator.Models
             {
                 this.OracleText = string.Empty;
             }
+
             PostProcessOracleText();
         }
 

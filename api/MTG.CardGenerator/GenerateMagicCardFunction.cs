@@ -102,43 +102,43 @@ namespace MTG.CardGenerator
             public string ApiKey { get; set; }
         }
 
-        const string GenerateCreativeCardSystemPrompt = $@"
+        private const string GenerateCreativeCardSystemPrompt = $@"
 You are an assistant who works as a Magic: The Gathering card designer. The cards you generate should be as creative as possible and utilize Magic: The Gathering card mechanics in unique and interesting ways, ideally mixing multiple mechanics and keywords together in novel ways and have good synergy with other cards or archetypes. The cards you are known to generate elicit a 'wow, cool, that's a great idea!' response from players and leave them surprised by the card that generated. Remember, be extra creative!
 You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'oracleText', 'flavorText', 'pt', and 'rarity'.
 Do not explain the cards or explain your reasoning. Only return the JSON of cards named 'cards'.";
 
-        const string GenerateCreativeCardSystemPromptWithExplanation = $@"
+        private const string GenerateCreativeCardSystemPromptWithExplanation = $@"
 You are an assistant who works as a Magic: The Gathering card designer. The cards you generate should be as creative as possible and utilize Magic: The Gathering card mechanics in unique and interesting ways, ideally mixing multiple mechanics and keywords together in novel ways and have good synergy with other cards or archetypes. The cards you are known to generate elicit a 'wow, cool, that's a great idea!' response from players and leave them surprised by the card that generated. Remember, be extra creative!
 You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'oracleText', 'flavorText', 'pt', 'rarity', 'explanation', and 'funnyExplanation' properties. The 'explanation' property should explain why the card was created the way it was. The 'funnyExplanation' property should be a hilarious explanation of why the card was created the way it was.
 Do not explain the cards or explain your reasoning. Only return the JSON of cards named 'cards'.";
 
-        const string GenerateCardSystemPrompt = $@"
+        private const string GenerateCardSystemPrompt = $@"
 You are an assistant who works as a Magic: The Gathering card designer. You like complex cards with interesting mechanics. The cards you generate should obey the Magic 'color pie' design rules and obey the the Magic: The Gathering comprehensive rules.
 You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'oracleText', 'flavorText', 'pt', and 'rarity'.
 Do not explain the cards or explain your reasoning. Only return the JSON of cards named 'cards'.";
 
-        const string GenerateCardSystemPromptWithExplanation = $@"
+        private const string GenerateCardSystemPromptWithExplanation = $@"
 You are an assistant who works as a Magic: The Gathering card designer. You like complex cards with interesting mechanics. The cards you generate should obey the Magic 'color pie' design rules. The cards you generate should also obey the the Magic: The Gathering comprehensive rules as much as possible.
 You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'oracleText', 'flavorText', 'pt', 'rarity', 'explanation', and 'funnyExplanation' properties. The 'explanation' property should explain why the card was created the way it was. The 'funnyExplanation' property should be a hilarious explanation of why the card was created the way it was.
 Do not explain the cards or explain your reasoning. Only return the JSON of cards named 'cards'.";
 
-        const float DefaultTemperature = 1;
-        const float CreativeTemperature = 1.3F;
+        private const float DefaultTemperature = 1;
+        private const float CreativeTemperature = 1.3F;
 
-        public static int AllowedFreeGenerationsPerDay = 3;
+        public const int AllowedFreeGenerationsPerDay = 3;
 
-        const int MaxPromptCharacters = 500;
+        private const int MaxPromptCharacters = 500;
 
         [Function("GenerateMagicCard")]
         [FunctionAuthorize]
         public static async Task<HttpResponseData> HttpStart([HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req, [DurableClient] DurableTaskClient client, FunctionContext context)
         {
             var log = context.GetLogger<GenerateMagicCardFunction>();
-            
+
             // Extract request parameters.
             var rawUserPrompt = req.GetQueryParam("userPrompt") ?? string.Empty;
             rawUserPrompt = WebUtility.UrlDecode(rawUserPrompt);
-            log.LogInformation($"User prompt: {rawUserPrompt?.Replace("\n", "")}");
+            log.LogInformation($"User prompt: {rawUserPrompt?.Replace("\n", string.Empty)}");
 
             var model = req.GetQueryParam("model");
             var imageModel = req.GetQueryParam("imageModel") ?? Constants.Dalle2ModelName;
@@ -294,7 +294,8 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 var json = JsonConvert.SerializeObject(output);
 
                 // 7. Log telemetry
-                var finalResponse = await context.CallActivityAsync<string>(nameof(LogTelemetry),
+                var finalResponse = await context.CallActivityAsync<string>(
+                    nameof(LogTelemetry),
                     new FinalResponseData
                     {
                         Json = json,
@@ -423,7 +424,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
 
                 var response = await openAIService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
                 {
-                    Messages = [ ChatMessage.FromUser(userPromptToSubmit), ChatMessage.FromSystem(systemPrompt) ],
+                    Messages = [ChatMessage.FromUser(userPromptToSubmit), ChatMessage.FromSystem(systemPrompt)],
                     Model = gptModel,
                     Temperature = temperature,
                     ChatResponseFormat = chatResponseFormat,
@@ -468,17 +469,19 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 {
                     log?.LogWarning($"The initial response was not valid JSON.");
                     var captures = new Regex(@"(?<json>\{(.*)\})", RegexOptions.Singleline).GetNamedGroupsMatches(openAIResponse);
-                    if (captures.ContainsKey("json"))
+                    if (captures.TryGetValue("json", out string value))
                     {
                         try
                         {
-                            var deserialized = JsonConvert.DeserializeObject<OpenAIMagicCardResponse>(captures["json"]);
+                            var deserialized = JsonConvert.DeserializeObject<OpenAIMagicCardResponse>(value);
                             if (deserialized != null && deserialized.Cards != null)
                             {
                                 openAICards = deserialized.Cards;
                             }
                         }
-                        catch (JsonReaderException) { }
+                        catch (JsonReaderException)
+                        {
+                        }
                     }
                 }
                 catch (JsonSerializationException)
@@ -509,7 +512,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             foreach (var card in cards)
             {
                 card.UserPrompt = rawUserPrompt;
-                card.AlternativeImageIds = Array.Empty<string>();
+                card.AlternativeImageIds = [];
                 card.Id = Guid.NewGuid().ToString();
             }
 
@@ -554,7 +557,8 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
         }
 
         [Function("GenerateCardImage")]
-        public static async Task<ImageGenerationResult> GenerateCardImage([ActivityTrigger] ImageOptions imageOptions, FunctionContext functionContext) {
+        public static async Task<ImageGenerationResult> GenerateCardImage([ActivityTrigger] ImageOptions imageOptions, FunctionContext functionContext)
+        {
             var log = functionContext.GetLogger(nameof(GenerateCardImage));
             var stopwatch = Stopwatch.StartNew();
 

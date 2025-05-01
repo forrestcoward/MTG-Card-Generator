@@ -24,7 +24,6 @@ namespace MTG.CardGenerator
         /// </summary>
         private class CardIndexResult
         {
-#pragma warning disable IDE1006 // Naming Styles
             public string id { get; set; }
             public string prompt { get; set; }
             public string name { get; set; }
@@ -36,7 +35,6 @@ namespace MTG.CardGenerator
             public string colorIdentity { get; set; }
             public string explanation { get; set; }
             public string funnyExplanation { get; set; }
-#pragma warning restore IDE1006 // Naming Styles
         }
 
         [Function("SearchMagicCards")]
@@ -44,7 +42,7 @@ namespace MTG.CardGenerator
         public static async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req, FunctionContext context)
         {
             var log = context.GetLogger<SearchMagicCardsFunction>();
-            
+
             try
             {
                 var query = req.GetQueryParam("query");
@@ -73,7 +71,7 @@ namespace MTG.CardGenerator
                 var cardsClient = new CardsClient(log);
                 var cards = await cardsClient.GetMagicCardRecords(ids);
 
-                return await req.CreateJsonResponse(HttpStatusCode.OK, "");
+                return await req.CreateJsonResponse(HttpStatusCode.OK, string.Empty);
             }
             catch (Exception ex)
             {

@@ -18,7 +18,7 @@ namespace MTG.CardGenerator
          * 1. Genenerate a new image.
          * 2. Store the image in blob storage.
          * 3. Add the image id to the card's alternative image ids. This will allow a user to see all the images they have generated for their card.
-         * 
+         *
          * Users (besides admins) need to provide their own OpenAI API key in order to generate images beyond the first.
          */
         [Function("GenerateNewCardImage")]
@@ -108,7 +108,7 @@ namespace MTG.CardGenerator
                     await cardsClient.AddAlternativeImageId(cardRecord, storeImageResult.ImageId.ToString());
                 }
 
-                log.LogMetric("GenerateNewCardImage_DurationSeconds", stopwatch.Elapsed.TotalSeconds, 
+                log.LogMetric("GenerateNewCardImage_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
                     properties: new Dictionary<string, object>()
                     {
                         { "imagePrompt", prompt },
@@ -129,7 +129,8 @@ namespace MTG.CardGenerator
             {
                 if (exception.Message.ContainsIgnoreCase("OpenAI rejected your authorization") || exception.Message.ContainsIgnoreCase("Incorrect API key provided"))
                 {
-                    return await req.CreateErrorResponse(HttpStatusCode.InternalServerError, 
+                    return await req.CreateErrorResponse(
+                        HttpStatusCode.InternalServerError,
                         "Error: The OpenAI API key you provided is invalid. Please check the integrity of this API key.");
                 }
 
@@ -145,7 +146,7 @@ namespace MTG.CardGenerator
         {
             var log = context.GetLogger<GenerateImageFunction>();
             var stopwatch = Stopwatch.StartNew();
-            
+
             try
             {
                 string requestBody;

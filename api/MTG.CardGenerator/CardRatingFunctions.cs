@@ -110,7 +110,7 @@ namespace MTG.CardGenerator
         public static async Task<HttpResponseData> RunTopCards([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req, FunctionContext context)
         {
             var log = context.GetLogger<CardRatingFunctions>();
-            
+
             try
             {
                 var stopwatch = Stopwatch.StartNew();

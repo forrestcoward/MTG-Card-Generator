@@ -15,7 +15,7 @@ namespace MTG.CardGenerator
         public static async Task<HttpResponseData> RunGetMagicCardByName([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req, FunctionContext context)
         {
             var log = context.GetLogger<GetMagicCardsFunction>();
-            
+
             try
             {
                 var cardName = req.GetQueryParam("cardName");
@@ -34,7 +34,7 @@ namespace MTG.CardGenerator
         public static async Task<HttpResponseData> RunGetMagicCard([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req, FunctionContext context)
         {
             var log = context.GetLogger<GetMagicCardsFunction>();
-            
+
             try
             {
                 var cardId = req.GetQueryParam("cardId");
@@ -54,7 +54,7 @@ namespace MTG.CardGenerator
         public static async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req, FunctionContext context)
         {
             var log = context.GetLogger<GetMagicCardsFunction>();
-            
+
             try
             {
                 var userSubject = req.GetUserSubject(log);

@@ -52,21 +52,21 @@ namespace MTG.CardGenerator
     public class CardRule
     {
         public CardPropertyOrKeyword PropertyOrKeyword { get; set; }
-        public string[] IncludesRules { get; set; } = Array.Empty<string>();
+        public string[] IncludesRules { get; set; } = [];
         public string MechanicMatchRule { get; set; } = string.Empty;
-        public string[] ReminderText { get; set; } = Array.Empty<string>();
+        public string[] ReminderText { get; set; } = [];
 
         // Adds a mechanic to the card, with a rule and line as context to the violation.
-        Action<MagicCardParseResult, CardRule, CardTextLine> AddMechanicToCard = null;
-        
+        private Action<MagicCardParseResult, CardRule, CardTextLine> AddMechanicToCard = null;
+
         // Fixes a card, given the rule it violated and line the violation occured.
         public Action<MagicCardParseResult, CardRule, CardTextLine> FixViolation = null;
 
         // The legal card types for this rule e.g. A card with flashback cannot be a creature.
-        public CardType[] LegalTypes { get; set; } = Array.Empty<CardType>();
+        public CardType[] LegalTypes { get; set; } = [];
 
         // The set of properties a card must have if it is has this rule e.g. a card that gains an effect when cast from the graveyard should have a keyword, like flashback, that allows it to be cast from the graveyard.
-        public CardPropertyOrKeyword[] MustHaveProperties { get; set; } = Array.Empty<CardPropertyOrKeyword>();
+        public CardPropertyOrKeyword[] MustHaveProperties { get; set; } = [];
 
         // Tests if the rule applies to the line of oracle text.
         public static bool Applies(CardTextLine cardTextLine, CardRule rule)
@@ -82,7 +82,7 @@ namespace MTG.CardGenerator
 
             if (!string.IsNullOrWhiteSpace(rule.MechanicMatchRule))
             {
-                if (cardTextLine.Mechanic.ToLower() == rule.MechanicMatchRule.ToLower())
+                if (cardTextLine.Mechanic.Equals(rule.MechanicMatchRule, StringComparison.CurrentCultureIgnoreCase))
                 {
                     return true;
                 }
@@ -192,11 +192,12 @@ namespace MTG.CardGenerator
             {
                 PropertyOrKeyword = CardPropertyOrKeyword.Unearth,
                 MechanicMatchRule = "Unearth",
-                LegalTypes= [CardType.Artifact, CardType.Creature],
+                LegalTypes = [CardType.Artifact, CardType.Creature],
                 AddMechanicToCard = (card, rule, line) =>
                 {
                     // Transform Flashback into Unearth.
-                    if (line.Properties.Contains(CardPropertyOrKeyword.Flashback)) {
+                    if (line.Properties.Contains(CardPropertyOrKeyword.Flashback))
+                    {
                         if (rule.ReminderText.Any(reminder => line.CostAndEffectWithoutManaCost.Contains(reminder, StringComparison.OrdinalIgnoreCase)))
                         {
                             var newText = $"\nUnearth {line.Cost}";
@@ -231,7 +232,7 @@ namespace MTG.CardGenerator
             {
                 get
                 {
-                    return Costs.FirstOrDefault(x => x.StartsWith("{") && x.EndsWith("}"));
+                    return Costs.FirstOrDefault(x => x.StartsWith('{') && x.EndsWith('}'));
                 }
             }
 
@@ -239,7 +240,7 @@ namespace MTG.CardGenerator
             {
                 get
                 {
-                    return Costs.Where(cost => cost != ManaCost).ToArray();
+                    return [.. Costs.Where(cost => cost != ManaCost)];
                 }
             }
 
@@ -313,7 +314,7 @@ namespace MTG.CardGenerator
             public List<CardRule> ViolatedRules { get; set; }
         }
 
-        internal static Regex UnbracketedManaCostRegex = new(@"(?<cost>(\s|^)[123456789WUBRG]+(\s|$|:))");
+        private static readonly Regex UnbracketedManaCostRegex = new(@"(?<cost>(\s|^)[123456789WUBRG]+(\s|$|:))");
 
         public static string CorrectUnbracketedManaCosts(string oracleText)
         {
@@ -351,8 +352,8 @@ namespace MTG.CardGenerator
 
             if (card.PowerAndToughness != null)
             {
-                card.PowerAndToughness = card.PowerAndToughness.Replace("(", "");
-                card.PowerAndToughness = card.PowerAndToughness.Replace(")", "");
+                card.PowerAndToughness = card.PowerAndToughness.Replace("(", string.Empty);
+                card.PowerAndToughness = card.PowerAndToughness.Replace(")", string.Empty);
             }
 
             if (string.IsNullOrWhiteSpace(card.PowerAndToughness) && (!string.IsNullOrWhiteSpace(card.Power) && !string.IsNullOrWhiteSpace(card.Toughness)))
@@ -411,7 +412,7 @@ namespace MTG.CardGenerator
                         violationToTextLine[rule] = parsedOracleTextLine;
                     }
 
-                    if (rule.MustHaveProperties.Any() && rule.MustHaveProperties.Any(mustHaveProperty => !properties.Contains(mustHaveProperty)))
+                    if (rule.MustHaveProperties.Length != 0 && rule.MustHaveProperties.Any(mustHaveProperty => !properties.Contains(mustHaveProperty)))
                     {
                         // This rule requires a property not present on the rest of the card.
                         // e.g. a card gains an additional effect when cast from the graveyard but does not have flashback or unearth.
@@ -429,6 +430,7 @@ namespace MTG.CardGenerator
 
             return parseResult;
         }
+
         private static string[] ParseOracleTextLines(string oracleText)
         {
             var delimiters = new string[] { "\n", @"\\\\n", @"\\n", @"\n" };
@@ -477,7 +479,8 @@ namespace MTG.CardGenerator
             return CardType.Unknown;
         }
 
-        private static ColorIdentity GetColorIdentity(string manaCostTokens) {
+        private static ColorIdentity GetColorIdentity(string manaCostTokens)
+        {
             var white = false;
             var blue = false;
             var black = false;
@@ -490,23 +493,23 @@ namespace MTG.CardGenerator
             if (manaCostTokens.Contains("{R}")) red = true;
             if (manaCostTokens.Contains("{G}")) green = true;
 
-            if ( white && !blue && !black && !red && !green) return ColorIdentity.White;
-            if (!white &&  blue && !black && !red && !green) return ColorIdentity.Blue;
-            if (!white && !blue &&  black && !red && !green) return ColorIdentity.Black;
-            if (!white && !blue && !black &&  red && !green) return ColorIdentity.Red;
-            if (!white && !blue && !black && !red &&  green) return ColorIdentity.Green;
+            if (white && !blue && !black && !red && !green) return ColorIdentity.White;
+            if (!white && blue && !black && !red && !green) return ColorIdentity.Blue;
+            if (!white && !blue && black && !red && !green) return ColorIdentity.Black;
+            if (!white && !blue && !black && red && !green) return ColorIdentity.Red;
+            if (!white && !blue && !black && !red && green) return ColorIdentity.Green;
             if (!white && !blue && !black && !red && !green) return ColorIdentity.Colorless;
 
-            if (white &&  blue && !black && !red && !green) return ColorIdentity.Azorius;
-            if (!white &&  blue &&  black && !red && !green) return ColorIdentity.Dimir;
-            if (!white && !blue &&  black &&  red && !green) return ColorIdentity.Rakdos;
-            if (!white && !blue && !black &&  red &&  green) return ColorIdentity.Gruul;
-            if ( white && !blue && !black && !red &&  green) return ColorIdentity.Selesnya;
-            if ( white && !blue &&  black && !red && !green) return ColorIdentity.Orzhov;
-            if (!white &&  blue && !black &&  red && !green) return ColorIdentity.Izzet;
-            if (!white && !blue &&  black && !red &&  green) return ColorIdentity.Golgari;
-            if ( white && !blue && !black &&  red && !green) return ColorIdentity.Boros;
-            if (!white &&  blue && !black && !red &&  green) return ColorIdentity.Simic;
+            if (white && blue && !black && !red && !green) return ColorIdentity.Azorius;
+            if (!white && blue && black && !red && !green) return ColorIdentity.Dimir;
+            if (!white && !blue && black && red && !green) return ColorIdentity.Rakdos;
+            if (!white && !blue && !black && red && green) return ColorIdentity.Gruul;
+            if (white && !blue && !black && !red && green) return ColorIdentity.Selesnya;
+            if (white && !blue && black && !red && !green) return ColorIdentity.Orzhov;
+            if (!white && blue && !black && red && !green) return ColorIdentity.Izzet;
+            if (!white && !blue && black && !red && green) return ColorIdentity.Golgari;
+            if (white && !blue && !black && red && !green) return ColorIdentity.Boros;
+            if (!white && blue && !black && !red && green) return ColorIdentity.Simic;
 
             return ColorIdentity.ThreePlusColored;
         }
@@ -527,8 +530,8 @@ namespace MTG.CardGenerator
 
             if (!manaCost.IsBracketed())
             {
-                manaCost = manaCost.Replace("}", "");
-                manaCost = manaCost.Replace("{", "");
+                manaCost = manaCost.Replace("}", string.Empty);
+                manaCost = manaCost.Replace("{", string.Empty);
                 return manaCost.BracketManaSymbols();
             }
 

@@ -31,7 +31,7 @@ namespace MTG.CardGenerator
 
             // Set ValidateBearerToken to false to disable bearer token validation.
             // Useful for local development.
-            var validateBearerToken = Environment.GetEnvironmentVariable(Constants.ValidateBearerToken) == null || 
+            var validateBearerToken = Environment.GetEnvironmentVariable(Constants.ValidateBearerToken) == null ||
                 bool.Parse(Environment.GetEnvironmentVariable(Constants.ValidateBearerToken));
 
             if (!validateBearerToken)

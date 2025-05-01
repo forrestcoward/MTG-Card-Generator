@@ -16,7 +16,7 @@ namespace MTG.CardGenerator.Models
         [JsonProperty("numberOfCardsGenerated")]
         public long NumberOfCardsGenerated { get; set; } = 0;
         [JsonProperty("numberOfCardsRated")]
-        public long NumberOfCardsRated { get; set;} = 0;
+        public long NumberOfCardsRated { get; set; } = 0;
         [JsonProperty("lastActiveTime")]
         public DateTime? LastActiveTime { get; set; } = null;
         [JsonProperty("totalCostOfCardsGenerated")]

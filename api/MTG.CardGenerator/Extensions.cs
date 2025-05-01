@@ -10,7 +10,7 @@ namespace MTG.CardGenerator
 {
     public static class Extensions
     {
-        private static readonly HttpClient client = new();
+        private static readonly HttpClient Client = new();
 
         public static JwtSecurityToken ReadJwtToken(this HttpRequestData request, ILogger log = null)
         {
@@ -26,7 +26,7 @@ namespace MTG.CardGenerator
                 var token = new JwtSecurityTokenHandler().ReadJwtToken(jwtToken);
                 return token;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 log?.LogError($"Error reading JWT token: {ex}");
                 return null;
@@ -63,7 +63,7 @@ namespace MTG.CardGenerator
 
         public static string GetUserSubject(this HttpRequestData req, ILogger log = null)
         {
-            var validateBearerToken = Environment.GetEnvironmentVariable(Constants.ValidateBearerToken) == null || 
+            var validateBearerToken = Environment.GetEnvironmentVariable(Constants.ValidateBearerToken) == null ||
                 bool.Parse(Environment.GetEnvironmentVariable(Constants.ValidateBearerToken));
 
             JwtSecurityToken jwtToken = null;
@@ -138,7 +138,7 @@ namespace MTG.CardGenerator
 
         public static async Task<StoreImageInBlobResult> StoreImageInBlobAsync(string imageUrl, string blobStorageName, string blobStorageEndpoint, string blobStorageContainerName, string blobStorageAccessKey, bool uploadUncompressedImage = false, ILogger log = null)
         {
-            using var response = await client.GetAsync(imageUrl, HttpCompletionOption.ResponseHeadersRead);
+            using var response = await Client.GetAsync(imageUrl, HttpCompletionOption.ResponseHeadersRead);
             response.EnsureSuccessStatusCode();
 
             var guid = Guid.NewGuid();
@@ -226,7 +226,7 @@ namespace MTG.CardGenerator
             }
 
             // TODO: Define this somewhere more globally. May need to add other symbols too, like 'X' and 'T'.
-            var validManaSymbols = new[] { 'R', 'W', 'G', 'U', 'B', '0','1', '2', '3', '4', '5', '6', '7', '8', '9' };
+            var validManaSymbols = new[] { 'R', 'W', 'G', 'U', 'B', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
             var result = new StringBuilder();
             foreach (char c in input)
             {
@@ -241,6 +241,7 @@ namespace MTG.CardGenerator
                 result.Append(c);
                 result.Append('}');
             }
+
             return result.ToString();
         }
 
@@ -270,7 +271,9 @@ namespace MTG.CardGenerator
         public static string FirstCharToLowerCase(this string str)
         {
             if (!string.IsNullOrEmpty(str) && char.IsUpper(str[0]))
+            {
                 return str.Length == 1 ? char.ToLower(str[0]).ToString() : char.ToLower(str[0]) + str[1..];
+            }
 
             return str;
         }
