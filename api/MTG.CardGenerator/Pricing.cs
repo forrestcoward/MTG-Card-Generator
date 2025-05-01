@@ -1,5 +1,4 @@
 ﻿using Betalgo.Ranul.OpenAI.ObjectModels.ResponseModels;
-using System.Collections.Generic;
 
 namespace MTG.CardGenerator
 {

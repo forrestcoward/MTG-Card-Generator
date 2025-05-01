@@ -1,21 +1,17 @@
 ﻿using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Specialized;
-using DarkLoop.Azure.Functions.Authorize;
+using DarkLoop.Azure.Functions.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Diagnostics;
-using System.IO;
-using System.Threading.Tasks;
 
 namespace MTG.CardGenerator
 {
     internal class UploadCardImageFunction
     {
-        [FunctionName("UploadCardImage")]
+        [Function("UploadCardImage")]
         [FunctionAuthorize]
         public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route = null)] HttpRequest req, ILogger log)
         {

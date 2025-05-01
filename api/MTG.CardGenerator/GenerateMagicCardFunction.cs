@@ -2,28 +2,23 @@ using Betalgo.Ranul.OpenAI;
 using Betalgo.Ranul.OpenAI.Managers;
 using Betalgo.Ranul.OpenAI.ObjectModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using DarkLoop.Azure.Functions.Authorization;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.DurableTask;
+using Microsoft.DurableTask.Client;
 using Microsoft.Extensions.Logging;
 using MTG.CardGenerator.CosmosClients;
 using MTG.CardGenerator.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
-using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace MTG.CardGenerator
 {
-    public static class GenerateMagicCardFunction
+    public class GenerateMagicCardFunction
     {
         private class OpenAIMagicCardResponse
         {
@@ -80,6 +75,33 @@ namespace MTG.CardGenerator
             public ImageGenerator.ImageGenerationOptions Options { get; set; }
         }
 
+        public class StoreCardRecordsInput
+        {
+            public CardResult CardResult { get; set; }
+            public CardGenerationRequest Request { get; set; }
+            public string ApiKey { get; set; }
+        }
+
+        public class PrepareImageGenerationInput
+        {
+            public MagicCard Card { get; set; }
+            public string ImageModel { get; set; }
+            public string ApiKey { get; set; }
+        }
+
+        public class UpdateUserRecordInput
+        {
+            public CardGenerationRequest Request { get; set; }
+            public int NumberOfCardsGenerated { get; set; }
+            public double TotalCost { get; set; }
+        }
+
+        public class CardContentInput
+        {
+            public CardGenerationRequest Request { get; set; }
+            public string ApiKey { get; set; }
+        }
+
         const string GenerateCreativeCardSystemPrompt = $@"
 You are an assistant who works as a Magic: The Gathering card designer. The cards you generate should be as creative as possible and utilize Magic: The Gathering card mechanics in unique and interesting ways, ideally mixing multiple mechanics and keywords together in novel ways and have good synergy with other cards or archetypes. The cards you are known to generate elicit a 'wow, cool, that's a great idea!' response from players and leave them surprised by the card that generated. Remember, be extra creative!
 You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'oracleText', 'flavorText', 'pt', and 'rarity'.
@@ -107,23 +129,27 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
 
         const int MaxPromptCharacters = 500;
 
-        [FunctionName("GenerateMagicCard")]
-        public static async Task<IActionResult> HttpStart([HttpTrigger(AuthorizationLevel.Anonymous, "GET", Route = null)] HttpRequest req, [DurableClient] IDurableOrchestrationClient starter, ILogger log) {
+        [Function("GenerateMagicCard")]
+        [FunctionAuthorize]
+        public static async Task<HttpResponseData> HttpStart([HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req, [DurableClient] DurableTaskClient client, FunctionContext context)
+        {
+            var log = context.GetLogger<GenerateMagicCardFunction>();
+            
             // Extract request parameters.
-            var rawUserPrompt = (string)req.Query["userPrompt"];
+            var rawUserPrompt = req.GetQueryParam("userPrompt") ?? string.Empty;
             rawUserPrompt = WebUtility.UrlDecode(rawUserPrompt);
-            log?.LogInformation($"User prompt: {rawUserPrompt?.Replace("\n", "")}");
+            log.LogInformation($"User prompt: {rawUserPrompt?.Replace("\n", "")}");
 
-            var model = (string)req.Query["model"];
-            var imageModel = (string)req.Query["imageModel"];
-            var includeExplanation = bool.TryParse(req.Query["includeExplanation"], out bool result) && result;
-            var generateImagePrompt = bool.TryParse(req.Query["generateImagePrompt"], out bool hd) && hd;
-            var extraCreative = bool.TryParse(req.Query["extraCreative"], out bool ec) && ec;
-            var userSuppliedApiKey = (string)req.Query["openAIApiKey"];
-            var source = (string)req.Query["source"];
+            var model = req.GetQueryParam("model");
+            var imageModel = req.GetQueryParam("imageModel") ?? Constants.Dalle2ModelName;
+            var includeExplanation = bool.TryParse(req.GetQueryParam("includeExplanation"), out bool result) && result;
+            var generateImagePrompt = bool.TryParse(req.GetQueryParam("generateImagePrompt"), out bool hd) && hd;
+            var extraCreative = bool.TryParse(req.GetQueryParam("extraCreative"), out bool ec) && ec;
+            var userSuppliedApiKey = req.GetQueryParam("openAIApiKey");
+            var source = req.GetQueryParam("source");
 
             var numCards = 1;
-            if (int.TryParse(req.Query["numCards"], out int parsedNumCards))
+            if (int.TryParse(req.GetQueryParam("numCards"), out int parsedNumCards))
             {
                 numCards = Math.Clamp(parsedNumCards, 1, 1);
             }
@@ -148,11 +174,8 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     if (user.LastActiveTime?.Date == DateTime.Now.ToUniversalTime().Date &&
                         user.NumberOfFreeCardsGeneratedToday >= allowedFreeCardGenerationsPerDay)
                     {
-                        return new ContentResult
-                        {
-                            StatusCode = 429,
-                            Content = $"You have exceeded your number of free generations per day ({AllowedFreeGenerationsPerDay}). Please enter your own OpenAI API key (https://platform.openai.com/api-keys) to continue generating. Sorry, this is a cost saving measure that I continue to scale back on :(",
-                        };
+                        var errorMessage = $"You have exceeded your number of free generations per day ({AllowedFreeGenerationsPerDay}). Please enter your own OpenAI API key (https://platform.openai.com/api-keys) to continue generating. Sorry, this is a cost saving measure that I continue to scale back on :(";
+                        return await req.CreateErrorResponse(HttpStatusCode.TooManyRequests, errorMessage);
                     }
                 }
             }
@@ -171,41 +194,40 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 UserName = userName,
                 UserSubject = userSubject,
                 UserLoggedIn = userLoggedIn,
-                Host = req.Host.Value,
-                Origin = req.Headers["Origin"].ToString()
+                Host = req.Url.Host,
+                Origin = req.Headers.TryGetValues("Origin", out var origins) ? origins.FirstOrDefault() : string.Empty
             };
 
-            // Start the orchestration.
-            var instanceId = await starter.StartNewAsync("GenerateMagicCardOrchestrator", request);
-            log.LogInformation($"Started orchestration with ID = '{instanceId}'.");
+            var instanceId = await client.ScheduleNewOrchestrationInstanceAsync("GenerateMagicCardOrchestrator", request);
+            log.LogInformation($"Started orchestration with ID '{instanceId}'.");
 
-            // Return immediate response with final result if orchestration completes quickly.
-            var status = await starter.GetStatusAsync(instanceId, showHistory: true, showHistoryOutput: true, showInput: true);
-
-            if (status != null && (status.RuntimeStatus == OrchestrationRuntimeStatus.Completed || status.RuntimeStatus == OrchestrationRuntimeStatus.Failed))
+            var isLocal = Environment.GetEnvironmentVariable("AZURE_FUNCTIONS_ENVIRONMENT") == "Development";
+            if (isLocal)
             {
-                if (status.RuntimeStatus == OrchestrationRuntimeStatus.Completed)
+                // The built in CreateCheckStatusResponseAsync method has the wrong port for URLs when running locally.
+                // I do not know how to fix this, if it is a bug, or something I am doing wrong.
+                var baseUrl = "http://localhost:7071/runtime/webhooks/durabletask/instances";
+                var statusQueryGetUri = $"{baseUrl}/{instanceId}";
+
+                var response = req.CreateResponse(HttpStatusCode.Accepted);
+                await response.WriteAsJsonAsync(new
                 {
-                    return new OkObjectResult(status.Output.ToString());
-                }
-                else
-                {
-                    return new ContentResult
-                    {
-                        StatusCode = 500,
-                        Content = $"Error: {status.Output}",
-                    };
-                }
+                    id = instanceId,
+                    statusQueryGetUri
+                });
+                return response;
             }
             else
             {
-                // Return a 202 with the status query endpoint.
-                return starter.CreateCheckStatusResponse(req, instanceId);
+                // Use built-in method when hosted in Azure (it will get correct host/port)
+                return await client.CreateCheckStatusResponseAsync(req, instanceId);
             }
         }
 
-        [FunctionName("GenerateMagicCardOrchestrator")]
-        public static async Task<string> RunOrchestrator([OrchestrationTrigger] IDurableOrchestrationContext context, ILogger log) {
+        [Function("GenerateMagicCardOrchestrator")]
+        public async Task<string> RunOrchestrator([OrchestrationTrigger] TaskOrchestrationContext context)
+        {
+            var log = context.CreateReplaySafeLogger<GenerateMagicCardFunction>();
             var request = context.GetInput<CardGenerationRequest>();
             var output = new GenerateMagicCardFunctionResponse();
             ImageGenerator.ImageGenerationOptions imageOptions = null;
@@ -216,11 +238,11 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 var apiKey = await context.CallActivityAsync<string>(nameof(ValidateAndGetApiKey), request);
                 if (string.IsNullOrEmpty(apiKey))
                 {
-                    throw new Exception("Please log in or supply your own Open AI API key in the settings to generate Magic: The Gathering cards!");
+                    throw new Exception("Please log in or supply your own OpenAI API key in the settings to generate Magic: The Gathering cards!");
                 }
 
                 // 2. Generate card content.
-                var cardResult = await context.CallActivityAsync<CardResult>(nameof(GenerateCardContent), (request, apiKey));
+                var cardResult = await context.CallActivityAsync<CardResult>(nameof(GenerateCardContent), new CardContentInput { Request = request, ApiKey = apiKey });
 
                 if (cardResult.Cards.Length == 0)
                 {
@@ -234,7 +256,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     foreach (var card in cardResult.Cards)
                     {
                         // Generate image options.
-                        var options = await context.CallActivityAsync<ImageOptions>(nameof(PrepareImageGeneration), (card, request.ImageModel, apiKey));
+                        var options = await context.CallActivityAsync<ImageOptions>(nameof(PrepareImageGeneration), new PrepareImageGenerationInput() { Card = card, ImageModel = request.ImageModel, ApiKey = apiKey });
 
                         imageOptions = options.Options;
 
@@ -242,7 +264,6 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                         if (request.GenerateImagePrompt)
                         {
                             options = await context.CallActivityAsync<ImageOptions>(nameof(GenerateDetailedImagePrompt), options);
-
                             imageOptions = options.Options;
                         }
 
@@ -260,12 +281,12 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 }
 
                 // 4. Store card records in database.
-                await context.CallActivityAsync(nameof(StoreCardRecords), (cardResult, request, apiKey));
+                await context.CallActivityAsync(nameof(StoreCardRecords), new StoreCardRecordsInput() { CardResult = cardResult, Request = request, ApiKey = apiKey });
 
                 // 5. Update user record.
                 if (request.UserLoggedIn)
                 {
-                    await context.CallActivityAsync(nameof(UpdateUserRecord), (request, cardResult.Cards.Length, cardResult.Cost.TotalCost));
+                    await context.CallActivityAsync(nameof(UpdateUserRecord), new UpdateUserRecordInput() { Request = request, NumberOfCardsGenerated = cardResult.Cards.Length, TotalCost = cardResult.Cost.TotalCost });
                 }
 
                 // 6. Prepare final response with telemetry.
@@ -290,7 +311,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             }
         }
 
-        [FunctionName("ValidateAndGetApiKey")]
+        [Function("ValidateAndGetApiKey")]
         public static string ValidateAndGetApiKey([ActivityTrigger] CardGenerationRequest request, ILogger log)
         {
             var apiKeyToUse = request.UserSuppliedApiKey;
@@ -311,16 +332,18 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             return apiKeyToUse;
         }
 
-        [FunctionName("GenerateCardContent")]
-        public static async Task<CardResult> GenerateCardContent([ActivityTrigger] IDurableActivityContext context, ILogger log)
+        [Function("GenerateCardContent")]
+        public static async Task<CardResult> GenerateCardContent([ActivityTrigger] CardContentInput context, FunctionContext functionContext)
         {
-            var (request, apiKey) = context.GetInput<(CardGenerationRequest, string)>();
+            var log = functionContext.GetLogger(nameof(GenerateCardContent));
+            var request = context.Request;
+            var apiKey = context.ApiKey;
             var systemPrompt = string.Empty;
             var cost = new Cost();
-            var openAIResponse = "";
+            var openAIResponse = string.Empty;
             var tokensUsed = 0;
             var attemptsToGenerateCard = 0;
-            var actualGPTModelUsed = "";
+            var actualGPTModelUsed = string.Empty;
 
            // Process raw user prompt.
             var rawUserPrompt = request.RawUserPrompt ?? string.Empty;
@@ -400,11 +423,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
 
                 var response = await openAIService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
                 {
-                    Messages = new List<ChatMessage>
-                    {
-                        ChatMessage.FromUser(userPromptToSubmit),
-                        ChatMessage.FromSystem(systemPrompt),
-                    },
+                    Messages = [ ChatMessage.FromUser(userPromptToSubmit), ChatMessage.FromSystem(systemPrompt) ],
                     Model = gptModel,
                     Temperature = temperature,
                     ChatResponseFormat = chatResponseFormat,
@@ -507,27 +526,24 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             };
         }
 
-        [FunctionName("PrepareImageGeneration")]
-        public static ImageOptions PrepareImageGeneration(
-            [ActivityTrigger] IDurableActivityContext context,
-            ILogger log)
+        [Function("PrepareImageGeneration")]
+        public static ImageOptions PrepareImageGeneration([ActivityTrigger] PrepareImageGenerationInput context, FunctionContext functionContext)
         {
-            var (card, imageModel, apiKey) = context.GetInput<(MagicCard, string, string)>();
-            var options = ImageGenerator.GetImageOptionsForCard(card, imageModel);
+            var log = functionContext.GetLogger(nameof(PrepareImageGeneration));
+            var options = ImageGenerator.GetImageOptionsForCard(context.Card, context.ImageModel);
 
             return new ImageOptions
             {
-                Card = card,
+                Card = context.Card,
                 Options = options,
-                ApiKey = apiKey
+                ApiKey = context.ApiKey
             };
         }
 
-        [FunctionName("GenerateDetailedImagePrompt")]
-        public static async Task<ImageOptions> GenerateDetailedImagePrompt(
-            [ActivityTrigger] ImageOptions imageOptions,
-            ILogger log)
+        [Function("GenerateDetailedImagePrompt")]
+        public static async Task<ImageOptions> GenerateDetailedImagePrompt([ActivityTrigger] ImageOptions imageOptions, FunctionContext functionContext)
         {
+            var log = functionContext.GetLogger(nameof(GenerateDetailedImagePrompt));
             var detailedPrompt = await ImageGenerator.GenerateDetailedImagePrompt(
                 imageOptions.Options,
                 imageOptions.ApiKey,
@@ -537,8 +553,9 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             return imageOptions;
         }
 
-        [FunctionName("GenerateCardImage")]
-        public static async Task<ImageGenerationResult> GenerateCardImage([ActivityTrigger] ImageOptions imageOptions, ILogger log) {
+        [Function("GenerateCardImage")]
+        public static async Task<ImageGenerationResult> GenerateCardImage([ActivityTrigger] ImageOptions imageOptions, FunctionContext functionContext) {
+            var log = functionContext.GetLogger(nameof(GenerateCardImage));
             var stopwatch = Stopwatch.StartNew();
 
             var tempUrl = await ImageGenerator.GenerateImage(imageOptions.Options.Prompt, imageOptions.Options.Model, imageOptions.Options.Size, imageOptions.ApiKey, log);
@@ -577,10 +594,13 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             };
         }
 
-        [FunctionName("StoreCardRecords")]
-        public static async Task StoreCardRecords([ActivityTrigger] IDurableActivityContext context, ILogger log)
+        [Function("StoreCardRecords")]
+        public static async Task StoreCardRecords([ActivityTrigger] StoreCardRecordsInput context, FunctionContext functionContext)
         {
-            var (cardResult, request, apiKey) = context.GetInput<(CardResult, CardGenerationRequest, string)>();
+            var log = functionContext.GetLogger(nameof(StoreCardRecords));
+            var cardResult = context.CardResult;
+            var request = context.Request;
+            var apiKey = context.ApiKey;
             var cosmosDatabaseId = Extensions.GetSettingOrThrow(Constants.CosmosDBDatabaseId);
             var cardsClient = new CardsClient();
 
@@ -630,10 +650,13 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             }
         }
 
-        [FunctionName("UpdateUserRecord")]
-        public static async Task UpdateUserRecord([ActivityTrigger] IDurableActivityContext context, ILogger log)
+        [Function("UpdateUserRecord")]
+        public static async Task UpdateUserRecord([ActivityTrigger] UpdateUserRecordInput context, FunctionContext functionContext)
         {
-            var (request, cardCount, totalCost) = context.GetInput<(CardGenerationRequest, int, double)>();
+            var log = functionContext.GetLogger(nameof(UpdateUserRecord));
+            var request = context.Request;
+            var cardCount = context.NumberOfCardsGenerated;
+            var totalCost = context.TotalCost;
 
             try
             {
@@ -667,9 +690,10 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             public ImageGenerator.ImageGenerationOptions ImageOptions { get; set; }
         }
 
-        [FunctionName("LogTelemetry")]
-        public static string LogTelemetry([ActivityTrigger] FinalResponseData responseData, ILogger log)
+        [Function("LogTelemetry")]
+        public static string LogTelemetry([ActivityTrigger] FinalResponseData responseData, FunctionContext functionContext)
         {
+            var log = functionContext.GetLogger(nameof(LogTelemetry));
             try
             {
                 log?.LogInformation($"API JSON response:{Environment.NewLine}{JToken.Parse(responseData.Json)}");

@@ -1,18 +1,15 @@
-using DarkLoop.Azure.Functions.Authorize;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using DarkLoop.Azure.Functions.Authorization;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using MTG.CardGenerator.CosmosClients;
 using MTG.CardGenerator.Models;
 using Newtonsoft.Json;
-using System;
-using System.Threading.Tasks;
+using System.Net;
 
 namespace MTG.CardGenerator
 {
-    public static class GetUserFunction
+    public class GetUserFunction
     {
         internal class GetuserFunctionResponse
         {
@@ -26,20 +23,21 @@ namespace MTG.CardGenerator
             public long NumberOfFreeCardsGeneratedToday { get; set; }
             [JsonProperty("numberOfFreeCardsAllowedPerDay")]
             public long AllowedFreeCardGenerationsPerDay { get; set; }
-            
         }
 
         // Gets the user information (or creates a new user if a record does not exist yet).
-        [FunctionName("GetUser")]
+        [Function("GetUser")]
         [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
-        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log)
+        public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req, FunctionContext context)
         {
+            var log = context.GetLogger<GetUserFunction>();
+            
             try
             {
                 var userSubject = req.GetUserSubject(log);
                 if (string.IsNullOrWhiteSpace(userSubject))
                 {
-                    return new UnauthorizedResult();
+                    return req.CreateResponse(HttpStatusCode.Unauthorized);
                 }
 
                 var usersClient = new UsersClient(log);
@@ -67,16 +65,12 @@ namespace MTG.CardGenerator
                     AllowedFreeCardGenerationsPerDay = user.AllowedFreeCardGenerationsPerDay != -1 ? user.AllowedFreeCardGenerationsPerDay : GenerateMagicCardFunction.AllowedFreeGenerationsPerDay,
                 });
 
-                return new OkObjectResult(json);
+                return await req.CreateJsonResponse(HttpStatusCode.OK, json);
             }
             catch (Exception ex)
             {
-                log?.LogError(ex, ex.ToString());
-                return new ContentResult
-                {
-                    StatusCode = 500,
-                    Content = ex.Message,
-                };
+                log.LogError(ex, ex.ToString());
+                return await req.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
             }
         }
     }

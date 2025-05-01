@@ -1,23 +1,17 @@
 ﻿using Betalgo.Ranul.OpenAI.ObjectModels;
-using DarkLoop.Azure.Functions.Authorize;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using DarkLoop.Azure.Functions.Authorization;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using MTG.CardGenerator.CosmosClients;
 using MTG.CardGenerator.Models;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Net;
-using System.Threading.Tasks;
 
 namespace MTG.CardGenerator
 {
-    public static class GenerateImageFunction
+    public class GenerateImageFunction
     {
         /*
          * This function generates a new image for a given card and prompt. It will:
@@ -27,39 +21,31 @@ namespace MTG.CardGenerator
          * 
          * Users (besides admins) need to provide their own OpenAI API key in order to generate images beyond the first.
          */
-        [FunctionName("GenerateNewCardImage")]
+        [Function("GenerateNewCardImage")]
         [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
-        public static async Task<IActionResult> GenerateNewCardImage([HttpTrigger(AuthorizationLevel.Anonymous, "GET", Route = null)] HttpRequest req, ILogger log)
+        public static async Task<HttpResponseData> GenerateNewCardImage([HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req, FunctionContext context)
         {
+            var log = context.GetLogger<GenerateImageFunction>();
             var stopwatch = Stopwatch.StartNew();
 
             var userSubject = req.GetUserSubject(log);
             if (string.IsNullOrWhiteSpace(userSubject))
             {
-                return new UnauthorizedResult();
+                return req.CreateResponse(HttpStatusCode.Unauthorized);
             }
 
-            var prompt = (string)req.Query["prompt"];
-            var openAIApiKey = (string)req.Query["openAIApiKey"];
-            var cardId = (string)req.Query["cardId"];
+            var prompt = req.GetQueryParam("prompt");
+            var openAIApiKey = req.GetQueryParam("openAIApiKey");
+            var cardId = req.GetQueryParam("cardId");
 
             if (string.IsNullOrWhiteSpace(prompt))
             {
-                return new ContentResult
-                {
-                    StatusCode = 400,
-                    // User friendly message because default prompt is empty in UI.
-                    Content = $"Please specify an image prompt.",
-                };
+                return await req.CreateErrorResponse(HttpStatusCode.BadRequest, "Please specify an image prompt.");
             }
 
             if (string.IsNullOrWhiteSpace(cardId))
             {
-                return new ContentResult
-                {
-                    StatusCode = 400,
-                    Content = $"Please specify cardId.",
-                };
+                return await req.CreateErrorResponse(HttpStatusCode.BadRequest, "Please specify cardId.");
             }
 
             prompt = WebUtility.UrlDecode(prompt);
@@ -83,11 +69,7 @@ namespace MTG.CardGenerator
                 if (string.IsNullOrEmpty(openAIApiKey) && cardHasAnImage && !user.IsAdmin)
                 {
                     log.LogMetric("GenerateNewCardImage_Rejected", 1, properties: new Dictionary<string, object>() { { "userSubject", userSubject }, });
-                    return new ContentResult
-                    {
-                        StatusCode = 400,
-                        Content = $"Please set your own OpenAI API key in the settings to generate images beyond the first.",
-                    };
+                    return await req.CreateErrorResponse(HttpStatusCode.BadRequest, "Please set your own OpenAI API key in the settings to generate images beyond the first.");
                 }
 
                 // If no key is provided, use the one from the environment if the card has not had an image generated before (or the user is an admin).
@@ -103,11 +85,7 @@ namespace MTG.CardGenerator
 
                 if (string.IsNullOrWhiteSpace(openAIApiKey))
                 {
-                    return new ContentResult
-                    {
-                        StatusCode = 400,
-                        Content = "No OpenAI API key was found.",
-                    };
+                    return await req.CreateErrorResponse(HttpStatusCode.BadRequest, "No OpenAI API key was found.");
                 }
 
                 var imageModel = Constants.Dalle3ModelName;
@@ -145,35 +123,29 @@ namespace MTG.CardGenerator
                     { "temporaryUrl", url }
                 };
 
-                var json = JsonConvert.SerializeObject(result);
-                return new OkObjectResult(result);
+                return await req.CreateJsonResponse(HttpStatusCode.OK, result);
             }
             catch (Exception exception)
             {
                 if (exception.Message.ContainsIgnoreCase("OpenAI rejected your authorization") || exception.Message.ContainsIgnoreCase("Incorrect API key provided"))
                 {
-                    return new ContentResult
-                    {
-                        StatusCode = 500,
-                        Content = $"Error: The OpenAI API key you provided is invalid. Please check the integrity of this API key.",
-                    };
+                    return await req.CreateErrorResponse(HttpStatusCode.InternalServerError, 
+                        "Error: The OpenAI API key you provided is invalid. Please check the integrity of this API key.");
                 }
 
                 var errorMessage = $"Unexpected exception: {exception}";
                 log?.LogError(exception, errorMessage);
-                return new ContentResult
-                {
-                    StatusCode = 500,
-                    Content = exception.Message,
-                };
+                return await req.CreateErrorResponse(HttpStatusCode.InternalServerError, exception.Message);
             }
         }
 
-        [FunctionName("GetImagePrompt")]
+        [Function("GetImagePrompt")]
         [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
-        public static async Task<IActionResult> GetImagePrompt([HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route = null)] HttpRequest req, ILogger log)
+        public static async Task<HttpResponseData> GetImagePrompt([HttpTrigger(AuthorizationLevel.Anonymous, "POST")] HttpRequestData req, FunctionContext context)
         {
+            var log = context.GetLogger<GenerateImageFunction>();
             var stopwatch = Stopwatch.StartNew();
+            
             try
             {
                 string requestBody;
@@ -191,15 +163,11 @@ namespace MTG.CardGenerator
                 {
                     var errorMessage = $"Could not parse request body to type MagicCard.";
                     log?.LogError(errorMessage);
-                    return await Task.FromResult<IActionResult>(new ContentResult
-                    {
-                        StatusCode = 400,
-                        Content = errorMessage,
-                    });
+                    return await req.CreateErrorResponse(HttpStatusCode.BadRequest, errorMessage);
                 }
 
                 var options = ImageGenerator.GetImageOptionsForCard(card, Constants.Dalle3ModelName);
-                var apiKey = Environment.GetEnvironmentVariable(Constants.OpenAIApiKeyLoggedIn);
+                var apiKey = Environment.GetEnvironmentVariable(Constants.OpenAIApiKey);
                 var prompt = await ImageGenerator.GenerateDetailedImagePrompt(options, apiKey, log);
 
                 stopwatch.Stop();
@@ -212,18 +180,13 @@ namespace MTG.CardGenerator
                     }
                 };
 
-                var json = JsonConvert.SerializeObject(response);
-                return await Task.FromResult<IActionResult>(new OkObjectResult(response));
+                return await req.CreateJsonResponse(HttpStatusCode.OK, response);
             }
             catch (Exception exception)
             {
                 var errorMessage = $"Unexpected exception: {exception}";
                 log?.LogError(exception, errorMessage);
-                return await Task.FromResult<IActionResult>(new ContentResult
-                {
-                    StatusCode = 500,
-                    Content = errorMessage,
-                });
+                return await req.CreateErrorResponse(HttpStatusCode.InternalServerError, errorMessage);
             }
         }
     }

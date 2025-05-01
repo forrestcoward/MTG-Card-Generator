@@ -1,16 +1,10 @@
 ﻿using Azure.Storage.Blobs;
 using ImageMagick;
-using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace MTG.CardGenerator
 {
@@ -18,11 +12,16 @@ namespace MTG.CardGenerator
     {
         private static readonly HttpClient client = new();
 
-        public static JwtSecurityToken ReadJwtToken(this HttpRequest request, ILogger log = null)
+        public static JwtSecurityToken ReadJwtToken(this HttpRequestData request, ILogger log = null)
         {
             try
             {
-                var authHeader = request.Headers["Authorization"].ToString();
+                if (!request.Headers.TryGetValues("Authorization", out var authValues))
+                {
+                    return null;
+                }
+
+                var authHeader = authValues.FirstOrDefault() ?? string.Empty;
                 var jwtToken = authHeader.Replace("Bearer ", string.Empty);
                 var token = new JwtSecurityTokenHandler().ReadJwtToken(jwtToken);
                 return token;
@@ -33,8 +32,8 @@ namespace MTG.CardGenerator
                 return null;
             }
         }
-        
-        public static string GetClaim(this HttpRequest req, string claimName, string defaultValue = "")
+
+        public static string GetClaim(this HttpRequestData req, string claimName, string defaultValue = "")
         {
             var jwtToken = req.ReadJwtToken();
             return jwtToken.GetClaim(claimName, defaultValue);
@@ -62,9 +61,10 @@ namespace MTG.CardGenerator
             return setting;
         }
 
-        public static string GetUserSubject(this HttpRequest req, ILogger log = null)
+        public static string GetUserSubject(this HttpRequestData req, ILogger log = null)
         {
-            var validateBearerToken = Environment.GetEnvironmentVariable(Constants.ValidateBearerToken) == null || bool.Parse(Environment.GetEnvironmentVariable(Constants.ValidateBearerToken));
+            var validateBearerToken = Environment.GetEnvironmentVariable(Constants.ValidateBearerToken) == null || 
+                bool.Parse(Environment.GetEnvironmentVariable(Constants.ValidateBearerToken));
 
             JwtSecurityToken jwtToken = null;
             if (validateBearerToken)
@@ -92,6 +92,12 @@ namespace MTG.CardGenerator
             }
 
             return userSubject;
+        }
+
+        public static string GetQueryParam(this HttpRequestData req, string paramName)
+        {
+            var query = System.Web.HttpUtility.ParseQueryString(req.Url.Query);
+            return query[paramName];
         }
 
         private static Stream CompressImage(Stream imageStream, uint quality, uint width)
@@ -276,10 +282,7 @@ namespace MTG.CardGenerator
 
         public static string GetAsObfuscatedSecret(this string input, int x)
         {
-            if (input == null)
-            {
-                throw new ArgumentNullException(nameof(input));
-            }
+            ArgumentNullException.ThrowIfNull(input);
 
             if (x > input.Length / 2)
             {

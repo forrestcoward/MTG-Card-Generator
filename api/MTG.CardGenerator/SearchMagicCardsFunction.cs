@@ -1,18 +1,13 @@
 ﻿using Azure;
 using Azure.Search.Documents.Indexes;
-using DarkLoop.Azure.Functions.Authorize;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using DarkLoop.Azure.Functions.Authorization;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using MTG.CardGenerator.CosmosClients;
 using MTG.CardGenerator.Models;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Net;
 
 namespace MTG.CardGenerator
 {
@@ -44,17 +39,19 @@ namespace MTG.CardGenerator
 #pragma warning restore IDE1006 // Naming Styles
         }
 
-        [FunctionName("SearchMagicCards")]
+        [Function("SearchMagicCards")]
         [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
-        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log)
+        public static async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req, FunctionContext context)
         {
+            var log = context.GetLogger<SearchMagicCardsFunction>();
+            
             try
             {
-                var query = (string)req.Query["query"];
+                var query = req.GetQueryParam("query");
 
                 if (string.IsNullOrWhiteSpace(query))
                 {
-                    return new BadRequestObjectResult($"Parameter 'query' is required.");
+                    return await req.CreateErrorResponse(HttpStatusCode.BadRequest, "Parameter 'query' is required.");
                 }
 
                 var cogSearchEndpoint = Extensions.GetSettingOrThrow(Constants.CognitiveSearchEndpoint);
@@ -76,18 +73,12 @@ namespace MTG.CardGenerator
                 var cardsClient = new CardsClient(log);
                 var cards = await cardsClient.GetMagicCardRecords(ids);
 
-                // var generatedCards = cards.Select(x => x.MagicCards.FirstOrDefault()).Take(30).ToArray();
-                // var json = JsonConvert.SerializeObject(new SearchMagicCardsFunctionResponse() { Cards = generatedCards.Select(x => new MagicCardResponse(x)).ToArray() });
-                return new OkObjectResult("");
+                return await req.CreateJsonResponse(HttpStatusCode.OK, "");
             }
             catch (Exception ex)
             {
-                log?.LogError(ex, ex.Message);
-                return new ContentResult
-                {
-                    StatusCode = 500,
-                    Content = ex.Message,
-                };
+                log.LogError(ex, ex.Message);
+                return await req.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
             }
         }
     }

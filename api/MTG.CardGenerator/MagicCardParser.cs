@@ -1,8 +1,5 @@
 ﻿using MTG.CardGenerator.Models;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using System.Text.RegularExpressions;
 using static MTG.CardGenerator.MagicCardParser;
 
@@ -94,13 +91,13 @@ namespace MTG.CardGenerator
             return false;
         }
 
-        internal static CardRule[] CardRules = new CardRule[]
-        {
+        internal static CardRule[] CardRules =
+        [
             new CardRule()
             {
                 PropertyOrKeyword = CardPropertyOrKeyword.GainsEffectWhenCastFromGraveyard,
-                IncludesRules = new string[]
-                {
+                IncludesRules =
+                [
                     "If you cast this spell from your graveyard",
                     "If you cast this spell a graveyard",
                     "If you cast this card from your graveyard",
@@ -119,8 +116,8 @@ namespace MTG.CardGenerator
                     "You may cast this card from your graveyard by paying its flashback cost",
                     "You may cast {name} from your graveyard by paying its flashback cost",
                     "You may cast it for its flashback cost"
-                },
-                MustHaveProperties = new[] { CardPropertyOrKeyword.Flashback },
+                ],
+                MustHaveProperties = [CardPropertyOrKeyword.Flashback],
                 FixViolation = (card, rule, line) =>
                 {
                     // Cards which gain an effect when cast from the graveyard should have Flashback.
@@ -134,16 +131,16 @@ namespace MTG.CardGenerator
             new CardRule()
             {
                 PropertyOrKeyword = CardPropertyOrKeyword.GainsEffectWhenKicked,
-                IncludesRules = new string[]
-                {
+                IncludesRules =
+                [
                     "If {name} was kicked",
                     "If {name} is kicked",
                     "You may pay the kicker cost",
                     "If you paid the kicker cost",
                     "If this spell was kicked",
                     "If it was kicked"
-                },
-                MustHaveProperties = new[] { CardPropertyOrKeyword.Kicker },
+                ],
+                MustHaveProperties = [CardPropertyOrKeyword.Kicker],
                 FixViolation = (card, rule, line) =>
                 {
                     // Add Kicker.
@@ -154,11 +151,11 @@ namespace MTG.CardGenerator
             {
                 PropertyOrKeyword = CardPropertyOrKeyword.Kicker,
                 MechanicMatchRule = "Kicker",
-                ReminderText = new string[]
-                {
+                ReminderText =
+                [
                     "(You may pay an additional {cost} as you cast this spell.)",
                     "(You may {cost} in addition to any other costs as you cast this spell)"
-                },
+                ],
                 AddMechanicToCard = (card, rule, line) =>
                 {
                     var newText = $"Kicker {card.Card.ManaCost}\n";
@@ -169,12 +166,12 @@ namespace MTG.CardGenerator
             {
                 PropertyOrKeyword = CardPropertyOrKeyword.Flashback,
                 MechanicMatchRule = "Flashback",
-                LegalTypes = new[] { CardType.Instant, CardType.Sorcery },
-                ReminderText = new string[]
-                {
+                LegalTypes = [CardType.Instant, CardType.Sorcery],
+                ReminderText =
+                [
                     "Exile this card from your graveyard: Cast it this turn for the its flashback cost",
                     "(You may cast this card from your graveyard for its flashback cost. Then exile it.)"
-                },
+                ],
                 AddMechanicToCard = (card, rule, line) =>
                 {
                     var newText = $"\nFlashback {card.Card.ManaCost}";
@@ -195,7 +192,7 @@ namespace MTG.CardGenerator
             {
                 PropertyOrKeyword = CardPropertyOrKeyword.Unearth,
                 MechanicMatchRule = "Unearth",
-                LegalTypes= new[] { CardType.Artifact, CardType.Creature },
+                LegalTypes= [CardType.Artifact, CardType.Creature],
                 AddMechanicToCard = (card, rule, line) =>
                 {
                     // Transform Flashback into Unearth.
@@ -218,7 +215,7 @@ namespace MTG.CardGenerator
                     }
                 }
             },
-        };
+        ];
     }
 
     /// <summary>
@@ -267,7 +264,7 @@ namespace MTG.CardGenerator
             get
             {
                 var costs = new CardCost(Cost);
-                if (costs.CostsWithoutManaCost.Any())
+                if (costs.CostsWithoutManaCost.Length != 0)
                 {
                     return $"{string.Join(',', costs.CostsWithoutManaCost)}: {Effect}";
                 }
@@ -292,8 +289,8 @@ namespace MTG.CardGenerator
             Cost = match["cost"].Trim();
             Effect = match["effect"].Trim();
 
-            Rules = CardRule.CardRules.Where(rule => CardRule.Applies(this, rule)).ToArray();
-            Properties = Rules.Select(criteria => criteria.PropertyOrKeyword).ToArray();
+            Rules = [.. CardRule.CardRules.Where(rule => CardRule.Applies(this, rule))];
+            Properties = [.. Rules.Select(criteria => criteria.PropertyOrKeyword)];
         }
 
         public override string ToString()
@@ -406,7 +403,7 @@ namespace MTG.CardGenerator
             {
                 foreach (var rule in parsedOracleTextLine.Rules)
                 {
-                    if (rule.LegalTypes.Any() && !rule.LegalTypes.Contains(type))
+                    if (rule.LegalTypes.Length != 0 && !rule.LegalTypes.Contains(type))
                     {
                         // Card contains a property that is not allowed on its type.
                         // e.g. flashback is not allowed on creatures.
@@ -500,7 +497,7 @@ namespace MTG.CardGenerator
             if (!white && !blue && !black && !red &&  green) return ColorIdentity.Green;
             if (!white && !blue && !black && !red && !green) return ColorIdentity.Colorless;
 
-            if  (white &&  blue && !black && !red && !green) return ColorIdentity.Azorius;
+            if (white &&  blue && !black && !red && !green) return ColorIdentity.Azorius;
             if (!white &&  blue &&  black && !red && !green) return ColorIdentity.Dimir;
             if (!white && !blue &&  black &&  red && !green) return ColorIdentity.Rakdos;
             if (!white && !blue && !black &&  red &&  green) return ColorIdentity.Gruul;

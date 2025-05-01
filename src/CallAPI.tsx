@@ -247,8 +247,8 @@ export async function GenerateMagicCardRequest(
 
 // New function to poll durable function status
 async function pollDurableFunctionStatus(statusUrl: string, token: AuthenticationResult | undefined): Promise<MagicCard[]> {
-  const maxAttempts = 60; // Maximum polling attempts (2 minutes with 2-second intervals)
-  const pollIntervalMs = 2000; // Polling interval in milliseconds
+  const maxAttempts = 120; // Maximum polling attempts (4 minutes with 3-second intervals)
+  const pollIntervalMs = 3000; // Polling interval in milliseconds
   
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
