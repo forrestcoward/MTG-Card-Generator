@@ -1,59 +1,57 @@
-﻿using Azure.Storage.Blobs;
+﻿using Azure.Storage;
+using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Specialized;
 using DarkLoop.Azure.Functions.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using System.Net;
 
 namespace MTG.CardGenerator
 {
-    internal class UploadCardImageFunction
+    public class UploadCardImageFunction
     {
         [Function("UploadCardImage")]
         [FunctionAuthorize]
-        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route = null)] HttpRequest req, ILogger log)
+        public static async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequestData req, FunctionContext context)
         {
+            var log = context.GetLogger<UploadCardImageFunction>();
             var stopwatch = Stopwatch.StartNew();
-            try
+
+            var cardId = req.GetQueryParam("cardId");
+            if (string.IsNullOrWhiteSpace(cardId))
             {
-                var cardId = (string)req.Query["cardId"];
-
-                var blobStorageName = Extensions.GetSettingOrThrow(Constants.BlobStorageName);
-                var blobStorageEndpoint = Extensions.GetSettingOrThrow(Constants.BlobStorageEndpoint);
-                var blobStorageContainerName = Extensions.GetSettingOrThrow(Constants.BlobStorageContainerName);
-                var blobStorageAccessKey = Extensions.GetSettingOrThrow(Constants.BlobStorageAccessKey);
-
-                var sharedKeyCredential = new Azure.Storage.StorageSharedKeyCredential(blobStorageName, blobStorageAccessKey);
-                var blobServiceClient = new BlobServiceClient(new Uri(blobStorageEndpoint), sharedKeyCredential);
-                var blobContainerClient = blobServiceClient.GetBlobContainerClient(blobStorageContainerName);
-
-                var blobName = $"image-{cardId}.png";
-                var blockBlob = blobContainerClient.GetBlockBlobClient(blobName);
-
-                using (var stream = new MemoryStream())
-                {
-                    await req.Body.CopyToAsync(stream);
-                    stream.Position = 0;
-                    await blockBlob.UploadAsync(stream);
-                }
-
-                var uploadedBlobUrl = blockBlob.Uri.ToString();
-                stopwatch.Stop();
-                log.LogMetric("UploadCardImage_DurationSeconds", stopwatch.Elapsed.TotalSeconds);
-                return new OkObjectResult(new { url = uploadedBlobUrl });
+                return await req.CreateErrorResponse(HttpStatusCode.BadRequest, "Parameter 'cardId' is required.");
             }
-            catch (Exception exception)
+
+            var blobStorageName = Extensions.GetSettingOrThrow(Constants.BlobStorageName);
+            var blobStorageEndpoint = Extensions.GetSettingOrThrow(Constants.BlobStorageEndpoint);
+            var blobStorageContainerName = Extensions.GetSettingOrThrow(Constants.BlobStorageContainerName);
+            var blobStorageAccessKey = Extensions.GetSettingOrThrow(Constants.BlobStorageAccessKey);
+
+            var sharedKeyCredential = new StorageSharedKeyCredential(blobStorageName, blobStorageAccessKey);
+            var blobServiceClient = new BlobServiceClient(new Uri(blobStorageEndpoint), sharedKeyCredential);
+            var blobContainerClient = blobServiceClient.GetBlobContainerClient(blobStorageContainerName);
+
+            var blobName = $"image-{cardId}.png";
+            var blockBlob = blobContainerClient.GetBlockBlobClient(blobName);
+
+            using (var stream = new MemoryStream())
             {
-                var errorMessage = $"Unexpected exception: {exception}";
-                log?.LogError(exception, errorMessage);
-                return new ContentResult()
-                {
-                    StatusCode = 500,
-                    Content = errorMessage,
-                };
+                await req.Body.CopyToAsync(stream);
+                stream.Position = 0;
+                await blockBlob.UploadAsync(stream);
             }
+
+            var uploadedBlobUrl = blockBlob.Uri.ToString();
+            stopwatch.Stop();
+
+            log.LogMetric("UploadCardImage_DurationSeconds", stopwatch.Elapsed.TotalSeconds);
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(new { url = uploadedBlobUrl });
+            return response;
         }
     }
 }

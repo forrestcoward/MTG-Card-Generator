@@ -11,7 +11,7 @@ namespace MTG.CardGenerator
 {
     public class GetUserFunction
     {
-        internal class GetuserFunctionResponse
+        internal class GetUserFunctionResponse
         {
             [JsonProperty("userName")]
             public string UserName { get; set; }
@@ -32,46 +32,38 @@ namespace MTG.CardGenerator
         {
             var log = context.GetLogger<GetUserFunction>();
 
-            try
+            var userSubject = req.GetUserSubject(log);
+            if (string.IsNullOrWhiteSpace(userSubject))
             {
-                var userSubject = req.GetUserSubject(log);
-                if (string.IsNullOrWhiteSpace(userSubject))
+                return req.CreateResponse(HttpStatusCode.Unauthorized);
+            }
+
+            var usersClient = new UsersClient(log);
+            var user = await usersClient.GetUserRecord(userSubject);
+
+            if (user == null)
+            {
+                var jwtToken = req.ReadJwtToken();
+                var userName = Extensions.GetClaim(jwtToken, "name", defaultValue: "Anonymous");
+                user = await usersClient.AddItemToContainerAsync(new User()
                 {
-                    return req.CreateResponse(HttpStatusCode.Unauthorized);
-                }
-
-                var usersClient = new UsersClient(log);
-                var user = await usersClient.GetUserRecord(userSubject);
-
-                if (user == null)
-                {
-                    var jwtToken = req.ReadJwtToken();
-                    var userName = Extensions.GetClaim(jwtToken, "name", defaultValue: "Anonymous");
-                    user = await usersClient.AddItemToContainerAsync(new User()
-                    {
-                        UserName = userName,
-                        UserSubject = userSubject,
-                    });
-
-                    log.LogInformation($"Created user record for user '{userSubject}' in database.");
-                }
-
-                var json = JsonConvert.SerializeObject(new GetuserFunctionResponse()
-                {
-                    UserName = user.UserName,
-                    NumberOfCardsGenerated = user.NumberOfCardsGenerated,
-                    NumberOfCardsRated = user.NumberOfCardsRated,
-                    NumberOfFreeCardsGeneratedToday = user.NumberOfFreeCardsGeneratedToday,
-                    AllowedFreeCardGenerationsPerDay = user.AllowedFreeCardGenerationsPerDay != -1 ? user.AllowedFreeCardGenerationsPerDay : GenerateMagicCardFunction.AllowedFreeGenerationsPerDay,
+                    UserName = userName,
+                    UserSubject = userSubject,
                 });
 
-                return await req.CreateJsonResponse(HttpStatusCode.OK, json);
+                log.LogInformation($"Created user record for user '{userSubject}' in database.");
             }
-            catch (Exception ex)
+
+            var json = JsonConvert.SerializeObject(new GetUserFunctionResponse()
             {
-                log.LogError(ex, ex.ToString());
-                return await req.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
-            }
+                UserName = user.UserName,
+                NumberOfCardsGenerated = user.NumberOfCardsGenerated,
+                NumberOfCardsRated = user.NumberOfCardsRated,
+                NumberOfFreeCardsGeneratedToday = user.NumberOfFreeCardsGeneratedToday,
+                AllowedFreeCardGenerationsPerDay = user.AllowedFreeCardGenerationsPerDay != -1 ? user.AllowedFreeCardGenerationsPerDay : GenerateMagicCardFunction.AllowedFreeGenerationsPerDay,
+            });
+
+            return await req.CreateJsonResponse(HttpStatusCode.OK, json);
         }
     }
 }

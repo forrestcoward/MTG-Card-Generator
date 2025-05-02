@@ -23,26 +23,17 @@ namespace MTG.CardGenerator
         public static async Task<HttpResponseData> RunGetCardToRate([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req, FunctionContext context)
         {
             var log = context.GetLogger<CardRatingFunctions>();
+            var stopwatch = Stopwatch.StartNew();
+            var cardsClient = new CardsClient(log);
+            var card = await cardsClient.GetCardToRate(log);
 
-            try
-            {
-                var stopwatch = Stopwatch.StartNew();
-                var cardsClient = new CardsClient(log);
-                var card = await cardsClient.GetCardToRate(log);
+            log.LogMetric("GetCardToRate_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
+                properties: new Dictionary<string, object>()
+                {
+                    { "cardId", card.Id },
+                });
 
-                log.LogMetric("GetCardToRate_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
-                    properties: new Dictionary<string, object>()
-                    {
-                        { "cardId", card.Id },
-                    });
-
-                return await req.CreateJsonResponse(HttpStatusCode.OK, APIResponses.GetCardResponse(card));
-            }
-            catch (Exception ex)
-            {
-                log.LogError(ex, ex.Message);
-                return await req.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
-            }
+            return await req.CreateJsonResponse(HttpStatusCode.OK, APIResponses.GetCardResponse(card));
         }
 
         [Function("RateCard")]
@@ -71,38 +62,31 @@ namespace MTG.CardGenerator
                 return await req.CreateErrorResponse(HttpStatusCode.BadRequest, "Parameter 'rating' must be between 1 and 5.");
             }
 
-            try
-            {
-                var cardsClient = new CardsClient(log);
-                var usersClient = new UsersClient(log);
-                var card = await cardsClient.GetMagicCardRecord(cardId);
+            var cardsClient = new CardsClient(log);
+            var usersClient = new UsersClient(log);
+            var card = await cardsClient.GetMagicCardRecord(cardId);
 
-                if (card == null)
+            if (card == null)
+            {
+                return await req.CreateErrorResponse(HttpStatusCode.BadRequest, "Parameter 'cardId' was not valid or did not exist.");
+            }
+
+            var updateTask = usersClient.UserRatedCard(userSubject);
+            await cardsClient.SetRatingResult(card, rating);
+            await updateTask;
+            var updatedCard = await cardsClient.GetMagicCardRecord(cardId);
+            var json = JsonConvert.SerializeObject(new CardRatingFunctionResponse() { Rating = updatedCard.Rating });
+
+            log.LogMetric("RateCard_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
+                properties: new Dictionary<string, object>()
                 {
-                    return await req.CreateErrorResponse(HttpStatusCode.BadRequest, "Parameter 'cardId' was not valid or did not exist.");
-                }
+                    { "rating", rating },
+                    { "cardId", card.Id },
+                    { "userSubject", userSubject },
+                });
 
-                var updateTask = usersClient.UserRatedCard(userSubject);
-                await cardsClient.SetRatingResult(card, rating);
-                await updateTask;
-                var updatedCard = await cardsClient.GetMagicCardRecord(cardId);
-                var json = JsonConvert.SerializeObject(new CardRatingFunctionResponse() { Rating = updatedCard.Rating });
+            return await req.CreateJsonResponse(HttpStatusCode.OK, json);
 
-                log.LogMetric("RateCard_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
-                    properties: new Dictionary<string, object>()
-                    {
-                        { "rating", rating },
-                        { "cardId", card.Id },
-                        { "userSubject", userSubject },
-                    });
-
-                return await req.CreateJsonResponse(HttpStatusCode.OK, json);
-            }
-            catch (Exception ex)
-            {
-                log.LogError(ex, ex.Message);
-                return await req.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
-            }
         }
 
         [Function("GetTopCards")]
@@ -110,20 +94,11 @@ namespace MTG.CardGenerator
         public static async Task<HttpResponseData> RunTopCards([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req, FunctionContext context)
         {
             var log = context.GetLogger<CardRatingFunctions>();
-
-            try
-            {
-                var stopwatch = Stopwatch.StartNew();
-                var cardsClient = new CardsClient(log);
-                var topCards = (await cardsClient.GetTopCards(top: 100, requiredNumberOfVotes: 2)).ToList();
-                log.LogMetric("GetTopCards_DurationSeconds", stopwatch.Elapsed.TotalSeconds);
-                return await req.CreateJsonResponse(HttpStatusCode.OK, APIResponses.GetCardsResponse(topCards));
-            }
-            catch (Exception ex)
-            {
-                log.LogError(ex, ex.Message);
-                return await req.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
-            }
+            var stopwatch = Stopwatch.StartNew();
+            var cardsClient = new CardsClient(log);
+            var topCards = (await cardsClient.GetTopCards(top: 100, requiredNumberOfVotes: 2)).ToList();
+            log.LogMetric("GetTopCards_DurationSeconds", stopwatch.Elapsed.TotalSeconds);
+            return await req.CreateJsonResponse(HttpStatusCode.OK, APIResponses.GetCardsResponse(topCards));
         }
     }
 }

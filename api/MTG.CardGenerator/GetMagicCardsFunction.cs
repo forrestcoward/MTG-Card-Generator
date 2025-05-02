@@ -16,18 +16,10 @@ namespace MTG.CardGenerator
         {
             var log = context.GetLogger<GetMagicCardsFunction>();
 
-            try
-            {
-                var cardName = req.GetQueryParam("cardName");
-                var cardsClient = new CardsClient(log);
-                var records = await cardsClient.GetMagicCardsByName(cardName);
-                return await req.CreateJsonResponse(HttpStatusCode.OK, APIResponses.GetCardsResponse(records));
-            }
-            catch (Exception ex)
-            {
-                log.LogError(ex, ex.Message);
-                return await req.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
-            }
+            var cardName = req.GetQueryParam("cardName");
+            var cardsClient = new CardsClient(log);
+            var records = await cardsClient.GetMagicCardsByName(cardName);
+            return await req.CreateJsonResponse(HttpStatusCode.OK, APIResponses.GetCardsResponse(records));
         }
 
         [Function("GetMagicCard")]
@@ -35,18 +27,10 @@ namespace MTG.CardGenerator
         {
             var log = context.GetLogger<GetMagicCardsFunction>();
 
-            try
-            {
-                var cardId = req.GetQueryParam("cardId");
-                var cardsClient = new CardsClient(log);
-                var record = await cardsClient.GetMagicCardRecord(cardId);
-                return await req.CreateJsonResponse(HttpStatusCode.OK, APIResponses.GetCardResponse(record));
-            }
-            catch (Exception ex)
-            {
-                log.LogError(ex, ex.Message);
-                return await req.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
-            }
+            var cardId = req.GetQueryParam("cardId");
+            var cardsClient = new CardsClient(log);
+            var record = await cardsClient.GetMagicCardRecord(cardId);
+            return await req.CreateJsonResponse(HttpStatusCode.OK, APIResponses.GetCardResponse(record));
         }
 
         [Function("GetMagicCards")]
@@ -55,30 +39,22 @@ namespace MTG.CardGenerator
         {
             var log = context.GetLogger<GetMagicCardsFunction>();
 
-            try
+            var userSubject = req.GetUserSubject(log);
+            if (string.IsNullOrWhiteSpace(userSubject))
             {
-                var userSubject = req.GetUserSubject(log);
-                if (string.IsNullOrWhiteSpace(userSubject))
-                {
-                    return req.CreateResponse(HttpStatusCode.Unauthorized);
-                }
-
-                var cardsClient = new CardsClient(log);
-                var userCards = await cardsClient.GetUsersMagicCards(userSubject);
-                log.LogInformation($"Found {userCards.Count} cards for user '{userSubject}'.");
-
-                log.LogMetric("GetMagicCards_Success", 1, new Dictionary<string, object>()
-                {
-                    { "userSubject", userSubject }
-                });
-
-                return await req.CreateJsonResponse(HttpStatusCode.OK, APIResponses.GetCardsResponse(userCards));
+                return req.CreateResponse(HttpStatusCode.Unauthorized);
             }
-            catch (Exception ex)
+
+            var cardsClient = new CardsClient(log);
+            var userCards = await cardsClient.GetUsersMagicCards(userSubject);
+            log.LogInformation($"Found {userCards.Count} cards for user '{userSubject}'.");
+
+            log.LogMetric("GetMagicCards_Success", 1, new Dictionary<string, object>()
             {
-                log.LogError(ex, ex.Message);
-                return await req.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
-            }
+                { "userSubject", userSubject }
+            });
+
+            return await req.CreateJsonResponse(HttpStatusCode.OK, APIResponses.GetCardsResponse(userCards));
         }
     }
 }
