@@ -84,19 +84,19 @@ namespace MTG.CardGenerator
 
                     options.Authority = validAuthority;
                     options.Audience = validAudience;
-                    
+
                     // Configure manual metadata endpoint retrieval to avoid dependency issues.
                     var httpClient = new HttpClient();
                     var metadataEndpoint = $"{validAuthority}/.well-known/openid-configuration";
-                    
+
                     // Configure manual metadata refresh for better control.
                     var configManager = new ConfigurationManager<OpenIdConnectConfiguration>(
                         metadataEndpoint,
                         new OpenIdConnectConfigurationRetriever(),
                         new HttpDocumentRetriever(httpClient));
-                    
+
                     options.ConfigurationManager = configManager;
-                    
+
                     // Set required parameters
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
@@ -107,7 +107,7 @@ namespace MTG.CardGenerator
                         ValidateLifetime = true,
                         ClockSkew = TimeSpan.FromMinutes(5)
                     };
-                    
+
                     // For local development, allow skipping certificate validation.
                     if (isLocalDevelopment)
                     {
@@ -171,7 +171,7 @@ namespace MTG.CardGenerator
         /// Adds the JWT "FunctionsBearer" scheme to the authentication configuration.
         /// </summary>
         /// <param name="builder">The current authentication builder.</param>
-        /// <param name="configureOptions">An action configuring the JWT options for authentication. 
+        /// <param name="configureOptions">An action configuring the JWT options for authentication.
         /// <param name="authenticationScheme">The authentication scheme to use.</param>"
         /// <returns>A instance of the <see cref="FunctionsAuthenticationBuilder"/></returns>
         public static FunctionsAuthenticationBuilder AddJwtFunctionsBearer(
@@ -191,7 +191,7 @@ namespace MTG.CardGenerator
         /// Adds the JWT "FunctionsBearer" scheme to the authentication configuration.
         /// </summary>
         /// <param name="builder">The current authentication builder.</param>
-        /// <param name="configureOptions">An action configuring the JWT options for authentication. 
+        /// <param name="configureOptions">An action configuring the JWT options for authentication.
         /// <returns>A instance of the <see cref="FunctionsAuthenticationBuilder"/></returns>
         public static FunctionsAuthenticationBuilder AddJwtFunctionsBearer(
             this FunctionsAuthenticationBuilder builder, Action<JwtBearerOptions> configureOptions)

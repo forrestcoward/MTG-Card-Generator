@@ -86,7 +86,6 @@ namespace MTG.CardGenerator
                 });
 
             return await req.CreateJsonResponse(HttpStatusCode.OK, json);
-
         }
 
         [Function("GetTopCards")]

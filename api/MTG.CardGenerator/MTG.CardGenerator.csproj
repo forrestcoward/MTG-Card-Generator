@@ -5,6 +5,7 @@
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
     <OutputType>Exe</OutputType>
     <ImplicitUsings>enable</ImplicitUsings>
+	<NoWarn>NU1603</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <None Include="..\.editorconfig" Link=".editorconfig" />

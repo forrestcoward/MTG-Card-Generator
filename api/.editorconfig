@@ -85,6 +85,16 @@ dotnet_diagnostic.SYSLIB1045.severity = none
 
 # IDE0290: Use primary constructor
 dotnet_diagnostic.IDE0290.severity = none
+dotnet_diagnostic.SA1025.severity = error
+dotnet_diagnostic.SA1028.severity = error
+csharp_style_allow_blank_lines_between_consecutive_braces_experimental = true:silent
+csharp_style_allow_blank_line_after_colon_in_constructor_initializer_experimental = true:silent
+csharp_style_allow_blank_line_after_token_in_conditional_expression_experimental = true:silent
+csharp_style_allow_blank_line_after_token_in_arrow_expression_clause_experimental = true:silent
+dotnet_diagnostic.SA1505.severity = error
+dotnet_diagnostic.SA1507.severity = error
+dotnet_diagnostic.SA1508.severity = error
+dotnet_diagnostic.SA1509.severity = error
 
 [*.{cs,vb}]
 #### Naming styles ####
@@ -140,3 +150,4 @@ dotnet_diagnostic.IDE0270.severity = none
 
 # Default severity for all analyzer diagnostics
 dotnet_analyzer_diagnostic.severity = none
+dotnet_style_allow_multiple_blank_lines_experimental = true:silent
