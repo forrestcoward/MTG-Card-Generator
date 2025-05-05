@@ -14,7 +14,7 @@ namespace MTG.CardGenerator
         public static void Main(string[] args)
         {
             var host = new HostBuilder()
-                .ConfigureFunctionsWorkerDefaults(builder =>
+                .ConfigureFunctionsWebApplication(builder =>
                 {
                     // Add middleware for exception handling to not wrap all functions in try-catch blocks.
                     builder.UseFunctionsAuthorization();
