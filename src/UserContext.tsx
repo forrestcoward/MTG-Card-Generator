@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { AccountInfo } from '@azure/msal-browser';
+import { AccountInfo, EventType } from '@azure/msal-browser';
 import { useMsal } from '@azure/msal-react';
 
 export interface UserContextType {
@@ -23,9 +23,51 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userAccount, setUserAccount] = useState<AccountInfo | null>(null);
   const [openAIAPIKey, setOpenAIAPIKey] = useState<string>('');
 
+  // Initial account setup
   useEffect(() => {
-    const account = instance.getActiveAccount();
-    setUserAccount(account);
+    const currentAccount = instance.getActiveAccount();
+    if (currentAccount) {
+      setUserAccount(currentAccount);
+    } else {
+      // If no active account, try to get the first account
+      const allAccounts = instance.getAllAccounts();
+      if (allAccounts.length > 0) {
+        instance.setActiveAccount(allAccounts[0]);
+        setUserAccount(allAccounts[0]);
+      }
+    }
+  }, [instance]);
+
+  // Listen for auth events
+  useEffect(() => {
+    const callbackId = instance.addEventCallback((event) => {
+      if (
+        event.eventType === EventType.LOGIN_SUCCESS ||
+        event.eventType === EventType.LOGOUT_SUCCESS ||
+        event.eventType === EventType.ACCOUNT_ADDED ||
+        event.eventType === EventType.ACCOUNT_REMOVED
+      ) {
+        // Update user account state when auth events occur
+        const currentAccount = instance.getActiveAccount();
+        if (currentAccount) {
+          setUserAccount(currentAccount);
+        } else {
+          const allAccounts = instance.getAllAccounts();
+          if (allAccounts.length > 0) {
+            instance.setActiveAccount(allAccounts[0]);
+            setUserAccount(allAccounts[0]);
+          } else {
+            setUserAccount(null);
+          }
+        }
+      }
+    });
+
+    return () => {
+      if (callbackId) {
+        instance.removeEventCallback(callbackId);
+      }
+    };
   }, [instance]);
 
   return (

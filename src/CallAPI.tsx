@@ -3,7 +3,10 @@ import { AuthenticationResult, IPublicClientApplication, InteractionRequiredAuth
 import { User } from "./User";
 
 export async function RetrieveMsalToken(msal: IPublicClientApplication, scopes: string[]): Promise<AuthenticationResult | undefined> {
-  const account = msal.getAllAccounts()[0];
+  await msal.initialize();
+  const accounts = msal.getAllAccounts();
+  const account = accounts.length > 0 ? accounts[0] : null;
+  
   if (!account) {
     return undefined;
   }
@@ -13,17 +16,23 @@ export async function RetrieveMsalToken(msal: IPublicClientApplication, scopes: 
     account: account,
   };
 
-  await msal.initialize()
-  return await msal.acquireTokenSilent(accessTokenRequest).then(async function (response) {
-    return response;
-  }).catch(async function (error) {
+  try {
+    // Try silent token acquisition first
+    return await msal.acquireTokenSilent(accessTokenRequest);
+  } catch (error) {
+    console.log("Silent token acquisition failed", error);
     if (error instanceof InteractionRequiredAuthError) {
-      // Fallback to interaction when silent call fails.
-      return msal.acquireTokenPopup(accessTokenRequest);
+      // Fallback to interaction when silent call fails
+      try {
+        return await msal.acquireTokenPopup(accessTokenRequest);
+      } catch (popupError) {
+        console.error("Error during popup authentication:", popupError);
+        return undefined;
+      }
     }
-    console.error("Error retrieving MSAL token: " + error)
+    console.error("Error retrieving MSAL token:", error);
     return undefined;
-  });
+  }
 }
 
 const productionApiUrl = 'https://mtgcardgenerator.azurewebsites.net/api';
