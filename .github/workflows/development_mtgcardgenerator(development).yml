@@ -40,4 +40,4 @@ jobs:
           app-name: 'mtgcardgenerator(dev)'
           slot-name: 'dev'
           package: '${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/output'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_BEFE6F831D324C808D2191373E318A9F }}
+          publish-profile: ${{ secrets.DEVELOPMENT_PUBLISH_PROFILE }}
