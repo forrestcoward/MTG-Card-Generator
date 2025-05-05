@@ -291,6 +291,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                         ImageOptions = imageOptions
                     });
 
+                context.SetCustomStatus("success");
                 return json;
             }
             catch (Exception ex)
