@@ -3,7 +3,6 @@ using Azure.Search.Documents.Indexes;
 using DarkLoop.Azure.Functions.Authorization;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.Extensions.Logging;
 using MTG.CardGenerator.CosmosClients;
 using MTG.CardGenerator.Models;
 using Newtonsoft.Json;
@@ -42,7 +41,6 @@ namespace MTG.CardGenerator
         public static async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req, FunctionContext context)
         {
             var log = context.GetLogger<SearchMagicCardsFunction>();
-
             var query = req.GetQueryParam("query");
 
             if (string.IsNullOrWhiteSpace(query))
