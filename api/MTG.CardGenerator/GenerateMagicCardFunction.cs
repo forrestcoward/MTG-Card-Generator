@@ -219,8 +219,22 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             }
             else
             {
-                // Use built-in method when hosted in Azure (it will get correct host/port)
-                return await client.CreateCheckStatusResponseAsync(req, instanceId);
+                var statusResponse = await client.CreateCheckStatusResponseAsync(req, instanceId);
+
+                var uriBuilder = new UriBuilder(req.Url)
+                {
+                    Path = $"/runtime/webhooks/durabletask/instances/{instanceId}",
+                    Query = "" // strip out the ?code=... if present
+                };
+
+                var response = req.CreateResponse(HttpStatusCode.Accepted);
+                await response.WriteAsJsonAsync(new
+                {
+                    id = instanceId,
+                    statusQueryGetUri = uriBuilder.Uri.ToString()
+                });
+
+                return response;
             }
         }
 

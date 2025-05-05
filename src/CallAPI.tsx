@@ -342,25 +342,17 @@ async function MakeHttpCall(method:string, url:string, body?:any, params?:Record
       return data;
     }
 
-    // Special handling for durable function errors
-    if (response.status === 429) {
-      throw new Error("Too many requests. The card generation service is currently busy. Please try again later.");
-    } else if (response.status === 408 || response.status === 504) {
-      throw new Error("The card generation request timed out. Please try again with a simpler request.");
-    } else if (response.status == 401 || response.status == 403) {
-      throw new Error("You are not authorized to use this API. Please sign in and try again.")
-    } else {
-      // Try to parse the error message from the API response
-      try {
-        const errorObj = JSON.parse(data);
-        if (errorObj.error) {
-          throw new Error(errorObj.error.message || errorObj.error || data);
-        }
-      } catch (parseError) {
-        // If parsing fails, use the raw error text
+    // Try to parse the error message from the API response
+    try {
+      const errorObj = JSON.parse(data);
+      if (errorObj.error) {
+        throw new Error(errorObj.error.message || errorObj.error || data);
       }
-      throw new Error(data);
+    } catch (parseError) {
+      // If parsing fails, use the raw error text
     }
+
+    throw new Error(data);
   } catch (error) {
     console.error('Error fetching data:', error);
     throw error;
