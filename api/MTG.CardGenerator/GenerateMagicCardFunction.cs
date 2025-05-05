@@ -131,7 +131,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
 
         [Function("GenerateMagicCard")]
         [FunctionAuthorize]
-        public static async Task<HttpResponseData> HttpStart([HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req, [DurableClient] DurableTaskClient client, FunctionContext context)
+        public static async Task<HttpResponseData> HttpStart([HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req, [DurableClient(TaskHub = "%DurableTaskHubName%")] DurableTaskClient client, FunctionContext context)
         {
             var log = context.GetLogger<GenerateMagicCardFunction>();
 
