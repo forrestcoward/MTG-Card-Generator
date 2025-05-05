@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Logging;
@@ -16,6 +17,7 @@ namespace MTG.CardGenerator
                 .ConfigureFunctionsWorkerDefaults(builder =>
                 {
                     // Add middleware for exception handling to not wrap all functions in try-catch blocks.
+                    builder.UseFunctionsAuthorization();
                     builder.UseMiddleware<ExceptionHandlingMiddleware>();
                 })
                 .ConfigureServices(services =>
