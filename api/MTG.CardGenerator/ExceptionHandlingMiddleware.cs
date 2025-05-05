@@ -1,15 +1,7 @@
-﻿using DarkLoop.Azure.Functions.Authorization;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Azure.Functions.Worker;
+﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Azure.Functions.Worker.Middleware;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Logging;
-using Microsoft.IdentityModel.Protocols;
-using Microsoft.IdentityModel.Protocols.OpenIdConnect;
-using Microsoft.IdentityModel.Tokens;
 using System.Net;
 
 namespace MTG.CardGenerator
@@ -18,6 +10,17 @@ namespace MTG.CardGenerator
     {
         public async Task Invoke(FunctionContext context, FunctionExecutionDelegate next)
         {
+            // Check if the function has an HTTP trigger.
+            var isHttpTrigger = context.FunctionDefinition.InputBindings
+                .Any(binding => binding.Value.Type.Equals("httpTrigger", StringComparison.OrdinalIgnoreCase));
+
+            if (!isHttpTrigger)
+            {
+                // Skip middleware for non-HTTP triggered functions (e.g., activity functions).
+                await next(context);
+                return;
+            }
+
             try
             {
                 await next(context);
@@ -25,9 +28,8 @@ namespace MTG.CardGenerator
             catch (Exception ex)
             {
                 var logger = context.GetLogger<ExceptionHandlingMiddleware>();
-                logger.LogError(ex, "An unhandled exception occurred.");
+                logger.LogError(ex, $"An unhandled exception occurred in {context.FunctionDefinition.Name}");
 
-                // Try to access HttpRequestData from FunctionContext.Features
                 var httpRequestData = await context.GetHttpRequestDataAsync();
 
                 if (httpRequestData != null)

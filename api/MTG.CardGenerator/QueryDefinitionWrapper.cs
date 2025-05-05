@@ -1,5 +1,4 @@
 ﻿using Microsoft.Azure.Cosmos;
-using System;
 
 namespace MTG.CardGenerator
 {

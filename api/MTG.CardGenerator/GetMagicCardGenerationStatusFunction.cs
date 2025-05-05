@@ -41,7 +41,7 @@ namespace MTG.CardGenerator
                 {
                     id = instance.InstanceId,
                     runtimeStatus = instance.RuntimeStatus.ToString(),
-                    customStatus = instance.SerializedCustomStatus,
+                    customStatus = instance.ReadCustomStatusAs<string>(),
                     output = instance.ReadOutputAs<string>(),
                 };
             }
