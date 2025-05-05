@@ -25,7 +25,7 @@ namespace MTG.CardGenerator
             public BasicCard[] Cards { get; set; }
         }
 
-        private class GenerateMagicCardFunctionResponse
+        public class GenerateMagicCardFunctionResponse
         {
             [JsonProperty("cards")]
             public IEnumerable<MagicCardResponse> Cards { get; set; }
@@ -201,41 +201,14 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             var instanceId = await client.ScheduleNewOrchestrationInstanceAsync("GenerateMagicCardOrchestrator", request);
             log.LogInformation($"Started orchestration with ID '{instanceId}'.");
 
-            var isLocal = Environment.GetEnvironmentVariable("AZURE_FUNCTIONS_ENVIRONMENT") == "Development";
-            if (isLocal)
+            // Only return the id to the client. Clients may use the GetMagicCardGenerationStatus function to query status.
+            var response = req.CreateResponse(HttpStatusCode.Accepted);
+            await response.WriteAsJsonAsync(new
             {
-                // The built in CreateCheckStatusResponseAsync method has the wrong port for URLs when running locally.
-                // I do not know how to fix this, if it is a bug, or something I am doing wrong.
-                var baseUrl = "http://localhost:7071/runtime/webhooks/durabletask/instances";
-                var statusQueryGetUri = $"{baseUrl}/{instanceId}";
+                id = instanceId
+            });
 
-                var response = req.CreateResponse(HttpStatusCode.Accepted);
-                await response.WriteAsJsonAsync(new
-                {
-                    id = instanceId,
-                    statusQueryGetUri
-                });
-                return response;
-            }
-            else
-            {
-                var statusResponse = await client.CreateCheckStatusResponseAsync(req, instanceId);
-
-                var uriBuilder = new UriBuilder(req.Url)
-                {
-                    Path = $"/runtime/webhooks/durabletask/instances/{instanceId}",
-                    Query = "" // strip out the ?code=... if present
-                };
-
-                var response = req.CreateResponse(HttpStatusCode.Accepted);
-                await response.WriteAsJsonAsync(new
-                {
-                    id = instanceId,
-                    statusQueryGetUri = uriBuilder.Uri.ToString()
-                });
-
-                return response;
-            }
+            return response;
         }
 
         [Function("GenerateMagicCardOrchestrator")]

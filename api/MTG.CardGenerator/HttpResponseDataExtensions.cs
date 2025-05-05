@@ -1,6 +1,7 @@
 using Microsoft.Azure.Functions.Worker.Http;
 using Newtonsoft.Json;
 using System.Net;
+using System.Text;
 
 namespace MTG.CardGenerator
 {
@@ -15,11 +16,11 @@ namespace MTG.CardGenerator
             return response;
         }
 
-        public static async Task<HttpResponseData> CreateJsonResponse(this HttpRequestData req, HttpStatusCode statusCode, string jsonString)
+        public static async Task<HttpResponseData> CreateJsonResponse(this HttpRequestData req, HttpStatusCode statusCode, string jsonContent)
         {
             var response = req.CreateResponse(statusCode);
-            response.Headers.Add("Content-Type", "application/json; charset=utf-8");
-            await response.WriteStringAsync(jsonString);
+            response.Headers.Add("Content-Type", "application/json");
+            await response.WriteStringAsync(jsonContent, Encoding.UTF8);
             return response;
         }
 

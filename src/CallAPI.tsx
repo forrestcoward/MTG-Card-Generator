@@ -196,18 +196,18 @@ export async function GetUserMagicCards(msal: IPublicClientApplication): Promise
 }
 
 export async function GenerateMagicCardRequest(
-  userPrompt:string, 
-  model:string, 
-  imageModel:string,
-  includeExplanation:boolean, 
-  generateImagePrompt:boolean,
-  numCards:number,
-  extraCreative:boolean,
-  openAIApiKey:string,
-  msal:IPublicClientApplication): Promise<MagicCard[]> {
-
+  userPrompt: string,
+  model: string,
+  imageModel: string,
+  includeExplanation: boolean,
+  generateImagePrompt: boolean,
+  numCards: number,
+  extraCreative: boolean,
+  openAIApiKey: string,
+  msal: IPublicClientApplication
+): Promise<MagicCard[]> {
   let url = getApiUrl('GenerateMagicCard');
-  var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"])
+  var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"]);
 
   const params: Record<string, string> = {
     userPrompt: userPrompt,
@@ -221,21 +221,18 @@ export async function GenerateMagicCardRequest(
   };
 
   if (openAIApiKey) {
-    params.openAIApiKey = openAIApiKey
+    params.openAIApiKey = openAIApiKey;
   }
 
   try {
     // First request to start the orchestration
     const initialResponse = await HttpGet(url, token, params);
     let responseData = JSON.parse(initialResponse);
-    
-    // Check if we got an immediate response or a status URL
-    if (responseData.cards) {
-      // Immediate response case (orchestration completed quickly)
-      return responseData.cards.map((card: BasicCard) => new MagicCard(card));
-    } else if (responseData.statusQueryGetUri) {
-      // Poll the status URL until completion
-      return await pollDurableFunctionStatus(responseData.statusQueryGetUri, token);
+
+    // Check if we got an ID for querying the status
+    if (responseData.id) {
+      // Use the ID to poll the status until completion
+      return await pollDurableFunctionStatus(responseData.id, token);
     } else {
       throw new Error("Unexpected response format from card generation API");
     }
@@ -246,15 +243,16 @@ export async function GenerateMagicCardRequest(
 }
 
 // New function to poll durable function status
-async function pollDurableFunctionStatus(statusUrl: string, token: AuthenticationResult | undefined): Promise<MagicCard[]> {
+async function pollDurableFunctionStatus(instanceId: string, token: AuthenticationResult | undefined): Promise<MagicCard[]> {
   const maxAttempts = 120; // Maximum polling attempts (4 minutes with 3-second intervals)
   const pollIntervalMs = 3000; // Polling interval in milliseconds
-  
+  const statusUrl = getApiUrl(`GetMagicCardGenerationStatus?instanceId=${instanceId}`);
+
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
       const statusResponse = await MakeHttpCall("GET", statusUrl, undefined, {}, token);
       const status = JSON.parse(statusResponse);
-      
+
       // Check if the orchestration has completed
       if (status.runtimeStatus === "Completed") {
         if (status.customStatus === "error") {
@@ -277,7 +275,7 @@ async function pollDurableFunctionStatus(statusUrl: string, token: Authenticatio
       } else if (status.runtimeStatus === "Terminated" || status.runtimeStatus === "Canceled") {
         throw new Error("Card generation was canceled or terminated");
       }
-      
+
       // Wait before polling again
       await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
     } catch (error) {
@@ -285,7 +283,7 @@ async function pollDurableFunctionStatus(statusUrl: string, token: Authenticatio
       throw error;
     }
   }
-  
+
   throw new Error("Timed out waiting for card generation to complete");
 }
 
