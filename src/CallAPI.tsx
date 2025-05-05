@@ -27,7 +27,7 @@ export async function RetrieveMsalToken(msal: IPublicClientApplication, scopes: 
 }
 
 const productionApiUrl = 'https://mtgcardgenerator.azurewebsites.net/api';
-const developmentApiUrl  = 'https://mtgcardgenerator-development.azurewebsites.net/api';
+const developmentApiUrl  = 'https://mtgcardgenerator-dev.azurewebsites.net/api';
 const developmentHostName = 'ambitious-meadow-0e2e9ce0f-development.eastus2.3.azurestaticapps.net';
 const localApiUrl = 'http://localhost:7071/api';
 

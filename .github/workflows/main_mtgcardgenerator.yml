@@ -11,14 +11,14 @@ on:
 
 env:
   AZURE_FUNCTIONAPP_PACKAGE_PATH: 'api' # set this to the path to your web app project, defaults to the repository root
-  DOTNET_VERSION: '6.0.x' # set this to the dotnet version to use
+  DOTNET_VERSION: '8.0.x' # set this to the dotnet version to use
 
 jobs:
   build-and-deploy:
     runs-on: windows-latest
     steps:
       - name: 'Checkout GitHub Action'
-        uses: actions/checkout@v2
+        uses:  actions/checkout@v4
 
       - name: Setup DotNet ${{ env.DOTNET_VERSION }} Environment
         uses: actions/setup-dotnet@v1
@@ -39,4 +39,4 @@ jobs:
           app-name: 'MTGCardGenerator'
           slot-name: 'Production'
           package: '${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/output'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_38C56B969C214438A4231D523793AC72 }}
+          publish-profile: ${{ secrets.AzureAppService_PublishProfile_1234 }}
