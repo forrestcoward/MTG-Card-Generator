@@ -308,7 +308,11 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             }
             catch (Exception ex)
             {
-                return FormatErrorMessage(ex, request.RawUserPrompt, request.UserSuppliedApiKey != null, request.UserLoggedIn);
+                // Set the orchestration's customStatus to "error" when an exception occurs.
+                var errorMessage = FormatErrorMessage(ex, request.RawUserPrompt, request.UserSuppliedApiKey != null, request.UserLoggedIn);
+                log.LogError(ex, errorMessage);
+                context.SetCustomStatus("error");
+                return errorMessage;
             }
         }
 
@@ -346,7 +350,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             var attemptsToGenerateCard = 0;
             var actualGPTModelUsed = string.Empty;
 
-           // Process raw user prompt.
+            // Process raw user prompt.
             var rawUserPrompt = request.RawUserPrompt ?? string.Empty;
             if (rawUserPrompt.Length > MaxPromptCharacters)
             {
@@ -738,7 +742,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
 
         private static string FormatErrorMessage(Exception exception, string rawUserPrompt, bool userSuppliedKey, bool userLoggedIn)
         {
-            var errorMessage = $"Error: {exception}";
+            var errorMessage = $"Error during card generation: {exception.Message}";
 
             if (exception.Message.ContainsIgnoreCase("Your request was rejected as a result of our safety system"))
             {

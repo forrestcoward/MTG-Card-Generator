@@ -257,12 +257,22 @@ async function pollDurableFunctionStatus(statusUrl: string, token: Authenticatio
       
       // Check if the orchestration has completed
       if (status.runtimeStatus === "Completed") {
+        if (status.customStatus === "error") {
+          // Handle custom error status
+          throw new Error(status.output || "An error occurred during card generation.");
+        }
         // Parse the output from the orchestration
         const output = JSON.parse(status.output);
         return output.cards.map((card: any) => new MagicCard(card));
       } else if (status.runtimeStatus === "Failed") {
         // Handle failure
-        const errorMessage = status.output ? JSON.parse(status.output).error || "Card generation failed" : "Card generation failed";
+        let errorMessage;
+        try {
+          const parsedOutput = JSON.parse(status.output);
+          errorMessage = parsedOutput.error || "Card generation failed";
+        } catch {
+          errorMessage = status.output || "Card generation failed";
+        }
         throw new Error(errorMessage);
       } else if (status.runtimeStatus === "Terminated" || status.runtimeStatus === "Canceled") {
         throw new Error("Card generation was canceled or terminated");
