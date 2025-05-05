@@ -1,11 +1,7 @@
 using DarkLoop.Azure.Functions.Authorization;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.DurableTask;
 using Microsoft.DurableTask.Client;
-using Microsoft.Extensions.Logging;
-using MTG.CardGenerator.Models;
-using Newtonsoft.Json;
 using System.Net;
 
 namespace MTG.CardGenerator
@@ -44,8 +40,6 @@ namespace MTG.CardGenerator
                 statusResponse = new
                 {
                     id = instance.InstanceId,
-                    createdTime = instance.CreatedAt,
-                    lastUpdatedTime = instance.LastUpdatedAt,
                     runtimeStatus = instance.RuntimeStatus.ToString(),
                     customStatus = instance.SerializedCustomStatus,
                     output = instance.ReadOutputAs<string>(),
