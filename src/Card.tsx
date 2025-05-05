@@ -11,9 +11,7 @@ import whitePaintBrush from './card-backgrounds/paintbrush-white.png'
 import { toBlob } from 'html-to-image';
 import { GenerateImageResponse, GenerateNewCardImage, GetImagePrompt, UploadImageToAzure } from "./CallAPI";
 import { msalInstance } from "./Index";
-
-// @ts-ignore
-import loadingIcon from './card-backgrounds/staff.png'
+import { LoadingSpinner } from "./LoadingSpinner";
 
 export interface BasicCard {
   name: string,
@@ -35,6 +33,7 @@ export interface BasicCard {
   funnyExplanation: string,
   id: string // Database id for lookup.
   alternativeImageUrls: string[]
+  url: string
 }
 
 enum ColorIdentity {
@@ -141,6 +140,7 @@ export class MagicCard {
   explanation: string
   funnyExplanation: string
   alternativeImageUrls: string[]
+  url: string
 
   constructor(card: BasicCard) {
     this.name = card.name
@@ -164,6 +164,7 @@ export class MagicCard {
     this.funnyExplanation = card.funnyExplanation
     this.databaseId = card.id
     this.alternativeImageUrls = card.alternativeImageUrls
+    this.url = card.url
   }
 
   static clone(card: MagicCard, sameId: boolean): MagicCard {
@@ -1018,7 +1019,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
                 { this.state.isImageLoading &&
                 <tr style={{display:"grid", justifyContent:"center", marginTop:5}}>
                   <td>
-                    <img className={this.state.isImageLoading ? "loadingAnimation loadingIcon" : "loadingIcon"} src={loadingIcon} />
+                    <LoadingSpinner isLoading={this.state.isImageLoading} />
                   </td>
                 </tr>
                 }

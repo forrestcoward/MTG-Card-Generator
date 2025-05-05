@@ -27,7 +27,7 @@ export async function RetrieveMsalToken(msal: IPublicClientApplication, scopes: 
 }
 
 const productionApiUrl = 'https://mtgcardgenerator.azurewebsites.net/api';
-const developmentApiUrl  = 'https://mtgcardgenerator-development.azurewebsites.net/api';
+const developmentApiUrl  = 'https://mtgcardgenerator-dev.azurewebsites.net/api';
 const developmentHostName = 'ambitious-meadow-0e2e9ce0f-development.eastus2.3.azurestaticapps.net';
 const localApiUrl = 'http://localhost:7071/api';
 
@@ -216,24 +216,77 @@ export async function GenerateMagicCardRequest(
     numCards: numCards.toString(),
     includeExplanation: includeExplanation.toString(),
     generateImagePrompt: generateImagePrompt.toString(),
-    extraCreative: extraCreative.toString()
+    extraCreative: extraCreative.toString(),
+    source: "MTGCardGeneratorWebsite"
   };
 
   if (openAIApiKey) {
     params.openAIApiKey = openAIApiKey
   }
 
-  let cards:BasicCard[] = []
-  await HttpGet(url, token, params)
-    .then(data => {
-      cards = JSON.parse(data).cards;
-    })
-    .catch(error => {
-      console.error('There was an error generating card JSON:', error);
-      throw error
-    });
+  try {
+    // First request to start the orchestration
+    const initialResponse = await HttpGet(url, token, params);
+    let responseData = JSON.parse(initialResponse);
+    
+    // Check if we got an immediate response or a status URL
+    if (responseData.cards) {
+      // Immediate response case (orchestration completed quickly)
+      return responseData.cards.map((card: BasicCard) => new MagicCard(card));
+    } else if (responseData.statusQueryGetUri) {
+      // Poll the status URL until completion
+      return await pollDurableFunctionStatus(responseData.statusQueryGetUri, token);
+    } else {
+      throw new Error("Unexpected response format from card generation API");
+    }
+  } catch (error) {
+    console.error('There was an error generating card JSON:', error);
+    throw error;
+  }
+}
 
-    return cards.map(card => new MagicCard(card));
+// New function to poll durable function status
+async function pollDurableFunctionStatus(statusUrl: string, token: AuthenticationResult | undefined): Promise<MagicCard[]> {
+  const maxAttempts = 120; // Maximum polling attempts (4 minutes with 3-second intervals)
+  const pollIntervalMs = 3000; // Polling interval in milliseconds
+  
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      const statusResponse = await MakeHttpCall("GET", statusUrl, undefined, {}, token);
+      const status = JSON.parse(statusResponse);
+      
+      // Check if the orchestration has completed
+      if (status.runtimeStatus === "Completed") {
+        if (status.customStatus === "error") {
+          // Handle custom error status
+          throw new Error(status.output || "An error occurred during card generation.");
+        }
+        // Parse the output from the orchestration
+        const output = JSON.parse(status.output);
+        return output.cards.map((card: any) => new MagicCard(card));
+      } else if (status.runtimeStatus === "Failed") {
+        // Handle failure
+        let errorMessage;
+        try {
+          const parsedOutput = JSON.parse(status.output);
+          errorMessage = parsedOutput.error || "Card generation failed";
+        } catch {
+          errorMessage = status.output || "Card generation failed";
+        }
+        throw new Error(errorMessage);
+      } else if (status.runtimeStatus === "Terminated" || status.runtimeStatus === "Canceled") {
+        throw new Error("Card generation was canceled or terminated");
+      }
+      
+      // Wait before polling again
+      await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
+    } catch (error) {
+      console.error('Error polling durable function status:', error);
+      throw error;
+    }
+  }
+  
+  throw new Error("Timed out waiting for card generation to complete");
 }
 
 async function HttpPost(url: string, blob: Blob, msalResult: AuthenticationResult | undefined, params?: Record<string, string>): Promise<any> {
@@ -289,10 +342,24 @@ async function MakeHttpCall(method:string, url:string, body?:any, params?:Record
       return data;
     }
 
-    if (response.status == 401 || response.status == 403)  {
+    // Special handling for durable function errors
+    if (response.status === 429) {
+      throw new Error("Too many requests. The card generation service is currently busy. Please try again later.");
+    } else if (response.status === 408 || response.status === 504) {
+      throw new Error("The card generation request timed out. Please try again with a simpler request.");
+    } else if (response.status == 401 || response.status == 403) {
       throw new Error("You are not authorized to use this API. Please sign in and try again.")
     } else {
-      throw new Error(data)
+      // Try to parse the error message from the API response
+      try {
+        const errorObj = JSON.parse(data);
+        if (errorObj.error) {
+          throw new Error(errorObj.error.message || errorObj.error || data);
+        }
+      } catch (parseError) {
+        // If parsing fails, use the raw error text
+      }
+      throw new Error(data);
     }
   } catch (error) {
     console.error('Error fetching data:', error);

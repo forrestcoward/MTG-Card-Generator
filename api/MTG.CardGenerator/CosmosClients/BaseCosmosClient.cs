@@ -1,18 +1,14 @@
 ﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
-using System.Threading.Tasks;
 
 namespace MTG.CardGenerator.CosmosClients
 {
     public static class CosmosConnectionManager
     {
-        private static readonly ConcurrentDictionary<string, CosmosClient> cosmosClients = new();
+        private static readonly ConcurrentDictionary<string, CosmosClient> CosmosClients = new();
 
         public static CosmosClient GetCosmosClient(string cosmosEndpointUrl = null, string accessKey = null)
         {
@@ -34,12 +30,13 @@ namespace MTG.CardGenerator.CosmosClients
                 }
             }
 
-            if (!cosmosClients.ContainsKey(cosmosEndpointUrl))
+            if (!CosmosClients.TryGetValue(cosmosEndpointUrl, out CosmosClient value))
             {
-                cosmosClients[cosmosEndpointUrl] = new CosmosClient(cosmosEndpointUrl, accessKey);
+                value = new CosmosClient(cosmosEndpointUrl, accessKey);
+                CosmosClients[cosmosEndpointUrl] = value;
             }
 
-            return cosmosClients[cosmosEndpointUrl];
+            return value;
         }
     }
 
@@ -174,6 +171,7 @@ namespace MTG.CardGenerator.CosmosClients
                     {
                         log?.LogInformation($"Iterated {response.Count} new records. Request Charge: {response.RequestCharge}", queryName, batchNumber, verbose);
                     }
+
                     totalCharge += response.RequestCharge;
 
                     if (verbose && resultSetIterator.HasMoreResults && !string.IsNullOrWhiteSpace(response.IndexMetrics))

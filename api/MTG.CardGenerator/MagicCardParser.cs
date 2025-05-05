@@ -1,8 +1,5 @@
 ﻿using MTG.CardGenerator.Models;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using System.Text.RegularExpressions;
 using static MTG.CardGenerator.MagicCardParser;
 
@@ -55,21 +52,21 @@ namespace MTG.CardGenerator
     public class CardRule
     {
         public CardPropertyOrKeyword PropertyOrKeyword { get; set; }
-        public string[] IncludesRules { get; set; } = Array.Empty<string>();
+        public string[] IncludesRules { get; set; } = [];
         public string MechanicMatchRule { get; set; } = string.Empty;
-        public string[] ReminderText { get; set; } = Array.Empty<string>();
+        public string[] ReminderText { get; set; } = [];
 
         // Adds a mechanic to the card, with a rule and line as context to the violation.
-        Action<MagicCardParseResult, CardRule, CardTextLine> AddMechanicToCard = null;
-        
+        private Action<MagicCardParseResult, CardRule, CardTextLine> AddMechanicToCard = null;
+
         // Fixes a card, given the rule it violated and line the violation occured.
         public Action<MagicCardParseResult, CardRule, CardTextLine> FixViolation = null;
 
         // The legal card types for this rule e.g. A card with flashback cannot be a creature.
-        public CardType[] LegalTypes { get; set; } = Array.Empty<CardType>();
+        public CardType[] LegalTypes { get; set; } = [];
 
         // The set of properties a card must have if it is has this rule e.g. a card that gains an effect when cast from the graveyard should have a keyword, like flashback, that allows it to be cast from the graveyard.
-        public CardPropertyOrKeyword[] MustHaveProperties { get; set; } = Array.Empty<CardPropertyOrKeyword>();
+        public CardPropertyOrKeyword[] MustHaveProperties { get; set; } = [];
 
         // Tests if the rule applies to the line of oracle text.
         public static bool Applies(CardTextLine cardTextLine, CardRule rule)
@@ -85,7 +82,7 @@ namespace MTG.CardGenerator
 
             if (!string.IsNullOrWhiteSpace(rule.MechanicMatchRule))
             {
-                if (cardTextLine.Mechanic.ToLower() == rule.MechanicMatchRule.ToLower())
+                if (cardTextLine.Mechanic.Equals(rule.MechanicMatchRule, StringComparison.CurrentCultureIgnoreCase))
                 {
                     return true;
                 }
@@ -94,13 +91,13 @@ namespace MTG.CardGenerator
             return false;
         }
 
-        internal static CardRule[] CardRules = new CardRule[]
-        {
+        internal static CardRule[] CardRules =
+        [
             new CardRule()
             {
                 PropertyOrKeyword = CardPropertyOrKeyword.GainsEffectWhenCastFromGraveyard,
-                IncludesRules = new string[]
-                {
+                IncludesRules =
+                [
                     "If you cast this spell from your graveyard",
                     "If you cast this spell a graveyard",
                     "If you cast this card from your graveyard",
@@ -119,8 +116,8 @@ namespace MTG.CardGenerator
                     "You may cast this card from your graveyard by paying its flashback cost",
                     "You may cast {name} from your graveyard by paying its flashback cost",
                     "You may cast it for its flashback cost"
-                },
-                MustHaveProperties = new[] { CardPropertyOrKeyword.Flashback },
+                ],
+                MustHaveProperties = [CardPropertyOrKeyword.Flashback],
                 FixViolation = (card, rule, line) =>
                 {
                     // Cards which gain an effect when cast from the graveyard should have Flashback.
@@ -134,16 +131,16 @@ namespace MTG.CardGenerator
             new CardRule()
             {
                 PropertyOrKeyword = CardPropertyOrKeyword.GainsEffectWhenKicked,
-                IncludesRules = new string[]
-                {
+                IncludesRules =
+                [
                     "If {name} was kicked",
                     "If {name} is kicked",
                     "You may pay the kicker cost",
                     "If you paid the kicker cost",
                     "If this spell was kicked",
                     "If it was kicked"
-                },
-                MustHaveProperties = new[] { CardPropertyOrKeyword.Kicker },
+                ],
+                MustHaveProperties = [CardPropertyOrKeyword.Kicker],
                 FixViolation = (card, rule, line) =>
                 {
                     // Add Kicker.
@@ -154,11 +151,11 @@ namespace MTG.CardGenerator
             {
                 PropertyOrKeyword = CardPropertyOrKeyword.Kicker,
                 MechanicMatchRule = "Kicker",
-                ReminderText = new string[]
-                {
+                ReminderText =
+                [
                     "(You may pay an additional {cost} as you cast this spell.)",
                     "(You may {cost} in addition to any other costs as you cast this spell)"
-                },
+                ],
                 AddMechanicToCard = (card, rule, line) =>
                 {
                     var newText = $"Kicker {card.Card.ManaCost}\n";
@@ -169,12 +166,12 @@ namespace MTG.CardGenerator
             {
                 PropertyOrKeyword = CardPropertyOrKeyword.Flashback,
                 MechanicMatchRule = "Flashback",
-                LegalTypes = new[] { CardType.Instant, CardType.Sorcery },
-                ReminderText = new string[]
-                {
+                LegalTypes = [CardType.Instant, CardType.Sorcery],
+                ReminderText =
+                [
                     "Exile this card from your graveyard: Cast it this turn for the its flashback cost",
                     "(You may cast this card from your graveyard for its flashback cost. Then exile it.)"
-                },
+                ],
                 AddMechanicToCard = (card, rule, line) =>
                 {
                     var newText = $"\nFlashback {card.Card.ManaCost}";
@@ -195,11 +192,12 @@ namespace MTG.CardGenerator
             {
                 PropertyOrKeyword = CardPropertyOrKeyword.Unearth,
                 MechanicMatchRule = "Unearth",
-                LegalTypes= new[] { CardType.Artifact, CardType.Creature },
+                LegalTypes = [CardType.Artifact, CardType.Creature],
                 AddMechanicToCard = (card, rule, line) =>
                 {
                     // Transform Flashback into Unearth.
-                    if (line.Properties.Contains(CardPropertyOrKeyword.Flashback)) {
+                    if (line.Properties.Contains(CardPropertyOrKeyword.Flashback))
+                    {
                         if (rule.ReminderText.Any(reminder => line.CostAndEffectWithoutManaCost.Contains(reminder, StringComparison.OrdinalIgnoreCase)))
                         {
                             var newText = $"\nUnearth {line.Cost}";
@@ -218,7 +216,7 @@ namespace MTG.CardGenerator
                     }
                 }
             },
-        };
+        ];
     }
 
     /// <summary>
@@ -234,7 +232,7 @@ namespace MTG.CardGenerator
             {
                 get
                 {
-                    return Costs.FirstOrDefault(x => x.StartsWith("{") && x.EndsWith("}"));
+                    return Costs.FirstOrDefault(x => x.StartsWith('{') && x.EndsWith('}'));
                 }
             }
 
@@ -242,7 +240,7 @@ namespace MTG.CardGenerator
             {
                 get
                 {
-                    return Costs.Where(cost => cost != ManaCost).ToArray();
+                    return [.. Costs.Where(cost => cost != ManaCost)];
                 }
             }
 
@@ -267,7 +265,7 @@ namespace MTG.CardGenerator
             get
             {
                 var costs = new CardCost(Cost);
-                if (costs.CostsWithoutManaCost.Any())
+                if (costs.CostsWithoutManaCost.Length != 0)
                 {
                     return $"{string.Join(',', costs.CostsWithoutManaCost)}: {Effect}";
                 }
@@ -292,8 +290,8 @@ namespace MTG.CardGenerator
             Cost = match["cost"].Trim();
             Effect = match["effect"].Trim();
 
-            Rules = CardRule.CardRules.Where(rule => CardRule.Applies(this, rule)).ToArray();
-            Properties = Rules.Select(criteria => criteria.PropertyOrKeyword).ToArray();
+            Rules = [.. CardRule.CardRules.Where(rule => CardRule.Applies(this, rule))];
+            Properties = [.. Rules.Select(criteria => criteria.PropertyOrKeyword)];
         }
 
         public override string ToString()
@@ -316,7 +314,7 @@ namespace MTG.CardGenerator
             public List<CardRule> ViolatedRules { get; set; }
         }
 
-        internal static Regex UnbracketedManaCostRegex = new(@"(?<cost>(\s|^)[123456789WUBRG]+(\s|$|:))");
+        private static readonly Regex UnbracketedManaCostRegex = new(@"(?<cost>(\s|^)[123456789WUBRG]+(\s|$|:))");
 
         public static string CorrectUnbracketedManaCosts(string oracleText)
         {
@@ -354,8 +352,8 @@ namespace MTG.CardGenerator
 
             if (card.PowerAndToughness != null)
             {
-                card.PowerAndToughness = card.PowerAndToughness.Replace("(", "");
-                card.PowerAndToughness = card.PowerAndToughness.Replace(")", "");
+                card.PowerAndToughness = card.PowerAndToughness.Replace("(", string.Empty);
+                card.PowerAndToughness = card.PowerAndToughness.Replace(")", string.Empty);
             }
 
             if (string.IsNullOrWhiteSpace(card.PowerAndToughness) && (!string.IsNullOrWhiteSpace(card.Power) && !string.IsNullOrWhiteSpace(card.Toughness)))
@@ -406,7 +404,7 @@ namespace MTG.CardGenerator
             {
                 foreach (var rule in parsedOracleTextLine.Rules)
                 {
-                    if (rule.LegalTypes.Any() && !rule.LegalTypes.Contains(type))
+                    if (rule.LegalTypes.Length != 0 && !rule.LegalTypes.Contains(type))
                     {
                         // Card contains a property that is not allowed on its type.
                         // e.g. flashback is not allowed on creatures.
@@ -414,7 +412,7 @@ namespace MTG.CardGenerator
                         violationToTextLine[rule] = parsedOracleTextLine;
                     }
 
-                    if (rule.MustHaveProperties.Any() && rule.MustHaveProperties.Any(mustHaveProperty => !properties.Contains(mustHaveProperty)))
+                    if (rule.MustHaveProperties.Length != 0 && rule.MustHaveProperties.Any(mustHaveProperty => !properties.Contains(mustHaveProperty)))
                     {
                         // This rule requires a property not present on the rest of the card.
                         // e.g. a card gains an additional effect when cast from the graveyard but does not have flashback or unearth.
@@ -432,6 +430,7 @@ namespace MTG.CardGenerator
 
             return parseResult;
         }
+
         private static string[] ParseOracleTextLines(string oracleText)
         {
             var delimiters = new string[] { "\n", @"\\\\n", @"\\n", @"\n" };
@@ -480,7 +479,8 @@ namespace MTG.CardGenerator
             return CardType.Unknown;
         }
 
-        private static ColorIdentity GetColorIdentity(string manaCostTokens) {
+        private static ColorIdentity GetColorIdentity(string manaCostTokens)
+        {
             var white = false;
             var blue = false;
             var black = false;
@@ -493,23 +493,23 @@ namespace MTG.CardGenerator
             if (manaCostTokens.Contains("{R}")) red = true;
             if (manaCostTokens.Contains("{G}")) green = true;
 
-            if ( white && !blue && !black && !red && !green) return ColorIdentity.White;
-            if (!white &&  blue && !black && !red && !green) return ColorIdentity.Blue;
-            if (!white && !blue &&  black && !red && !green) return ColorIdentity.Black;
-            if (!white && !blue && !black &&  red && !green) return ColorIdentity.Red;
-            if (!white && !blue && !black && !red &&  green) return ColorIdentity.Green;
+            if (white && !blue && !black && !red && !green) return ColorIdentity.White;
+            if (!white && blue && !black && !red && !green) return ColorIdentity.Blue;
+            if (!white && !blue && black && !red && !green) return ColorIdentity.Black;
+            if (!white && !blue && !black && red && !green) return ColorIdentity.Red;
+            if (!white && !blue && !black && !red && green) return ColorIdentity.Green;
             if (!white && !blue && !black && !red && !green) return ColorIdentity.Colorless;
 
-            if  (white &&  blue && !black && !red && !green) return ColorIdentity.Azorius;
-            if (!white &&  blue &&  black && !red && !green) return ColorIdentity.Dimir;
-            if (!white && !blue &&  black &&  red && !green) return ColorIdentity.Rakdos;
-            if (!white && !blue && !black &&  red &&  green) return ColorIdentity.Gruul;
-            if ( white && !blue && !black && !red &&  green) return ColorIdentity.Selesnya;
-            if ( white && !blue &&  black && !red && !green) return ColorIdentity.Orzhov;
-            if (!white &&  blue && !black &&  red && !green) return ColorIdentity.Izzet;
-            if (!white && !blue &&  black && !red &&  green) return ColorIdentity.Golgari;
-            if ( white && !blue && !black &&  red && !green) return ColorIdentity.Boros;
-            if (!white &&  blue && !black && !red &&  green) return ColorIdentity.Simic;
+            if (white && blue && !black && !red && !green) return ColorIdentity.Azorius;
+            if (!white && blue && black && !red && !green) return ColorIdentity.Dimir;
+            if (!white && !blue && black && red && !green) return ColorIdentity.Rakdos;
+            if (!white && !blue && !black && red && green) return ColorIdentity.Gruul;
+            if (white && !blue && !black && !red && green) return ColorIdentity.Selesnya;
+            if (white && !blue && black && !red && !green) return ColorIdentity.Orzhov;
+            if (!white && blue && !black && red && !green) return ColorIdentity.Izzet;
+            if (!white && !blue && black && !red && green) return ColorIdentity.Golgari;
+            if (white && !blue && !black && red && !green) return ColorIdentity.Boros;
+            if (!white && blue && !black && !red && green) return ColorIdentity.Simic;
 
             return ColorIdentity.ThreePlusColored;
         }
@@ -530,8 +530,8 @@ namespace MTG.CardGenerator
 
             if (!manaCost.IsBracketed())
             {
-                manaCost = manaCost.Replace("}", "");
-                manaCost = manaCost.Replace("{", "");
+                manaCost = manaCost.Replace("}", string.Empty);
+                manaCost = manaCost.Replace("{", string.Empty);
                 return manaCost.BracketManaSymbols();
             }
 

@@ -1,24 +1,16 @@
 ﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
 using MTG.CardGenerator.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace MTG.CardGenerator.CosmosClients
 {
     /// <summary>
     /// Operations on the 'generated-cards' collection.
     /// </summary>
-    internal class CardsClient : BaseCosmosClient
+    internal class CardsClient(ILogger logger = null) : BaseCosmosClient(Extensions.GetSettingOrThrow(Constants.CosmosDBDatabaseId), Constants.CosmosDBCardsCollectionName, logger: logger)
     {
         private static readonly char[] AlphanumericCharacters = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray();
         private static readonly Random Random = new();
-
-        public CardsClient(ILogger logger = null) : base(Extensions.GetSettingOrThrow(Constants.CosmosDBDatabaseId), Constants.CosmosDBCardsCollectionName, logger: logger)
-        {
-        }
 
         public async Task<List<CardGenerationRecord>> GetUsersMagicCards(string userSubject, int top = 50)
         {

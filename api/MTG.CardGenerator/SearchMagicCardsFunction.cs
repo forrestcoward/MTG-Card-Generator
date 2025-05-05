@@ -1,18 +1,12 @@
 ﻿using Azure;
 using Azure.Search.Documents.Indexes;
-using DarkLoop.Azure.Functions.Authorize;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Extensions.Logging;
+using DarkLoop.Azure.Functions.Authorization;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using MTG.CardGenerator.CosmosClients;
 using MTG.CardGenerator.Models;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Net;
 
 namespace MTG.CardGenerator
 {
@@ -29,7 +23,6 @@ namespace MTG.CardGenerator
         /// </summary>
         private class CardIndexResult
         {
-#pragma warning disable IDE1006 // Naming Styles
             public string id { get; set; }
             public string prompt { get; set; }
             public string name { get; set; }
@@ -41,54 +34,38 @@ namespace MTG.CardGenerator
             public string colorIdentity { get; set; }
             public string explanation { get; set; }
             public string funnyExplanation { get; set; }
-#pragma warning restore IDE1006 // Naming Styles
         }
 
-        [FunctionName("SearchMagicCards")]
+        [Function("SearchMagicCards")]
         [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
-        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log)
+        public static async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req, FunctionContext context)
         {
-            try
+            var log = context.GetLogger<SearchMagicCardsFunction>();
+            var query = req.GetQueryParam("query");
+
+            if (string.IsNullOrWhiteSpace(query))
             {
-                var query = (string)req.Query["query"];
-
-                if (string.IsNullOrWhiteSpace(query))
-                {
-                    return new BadRequestObjectResult($"Parameter 'query' is required.");
-                }
-
-                var cogSearchEndpoint = Extensions.GetSettingOrThrow(Constants.CognitiveSearchEndpoint);
-                var cogSearchKey = Extensions.GetSettingOrThrow(Constants.CognitiveSearchConnectionKey);
-                var indexName = Extensions.GetSettingOrThrow(Constants.CognitiveSearchCardSearchIndexName);
-                var cosmosDatabaseId = Extensions.GetSettingOrThrow(Constants.CosmosDBDatabaseId);
-
-                var searchCredential = new AzureKeyCredential(cogSearchKey);
-                var indexClient = new SearchIndexClient(new Uri(cogSearchEndpoint), searchCredential);
-                var searchClient = indexClient.GetSearchClient(indexName);
-
-                var results = await searchClient.SearchAsync<CardIndexResult>(query);
-                var ids = new List<string>();
-                await foreach (var result in results.Value.GetResultsAsync())
-                {
-                    ids.Add(result.Document.id);
-                }
-
-                var cardsClient = new CardsClient(log);
-                var cards = await cardsClient.GetMagicCardRecords(ids);
-
-                // var generatedCards = cards.Select(x => x.MagicCards.FirstOrDefault()).Take(30).ToArray();
-                // var json = JsonConvert.SerializeObject(new SearchMagicCardsFunctionResponse() { Cards = generatedCards.Select(x => new MagicCardResponse(x)).ToArray() });
-                return new OkObjectResult("");
+                return await req.CreateErrorResponse(HttpStatusCode.BadRequest, "Parameter 'query' is required.");
             }
-            catch (Exception ex)
+
+            var cogSearchEndpoint = Extensions.GetSettingOrThrow(Constants.CognitiveSearchEndpoint);
+            var cogSearchKey = Extensions.GetSettingOrThrow(Constants.CognitiveSearchConnectionKey);
+            var indexName = Extensions.GetSettingOrThrow(Constants.CognitiveSearchCardSearchIndexName);
+
+            var searchCredential = new AzureKeyCredential(cogSearchKey);
+            var indexClient = new SearchIndexClient(new Uri(cogSearchEndpoint), searchCredential);
+            var searchClient = indexClient.GetSearchClient(indexName);
+
+            var results = await searchClient.SearchAsync<CardIndexResult>(query);
+            var ids = new List<string>();
+            await foreach (var result in results.Value.GetResultsAsync())
             {
-                log?.LogError(ex, ex.Message);
-                return new ContentResult
-                {
-                    StatusCode = 500,
-                    Content = ex.Message,
-                };
+                ids.Add(result.Document.id);
             }
+
+            var cardsClient = new CardsClient(log);
+            var cards = await cardsClient.GetMagicCardRecords(ids);
+            return await req.CreateJsonResponse(HttpStatusCode.OK, string.Empty);
         }
     }
 }

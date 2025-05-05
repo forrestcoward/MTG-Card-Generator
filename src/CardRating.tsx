@@ -114,7 +114,7 @@ export function CardRating() {
             <tr>
               <td>
                 <div>
-                  <span style={{fontSize:20}}>#{index+1} </span>
+                  <span style={{fontSize:20, marginRight:5}}><a href={cardRecord.card.url} target="_blank">#{index+1}</a></span>
                   <Rate defaultValue={cardRecord.rating.averageScore} disabled={true} allowHalf={true}></Rate>
                 </div>
               </td>
@@ -161,7 +161,7 @@ export function CardRating() {
             </tr>
             <tr style={{textAlign: "center"}}>
               <td>
-                <h4>Submit Your Rating:</h4>
+                <h4>Submit Rating For <a href={card.url} target="_blank" style={{textDecoration:"none"}}>{card.name}</a>? (1-5 Stars)</h4>
               </td>
             </tr>
             { user &&

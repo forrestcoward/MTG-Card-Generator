@@ -5,16 +5,13 @@ import { GenerateMagicCardRequest } from './CallAPI';
 import { isMobileDevice, setCardContainerSize } from './Utility';
 import { TutorialCard } from './TutorialCard';
 import PopOutSettingsMenu from './PopOutSettingsMenu';
+import { useMsal } from '@azure/msal-react';
+import { SettingsButton } from './SettingsButton';
 
 import './mana.min.css';
 import './mtg-card.css';
 import './app.css';
-
-// @ts-ignore
-import loadingIcon from './card-backgrounds/staff.png'
-import { useMsal } from '@azure/msal-react';
-import { SettingFilled } from '@ant-design/icons';
-import { Button, Tooltip } from 'antd';
+import { LoadingSpinner } from './LoadingSpinner';
 
 export interface SettingGroup {
   name: string;
@@ -28,16 +25,16 @@ export interface Setting {
   id: string;
   value: boolean;
   description: string;
+  mobileDescription?: string;
   group?: string;
 }
 
 const defaultPrompt:string = 'is from the Dominaria plane.'
-const defaultLanguageModel:string= 'gpt-4-turbo-preview'
+const defaultLanguageModel:string= 'gpt-4o-mini'
 const defaultImageModel:string = 'dall-e-2'
 
 const modelSettings = [
-  { name: 'GPT 3.5', id: 'gpt-3.5', value: true, description: 'GPT 3.5 is a fast and capable general purpose model.', group: 'model-settings'},
-  { name: 'GPT 4', id: 'gpt-4-turbo-preview', value: false, description: 'GPT 4 is the most intelligent model to date, but is slower and more expensive.', group: 'model-settings' },
+  { name: 'GPT 4-o', id: 'gpt-4o-mini', value: true, description: 'GPT 4-o is the most intelligent model to date.', group: 'model-settings' },
 ]
 
 const modelSettingsGroup : SettingGroup = {
@@ -61,9 +58,9 @@ const imageSettingsGroup : SettingGroup = {
 }
 
 const cardGenerationSettings = [
-  { name: 'Generative Image Prompt', id: 'setting-generate-image-prompt', value: true, description: 'Use an intelligently generated image prompt to produce more unique and interesting art.' },
-  { name: 'Extra Creative', id: 'setting-extra-creative', value: false, description: 'Mix and match mechanics and keywords in more interesting ways.' },
-  { name: 'Explain Yourself', id: 'setting-provide-explanation', value: false, description: 'Provide an explanation why the card was generated. The AI can be even be quite funny!' },
+  { name: 'Generative Image Prompt', id: 'setting-generate-image-prompt', value: true, description: 'Use an intelligently generated image prompt to produce more unique and interesting art.', mobileDescription: 'Use a dynamically generated image prompt.' },
+  { name: 'Extra Creative', id: 'setting-extra-creative', value: false, description: 'Mix and match mechanics and keywords in more interesting ways.', mobileDescription: 'Utilize a unique blend of mechanics and keywords.' },
+  { name: 'Explain Yourself', id: 'setting-provide-explanation', value: false, description: 'Provide an explanation why the card was generated. The AI can be even be quite funny!', mobileDescription: 'Provide an explanation for the card.' },
 ]
 
 const cardGenerationSettingsGroup : SettingGroup = {
@@ -193,12 +190,10 @@ export function MTGCardGenerator() {
                 <td>
                 </td>
                 <td>
-                  <img className={isLoading ? 'loadingAnimation loadingIcon' : 'loadingIcon'} src={loadingIcon} />
+                  <LoadingSpinner isLoading={isLoading} />
                 </td>
                 <td>
-                  <Tooltip title="Settings">
-                    <Button icon={<SettingFilled className="spinningIcon" />} type="text" onClick={() => setIsSettingsOpen(true)} className='settingButton' />
-                  </Tooltip>
+                  <SettingsButton onClick={() => setIsSettingsOpen(true)} />
                 </td>
               </tr>
             </tbody>
