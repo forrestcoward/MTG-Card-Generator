@@ -1,9 +1,5 @@
 ﻿using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using User = MTG.CardGenerator.Models.User;
 
 namespace MTG.CardGenerator.CosmosClients
@@ -11,12 +7,8 @@ namespace MTG.CardGenerator.CosmosClients
     /// <summary>
     /// Operations on the 'users' collection.
     /// </summary>
-    public class UsersClient : BaseCosmosClient
+    public class UsersClient(ILogger logger = null) : BaseCosmosClient(Extensions.GetSettingOrThrow(Constants.CosmosDBDatabaseId), Constants.CosmosDBUsersCollectionName, logger: logger)
     {
-        public UsersClient(ILogger logger = null) : base(Extensions.GetSettingOrThrow(Constants.CosmosDBDatabaseId), Constants.CosmosDBUsersCollectionName, logger: logger)
-        {
-        }
-
         public async Task<User> GetUserRecord(string userSubject)
         {
             var queryDefinition = new QueryDefinitionWrapper(

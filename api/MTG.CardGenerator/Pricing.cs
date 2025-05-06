@@ -1,5 +1,4 @@
-﻿using OpenAI.ObjectModels.ResponseModels;
-using System.Collections.Generic;
+﻿using Betalgo.Ranul.OpenAI.ObjectModels.ResponseModels;
 
 namespace MTG.CardGenerator
 {
@@ -29,14 +28,14 @@ namespace MTG.CardGenerator
 
         // From https://openai.com/pricing.
         // Currently no way to get this from an API.
-        private static readonly List<ModelCost> ModelCosts = new()
-        {
+        private static readonly List<ModelCost> ModelCosts =
+        [
             // GPT 3.5
             new ModelCost() { Model = "gpt-3.5-turbo-instruct", InputPrice = 1.5 / 1000000, OutputPrice = 2 / 1000000 },
             // GPT 4
             new ModelCost() { Model = "gpt-4o-mini", InputPrice = .15 / 1000000, OutputPrice = .6 / 1000000 },
             new ModelCost() { Model = "gpt-4o", InputPrice = 5 / 1000000, OutputPrice = 15 / 1000000 },
-        };
+        ];
 
         public static double GetCost(ChatCompletionCreateResponse result)
         {
@@ -47,7 +46,7 @@ namespace MTG.CardGenerator
                 return 0;
             }
 
-            return result.Usage.PromptTokens * cost.InputPrice + result.Usage.CompletionTokens.Value * cost.OutputPrice;
+            return (result.Usage.PromptTokens * cost.InputPrice) + (result.Usage.CompletionTokens.Value * cost.OutputPrice);
         }
 
         public static double GetImageCost(string size, string model)

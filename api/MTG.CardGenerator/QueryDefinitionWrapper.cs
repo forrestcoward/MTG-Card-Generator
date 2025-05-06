@@ -1,25 +1,18 @@
 ﻿using Microsoft.Azure.Cosmos;
-using System;
 
 namespace MTG.CardGenerator
 {
-    internal class QueryDefinitionWrapper
+    internal class QueryDefinitionWrapper(string query)
     {
         /// <summary>
-        /// The formatted query with parameters substituted.
+        /// Gets the formatted query with parameters substituted.
         /// </summary>
-        public string Query { get; private set; }
+        public string Query { get; private set; } = query;
 
         /// <summary>
-        /// The underlying QueryDefinition object.
+        /// Gets the underlying QueryDefinition object.
         /// </summary>
-        public QueryDefinition QueryDefinition { get; private set; }
-
-        public QueryDefinitionWrapper(string query)
-        {
-            Query = query;
-            QueryDefinition = new QueryDefinition(query);
-        }
+        public QueryDefinition QueryDefinition { get; private set; } = new QueryDefinition(query);
 
         public QueryDefinitionWrapper WithParameter(string name, object value)
         {

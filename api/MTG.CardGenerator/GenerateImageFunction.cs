@@ -1,230 +1,162 @@
-﻿using DarkLoop.Azure.Functions.Authorize;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+﻿using Betalgo.Ranul.OpenAI.ObjectModels;
+using DarkLoop.Azure.Functions.Authorization;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using MTG.CardGenerator.CosmosClients;
 using MTG.CardGenerator.Models;
 using Newtonsoft.Json;
-using OpenAI.ObjectModels;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Net;
-using System.Threading.Tasks;
 
 namespace MTG.CardGenerator
 {
-    public static class GenerateImageFunction
+    public class GenerateImageFunction
     {
         /*
          * This function generates a new image for a given card and prompt. It will:
-         * 1. Genenerate a new image.
+         * 1. Generate a new image.
          * 2. Store the image in blob storage.
-         * 3. Add the image id to the card's alternative image ids. This will allow a user to see all the images they have generated for their card.
-         * 
+         * 3. Add the image ID to the card's alternative image IDs. This will allow a user to see all the images they have generated for their card.
+         *
          * Users (besides admins) need to provide their own OpenAI API key in order to generate images beyond the first.
          */
-        [FunctionName("GenerateNewCardImage")]
+        [Function("GenerateNewCardImage")]
         [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
-        public static async Task<IActionResult> GenerateNewCardImage([HttpTrigger(AuthorizationLevel.Anonymous, "GET", Route = null)] HttpRequest req, ILogger log)
+        public static async Task<HttpResponseData> GenerateNewCardImage([HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req, FunctionContext context)
         {
+            var log = context.GetLogger<GenerateImageFunction>();
             var stopwatch = Stopwatch.StartNew();
 
             var userSubject = req.GetUserSubject(log);
             if (string.IsNullOrWhiteSpace(userSubject))
             {
-                return new UnauthorizedResult();
+                return req.CreateResponse(HttpStatusCode.Unauthorized);
             }
 
-            var prompt = (string)req.Query["prompt"];
-            var openAIApiKey = (string)req.Query["openAIApiKey"];
-            var cardId = (string)req.Query["cardId"];
+            var prompt = req.GetQueryParam("prompt");
+            var openAIApiKey = req.GetQueryParam("openAIApiKey");
+            var cardId = req.GetQueryParam("cardId");
 
             if (string.IsNullOrWhiteSpace(prompt))
             {
-                return new ContentResult
-                {
-                    StatusCode = 400,
-                    // User friendly message because default prompt is empty in UI.
-                    Content = $"Please specify an image prompt.",
-                };
+                return await req.CreateErrorResponse(HttpStatusCode.BadRequest, "Please specify an image prompt.");
             }
 
             if (string.IsNullOrWhiteSpace(cardId))
             {
-                return new ContentResult
-                {
-                    StatusCode = 400,
-                    Content = $"Please specify cardId.",
-                };
+                return await req.CreateErrorResponse(HttpStatusCode.BadRequest, "Please specify cardId.");
             }
 
             prompt = WebUtility.UrlDecode(prompt);
             var maxLengthPrompt = 1500;
             if (prompt.Length > maxLengthPrompt)
             {
-                // Only allow maxLengthPrompt characters to prevent abuse.
-                prompt = prompt[..maxLengthPrompt];
+                prompt = prompt[..maxLengthPrompt]; // Truncate to prevent abuse.
             }
 
-            try
+            var usersCosmosClient = new UsersClient(log);
+            var cardsClient = new CardsClient(log);
+
+            var user = await usersCosmosClient.GetUserRecord(userSubject);
+            var cardRecord = await cardsClient.GetMagicCardRecord(cardId);
+            var cardHasAnImage = !string.IsNullOrWhiteSpace(cardRecord.Card.ImageUrl);
+
+            // Regular users must provide their own key in order to generate an image beyond the first.
+            if (string.IsNullOrEmpty(openAIApiKey) && cardHasAnImage && !user.IsAdmin)
             {
-                var usersCosmosClient = new UsersClient(log);
-                var cardsClient = new CardsClient(log);
-
-                var user = await usersCosmosClient.GetUserRecord(userSubject);
-                var cardRecord = await cardsClient.GetMagicCardRecord(cardId);
-                var cardHasAnImage = !string.IsNullOrWhiteSpace(cardRecord.Card.ImageUrl);
-
-                // Regular users must provide their own key in order to generate an image beyond the first.
-                if (string.IsNullOrEmpty(openAIApiKey) && cardHasAnImage && !user.IsAdmin)
-                {
-                    log.LogMetric("GenerateNewCardImage_Rejected", 1, properties: new Dictionary<string, object>() { { "userSubject", userSubject }, });
-                    return new ContentResult
-                    {
-                        StatusCode = 400,
-                        Content = $"Please set your own OpenAI API key in the settings to generate images beyond the first.",
-                    };
-                }
-
-                // If no key is provided, use the one from the environment if the card has not had an image generated before (or the user is an admin).
-                else if (string.IsNullOrEmpty(openAIApiKey) && (!cardHasAnImage || user.IsAdmin))
-                {
-                    openAIApiKey = Environment.GetEnvironmentVariable(Constants.OpenAIApiKeyLoggedIn);
-
-                    if (string.IsNullOrWhiteSpace(openAIApiKey))
-                    {
-                        openAIApiKey = Environment.GetEnvironmentVariable(Constants.OpenAIApiKey);
-                    }
-                }
-
-                if (string.IsNullOrWhiteSpace(openAIApiKey))
-                {
-                    return new ContentResult
-                    {
-                        StatusCode = 400,
-                        Content = "No OpenAI API key was found.",
-                    };
-                }
-
-                var imageModel = Constants.Dalle3ModelName;
-                var imageSize = StaticValues.ImageStatics.Size.Size1024;
-                var url = ImageGenerator.GenerateImage(prompt, imageModel, imageSize, openAIApiKey, log).Result;
-
-                var blobStorageName = Extensions.GetSettingOrThrow(Constants.BlobStorageName);
-                var blobStorageEndpoint = Extensions.GetSettingOrThrow(Constants.BlobStorageEndpoint);
-                var blobStorageContainerName = Extensions.GetSettingOrThrow(Constants.BlobStorageContainerName);
-                var blobStorageAccessKey = Extensions.GetSettingOrThrow(Constants.BlobStorageAccessKey);
-                var storeImageResult = await Extensions.StoreImageInBlobAsync(url, blobStorageName, blobStorageEndpoint, blobStorageContainerName, blobStorageAccessKey, log: log);
-
-                // The first time a user generates an image for a card, set that as the card's image, otherwise add as an alternate.
-                if (string.IsNullOrWhiteSpace(cardRecord.Card.ImageUrl))
-                {
-                    await cardsClient.SetCardImageUrl(cardRecord, storeImageResult.Url);
-                }
-                else
-                {
-                    await cardsClient.AddAlternativeImageId(cardRecord, storeImageResult.ImageId.ToString());
-                }
-
-                log.LogMetric("GenerateNewCardImage_DurationSeconds", stopwatch.Elapsed.TotalSeconds, 
-                    properties: new Dictionary<string, object>()
-                    {
-                        { "imagePrompt", prompt },
-                        { "imageModel", imageModel },
-                        { "imageSize", imageSize },
-                        { "userSubject", userSubject },
-                    });
-
-                var result = new Dictionary<string, object>()
-                {
-                    { "imageUrl", storeImageResult.Url },
-                    { "temporaryUrl", url }
-                };
-
-                var json = JsonConvert.SerializeObject(result);
-                return new OkObjectResult(result);
+                log.LogMetric("GenerateNewCardImage_Rejected", 1, properties: new Dictionary<string, object>() { { "userSubject", userSubject } });
+                return await req.CreateErrorResponse(HttpStatusCode.BadRequest, "Please set your own OpenAI API key in the settings to generate images beyond the first.");
             }
-            catch (Exception exception)
+
+            // If no key is provided, use the one from the environment if the card has not had an image generated before (or the user is an admin).
+            if (string.IsNullOrEmpty(openAIApiKey) && (!cardHasAnImage || user.IsAdmin))
             {
-                if (exception.Message.ContainsIgnoreCase("OpenAI rejected your authorization") || exception.Message.ContainsIgnoreCase("Incorrect API key provided"))
-                {
-                    return new ContentResult
-                    {
-                        StatusCode = 500,
-                        Content = $"Error: The OpenAI API key you provided is invalid. Please check the integrity of this API key.",
-                    };
-                }
-
-                var errorMessage = $"Unexpected exception: {exception}";
-                log?.LogError(exception, errorMessage);
-                return new ContentResult
-                {
-                    StatusCode = 500,
-                    Content = exception.Message,
-                };
+                openAIApiKey = Environment.GetEnvironmentVariable(Constants.OpenAIApiKeyLoggedIn) ??
+                               Environment.GetEnvironmentVariable(Constants.OpenAIApiKey);
             }
+
+            if (string.IsNullOrWhiteSpace(openAIApiKey))
+            {
+                return await req.CreateErrorResponse(HttpStatusCode.BadRequest, "No OpenAI API key was found.");
+            }
+
+            var imageModel = Constants.Dalle3ModelName;
+            var imageSize = StaticValues.ImageStatics.Size.Size1024;
+            var url = await ImageGenerator.GenerateImage(prompt, imageModel, imageSize, openAIApiKey, log);
+
+            var blobStorageName = Extensions.GetSettingOrThrow(Constants.BlobStorageName);
+            var blobStorageEndpoint = Extensions.GetSettingOrThrow(Constants.BlobStorageEndpoint);
+            var blobStorageContainerName = Extensions.GetSettingOrThrow(Constants.BlobStorageContainerName);
+            var blobStorageAccessKey = Extensions.GetSettingOrThrow(Constants.BlobStorageAccessKey);
+            var storeImageResult = await Extensions.StoreImageInBlobAsync(url, blobStorageName, blobStorageEndpoint, blobStorageContainerName, blobStorageAccessKey, log: log);
+
+            // The first time a user generates an image for a card, set that as the card's image, otherwise add as an alternate.
+            if (string.IsNullOrWhiteSpace(cardRecord.Card.ImageUrl))
+            {
+                await cardsClient.SetCardImageUrl(cardRecord, storeImageResult.Url);
+            }
+            else
+            {
+                await cardsClient.AddAlternativeImageId(cardRecord, storeImageResult.ImageId.ToString());
+            }
+
+            log.LogMetric("GenerateNewCardImage_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
+                properties: new Dictionary<string, object>()
+                {
+                    { "imagePrompt", prompt },
+                    { "imageModel", imageModel },
+                    { "imageSize", imageSize },
+                    { "userSubject", userSubject },
+                });
+
+            var result = new Dictionary<string, object>()
+            {
+                { "imageUrl", storeImageResult.Url },
+                { "temporaryUrl", url }
+            };
+
+            return await req.CreateJsonResponse(HttpStatusCode.OK, result);
         }
 
-        [FunctionName("GetImagePrompt")]
+        [Function("GetImagePrompt")]
         [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
-        public static async Task<IActionResult> GetImagePrompt([HttpTrigger(AuthorizationLevel.Anonymous, "POST", Route = null)] HttpRequest req, ILogger log)
+        public static async Task<HttpResponseData> GetImagePrompt([HttpTrigger(AuthorizationLevel.Anonymous, "POST")] HttpRequestData req, FunctionContext context)
         {
+            var log = context.GetLogger<GenerateImageFunction>();
             var stopwatch = Stopwatch.StartNew();
+
+            string requestBody;
+            using (var streamReader = new StreamReader(req.Body))
+            {
+                requestBody = await streamReader.ReadToEndAsync();
+            }
+
+            MagicCard card;
             try
             {
-                string requestBody;
-                using (var streamReader = new StreamReader(req.Body))
-                {
-                    requestBody = await streamReader.ReadToEndAsync();
-                }
-
-                MagicCard card;
-                try
-                {
-                    card = JsonConvert.DeserializeObject<MagicCard>(requestBody);
-                }
-                catch (Exception e) when (e is JsonException || e is JsonReaderException)
-                {
-                    var errorMessage = $"Could not parse request body to type MagicCard.";
-                    log?.LogError(errorMessage);
-                    return await Task.FromResult<IActionResult>(new ContentResult
-                    {
-                        StatusCode = 400,
-                        Content = errorMessage,
-                    });
-                }
-
-                var options = ImageGenerator.GetImageOptionsForCard(card, Constants.Dalle3ModelName);
-                var apiKey = Environment.GetEnvironmentVariable(Constants.OpenAIApiKeyLoggedIn);
-                var prompt = await ImageGenerator.GenerateDetailedImagePrompt(options, apiKey, log);
-
-                stopwatch.Stop();
-                log.LogMetric("GetImagePrompt_DurationSeconds", stopwatch.Elapsed.TotalSeconds);
-
-                var response = new Dictionary<string, object>()
-                {
-                    {
-                        "suggestedPrompt", prompt
-                    }
-                };
-
-                var json = JsonConvert.SerializeObject(response);
-                return await Task.FromResult<IActionResult>(new OkObjectResult(response));
+                card = JsonConvert.DeserializeObject<MagicCard>(requestBody);
             }
-            catch (Exception exception)
+            catch (JsonException)
             {
-                var errorMessage = $"Unexpected exception: {exception}";
-                log?.LogError(exception, errorMessage);
-                return await Task.FromResult<IActionResult>(new ContentResult
-                {
-                    StatusCode = 500,
-                    Content = errorMessage,
-                });
+                var errorMessage = "Could not parse request body to type MagicCard.";
+                log.LogError(errorMessage);
+                return await req.CreateErrorResponse(HttpStatusCode.BadRequest, errorMessage);
             }
+
+            var options = ImageGenerator.GetImageOptionsForCard(card, Constants.Dalle3ModelName);
+            var apiKey = Environment.GetEnvironmentVariable(Constants.OpenAIApiKey);
+            var prompt = await ImageGenerator.GenerateDetailedImagePrompt(options, apiKey, log);
+
+            stopwatch.Stop();
+            log.LogMetric("GetImagePrompt_DurationSeconds", stopwatch.Elapsed.TotalSeconds);
+
+            var response = new Dictionary<string, object>()
+            {
+                { "suggestedPrompt", prompt }
+            };
+
+            return await req.CreateJsonResponse(HttpStatusCode.OK, response);
         }
     }
 }

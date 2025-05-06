@@ -1,7 +1,5 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using System;
-using System.Linq;
 using System.Net;
 
 namespace MTG.CardGenerator.Models
@@ -41,7 +39,7 @@ namespace MTG.CardGenerator.Models
     public class MagicCard
     {
         // Id not stored in database on this record, just use this field for the GenerateMagicCard function response.
-        [JsonIgnore]
+        // [JsonIgnore]
         public string Id { get; set; }
         [JsonProperty("name")]
         public string Name { get; set; }
@@ -163,11 +161,11 @@ namespace MTG.CardGenerator.Models
             var blobStorageEndpoint = Environment.GetEnvironmentVariable(Constants.BlobStorageEndpoint);
             if (card.AlternativeImageIds != null)
             {
-                this.AlternativeImageUrls = card.AlternativeImageIds.Select(id => $"{blobStorageEndpoint}card-images/{id}.png").ToArray();
+                this.AlternativeImageUrls = [.. card.AlternativeImageIds.Select(id => $"{blobStorageEndpoint}card-images/{id}.png")];
             }
             else
             {
-                this.AlternativeImageUrls = Array.Empty<string>();
+                this.AlternativeImageUrls = [];
             }
 
             this.OracleText = !string.IsNullOrWhiteSpace(card.OracleText) ? card.OracleText : card.RawOracleText;
@@ -175,6 +173,7 @@ namespace MTG.CardGenerator.Models
             {
                 this.OracleText = string.Empty;
             }
+
             PostProcessOracleText();
         }
 

@@ -1,94 +1,57 @@
-using DarkLoop.Azure.Functions.Authorize;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using DarkLoop.Azure.Functions.Authorization;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using MTG.CardGenerator.CosmosClients;
 using MTG.CardGenerator.Models;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Net;
 
 namespace MTG.CardGenerator
 {
-    public static class GetMagicCardsFunction
+    public class GetMagicCardsFunction
     {
-        [FunctionName("GetMagicCardByName")]
+        [Function("GetMagicCardByName")]
         [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
-        public static async Task<IActionResult> RunGetMagicCardByName([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log)
+        public static async Task<HttpResponseData> RunGetMagicCardByName([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req, FunctionContext context)
         {
-            try
-            {
-                var cardName = (string)req.Query["cardName"];
-                var cardsClient = new CardsClient(log);
-                var records = await cardsClient.GetMagicCardsByName(cardName);
-                return new OkObjectResult(APIResponses.GetCardsResponse(records));
-            }
-            catch (Exception ex)
-            {
-                log?.LogError(ex, ex.Message);
-                return new ContentResult
-                {
-                    StatusCode = 500,
-                    Content = ex.Message,
-                };
-            }
+            var log = context.GetLogger<GetMagicCardsFunction>();
+            var cardName = req.GetQueryParam("cardName");
+            var cardsClient = new CardsClient(log);
+            var records = await cardsClient.GetMagicCardsByName(cardName);
+            return await req.CreateJsonResponse(HttpStatusCode.OK, APIResponses.GetCardsResponse(records));
         }
 
-        [FunctionName("GetMagicCard")]
-        public static async Task<IActionResult> RunGetMagicCard([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log)
+        [Function("GetMagicCard")]
+        public static async Task<HttpResponseData> RunGetMagicCard([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req, FunctionContext context)
         {
-            try
-            {
-                var cardId = (string)req.Query["cardId"];
-                var cardsClient = new CardsClient(log);
-                var record = await cardsClient.GetMagicCardRecord(cardId);
-                return new OkObjectResult(APIResponses.GetCardResponse(record));
-            }
-            catch (Exception ex)
-            {
-                log?.LogError(ex, ex.Message);
-                return new ContentResult
-                {
-                    StatusCode = 500,
-                    Content = ex.Message,
-                };
-            }
+            var log = context.GetLogger<GetMagicCardsFunction>();
+            var cardId = req.GetQueryParam("cardId");
+            var cardsClient = new CardsClient(log);
+            var record = await cardsClient.GetMagicCardRecord(cardId);
+            return await req.CreateJsonResponse(HttpStatusCode.OK, APIResponses.GetCardResponse(record));
         }
 
-        [FunctionName("GetMagicCards")]
+        [Function("GetMagicCards")]
         [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
-        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req, ILogger log)
+        public static async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req, FunctionContext context)
         {
-            try
+            var log = context.GetLogger<GetMagicCardsFunction>();
+            var userSubject = req.GetUserSubject(log);
+            if (string.IsNullOrWhiteSpace(userSubject))
             {
-                var userSubject = req.GetUserSubject(log);
-                if (string.IsNullOrWhiteSpace(userSubject))
-                {
-                    return new UnauthorizedResult();
-                }
-
-                var cardsClient = new CardsClient(log);
-                var userCards = await cardsClient.GetUsersMagicCards(userSubject);
-                log.LogInformation($"Found {userCards.Count} cards for user '{userSubject}'.");
-
-                log.LogMetric("GetMagicCards_Success", 1, new Dictionary<string, object>()
-                {
-                    { "userSubject", req.GetUserSubject() }
-                });
-
-                return new OkObjectResult(APIResponses.GetCardsResponse(userCards));
+                return req.CreateResponse(HttpStatusCode.Unauthorized);
             }
-            catch (Exception ex)
+
+            var cardsClient = new CardsClient(log);
+            var userCards = await cardsClient.GetUsersMagicCards(userSubject);
+            log.LogInformation($"Found {userCards.Count} cards for user '{userSubject}'.");
+
+            log.LogMetric("GetMagicCards_Success", 1, new Dictionary<string, object>()
             {
-                log?.LogError(ex, ex.Message);
-                return new ContentResult
-                {
-                    StatusCode = 500,
-                    Content = ex.Message,
-                };
-            }
+                { "userSubject", userSubject }
+            });
+
+            return await req.CreateJsonResponse(HttpStatusCode.OK, APIResponses.GetCardsResponse(userCards));
         }
     }
 }
