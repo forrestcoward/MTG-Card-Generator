@@ -28,7 +28,7 @@ namespace MTG.CardGenerator
             catch (Exception ex)
             {
                 var logger = context.GetLogger<ExceptionHandlingMiddleware>();
-                logger.LogError(ex, $"An unhandled exception occurred in {context.FunctionDefinition.Name}");
+                logger.LogError(ex, $"An unhandled exception occurred in {context.FunctionDefinition.Name}: {ex.Message}");
 
                 var httpRequestData = await context.GetHttpRequestDataAsync();
 

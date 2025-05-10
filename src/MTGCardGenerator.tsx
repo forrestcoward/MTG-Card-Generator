@@ -34,7 +34,13 @@ const defaultLanguageModel:string= 'gpt-4o-mini'
 const defaultImageModel:string = 'dall-e-2'
 
 const modelSettings = [
-  { name: 'GPT 4-o', id: 'gpt-4o-mini', value: true, description: 'GPT 4-o is the most intelligent model to date.', group: 'model-settings' },
+  { name: 'GPT 4.1', id: 'gpt-41', value: true, description: 'Flagship GPT model for complex tasks.', group: 'model-settings' },
+  { name: 'GPT 4o', id: 'gpt-4o', value: false, description: 'Fast, intelligent, flexible GPT model.', group: 'model-settings' },
+  // { name: 'GPT 4o-mini', id: 'gpt-4o-mini', value: false, description: 'Fast, intelligent, flexible GPT model', group: 'model-settings' },
+  { name: 'GPT o3', id: 'gpt-o3', value: false, description: 'The most powerful GPT reasoning model.', group: 'model-settings' },
+  // { name: 'GPT 4.1 mini', id: 'gpt-41-mini', value: false, description: 'GPT 4-o is the most intelligent model to date.', group: 'model-settings' },
+  // { name: 'GPT 4.1 nano', id: 'gpt-41-nano', value: false, description: 'GPT 4-o is the most intelligent model to date.', group: 'model-settings' },
+  // { name: 'GPT 3.5', id: 'gpt-35', value: false, description: 'An older, but still powerful model', group: 'model-settings' },
 ]
 
 const modelSettingsGroup : SettingGroup = {
@@ -47,7 +53,7 @@ const modelSettingsGroup : SettingGroup = {
 const imageSettings = [
   { name: 'Dalle-2', id: 'dall-e-2', value: true, description: 'Dalle-2 is a fast, cheap and great for prototyping.', group: 'image-settings' },
   { name: 'Dalle-3', id: 'dall-e-3', value: false, description: 'Dalle-3 produces the highest quality images, but is slower and more expensive.', group: 'image-settings' },
-  { name: 'No Image', id: 'none', value: false, description: 'Do not generate an image (the Image Editor tool can be used afterwards).', group: 'image-settings' },
+  { name: 'No Image', id: 'none', value: false, description: 'Do not generate an image for fastest response. The Image Editor tool may be used afterwards.', group: 'image-settings' },
 ]
 
 const imageSettingsGroup : SettingGroup = {
