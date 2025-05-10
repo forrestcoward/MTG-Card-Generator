@@ -75,7 +75,9 @@ namespace MTG.CardGenerator
 
         private static List<CardMechanic> LoadMechanicsFromFile(string filePath)
         {
-            var json = File.ReadAllText(filePath);
+            // Build the full path relative to the application base directory.
+            var fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, filePath);
+            var json = File.ReadAllText(fullPath);
             return JsonConvert.DeserializeObject<List<CardMechanic>>(json);
         }
     }
