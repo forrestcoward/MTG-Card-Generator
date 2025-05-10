@@ -162,10 +162,10 @@
   },
   {
     "keyword": "Reforge — {cost}",
-    "reminder_text": "Reforge (cost) (You may cast this card from your graveyard by sacrificing an artifact in addition to paying its other costs.)",
+    "reminder_text": "Reforge {cost} (You may cast this card from your graveyard by sacrificing an artifact in addition to paying {cost})",
     "examples": [
       "Reforge — {2}{R}",
-      "Reforge — {2}{R} (You may cast this from your graveyard by sacrificing an artifact in addition to paying its other costs.)"
+      "Reforge — {2}{R} (You may cast this from your graveyard by sacrificing an artifact in addition to paying {2}{R})"
     ],
     "notes": "Artifact synergy and recursion balanced by sacrifice.",
     "type": "Mechanic"
@@ -197,7 +197,7 @@
       "Tributary — {1}{G}",
       "Tributary — {1}{G} (You may cast this by sacrificing a land and paying its tributary cost.)"
     ],
-    "notes": "Land sacrifice for powerful effects; synergizes with fetch or landfall.",
+    "notes": "Land sacrifice for powerful effects; synergizes with fetch or landfall. The tributary cost is typically less than the normal mana cost of the card to make up for the downside of sacrificing a land.",
     "type": "Mechanic"
   },
   {
@@ -856,10 +856,9 @@
   },
   {
     "keyword": "Proliferate",
-    "reminder_text": "Proliferate (Choose any number of permanents and/or players with counters, then give each another counter of a kind it already has.)",
+    "reminder_text": "Proliferate",
     "examples": [
-      "Proliferate",
-      "Proliferate (Choose any number of counters and give each another counter of a kind it already has.)"
+      "Proliferate"
     ],
     "notes": "Enhances counters across board; key in counter-based decks.",
     "type": "Mechanic"
@@ -998,7 +997,7 @@
   },
   {
     "keyword": "Soulshift",
-    "reminder_text": "Soulshift X (When this creature dies, you may return target Spirit card with mana value X or less from your graveyard to your hand.)",
+    "reminder_text": "Soulshift {X} (When this creature dies, you may return target Spirit card with mana value {X} or less from your graveyard to your hand.)",
     "examples": [
       "Soulshift 2",
       "Soulshift 2 (When this dies, you may return target Spirit card with mana value two or less from your graveyard to your hand.)"
@@ -1028,10 +1027,10 @@
   },
   {
     "keyword": "Sunburst",
-    "reminder_text": "Sunburst (This enters the battlefield with a +1/+1 counter if it's a creature—or a charge counter otherwise—for each color of mana spent to cast it.)",
+    "reminder_text": "Sunburst (This enters with a +1/+1 counter on it for each color of mana spent to cast it.)",
     "examples": [
       "Sunburst",
-      "Sunburst (This enters with a counter for each color of mana spent to cast it.)"
+      "Sunburst (This enters with a +1/+1 counter on it for each color of mana spent to cast it.)"
     ],
     "notes": "Reward multicolor investment with additional counters.",
     "type": "Mechanic"
@@ -1127,17 +1126,21 @@
     "reminder_text": "Vanishing X (This enters with X time counters. Remove one each upkeep. When the last is removed, sacrifice it.)",
     "examples": [
       "Vanishing 3",
-      "Vanishing 3 (This enters with three time counters...)"
+      "Vanishing 3 (This enters with X time counters. Remove one each upkeep. When the last is removed, sacrifice it.)"
     ],
     "notes": "Limited lifespan with time counter theme.",
     "type": "Mechanic"
   },
   {
     "keyword": "Ward",
-    "reminder_text": "Ward {cost} (When this becomes the target of a spell or ability an opponent controls, counter that spell or ability unless its controller pays {cost}.)",
+    "reminder_text": "Ward {cost}",
     "examples": [
+      "Ward {1}",
       "Ward {2}",
-      "Ward - discard a card"
+      "Ward - discard a card",
+      "Ward - pay 3 life",
+      "Ward - sacrifice a creature",
+      "Ward - mill 10 cards"
     ],
     "notes": "Targeting deterrent to protect key permanents.",
     "type": "Mechanic"
