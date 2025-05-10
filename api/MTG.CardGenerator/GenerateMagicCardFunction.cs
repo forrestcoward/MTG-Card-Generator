@@ -77,7 +77,7 @@ namespace MTG.CardGenerator
         private const float DefaultTemperature = 1;
         private const float CreativeTemperature = 1.3F;
 
-        public const int AllowedFreeGenerationsPerDay = 3;
+        public const int AllowedFreeGenerationsPerDay = 5;
 
         [Function("GenerateMagicCard")]
         [FunctionAuthorize]
@@ -381,7 +381,6 @@ namespace MTG.CardGenerator
                             UserPrompt = request.RawUserPrompt,
                             SystemPrompt = cardResult.SystemPrompt,
                             ImagePrompt = card.TemporaryImageUrl != null ? "Image generated" : null,
-                            Temperature = cardResult.Temperature,
                             TokensUsed = cardResult.TokensUsed,
                             Model = cardResult.ActualGPTModelUsed,
                             ImageSize = request.ImageModel != "none" ? StaticValues.ImageStatics.Size.Size1024 : null,
@@ -482,7 +481,6 @@ namespace MTG.CardGenerator
                         { "model", responseData.CardResult.ActualGPTModelUsed },
                         { "numberOfChatCompletionAttempts", responseData.CardResult.AttemptsToGenerateCard },
                         { "systemPrompt", responseData.CardResult.SystemPrompt },
-                        { "temperature", responseData.CardResult.Temperature },
                         { "userSubject", responseData.Request.Metadata.UserSubject },
                         { "userPrompt", userPromptToSubmit },
                         { "source", responseData.Request.Source }

@@ -11,12 +11,10 @@
   },
   {
     "keyword": "Bound — {effect}",
-    "reminder_text": "Bound — {effect} (As this enters the battlefield, choose another permanent. They remain bound for as long as both are on the battlefield.)",
+    "reminder_text": "Bound — {effect} (As this enters the battlefield, choose another permanent. They remain bound for as long as both are on the battlefield. They gain {effect} as long as they are bound.)",
     "examples": [
-      "Bound — Flying",
-      "Bound — Flying (As this enters the battlefield, choose another permanent. They remain bound for as long as both are on the battlefield.)",
-      "Bound — Hexproof",
-      "Bound — Hexproof (As this enters the battlefield, choose another permanent. They remain bound for as long as both are on the battlefield.)"
+      "Bound — Flying (As this enters the battlefield, choose another permanent. They remain bound for as long as both are on the battlefield. They gain flying as long as they are bound.)",
+      "Bound — Hexproof (As this enters the battlefield, choose another permanent. They remain bound for as long as both are on the battlefield. They gain hexproof as long as they are bound.)"
     ],
     "notes": "Pairs two permanents to share or grant abilities, creating powerful synergies or protections.",
     "type": "Mechanic"
@@ -35,7 +33,6 @@
     "keyword": "Exhume",
     "reminder_text": "Exhume (You may cast this card from your graveyard by exiling another card from your graveyard in addition to paying its other costs.)",
     "examples": [
-      "Exhume",
       "Exhume (You may cast this card from your graveyard by exiling another card from your graveyard in addition to paying its other costs.)"
     ],
     "notes": "Graveyard recursion keyed to resource management, forcing choices about what to exile.",
@@ -324,16 +321,6 @@
     "type": "Mechanic"
   },
   {
-    "keyword": "Ascend",
-    "reminder_text": "Ascend (If you control ten or more permanents, you get the city's blessing for the rest of the game.)",
-    "examples": [
-      "Ascend",
-      "Ascend (If you control ten or more permanents, you get the city's blessing for the rest of the game.)"
-    ],
-    "notes": "Encourages wide board states; grants a permanent bonus once the threshold is reached.",
-    "type": "Mechanic"
-  },
-  {
     "keyword": "Battle cry",
     "reminder_text": "Battle cry (Whenever this creature attacks, each other attacking creature gets +1/+0 until end of turn.)",
     "examples": [
@@ -395,20 +382,18 @@
   },
   {
     "keyword": "Cascade",
-    "reminder_text": "Cascade (When you cast this spell, exile cards from the top of your library until you exile a nonland card with lesser mana value. You may cast that card without paying its cost. Then put the exiled cards on the bottom of your library in a random order.)",
+    "reminder_text": "Cascade",
     "examples": [
-      "Cascade",
-      "Cascade (When you cast this spell, exile cards from the top of your library until you exile a nonland card with lesser mana value. You may cast that card without paying its cost. Then put the exiled cards on the bottom of your library in a random order.)"
+      "Cascade"
     ],
     "notes": "Generates high tempo and variance by chaining spells at random.",
     "type": "Mechanic"
   },
   {
     "keyword": "Changeling",
-    "reminder_text": "Changeling (This card is every creature type.)",
+    "reminder_text": "",
     "examples": [
-      "Changeling",
-      "Changeling (This card is every creature type.)"
+      "Changeling"
     ],
     "notes": "Universal tribal synergies but can be overly powerful in tribal decks. Only valid for creatures.",
     "type": "Mechanic"
@@ -515,32 +500,35 @@
   },
   {
     "keyword": "Embalm",
-    "reminder_text": "Embalm (cost) (Exile this from your graveyard: Create a token copy with flying.)",
+    "reminder_text": "Embalm {cost} ({cost}, Exile this from your graveyard: create a token that's a copy of it, except it's a {type of card} with no mana cost. Embalm only as a sorcery.)",
     "examples": [
-      "Embalm {3}{W}",
-      "Embalm {3}{W} (Exile this card from your graveyard: Create a token that's a copy of it with flying.)"
+      "Embalm {3}{G} ({3}{G}, Exile this card from your graveyard: Create a token that’s a copy of it, except it’s a white Zombie Snake Hydra with no mana cost. Embalm only as a sorcery.)",
+      "Embalm {2}{W} ({2}{W}, Exile this card from your graveyard: Create a token that’s a copy of it, except it’s a white Zombie Human Warrior with no mana cost. Embalm only as a sorcery.)",
+      "Embalm {1}{W}"
     ],
     "notes": "Graveyard double-dip for creatures. Only valid for creatures.",
     "type": "Mechanic"
   },
   {
     "keyword": "Emerge",
-    "reminder_text": "Emerge (cost) (You may sacrifice a creature: This costs its emerge cost minus sacrificed's mana value.)",
+    "reminder_text": "Emerge (cost) (You may cast this spell by sacrificing a creature and paying the emerge cost reduced by that creature’s mana value.)",
     "examples": [
       "Emerge {5}{G}",
-      "Emerge {5}{G} (You may sacrifice a creature: This costs its emerge cost minus that creature's mana value.)"
+      "Emerge {5}{G} (You may cast this spell by sacrificing a creature and paying the emerge cost reduced by that creature’s mana value.)",
+      "Emerge {5}{G}{U} (You may cast this spell by sacrificing a creature and paying the emerge cost reduced by that creature’s mana value.)"
     ],
     "notes": "Enables casting big creatures earlier by sacrificing smaller ones.",
     "type": "Mechanic"
   },
   {
     "keyword": "Entwine",
-    "reminder_text": "Entwine (cost) (If you pay this in addition to its other costs, do both modes instead of one.)",
+    "reminder_text": "Entwine (cost) (Choose both if you pay the entwine cost.)",
     "examples": [
-      "Entwine {1}{R}",
-      "Entwine {1}{R} (If you pay this in addition to its other costs, this spell gains both modes.)"
-    ],
-    "notes": "Allows dual-mode spells, increasing flexibility at extra cost.",
+      "Choose one — Tap two target creatures; or creatures don't untap during target player's next untap step. Entwine {1} (Choose both if you pay the entwine cost)",
+      "Choose one — Barbed Lightning deals 3 damage to target creature; or Barbed Lightning deals 3 damage to target player or planeswalker. Entwine {2} (Choose both if you pay the entwine cost.)",
+      "Choose two — Each opponent sacrifices a creature of their choice; Exile all opponents’ graveyards; Create a 1/1 white and black Spirit creature token with flying; You gain 4 life. Entwine {3} (Choose all if you pay the entwine cost.)"
+     ],
+    "notes": "Allows dual-mode spells, increasing flexibility at extra cost. In order to have the Entwine keyword, the card must offer a choice like 'Choose one - X or Y'",
     "type": "Mechanic"
   },
   {
@@ -555,10 +543,9 @@
   },
   {
     "keyword": "Evoke",
-    "reminder_text": "Evoke (cost) (You may cast this for its evoke cost. If you do, sacrifice it when it enters. You still get its enter-the-battlefield effects.)",
+    "reminder_text": "Evoke {cost} (You may cast this spell for its evoke cost. If you do, it’s sacrificed when it enters.)",
     "examples": [
-      "Evoke {1}{U}",
-      "Evoke {1}{U} (You may cast this for its evoke cost. If you do, sacrifice it when it enters. You still get its ETB effects.)"
+      "Evoke {1}{U} (You may cast this spell for its evoke cost. If you do, it’s sacrificed when it enters.)"
     ],
     "notes": "Trades creature permanence for immediate effects at discount.",
     "type": "Mechanic"
@@ -585,10 +572,11 @@
   },
   {
     "keyword": "Exploit",
-    "reminder_text": "Exploit (When this enters the battlefield, you may sacrifice a creature. When you do, gain the given additional effect.)",
+    "reminder_text": "Exploit (When this creature enters, you may sacrifice a creature.)",
     "examples": [
-      "Exploit- When this enters, you may sacrifice a creature. When you do, draw a card.",
-      "Exploit- When this enters, you may sacrifice a creature. When you do, counter target spell."
+      "Exploit (When this creature enters, you may sacrifice a creature.). Whenever a creature you control exploits a creature, put a +1/+1 counter on each creature you control.",
+      "Exploit (When this creature enters, you may sacrifice a creature.) Whenever a creature you control exploits a creature, create a 2/2 black Zombie creature token.",
+      "Exploit (When this creature enters, you may sacrifice a creature.) When this creature exploits a creature, return target creature to its owner’s hand."
     ],
     "notes": "Offers optional sacrifice payoff on ETB triggers.",
     "type": "Mechanic"
@@ -615,10 +603,10 @@
   },
   {
     "keyword": "Fabricate",
-    "reminder_text": "Fabricate X (When this creature enters the battlefield, choose one — put X +1/+1 counters on this creature; or create X 1/1 colorless Servo artifact creature tokens.)",
+    "reminder_text": "Fabricate X (When this creature enters the battlefield, put X +1/+1 counters on this creature; or create X 1/1 colorless Servo artifact creature tokens.)",
     "examples": [
-      "Fabricate 2",
-      "Fabricate 2 (When this enters, choose one — put two +1/+1 counters on this creature; or create two 1/1 colorless Servo artifact creature tokens.)"
+      "Fabricate 1 (When this creature enters, put a +1/+1 counter on it or create a 1/1 colorless Servo artifact creature token.)",
+      "Fabricate 2 (When this creature enters, put two +1/+1 counters on it or create two 1/1 colorless Servo artifact creature tokens.)"
     ],
     "notes": "Flexibility between creature size or board presence. Only valid for creatures.",
     "type": "Mechanic"
@@ -657,10 +645,11 @@
     "keyword": "Flashback",
     "reminder_text": "Flashback (cost) (You may cast this card from your graveyard by paying its flashback cost. Then exile it.)",
     "examples": [
-      "Flashback {3}{G}",
-      "Flashback {3}{G} (You may cast this card from your graveyard by paying its flashback cost. Then exile it.)"
+      "Flashback {2}{W}",
+      "Flashback {3}{G} (You may cast this card from your graveyard by paying its flashback cost. Then exile it.)",
+      "Flashback—{1}{G}, Pay 3 life. (You may cast this card from your graveyard for its flashback cost. Then exile it.)"
     ],
-    "notes": "Classic graveyard reuse for spells.",
+    "notes": "Classic graveyard reuse for spells. Typically the flashback cost is more than the card's normal mana cost.'",
     "type": "Mechanic"
   },
   {
@@ -715,10 +704,10 @@
   },
   {
     "keyword": "Infect",
-    "reminder_text": "Infect (This deals damage to creatures in the form of -1/-1 counters and to players in the form of poison counters.)",
+    "reminder_text": "Infect (This creature deals damage to creatures in the form of -1/-1 counters and to players in the form of poison counters.)",
     "examples": [
       "Infect",
-      "Infect (This deals damage as -1/-1 counters to creatures and poison counters to players.)"
+      "Infect (This creature deals damage to creatures in the form of -1/-1 counters and to players in the form of poison counters.)"
     ],
     "notes": "Alternate win condition with poison counters. Only valid for creatures.",
     "type": "Mechanic"
@@ -735,10 +724,11 @@
   },
   {
     "keyword": "Kicker",
-    "reminder_text": "Kicker (cost) (You may pay an additional cost as you cast this spell. If you do, you get an additional effect.)",
+    "reminder_text": "Kicker {cost} (You may pay an additional {cost} as you cast this spell.)",
     "examples": [
-      "Kicker {2}",
-      "Kicker {2} (You may pay an additional {2}. If you do, this spell gains extra effect.)"
+      "Kicker {4} (You may pay an additional {4} as you cast this spell.) If this creature was kicked, it enters with two +1/+1 counters on it.",
+      "Kicker {1}{G} (You may pay an additional {1}{G} as you cast this spell.). When this creature enters, if it was kicked, destroy target land.",
+      "Kicker {1}{R} and/or {G} (You may pay an additional {1}{R} and/or {G} as you cast this spell.). If this creature was kicked with its {1}{R} kicker, it enters with two +1/+1 counters on it and with first strike. If this creature was kicked with its {G} kicker, it enters with a +1/+1 counter on it and with trample."
     ],
     "notes": "Simple optional extra cost for enhanced outcomes.",
     "type": "Mechanic"
@@ -755,20 +745,20 @@
   },
   {
     "keyword": "Madness",
-    "reminder_text": "Madness (cost) (When you discard this card, you may pay its madness cost and cast it.)",
+    "reminder_text": "Madness {cost} (If you discard this card, discard it into exile. When you do, cast it for its madness cost or put it into your graveyard.)",
     "examples": [
       "Madness {B}",
-      "Madness {B} (When you discard this card, you may pay its madness cost and cast it.)"
+      "Madness {B} (If you discard this card, discard it into exile. When you do, cast it for its madness cost or put it into your graveyard.)"
     ],
     "notes": "Encourages self-discard and wheel strategies.",
     "type": "Mechanic"
   },
   {
     "keyword": "Manifest",
-    "reminder_text": "Manifest [X] (Put X cards from the top of your library onto the battlefield face-down as 2/2 creatures. You may turn any face-down creature face-up for its mana cost if it's a creature card.)",
+    "reminder_text": "Manifest {X} (To manifest a card, put it onto the battlefield face down as a 2/2 creature. Turn it face up any time for its mana cost if it’s a creature card.)",
     "examples": [
       "Manifest 1",
-      "Manifest 1 (Put one card from the top of your library onto the battlefield face-down as a 2/2. You may turn it face-up for its mana cost if it's a creature card.)"
+      "Manifest 2 (To manifest a card, put it onto the battlefield face down as a 2/2 creature. Turn it face up any time for its mana cost if it’s a creature card.)"
     ],
     "notes": "Hidden creatures add mind games; interacts with morph.",
     "type": "Mechanic"
@@ -815,10 +805,11 @@
   },
   {
     "keyword": "Multikicker",
-    "reminder_text": "Multikicker (cost) (You may pay this any number of times. Each time you do, copy this spell.)",
+    "reminder_text": "Multikicker {cost} (You may pay an additional {cost} any number of times as you cast this spell.)",
     "examples": [
-      "Multikicker {1}",
-      "Multikicker {1} (You may pay this any number of times. Each time you do, copy this spell.)"
+      "Multikicker {1}{W} (You may pay an additional {1}{W} any number of times as you cast this spell.) This creature enters with a +1/+1 counter on it for each time it was kicked.",
+      "Multikicker {2} (You may pay an additional {2} any number of times as you cast this spell.) This creature enters with a +1/+1 counter on it for each time it was kicked.",
+      "Multikicker {2} (You may pay an additional {2} any number of times as you cast this spell.) {T}: Add {C} for each charge counter on this artifact."
     ],
     "notes": "Scalable additional cost mechanic for flexible builds.",
     "type": "Mechanic"
@@ -976,10 +967,10 @@
   },
   {
     "keyword": "Scavenge",
-    "reminder_text": "Scavenge (cost) (Exile this card from your graveyard: Put a number of +1/+1 counters equal to its power on target creature. Activate only as a sorcery.)",
+    "reminder_text": "Scavenge {cost} ({cost}, Exile this card from your graveyard: Put a number of +1/+1 counters equal to this card’s power on target creature. Scavenge only as a sorcery.)",
     "examples": [
-      "Scavenge {3}{G}",
-      "Scavenge {3}{G} (Exile this from your graveyard: Put a number of +1/+1 counters equal to its power on target creature.)"
+      "Scavenge {4}{B} ({4}{B}, Exile this card from your graveyard: Put a number of +1/+1 counters equal to this card’s power on target creature. Scavenge only as a sorcery.)",
+      "Scavenge {4}{G}{G} ({4}{G}{G}, Exile this card from your graveyard: Put a number of +1/+1 counters equal to this card’s power on target creature. Scavenge only as a sorcery.)"
     ],
     "notes": "Late-game buff from graveyard resources.",
     "type": "Mechanic"
@@ -996,10 +987,11 @@
   },
   {
     "keyword": "Soulbond",
-    "reminder_text": "Soulbond (When this or another creature enters the battlefield under your control, you may pair them. They each gain the other's abilities.)",
+    "reminder_text": "Soulbond (You may pair this creature with another unpaired creature when either enters. They remain paired for as long as you control both of them.)",
     "examples": [
-      "Soulbond",
-      "Soulbond (When this or another creature enters under your control, you may pair them. They each gain the other's abilities.)"
+      "As long as Deadeye Navigator is paired with another creature, each of those creatures has “{1}{U}: Exile this creature, then return it to the battlefield under your control.”",
+      "Soulbond (You may pair this creature with another unpaired creature when either enters. They remain paired for as long as you control both of them.) As long as Doom Weaver is paired with another creature, each of those creatures has “When this creature dies, draw cards equal to its power.",
+      "Soulbond (You may pair this creature with another unpaired creature when either enters. They remain paired for as long as you control both of them.) As long as this creature is paired with another creature, both creatures have vigilance."
     ],
     "notes": "Pairing synergy for simultaneous buffs.",
     "type": "Mechanic"

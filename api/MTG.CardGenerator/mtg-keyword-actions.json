@@ -1,7 +1,7 @@
 [
   {
     "keyword": "Counter",
-    "reminder_text": "Counter (Remove target spell or ability from the stack without resolving it; put it into its owner's graveyard.)",
+    "reminder_text": "",
     "examples": [
       "Counter target spell.",
       "Counter target noncreature spell.",
@@ -17,7 +17,7 @@
   },
   {
     "keyword": "Exile",
-    "reminder_text": "Exile (Remove target object from the game; put it into the exile zone.)",
+    "reminder_text": "",
     "examples": [
       "Exile target permanent.",
       "Exile target creature.",
@@ -33,7 +33,7 @@
   },
   {
     "keyword": "Fight",
-    "reminder_text": "Fight (Two target creatures each deal damage equal to their power to the other.)",
+    "reminder_text": "",
     "examples": [
       "Fight target creature you control and target creature an opponent controls.",
       "Fight two target creatures.",
@@ -48,7 +48,7 @@
   },
   {
     "keyword": "Mill",
-    "reminder_text": "Mill X (Put the top X cards of target player's library into their graveyard.)",
+    "reminder_text": "",
     "examples": [
       "Target player mills 3 cards.",
       "Each opponent mills two cards.",
@@ -62,7 +62,7 @@
   },
   {
     "keyword": "Sacrifice",
-    "reminder_text": "Sacrifice (controller) (That player sacrifices the specified permanent they control.)",
+    "reminder_text": "",
     "examples": [
       "Sacrifice a creature: you gain 1 life.",
       "Sacrifice an artifact: deal 2 damage to any target.",
@@ -78,7 +78,7 @@
   },
   {
     "keyword": "Enters",
-    "reminder_text": "Enters (When this permanent enters the battlefield)",
+    "reminder_text": "",
     "examples": [
       "When this creature enters the battlefield, create a 1/1 white Spirit creature token with flying.",
       "When this creature enters the battlefield, another target creature you control gets +1/+1 until end of turn.",
@@ -94,7 +94,7 @@
   },
   {
     "keyword": "Dies",
-    "reminder_text": "Dies (When this creature is put into a graveyard from the battlefield)",
+    "reminder_text": "",
     "examples": [
       "When this creature dies, draw a card.",
       "When this creature dies, you may return target creature card from your graveyard to your hand.",
@@ -110,7 +110,7 @@
   },
   {
     "keyword": "Scry X",
-    "reminder_text": "Scry X (Look at the top X cards of your library. Put any number on the bottom and the rest on top in any order.)",
+    "reminder_text": "",
     "examples": [
       "Scry 1.",
       "Scry 2.",
@@ -126,7 +126,7 @@
   },
   {
     "keyword": "Tap",
-    "reminder_text": "Tap (Rotate this permanent 90° to indicate use or to pay a tap cost.)",
+    "reminder_text": "",
     "examples": [
       "{T}: Add {G}.",
       "{T}: Destroy target creature.",
@@ -142,7 +142,7 @@
   },
   {
     "keyword": "Untap",
-    "reminder_text": "Untap (Return this permanent to its upright position, making it available again.)",
+    "reminder_text": "",
     "examples": [
       "Untap target creature.",
       "Untap target land.",

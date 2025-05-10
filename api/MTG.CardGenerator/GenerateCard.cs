@@ -26,7 +26,6 @@ namespace MTG.CardGenerator
     {
         public MagicCard[] Cards { get; set; }
         public string OpenAIResponse { get; set; }
-        public float Temperature { get; set; }
         public int TokensUsed { get; set; }
         public string ActualGPTModelUsed { get; set; }
         public string SystemPrompt { get; set; }
@@ -61,9 +60,6 @@ You are an assistant who works as a Magic: The Gathering card designer. You like
 You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'oracleText', 'flavorText', 'pt', 'rarity', 'explanation', and 'funnyExplanation' properties. The 'explanation' property should explain why the card was created the way it was. The 'funnyExplanation' property should be a hilarious explanation of why the card was created the way it was.
 Do not explain the cards or explain your reasoning. Only return the JSON of cards named 'cards'.";
 
-        private const float DefaultTemperature = 1;
-        private const float CreativeTemperature = 1.3F;
-
         private const int MaxPromptCharacters = 500;
 
         public static async Task<CardResult> Generate(CardGenerationRequest request, string apiKey, Microsoft.Extensions.Logging.ILogger log)
@@ -89,7 +85,6 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             }
 
             // Determine system prompt based on settings.
-            var temperature = request.ExtraCreative ? CreativeTemperature : DefaultTemperature;
             if (request.ExtraCreative && request.IncludeExplanation)
             {
                 systemPrompt = GenerateCreativeCardSystemPromptWithExplanation;
@@ -158,11 +153,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             log.LogInformation($"generateImage: {request.ImageModel != "none"}");
             log.LogInformation($"numCards: {request.NumCards}");
 
-            var openAIService = new OpenAIService(new OpenAIOptions()
-            {
-                ApiKey = apiKey
-            });
-
+            var openAIService = new OpenAIService(new OpenAIOptions() { ApiKey = apiKey });
             var openAICards = Array.Empty<BasicCard>();
 
             for (var attempt = 0; attempt < 5; attempt++)
@@ -173,7 +164,6 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 {
                     Messages = [ChatMessage.FromUser(userPromptToSubmit), ChatMessage.FromSystem(systemPrompt)],
                     Model = gptModel,
-                    Temperature = temperature,
                     ChatResponseFormat = chatResponseFormat,
                 });
 
@@ -188,6 +178,67 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
 
                 openAIResponse = response.Choices[0].Message.Content;
                 log?.LogInformation($"OpenAI response ({actualGPTModelUsed}):{Environment.NewLine}{openAIResponse}");
+
+                if (request.ExtraCreative)
+                {
+                    var mechanicsToUsePrompt = CardMechanicSelector.GetRandomMechanicsAsPrompt(evergreenCount: 0, keywordActionCount: 1, mechanicCount: 1);
+
+                    log.LogInformation($"Mechanics to use:{Environment.NewLine}: {mechanicsToUsePrompt}");
+
+                    var userPrompt = $"The card you are updating is the following: {openAIResponse} ";
+
+                    var extraCreativeSystemPrompt = $@"
+                        You are an assistant who works as a Magic: The Gathering card designer. Your job is to update an existing card's oracle text to incorporate new mechanics into the card to make it more interesting. You will be given an existing card and a set of new mechanics to incorporate into the card. Think step by step when incorporating the new mechanics into the card: Please ensure that the new mechanics are incorporated in a consistent and coherent way with regards to the rest of the card. 
+
+                        The mechanics you should incorporate into the card are the following: {mechanicsToUsePrompt}
+
+                        You should return the card JSON with the updated 'oracleText' field.
+                        Do not explain the cards or explain your reasoning. Only return the JSON with the updated `oracleText` that incorporates the new mechanics.";
+
+                    var updatedCardReponse = await openAIService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
+                    {
+                        Messages = [ChatMessage.FromUser(userPrompt), ChatMessage.FromSystem(extraCreativeSystemPrompt)],
+                        Model = gptModel,
+                        ChatResponseFormat = chatResponseFormat,
+                    });
+
+                    openAIResponse = updatedCardReponse.Choices[0].Message.Content;
+                    tokensUsed += response.Usage.TotalTokens;
+                    cost.AddChatCost(updatedCardReponse);
+                    log?.LogInformation($"[Extra creative] OpenAI response to update the card: ({actualGPTModelUsed}):{Environment.NewLine}{openAIResponse}");
+                }
+
+                var checkConsistency = true;
+                if (checkConsistency)
+                {
+                    var userPrompt = $"The card you are updating is the following: {openAIResponse} ";
+
+                    var checkConsistencySystemPrompt = $@"
+                        You are a Magic: The Gathering card designer assistant. Your task is to:
+
+                        1. **Validate** an existing card’s `oracleText` for rule consistency. 
+                           - E.g., creatures without flash shouldn’t be able to counter spells (they can’t be cast at instant speed).  
+                           - Artifacts can’t have haste (they’re not affected by summoning sickness).
+
+                        2. **If inconsistent**, rewrite **only** the `oracleText` so the ability makes sense within MTG’s rules.
+
+                        3. **Output**: Return the full card JSON, updating only the `""oracleText""` field.  
+                           - **Do not** include explanations, reasoning, or any other modifications.
+
+                        **Think step-by-step** through relevant rules as you validate and rewrite.";
+
+                    var updatedCardReponse = await openAIService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
+                    {
+                        Messages = [ChatMessage.FromUser(userPrompt), ChatMessage.FromSystem(checkConsistencySystemPrompt)],
+                        Model = gptModel,
+                        ChatResponseFormat = chatResponseFormat,
+                    });
+
+                    openAIResponse = updatedCardReponse.Choices[0].Message.Content;
+                    tokensUsed += response.Usage.TotalTokens;
+                    cost.AddChatCost(updatedCardReponse);
+                    log?.LogInformation($"[Check consistency] OpenAI response to update the card: ({actualGPTModelUsed}):{Environment.NewLine}{openAIResponse}");
+                }
 
                 try
                 {
@@ -229,8 +280,6 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 }
             }
 
-            log?.LogInformation($"{tokensUsed} {actualGPTModelUsed} chat completion tokens used (${cost.TotalCost}).");
-
             // Parse basic cards into full Magic cards.
             var cards = openAICards
                 .Select(x => MagicCardParser.Parse(x).Card)
@@ -245,17 +294,17 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 card.Id = Guid.NewGuid().ToString();
             }
 
-            return new CardResult
+            var cardResult = new CardResult
             {
                 Cards = cards,
                 OpenAIResponse = openAIResponse,
-                Temperature = temperature,
                 TokensUsed = tokensUsed,
                 ActualGPTModelUsed = actualGPTModelUsed,
                 SystemPrompt = systemPrompt,
                 Cost = cost,
                 AttemptsToGenerateCard = attemptsToGenerateCard
             };
+            return cardResult;
         }
     }
 }

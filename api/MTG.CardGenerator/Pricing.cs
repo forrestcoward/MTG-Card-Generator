@@ -1,19 +1,21 @@
 ﻿using Betalgo.Ranul.OpenAI.ObjectModels.ResponseModels;
+using Newtonsoft.Json;
 
 namespace MTG.CardGenerator
 {
     public class Cost
     {
-        public double TotalCost { get; private set; } = 0;
+        [JsonProperty("totalCost")]
+        public double TotalCost { get; set; }
 
         public void AddChatCost(ChatCompletionCreateResponse result)
         {
             TotalCost += Pricing.GetCost(result);
         }
 
-        public void AddImageCost(string size, string model)
+        public void AddImageCost(string imageSize, string imageModel)
         {
-            TotalCost += Pricing.GetImageCost(size, model);
+            TotalCost += Pricing.GetImageCost(imageSize, imageModel);
         }
     }
 
@@ -30,11 +32,13 @@ namespace MTG.CardGenerator
         // Currently no way to get this from an API.
         private static readonly List<ModelCost> ModelCosts =
         [
-            // GPT 3.5
-            new ModelCost() { Model = "gpt-3.5-turbo-instruct", InputPrice = 1.5 / 1000000, OutputPrice = 2 / 1000000 },
-            // GPT 4
-            new ModelCost() { Model = "gpt-4o-mini", InputPrice = .15 / 1000000, OutputPrice = .6 / 1000000 },
-            new ModelCost() { Model = "gpt-4o", InputPrice = 5 / 1000000, OutputPrice = 15 / 1000000 },
+            new ModelCost() { Model = "gpt-4o-mini", InputPrice = .15 / 1000000.0, OutputPrice = .6 / 1000000.0 },
+            new ModelCost() { Model = "gpt-4o", InputPrice = 2.5 / 1000000.0, OutputPrice = 10 / 1000000.0 },
+            new ModelCost() { Model = "o3-mini", InputPrice = 1.10 / 1000000.0, OutputPrice = 4.4 / 1000000.0 },
+            new ModelCost() { Model = "o3", InputPrice = 10 / 1000000.0, OutputPrice = 40 / 1000000.0 },
+            new ModelCost() { Model = "gpt-4.1-mini", InputPrice = .4 / 1000000.0, OutputPrice = 1.6 / 1000000.0 },
+            new ModelCost() { Model = "gpt-4.1-nano", InputPrice = .1 / 1000000.0, OutputPrice = .4 / 1000000.0 },
+            new ModelCost() { Model = "gpt-4.1", InputPrice = 2 / 1000000.0, OutputPrice = 8 / 1000000.0 },
         ];
 
         public static double GetCost(ChatCompletionCreateResponse result)
