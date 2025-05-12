@@ -6,6 +6,7 @@ using MTG.CardGenerator.Models;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
 using static MTG.CardGenerator.GenerateMagicCardFunction;
+using ChatMessage = Betalgo.Ranul.OpenAI.ObjectModels.RequestModels.ChatMessage;
 
 namespace MTG.CardGenerator
 {
@@ -25,12 +26,11 @@ namespace MTG.CardGenerator
     public class CardResult
     {
         public MagicCard[] Cards { get; set; }
+        public MagicCard[] CardIterations { get; set; }
         public string OpenAIResponse { get; set; }
-        public int TokensUsed { get; set; }
         public string ActualGPTModelUsed { get; set; }
-        public string SystemPrompt { get; set; }
         public Cost Cost { get; set; }
-        public int AttemptsToGenerateCard { get; set; }
+        public string SystemPrompt { get; set; }
     }
 
     public class OpenAIMagicCardResponse
@@ -67,9 +67,9 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             var systemPrompt = string.Empty;
             var cost = new Cost();
             var openAIResponse = string.Empty;
-            var tokensUsed = 0;
             var attemptsToGenerateCard = 0;
-            var actualGPTModelUsed = string.Empty;
+            var gptModelUsed = string.Empty;
+            var maxAttempts = 3;
 
             // Process raw user prompt.
             var rawUserPrompt = request.RawUserPrompt ?? string.Empty;
@@ -111,7 +111,6 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
 
             // Select model and response format.
             var gptModel = Betalgo.Ranul.OpenAI.ObjectModels.Models.Gpt_4o;
-            var chatResponseFormat = ChatCompletionCreateRequest.ResponseFormats.Json;
             if (!string.IsNullOrWhiteSpace(request.Model))
             {
                 if (request.Model.Equals("gpt-4o-mini", StringComparison.OrdinalIgnoreCase))
@@ -138,11 +137,6 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 {
                     gptModel = Betalgo.Ranul.OpenAI.ObjectModels.Models.Gpt_4_1_nano;
                 }
-                else if (request.Model.StartsWith("gpt-35", StringComparison.OrdinalIgnoreCase))
-                {
-                    gptModel = Betalgo.Ranul.OpenAI.ObjectModels.Models.Gpt_3_5_Turbo;
-                    chatResponseFormat = ChatCompletionCreateRequest.ResponseFormats.Text;
-                }
             }
 
             log.LogInformation($"model: {request.Model}");
@@ -155,128 +149,96 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
 
             var openAIService = new OpenAIService(new OpenAIOptions() { ApiKey = apiKey });
             var openAICards = Array.Empty<BasicCard>();
+            var cardIterations = new List<BasicCard>();
 
-            for (var attempt = 0; attempt < 5; attempt++)
+            for (var attempt = 0; attempt < maxAttempts; attempt++)
             {
-                attemptsToGenerateCard++;
-
-                var response = await openAIService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
+                try
                 {
-                    Messages = [ChatMessage.FromUser(userPromptToSubmit), ChatMessage.FromSystem(systemPrompt)],
-                    Model = gptModel,
-                    ChatResponseFormat = chatResponseFormat,
-                });
+                    attemptsToGenerateCard++;
 
-                if (!response.Successful)
-                {
-                    throw new Exception(response.Error.Message);
-                }
+                    var response = await GenerateOpenAICardResponse(openAIService, "Generate Initial Card", systemPrompt, userPromptToSubmit, gptModel, cost, log);
+                    openAICards = response.Item1;
+                    openAIResponse = response.Item2;
+                    cardIterations.AddRange(openAICards);
 
-                actualGPTModelUsed = response.Model;
-                tokensUsed += response.Usage.TotalTokens;
-                cost.AddChatCost(response);
+                    if (request.ExtraCreative)
+                    {
+                        // Select 1 additional mechanic to add to the card from either the keyword or mechanic list.
+                        var numKeywordActions = Random.Shared.Next(0, 2);
+                        var numMechanics = numKeywordActions == 0 ? 1 : 0;
+                        var mechanicsToUsePrompt = CardMechanicSelector.GetRandomMechanicsAsPrompt(evergreenCount: 0, keywordActionCount: numKeywordActions, mechanicCount: numMechanics, out var selectedMechanics);
 
-                openAIResponse = response.Choices[0].Message.Content;
-                log?.LogInformation($"OpenAI response ({actualGPTModelUsed}):{Environment.NewLine}{openAIResponse}");
+                        log.LogInformation($"Mechanics to use: {string.Join(',', selectedMechanics.Select(x => x.Keyword))}");
 
-                if (request.ExtraCreative)
-                {
-                    var mechanicsToUsePrompt = CardMechanicSelector.GetRandomMechanicsAsPrompt(evergreenCount: 0, keywordActionCount: 1, mechanicCount: 1);
+                        var userPrompt = $"The card you are updating is the following: {openAIResponse} ";
 
-                    log.LogInformation($"Mechanics to use:{Environment.NewLine}: {mechanicsToUsePrompt}");
-
-                    var userPrompt = $"The card you are updating is the following: {openAIResponse} ";
-
-                    var extraCreativeSystemPrompt = $@"
-                        You are an assistant who works as a Magic: The Gathering card designer. Your job is to update an existing card's oracle text to incorporate new mechanics into the card to make it more interesting. You will be given an existing card and a set of new mechanics to incorporate into the card. Think step by step when incorporating the new mechanics into the card: Please ensure that the new mechanics are incorporated in a consistent and coherent way with regards to the rest of the card. 
+                        var extraCreativeSystemPrompt = $@"
+                        You are an assistant who works as a Magic: The Gathering card designer. Your job is to update an existing card's oracle text to incorporate new mechanics into the card to make it more interesting. You will be given an existing card and a set of new mechanics to incorporate into the card. Think step by step when incorporating the new mechanics into the card. Please ensure that the new mechanics are incorporated in a consistent and coherent way with regards to the rest of the card.
 
                         The mechanics you should incorporate into the card are the following: {mechanicsToUsePrompt}
 
                         You should return the card JSON with the updated 'oracleText' field.
                         Do not explain the cards or explain your reasoning. Only return the JSON with the updated `oracleText` that incorporates the new mechanics.";
 
-                    var updatedCardReponse = await openAIService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
+                        response = await GenerateOpenAICardResponse(openAIService, "Add Mechanics To Card", extraCreativeSystemPrompt, userPrompt, gptModel, cost, log);
+                        openAICards = response.Item1;
+                        openAIResponse = response.Item2;
+                        cardIterations.AddRange(openAICards);
+                    }
+
+                    var checkConsistency = true;
+                    if (checkConsistency)
                     {
-                        Messages = [ChatMessage.FromUser(userPrompt), ChatMessage.FromSystem(extraCreativeSystemPrompt)],
-                        Model = gptModel,
-                        ChatResponseFormat = chatResponseFormat,
-                    });
+                        var userPrompt = $"The card you are updating is the following: {openAIResponse} ";
 
-                    openAIResponse = updatedCardReponse.Choices[0].Message.Content;
-                    tokensUsed += response.Usage.TotalTokens;
-                    cost.AddChatCost(updatedCardReponse);
-                    log?.LogInformation($"[Extra creative] OpenAI response to update the card: ({actualGPTModelUsed}):{Environment.NewLine}{openAIResponse}");
-                }
-
-                var checkConsistency = true;
-                if (checkConsistency)
-                {
-                    var userPrompt = $"The card you are updating is the following: {openAIResponse} ";
-
-                    var checkConsistencySystemPrompt = $@"
+                        var checkConsistencySystemPrompt = $@"
                         You are a Magic: The Gathering card designer assistant. Your task is to:
 
-                        1. **Validate** an existing card’s `oracleText` for rule consistency. 
-                           - E.g., creatures without flash shouldn’t be able to counter spells (they can’t be cast at instant speed).  
-                           - Artifacts can’t have haste (they’re not affected by summoning sickness).
+                        1. **Validate** an existing card’s `oracleText` for rule consistency. E.g.
+                           - Creatures without flash should not be able to counter spells (they cannot be cast at instant speed).
+                           - Artifacts cannot have haste (they are not affected by summoning sickness).
+                           - Check that the card's abilities are allowed on that type of card (ex. an enchantment cannot have defender).
 
                         2. **If inconsistent**, rewrite **only** the `oracleText` so the ability makes sense within MTG’s rules.
 
-                        3. **Output**: Return the full card JSON, updating only the `""oracleText""` field.  
+                        3. Next, **Validate** an existing card's mana cost for consistency. E.g.
+                           - Colorless mana symbols should come before colored mana symbols (ex. {{G}}{{1}} should be {{1}}{{G}}).
+                           - Colored mana should be capitalized (ex. {{g}} should be {{G}}).
+                           - Each individual symbol should be in brackets (eg. {{BG}} should be {{B}}{{G}}).
+
+                        4. **If inconsistent**, rewrite **only** the `manaCost` so the mana cost is consistent with MTG's style rules.
+
+                        5. **Output**: Return the full card JSON, updating only the `""oracleText""` field and `""manaCost`"" fields as appropriate.  
                            - **Do not** include explanations, reasoning, or any other modifications.
 
-                        **Think step-by-step** through relevant rules as you validate and rewrite.";
+                        **Think step-by-step**.";
 
-                    var updatedCardReponse = await openAIService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
-                    {
-                        Messages = [ChatMessage.FromUser(userPrompt), ChatMessage.FromSystem(checkConsistencySystemPrompt)],
-                        Model = gptModel,
-                        ChatResponseFormat = chatResponseFormat,
-                    });
-
-                    openAIResponse = updatedCardReponse.Choices[0].Message.Content;
-                    tokensUsed += response.Usage.TotalTokens;
-                    cost.AddChatCost(updatedCardReponse);
-                    log?.LogInformation($"[Check consistency] OpenAI response to update the card: ({actualGPTModelUsed}):{Environment.NewLine}{openAIResponse}");
-                }
-
-                try
-                {
-                    var deserialized = JsonConvert.DeserializeObject<OpenAIMagicCardResponse>(openAIResponse);
-                    openAICards = deserialized.Cards;
-                }
-                catch (JsonReaderException)
-                {
-                    log?.LogWarning($"The initial response was not valid JSON.");
-                    var captures = new Regex(@"(?<json>\{(.*)\})", RegexOptions.Singleline).GetNamedGroupsMatches(openAIResponse);
-                    if (captures.TryGetValue("json", out string value))
-                    {
-                        try
-                        {
-                            var deserialized = JsonConvert.DeserializeObject<OpenAIMagicCardResponse>(value);
-                            if (deserialized != null && deserialized.Cards != null)
-                            {
-                                openAICards = deserialized.Cards;
-                            }
-                        }
-                        catch (JsonReaderException)
-                        {
-                        }
+                        response = await GenerateOpenAICardResponse(openAIService, "Verify Card Consistency", checkConsistencySystemPrompt, userPrompt, gptModel, cost, log);
+                        openAICards = response.Item1;
+                        openAIResponse = response.Item2;
+                        cardIterations.AddRange(openAICards);
                     }
                 }
-                catch (JsonSerializationException)
+                catch (Exception ex)
                 {
-                    log?.LogWarning("Could not deserialize OpenAI response as OpenAIMagicCardResponse object. Now trying to deserialize as BasicCard[]...");
-                    openAICards = JsonConvert.DeserializeObject<BasicCard[]>(openAIResponse);
+                    log.LogError($"[{attempt}] Error while generating card: {ex.Message}");
+
+                    if (attempt + 1 >= maxAttempts)
+                    {
+                        throw new Exception($"[{attempt}] Unable to generate card after {maxAttempts} attempts: {ex.Message}", ex);
+                    }
                 }
 
                 if (openAICards.Length > 0)
                 {
+                    // At least one card was generated successfully.
                     break;
                 }
                 else
                 {
-                    log?.LogError($"[Attempt {attempt + 1}] Unable to parse OpenAI response.");
+                    log.LogWarning($"[{attempt}] OpenAI response was empty. Attempting again...");
+                    openAICards = Array.Empty<BasicCard>();
                 }
             }
 
@@ -294,17 +256,88 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 card.Id = Guid.NewGuid().ToString();
             }
 
+            var parsedCardIterations = cardIterations
+                .Select(x => MagicCardParser.Parse(x).Card)
+                .ToArray()
+                .ToArray();
+
+            foreach (var cardIteration in parsedCardIterations)
+            {
+                cardIteration.UserPrompt = rawUserPrompt;
+                cardIteration.AlternativeImageIds = [];
+                cardIteration.Id = Guid.NewGuid().ToString();
+            }
+
             var cardResult = new CardResult
             {
                 Cards = cards,
+                CardIterations = parsedCardIterations,
                 OpenAIResponse = openAIResponse,
-                TokensUsed = tokensUsed,
-                ActualGPTModelUsed = actualGPTModelUsed,
+                ActualGPTModelUsed = gptModelUsed,
                 SystemPrompt = systemPrompt,
                 Cost = cost,
-                AttemptsToGenerateCard = attemptsToGenerateCard
             };
+
             return cardResult;
+        }
+
+        // Generate a set of cards from OpenAI. Returns the parsed cards and the raw OpenAI response.
+        public static async Task<(BasicCard[], string)> GenerateOpenAICardResponse(OpenAIService service, string requestName, string systemPrompt, string userPrompt, string gptModel, Cost cost, ILogger log)
+        {
+            var response = await service.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
+            {
+                Messages = [ChatMessage.FromUser(userPrompt), ChatMessage.FromSystem(systemPrompt)],
+                Model = gptModel,
+                ChatResponseFormat = ChatCompletionCreateRequest.ResponseFormats.Json,
+            });
+
+            if (!response.Successful)
+            {
+                throw new Exception(response.Error.Message);
+            }
+
+            var openAIResponse = response.Choices[0].Message.Content;
+            cost.AddChatCost(response);
+            log?.LogInformation($"[{requestName}] OpenAI response: ({response.Model}):{Environment.NewLine}{openAIResponse}");
+
+            try
+            {
+                try
+                {
+                    var deserialized = JsonConvert.DeserializeObject<OpenAIMagicCardResponse>(openAIResponse);
+                    return (deserialized.Cards, openAIResponse);
+                }
+                catch (JsonReaderException)
+                {
+                    log?.LogWarning($"[{requestName}] The initial response was not valid JSON.");
+                    var captures = new Regex(@"(?<json>\{(.*)\})", RegexOptions.Singleline).GetNamedGroupsMatches(openAIResponse);
+                    if (captures.TryGetValue("json", out string value))
+                    {
+                        try
+                        {
+                            var deserialized = JsonConvert.DeserializeObject<OpenAIMagicCardResponse>(value);
+                            if (deserialized != null && deserialized.Cards != null)
+                            {
+                                return (deserialized.Cards, openAIResponse);
+                            }
+                        }
+                        catch (JsonReaderException)
+                        {
+                        }
+                    }
+
+                    throw;
+                }
+                catch (JsonSerializationException)
+                {
+                    log?.LogWarning($"[{requestName}] Could not deserialize OpenAI response as OpenAIMagicCardResponse object. Now trying to deserialize as BasicCard[]...");
+                    return (JsonConvert.DeserializeObject<BasicCard[]>(openAIResponse), openAIResponse);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"[{requestName}] Unable to parse OpenAI response: {ex.Message}", ex);
+            }
         }
     }
 }

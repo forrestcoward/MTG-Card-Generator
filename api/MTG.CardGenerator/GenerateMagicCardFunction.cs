@@ -124,7 +124,7 @@ namespace MTG.CardGenerator
                     if (user.LastActiveTime?.Date == DateTime.Now.ToUniversalTime().Date &&
                         user.NumberOfFreeCardsGeneratedToday >= allowedFreeCardGenerationsPerDay)
                     {
-                        var errorMessage = $"You have exceeded your number of free generations per day ({AllowedFreeGenerationsPerDay}). Please enter your own OpenAI API key (https://platform.openai.com/api-keys) to continue generating. Sorry, this is a cost saving measure that I continue to scale back on :(";
+                        var errorMessage = $"You have exceeded your number of free generations per day ({AllowedFreeGenerationsPerDay}). Please enter your own OpenAI API key (https://platform.openai.com/api-keys) to continue generating.";
                         return await req.CreateErrorResponse(HttpStatusCode.TooManyRequests, errorMessage);
                     }
                 }
@@ -381,7 +381,6 @@ namespace MTG.CardGenerator
                             UserPrompt = request.RawUserPrompt,
                             SystemPrompt = cardResult.SystemPrompt,
                             ImagePrompt = card.TemporaryImageUrl != null ? "Image generated" : null,
-                            TokensUsed = cardResult.TokensUsed,
                             Model = cardResult.ActualGPTModelUsed,
                             ImageSize = request.ImageModel != "none" ? StaticValues.ImageStatics.Size.Size1024 : null,
                             ImageStyle = null,
@@ -479,7 +478,6 @@ namespace MTG.CardGenerator
                         { "generateImagePrompt", responseData.Request.GenerateImagePrompt.ToString() },
                         { "extraCreative", responseData.Request.ExtraCreative.ToString() },
                         { "model", responseData.CardResult.ActualGPTModelUsed },
-                        { "numberOfChatCompletionAttempts", responseData.CardResult.AttemptsToGenerateCard },
                         { "systemPrompt", responseData.CardResult.SystemPrompt },
                         { "userSubject", responseData.Request.Metadata.UserSubject },
                         { "userPrompt", userPromptToSubmit },

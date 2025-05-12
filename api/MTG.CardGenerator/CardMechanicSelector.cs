@@ -39,10 +39,11 @@ namespace MTG.CardGenerator
             initialized = true;
         }
 
-        public static string GetRandomMechanicsAsPrompt(int evergreenCount, int keywordActionCount, int mechanicCount)
+        public static string GetRandomMechanicsAsPrompt(int evergreenCount, int keywordActionCount, int mechanicCount, out List<CardMechanic> selectedMechanics)
         {
             Initialize();
             var (evergreen, action, mechanics) = GetRandomMechanics(evergreenCount, keywordActionCount, mechanicCount);
+            selectedMechanics = evergreen.Concat(action).Concat(mechanics).ToList();
             // Combine all mechanics into one list.
             var allMechanics = evergreen.Concat(action).Concat(mechanics).ToList();
             var prompt = "Please find creative ways to incorporate the following mechanics into the generated card. The examples provided in each mechanic are for illustration purposes. Incorporate these mechanics in a consistent and coherhent way with regards to the rest of the user prompt and card.\n";

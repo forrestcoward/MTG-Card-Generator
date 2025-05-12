@@ -174,7 +174,6 @@
     "keyword": "Bloodprice",
     "reminder_text": "Bloodprice (You may pay life instead of mana to cast this spell. Each 1 life paid pays for {1}.)",
     "examples": [
-      "Bloodprice",
       "Bloodprice (You may pay life instead of mana to cast this spell. Each 1 life paid pays for {1}.)"
     ],
     "notes": "Risk-reward alternative payment option; strong in lifegain archetypes.",
@@ -212,10 +211,10 @@
   },
   {
     "keyword": "Devour Essence",
-    "reminder_text": "Devour Essence (You may sacrifice any number of creatures as an additional cost. This costs {1} less to cast for each creature sacrificed.)",
+    "reminder_text": "Devour Essence (As an additional cost to cast this spell, you may sacrifice any number of creatures. This spell costs {1} less to cast for each creature sacrificed.)",
     "examples": [
       "Devour Essence",
-      "Devour Essence (You may sacrifice any number of creatures as an additional cost. It costs {1} less for each sacrificed.)"
+      "Devour Essence (As an additional cost to cast this spell, you may sacrifice any number of creatures. This spell costs {1} less to cast for each creature sacrificed.)"
     ],
     "notes": "Flexible sacrifice discounts; scales with board state.",
     "type": "Mechanic"
@@ -495,7 +494,7 @@
       "Echo {2}{G}",
       "Echo {2}{G} (At the beginning of your next upkeep after this enters, sacrifice it unless you pay its echo cost.)"
     ],
-    "notes": "Requires follow-up investment or permanent sacrifice, challenging timing.",
+    "notes": "Requires follow-up investment or permanent sacrifice. Paying an echo cost is very costly, so the card should be very powerful to make up for it.",
     "type": "Mechanic"
   },
   {
@@ -643,7 +642,7 @@
   },
   {
     "keyword": "Flashback",
-    "reminder_text": "Flashback (cost) (You may cast this card from your graveyard by paying its flashback cost. Then exile it.)",
+    "reminder_text": "Flashback {cost} (You may cast this card from your graveyard by paying its flashback cost. Then exile it.)",
     "examples": [
       "Flashback {2}{W}",
       "Flashback {3}{G} (You may cast this card from your graveyard by paying its flashback cost. Then exile it.)",
@@ -654,10 +653,10 @@
   },
   {
     "keyword": "Fortify",
-    "reminder_text": "Fortify (cost) (Attach this fortification to target land you control. That land becomes enchanted.)",
+    "reminder_text": "Fortify {cost} ({cost}: Attach to target land you control. Fortify only as a sorcery.)",
     "examples": [
-      "Fortify {1}{W}",
-      "Fortify {1}{W} (Attach this fortification to target land you control. That land becomes enchanted.)"
+      "Fortify {1}{W} ({1}{W}: Attach to target land you control. Fortify only as a sorcery.) When fortified land becomes tapped, gain 3 life and add one mana of any color.",
+      "Fortify {3} ({3}: Attach to target land you control. Fortify only as a sorcery.) Whenever fortified land becomes tapped, proliferate."
     ],
     "notes": "Land embellishments analogous to equipment.",
     "type": "Mechanic"
