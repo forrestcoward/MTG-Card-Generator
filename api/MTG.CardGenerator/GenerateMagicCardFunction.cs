@@ -27,7 +27,8 @@ namespace MTG.CardGenerator
         {
             public MagicCard Card { get; set; }
             public ImageGenerator.ImageGenerationOptions Options { get; set; }
-            public string ApiKey { get; set; }
+            public string OpenAIApiKey { get; set; }
+            public string ReplicateApiKey { get; set; }
         }
 
         public class ImageGenerationResult
@@ -48,7 +49,8 @@ namespace MTG.CardGenerator
         {
             public MagicCard Card { get; set; }
             public string ImageModel { get; set; }
-            public string ApiKey { get; set; }
+            public string OpenAIApiKey { get; set; }
+            public string ReplicateApiKey { get; set; }
         }
 
         public class UpdateUserRecordInput
@@ -198,7 +200,7 @@ namespace MTG.CardGenerator
                     foreach (var card in cardResult.Cards)
                     {
                         // Generate image options.
-                        var options = await context.CallActivityAsync<ImageOptions>(nameof(PrepareImageGeneration), new PrepareImageGenerationInput() { Card = card, ImageModel = request.ImageModel, ApiKey = apiKey });
+                        var options = await context.CallActivityAsync<ImageOptions>(nameof(PrepareImageGeneration), new PrepareImageGenerationInput() { Card = card, ImageModel = request.ImageModel, OpenAIApiKey = apiKey, ReplicateApiKey = Environment.GetEnvironmentVariable(Constants.ReplicateApiKey) });
 
                         imageOptions = options.Options;
 
@@ -299,7 +301,8 @@ namespace MTG.CardGenerator
             {
                 Card = context.Card,
                 Options = options,
-                ApiKey = context.ApiKey
+                OpenAIApiKey = context.OpenAIApiKey,
+                ReplicateApiKey = context.ReplicateApiKey
             };
         }
 
@@ -309,7 +312,7 @@ namespace MTG.CardGenerator
             var log = functionContext.GetLogger(nameof(GenerateDetailedImagePrompt));
             var detailedPrompt = await ImageGenerator.GenerateDetailedImagePrompt(
                 imageOptions.Options,
-                imageOptions.ApiKey,
+                imageOptions.OpenAIApiKey,
                 log);
 
             imageOptions.Options.Prompt = detailedPrompt;
@@ -322,7 +325,8 @@ namespace MTG.CardGenerator
             var log = functionContext.GetLogger(nameof(GenerateCardImage));
             var stopwatch = Stopwatch.StartNew();
 
-            var tempUrl = await ImageGenerator.GenerateImage(imageOptions.Options.Prompt, imageOptions.Options.Model, imageOptions.Options.Size, imageOptions.ApiKey, log);
+            var tempUrl = await ImageGenerator.GenerateImage(imageOptions.Options.Prompt, imageOptions.Options.Model, imageOptions.Options.Size, imageOptions.OpenAIApiKey, imageOptions.ReplicateApiKey, log);
+
             var finalUrl = tempUrl;
 
             try

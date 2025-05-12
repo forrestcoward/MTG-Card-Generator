@@ -81,9 +81,9 @@ namespace MTG.CardGenerator
                 return await req.CreateErrorResponse(HttpStatusCode.BadRequest, "No OpenAI API key was found.");
             }
 
-            var imageModel = Constants.Dalle3ModelName;
+            var imageModel = Constants.GoogleImagen3FastModelName;
             var imageSize = StaticValues.ImageStatics.Size.Size1024;
-            var url = await ImageGenerator.GenerateImage(prompt, imageModel, imageSize, openAIApiKey, log);
+            var url = await ImageGenerator.GenerateImage(prompt, imageModel, imageSize, openAIApiKey, Environment.GetEnvironmentVariable(Constants.ReplicateApiKey), log);
 
             var blobStorageName = Extensions.GetSettingOrThrow(Constants.BlobStorageName);
             var blobStorageEndpoint = Extensions.GetSettingOrThrow(Constants.BlobStorageEndpoint);

@@ -8,6 +8,7 @@
         public const string ValidJWTIssuer = "ValidJWTIssuer";
         public const string ValidateBearerToken = "ValidateBearerToken";
         public const string OpenAIApiKey = "OPENAI_API_KEY";
+        public const string ReplicateApiKey = "REPLICATE_API_KEY";
         public const string OpenAIApiKeyLoggedIn = "OpenAIAPIKeyLoggedIn";
         public const string AzureFunctionsEnvironment = "AZURE_FUNCTIONS_ENVIRONMENT";
         public const string CosmosDBEndpointUrl = "CosmosDBEndpointUrl";
@@ -29,5 +30,8 @@
         // Model constants.
         public const string Dalle3ModelName = "dall-e-3";
         public const string Dalle2ModelName = "dall-e-2";
+        public const string GoogleImagen3FastModelName = "imagen-3-fast";
+        public const string StableDiffusion35MediumModelName = "stable-diffusion-3.5-medium";
+        public const string BlackForestLabsFluxSchnell = "black-forest-labs-flux-schnell";
     }
 }

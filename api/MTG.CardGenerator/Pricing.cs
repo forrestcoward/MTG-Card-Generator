@@ -81,6 +81,21 @@ namespace MTG.CardGenerator
                 return .08;
             }
 
+            if (model == Constants.GoogleImagen3FastModelName)
+            {
+                return 0.025;
+            }
+
+            if (model == Constants.StableDiffusion35MediumModelName)
+            {
+                return 0.035;
+            }
+
+            if (model == Constants.BlackForestLabsFluxSchnell)
+            {
+                return 0.003;
+            }
+
             return 0;
         }
     }

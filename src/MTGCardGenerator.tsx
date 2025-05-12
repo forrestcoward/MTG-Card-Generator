@@ -27,6 +27,9 @@ export interface Setting {
   description: string;
   mobileDescription?: string;
   group?: string;
+  url?: string;
+  pricing?: string;
+  details?: string;
 }
 
 const defaultPrompt:string = 'is from the Dominaria plane.'
@@ -37,7 +40,7 @@ const modelSettings = [
   { name: 'GPT 4.1', id: 'gpt-41', value: true, description: 'Flagship GPT model for complex tasks.', group: 'model-settings' },
   { name: 'GPT 4o', id: 'gpt-4o', value: false, description: 'Fast, intelligent, flexible GPT model.', group: 'model-settings' },
   // { name: 'GPT 4o-mini', id: 'gpt-4o-mini', value: false, description: 'Fast, intelligent, flexible GPT model', group: 'model-settings' },
-  { name: 'GPT o3', id: 'gpt-o3', value: false, description: 'The most powerful GPT reasoning model.', group: 'model-settings' },
+  { name: 'GPT o3', id: 'gpt-o3', value: false, description: 'The most powerful GPT reasoning model. Quite slow.', group: 'model-settings' },
   // { name: 'GPT 4.1 mini', id: 'gpt-41-mini', value: false, description: 'GPT 4-o is the most intelligent model to date.', group: 'model-settings' },
   // { name: 'GPT 4.1 nano', id: 'gpt-41-nano', value: false, description: 'GPT 4-o is the most intelligent model to date.', group: 'model-settings' },
   // { name: 'GPT 3.5', id: 'gpt-35', value: false, description: 'An older, but still powerful model', group: 'model-settings' },
@@ -51,9 +54,66 @@ const modelSettingsGroup : SettingGroup = {
 }
 
 const imageSettings = [
-  { name: 'Dalle-2', id: 'dall-e-2', value: true, description: 'Dalle-2 is a fast, cheap and great for prototyping.', group: 'image-settings' },
-  { name: 'Dalle-3', id: 'dall-e-3', value: false, description: 'Dalle-3 produces the highest quality images, but is slower and more expensive.', group: 'image-settings' },
-  { name: 'No Image', id: 'none', value: false, description: 'Do not generate an image for fastest response. The Image Editor tool may be used afterwards.', group: 'image-settings' },
+  { 
+    name: 'Imagen 3', 
+    id: 'imagen-3-fast', 
+    value: true, 
+    description: 'Google’s DeepMind Imagen 3 model.', 
+    group: 'image-settings',
+    url: 'https://replicate.com/google/imagen-3-fast',
+    pricing: '$0.025 per image',
+    details: 'Imagen 3 is DeepMind’s latest text-to-image generative model, focusing on high-quality image generation with improved detail, lighting, and reduced artifacts.'
+  },
+  { 
+    name: "Stable Diffusion 3.5", 
+    id: 'stable-diffusion-3.5-medium', 
+    value: false, 
+    description: 'Stable Diffusion 3.5 model.', 
+    group: 'image-settings',
+    url: 'https://replicate.com/stability-ai/stable-diffusion-3.5-medium',
+    pricing: '$0.035 per image',
+    details: 'Stable Diffusion 3.5 Medium is a Multimodal Diffusion Transformer with improvements (MMDiT-x) text-to-image model that features improved performance in image quality, typography, complex prompt understanding, and resource-efficiency.'
+  },
+  { 
+    name: "Black Forest Flux", 
+    id: 'black-forest-labs-flux-schnell', 
+    value: false, 
+    description: 'Black Forest Labs Flux Schnell model.', 
+    group: 'image-settings',
+    url: 'https://replicate.com/black-forest-labs/flux-schnell',
+    pricing: '$0.003 per image',
+    details: 'FLUX.1 [schnell] is a 12 billion parameter rectified flow transformer capable of generating images from text descriptions. A fast generation model tailored for local development and personal use.'
+  },
+  { 
+    name: 'Dalle-2', 
+    id: 'dall-e-2', 
+    value: false, 
+    description: 'OpenAI Dalle-2 model.', 
+    group: 'image-settings',
+    url: 'https://openai.com/index/dall-e-2/',
+    pricing: '$0.010 per image',
+    details: 'DALL-E 2 is the fastest option, producing good quality images at the lowest cost. Best for simple concepts.'
+  },
+  { 
+    name: 'Dalle-3', 
+    id: 'dall-e-3', 
+    value: false, 
+    description: 'OpenAI Dalle-3 model..', 
+    group: 'image-settings',
+    url: 'https://openai.com/index/dall-e-3/',
+    pricing: '$0.040 per image',
+    details: 'DALL-E 3 is OpenAI\'s premium image model, with excellent prompt following and detailed artistic output.'
+  },
+  { 
+    name: 'No Image', 
+    id: 'none', 
+    value: false, 
+    description: 'Generate no image for the fastest response.', 
+    group: 'image-settings',
+    url: '',
+    pricing: 'Free',
+    details: 'Skip image generation entirely to get the fastest card generation experience.'
+  },
 ]
 
 const imageSettingsGroup : SettingGroup = {

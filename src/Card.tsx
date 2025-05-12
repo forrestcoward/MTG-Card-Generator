@@ -913,7 +913,7 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
                   </div>
                   <div className="fbi-center" onClick={(e) => { this.updateEditMode()}}></div>
                   <div className="fbi-right">
-                      &#x99; &amp; &#169; 2023 Chat GPT Turbo
+                      &#169; 2025 MTG Card Generator
                   </div>
                 </div>
               </div>
