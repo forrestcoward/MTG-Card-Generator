@@ -39,8 +39,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userLoading, setUserLoading] = useState<boolean>(false);
   const [userError, setUserError] = useState<string>('');
 
-  // Helper to fetch user info
-  const fetchUserInfo = () => {
+  const fetchUserInfo = (account: AccountInfo | null) => {  
+    if (!account) {
+      setUser(undefined);
+      setUserLoading(false);
+      setUserError('');
+      return;
+    }
     setUserLoading(true);
     setUserError('');
     GetUserInfo(instance)
@@ -60,15 +65,20 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const currentAccount = instance.getActiveAccount();
     if (currentAccount) {
       setUserAccount(currentAccount);
+      fetchUserInfo(currentAccount);
     } else {
       const allAccounts = instance.getAllAccounts();
       if (allAccounts.length > 0) {
         instance.setActiveAccount(allAccounts[0]);
         setUserAccount(allAccounts[0]);
+        fetchUserInfo(allAccounts[0]);
+      } else {
+        setUserAccount(null);
+        setUser(undefined);
+        setUserLoading(false);
+        setUserError('');
       }
     }
-    // Always fetch user info on mount.
-    fetchUserInfo();
   }, [instance]);
 
   // Listen for auth events.
@@ -83,17 +93,20 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const currentAccount = instance.getActiveAccount();
         if (currentAccount) {
           setUserAccount(currentAccount);
+          fetchUserInfo(currentAccount);
         } else {
           const allAccounts = instance.getAllAccounts();
           if (allAccounts.length > 0) {
             instance.setActiveAccount(allAccounts[0]);
             setUserAccount(allAccounts[0]);
+            fetchUserInfo(allAccounts[0]);
           } else {
             setUserAccount(null);
+            setUser(undefined);
+            setUserLoading(false);
+            setUserError('');
           }
         }
-        // Fetch user info on auth event.
-        fetchUserInfo();
       }
     });
 
