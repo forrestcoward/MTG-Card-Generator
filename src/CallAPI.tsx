@@ -274,13 +274,13 @@ async function pollDurableFunctionStatus(instanceId: string, token: Authenticati
       const statusResponse = await MakeHttpCall("GET", statusUrl, undefined, {}, token);
       const status = JSON.parse(statusResponse);
 
-      // Check if the orchestration has completed
+      // Check if the orchestration has completed.
       if (status.runtimeStatus === "Completed") {
         if (status.customStatus === "error") {
           // Handle custom error status
           throw new Error(status.output || "An error occurred during card generation.");
         }
-        // Parse the output from the orchestration
+        // Parse the output from the orchestration.
         const output = JSON.parse(status.output);
         return {
           cards: output.cards.map((card: any) => new MagicCard(card)),
@@ -292,7 +292,7 @@ async function pollDurableFunctionStatus(instanceId: string, token: Authenticati
           }
         };
       } else if (status.runtimeStatus === "Failed") {
-        // Handle failure
+        // Handle failure.
         let errorMessage;
         try {
           const parsedOutput = JSON.parse(status.output);
@@ -305,7 +305,7 @@ async function pollDurableFunctionStatus(instanceId: string, token: Authenticati
         throw new Error("Card generation was canceled or terminated");
       }
 
-      // Wait before polling again
+      // Wait before polling again.
       await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
     } catch (error) {
       console.error('Error polling durable function status:', error);

@@ -99,7 +99,7 @@ const imageSettings = [
     name: 'Dalle-3', 
     id: 'dall-e-3', 
     value: false, 
-    description: 'OpenAI Dalle-3 model..', 
+    description: 'OpenAI Dalle-3 model.', 
     group: 'image-settings',
     url: 'https://openai.com/index/dall-e-3/',
     pricing: '$0.040 per image',
@@ -170,6 +170,13 @@ export function MTGCardGenerator() {
     }
   }, [user]);
 
+  // Clear error when user logs in.
+  useEffect(() => {
+    if (user) {
+      setCurrentError('');
+    }
+  }, [user]);
+
   function allSettings(): Setting[] {
     return settings.map(settingGroup => settingGroup.settings).flat();
   }
@@ -195,11 +202,6 @@ export function MTGCardGenerator() {
     let setting = allSettings().find(setting => setting.value == true && setting?.group == 'image-settings')
     return setting?.id ?? defaultImageModel
   }
-
-  // Helper function to format currency to nearest cent
-  const formatCurrency = (amount: number): string => {
-    return amount.toFixed(2);
-  };
 
   function handleSettingUpdate(updatedSetting: string, newValue: boolean) {
     // Flatten all settings.

@@ -11,7 +11,7 @@ export interface UserContextType {
   userError: string;
   openAIAPIKey: string;
   setOpenAIAPIKey: (key: string) => void;
-  refreshUser: () => void; // Add this
+  refreshUser: () => void;
 }
 
 export const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -61,7 +61,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
   };
 
-  // Expose a refreshUser function for manual refresh
   const refreshUser = () => {
     fetchUserInfo(userAccount);
   };
