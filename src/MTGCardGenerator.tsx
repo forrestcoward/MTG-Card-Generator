@@ -144,31 +144,23 @@ export function MTGCardGenerator() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settings, setSettings] = useState([modelSettingsGroup, imageSettingsGroup, cardGenerationSettingsGroup]);
   const [cards, setCards] = useState([TutorialCard]);
-  const [user, setUser] = useState<User|undefined>(undefined);
   const [currentError, setCurrentError] = useState('');
   const [defaultCardWidth, setDefaultCardWidth] = useState(setCardContainerSize());
   const [showNewFeatureNotification] = useState(false);
 
   const userContext = useContext(UserContext);
+  const user = userContext?.user;
+  const userLoading = userContext?.userLoading;
+  const userError = userContext?.userError;
   const { instance: msalInstance } = useMsal();
 
   useEffect(() => {
     const updateCardSize = () => {
       setDefaultCardWidth(setCardContainerSize());
     };
-    getUserInfo();
     window.addEventListener('resize', updateCardSize);
     return () => window.removeEventListener('resize', updateCardSize);
   }, []);
-
-  const getUserInfo = () => {
-    GetUserInfo(msalInstance).then(user => {
-      setUser(user);
-    }).catch(error => {
-      setCurrentError("Erorr getting user");
-      console.error("Error in getUserInfo: " + error);
-    });
-  };
 
   function allSettings(): Setting[] {
     return settings.map(settingGroup => settingGroup.settings).flat();
@@ -236,7 +228,6 @@ export function MTGCardGenerator() {
       setResponse(JSON.stringify(generatedCards))
       setCards([...generatedCards.cards, ...cards])
       setIsLoading(false)
-      getUserInfo()
     }).catch((error: Error) => {
       setCurrentError(error.message)
       setIsLoading(false)

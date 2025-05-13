@@ -2,7 +2,7 @@ import { AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from '@azure/
 import { loginRequest } from './AuthConfig';
 import React from 'react';
 import "./nav-bar.css";
-import { useUserAccount } from './UserContext';
+import { useUserAccount, UserContext } from './UserContext';
 // @ts-ignore
 import githubIcon from "./card-backgrounds/github-mark-white.png"
 import { Dropdown, Space } from 'antd';
@@ -11,6 +11,8 @@ import { CaretDownFilled, DatabaseOutlined, FireOutlined, HomeOutlined, Instagra
 export const NavigationBar = () => {
     const { instance } = useMsal();
     const userAccount = useUserAccount();
+    const userContext = React.useContext(UserContext);
+    const user = userContext?.user;
 
     const handleLogin = () => {
       let mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
@@ -105,7 +107,7 @@ export const NavigationBar = () => {
                     <div className='navbar-item'>
                       <Space>
                         <div>
-                          {userAccount?.name ? userAccount.name : 'Unknown'}
+                          {user?.userName ? user.userName : (userAccount?.name ? userAccount.name : 'Unknown')}
                         </div>
                         <CaretDownFilled />
                       </Space>

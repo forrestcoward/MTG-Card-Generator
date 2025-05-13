@@ -1050,4 +1050,3 @@ export class CardDisplay extends React.Component<CardDisplayProps, CardDisplaySt
     return fullCard
   }
 }
-CardDisplay.contextType = UserContext;
