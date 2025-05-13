@@ -61,18 +61,17 @@ namespace MTG.CardGenerator
             var user = await usersCosmosClient.GetUserRecord(userSubject);
             var cardRecord = await cardsClient.GetMagicCardRecord(cardId);
             var cardHasAnImage = !string.IsNullOrWhiteSpace(cardRecord.Card.ImageUrl);
-
             var userSuppliedOpenAIApiKey = true;
 
-            // Regular users must provide their own key in order to generate an image beyond the first.
-            if (string.IsNullOrEmpty(openAIApiKey) && cardHasAnImage && !user.IsAdmin)
+            // Enforce daily spend limit for logged-in users without their own API key.
+            var spendLimitResponse = await Extensions.CheckAndEnforceDailySpendLimit(user, openAIApiKey, req, log, GenerateMagicCardFunction.DefaultDailySpendLimit);
+            if (spendLimitResponse != null)
             {
-                log.LogMetric("GenerateNewCardImage_Rejected", 1, properties: new Dictionary<string, object>() { { "userSubject", userSubject } });
-                return await req.CreateErrorResponse(HttpStatusCode.BadRequest, "Please set your own OpenAI API key in the settings to generate images beyond the first.");
+                return spendLimitResponse;
             }
 
             // If no key is provided, use the one from the environment if the card has not had an image generated before (or the user is an admin).
-            if (string.IsNullOrEmpty(openAIApiKey) && (!cardHasAnImage || user.IsAdmin))
+            if (string.IsNullOrEmpty(openAIApiKey))
             {
                 openAIApiKey = Environment.GetEnvironmentVariable(Constants.OpenAIApiKey);
                 userSuppliedOpenAIApiKey = false;
@@ -83,7 +82,7 @@ namespace MTG.CardGenerator
                 return await req.CreateErrorResponse(HttpStatusCode.BadRequest, "No OpenAI API key was found.");
             }
 
-            var imageModel = Constants.GoogleImagen3FastModelName;
+            var imageModel = Constants.Dalle3ModelName;
             var imageSize = StaticValues.ImageStatics.Size.Size1024;
             var incurredCost = new Cost();
 
@@ -118,6 +117,8 @@ namespace MTG.CardGenerator
             {
                 await cardsClient.AddAlternativeImageId(cardRecord, storeImageResult.ImageId.ToString());
             }
+
+            await usersCosmosClient.UserGeneratedImageOperation(user, userSubject, incurredCost);
 
             log.LogMetric("GenerateNewCardImage_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
                 properties: new Dictionary<string, object>()

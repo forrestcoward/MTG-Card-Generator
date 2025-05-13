@@ -124,30 +124,13 @@ namespace MTG.CardGenerator
                 });
             }
 
-            // Check for free tier usage limits (spend-based).
-            if (userLoggedIn && string.IsNullOrWhiteSpace(userSuppliedApiKey))
+            // Enforce daily spend limit for logged-in users without their own API key.
+            var usersCosmosClient = new UsersClient(log);
+            var user = await usersCosmosClient.GetUserRecord(userSubject);
+            var spendLimitResponse = await Extensions.CheckAndEnforceDailySpendLimit(user, userSuppliedApiKey, req, log, GenerateMagicCardFunction.DefaultDailySpendLimit);
+            if (spendLimitResponse != null)
             {
-                var usersCosmosClient = new UsersClient(log);
-                var user = await usersCosmosClient.GetUserRecord(userSubject);
-
-                if (user != null && !user.IsAdmin)
-                {
-                    var dailySpendLimit = user.DailySpendLimit > 0 ? user.DailySpendLimit : DefaultDailySpendLimit;
-                    var today = DateTime.Now.ToUniversalTime().Date;
-                    var userSpendToday = (user.LastActiveTime?.Date == today) ? user.TotalCostOfCardsGeneratedToday : 0.0;
-
-                    if (userSpendToday >= dailySpendLimit)
-                    {
-                        var errorMessage = $"You have exceeded your daily free spend limit (${dailySpendLimit:0.00}). Please enter your own OpenAI API key (https://platform.openai.com/api-keys) to continue generating.";
-                        var details = new
-                        {
-                            error = errorMessage,
-                            dailySpendLimit,
-                            totalCostOfCardsGeneratedToday = userSpendToday
-                        };
-                        return await req.CreateJsonResponse(HttpStatusCode.TooManyRequests, details);
-                    }
-                }
+                return spendLimitResponse;
             }
 
             var requestMetadata = new CardRequestMetadata
@@ -469,16 +452,8 @@ namespace MTG.CardGenerator
                     });
                 }
 
-                var updatedUser = await usersCosmosClient.UserGeneratedCard(
-                    user,
-                    request.Metadata.UserSubject,
-                    cardCount,
-                    cost,
-                    !string.IsNullOrWhiteSpace(request.Metadata.UserSuppliedApiKey)
-                );
-
+                var updatedUser = await usersCosmosClient.UserGeneratedCardOperation(user, request.Metadata.UserSubject, cardCount, cost);
                 log.LogInformation($"Updated user record for user '{request.Metadata.UserSubject}' in database.");
-
                 return user;
             }
             catch (Exception ex)

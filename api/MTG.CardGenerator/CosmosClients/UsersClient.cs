@@ -29,7 +29,7 @@ namespace MTG.CardGenerator.CosmosClients
             return await PatchDocument<User>(userSubject, userSubject, operations);
         }
 
-        public async Task<ItemResponse<User>> UserGeneratedCard(User user, string userSubject, int numberOfNewCards, Cost cost, bool userSuppliedApiKey)
+        public async Task<ItemResponse<User>> UserGeneratedCardOperation(User user, string userSubject, int numberOfNewCards, Cost cost)
         {
             var operations = new List<PatchOperation>
             {
@@ -41,17 +41,33 @@ namespace MTG.CardGenerator.CosmosClients
             var today = DateTime.Now.ToUniversalTime().Date;
             if (user.LastActiveTime?.Date != today)
             {
-                // Reset daily spend and free card count at start of new day
+                // Reset daily spend and free card count at start of new day.
                 operations.Add(PatchOperation.Set("/totalCostOfCardsGeneratedToday", 0.0));
                 operations.Add(PatchOperation.Set("/numberOfFreeCardsGeneratedToday", 0));
             }
 
-            if (!userSuppliedApiKey)
+            operations.Add(PatchOperation.Increment("/totalCostOfCardsGeneratedToday", cost.CostToWebsiteApiKeys));
+            operations.Add(PatchOperation.Increment("/numberOfFreeCardsGeneratedToday", numberOfNewCards));
+
+            return await PatchDocument<User>(userSubject, userSubject, operations);
+        }
+
+        public async Task<ItemResponse<User>> UserGeneratedImageOperation(User user, string userSubject, Cost cost)
+        {
+            var operations = new List<PatchOperation>
             {
-                // Only increment daily spend if not using user-supplied API key
-                operations.Add(PatchOperation.Increment("/totalCostOfCardsGeneratedToday", cost.CostToWebsiteApiKeys));
-                operations.Add(PatchOperation.Increment("/numberOfFreeCardsGeneratedToday", numberOfNewCards));
+                PatchOperation.Add("/lastActiveTime", DateTime.Now.ToUniversalTime()),
+                PatchOperation.Increment("/totalCostOfCardsGenerated", cost.CostToWebsiteApiKeys),
+            };
+
+            var today = DateTime.Now.ToUniversalTime().Date;
+            if (user.LastActiveTime?.Date != today)
+            {
+                // Reset daily spend and free image count at start of new day.
+                operations.Add(PatchOperation.Set("/totalCostOfCardsGeneratedToday", 0.0));
             }
+
+            operations.Add(PatchOperation.Increment("/totalCostOfCardsGeneratedToday", cost.CostToWebsiteApiKeys));
 
             return await PatchDocument<User>(userSubject, userSubject, operations);
         }

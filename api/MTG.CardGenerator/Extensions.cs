@@ -2,6 +2,7 @@
 using ImageMagick;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
+using MTG.CardGenerator.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -11,6 +12,40 @@ namespace MTG.CardGenerator
     public static class Extensions
     {
         private static readonly HttpClient Client = new();
+
+        // Helper to check if user has exceeded daily spend limit and return a 429 response if so.
+        public static async Task<HttpResponseData> CheckAndEnforceDailySpendLimit(User user, string userSuppliedApiKey, HttpRequestData req, ILogger log, double defaultDailySpendLimit)
+        {
+            // Do not enforce spend limit for admins or if user has supplied their own API key.
+            if (user.IsAdmin)
+            {
+                return null;
+            }
+
+            if (!string.IsNullOrWhiteSpace(userSuppliedApiKey))
+            {
+                return null;
+            }
+
+            var dailySpendLimit = user.DailySpendLimit > 0 ? user.DailySpendLimit : defaultDailySpendLimit;
+            var today = DateTime.Now.ToUniversalTime().Date;
+            var userSpendToday = (user.LastActiveTime?.Date == today) ? user.TotalCostOfCardsGeneratedToday : 0.0;
+
+            if (userSpendToday >= dailySpendLimit)
+            {
+                var errorMessage = $"You have exceeded your daily free spend limit (${dailySpendLimit:0.00}). Please enter your own OpenAI API key (https://platform.openai.com/api-keys) to continue generating.";
+                var details = new
+                {
+                    error = errorMessage,
+                    dailySpendLimit,
+                    totalCostOfCardsGeneratedToday = userSpendToday
+                };
+                log?.LogWarning(errorMessage);
+                return await req.CreateJsonResponse(System.Net.HttpStatusCode.TooManyRequests, details);
+            }
+
+            return null;
+        }
 
         public static JwtSecurityToken ReadJwtToken(this HttpRequestData request, ILogger log = null)
         {
@@ -97,7 +132,12 @@ namespace MTG.CardGenerator
         public static string GetQueryParam(this HttpRequestData req, string paramName)
         {
             var query = System.Web.HttpUtility.ParseQueryString(req.Url.Query);
-            return query[paramName];
+            var result = query[paramName];
+            if (result == null || result.Equals("undefined"))
+            {
+                return null;
+            }
+            return result;
         }
 
         private static Stream CompressImage(Stream imageStream, uint quality, uint width)
