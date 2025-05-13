@@ -163,6 +163,13 @@ export function MTGCardGenerator() {
     return () => window.removeEventListener('resize', updateCardSize);
   }, []);
 
+  // Clear error when user logs out or is not logged in.
+  useEffect(() => {
+    if (!user) {
+      setCurrentError('');
+    }
+  }, [user]);
+
   function allSettings(): Setting[] {
     return settings.map(settingGroup => settingGroup.settings).flat();
   }
