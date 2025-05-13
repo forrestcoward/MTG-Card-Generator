@@ -138,42 +138,42 @@ namespace MTG.CardGenerator
         public static double GetImageCost(string size, string model)
         {
             var s = size.ToString();
-            if (s == "1024x1024" && model == Constants.Dalle2ModelName)
+            if (s == "1024x1024" && model == Constants.ImageModels.Dalle2ModelName)
             {
                 return .02;
             }
 
-            if (s == "512x512" && model == Constants.Dalle2ModelName)
+            if (s == "512x512" && model == Constants.ImageModels.Dalle2ModelName)
             {
                 return .018;
             }
 
-            if (s == "256x256" && model == Constants.Dalle2ModelName)
+            if (s == "256x256" && model == Constants.ImageModels.Dalle2ModelName)
             {
                 return .016;
             }
 
-            if (s == "1024x1024" && model == Constants.Dalle3ModelName)
+            if (s == "1024x1024" && model == Constants.ImageModels.Dalle3ModelName)
             {
                 return .04;
             }
 
-            if ((s == "1024x1792" || s == "1792x1024") && model == Constants.Dalle3ModelName)
+            if ((s == "1024x1792" || s == "1792x1024") && model == Constants.ImageModels.Dalle3ModelName)
             {
                 return .08;
             }
 
-            if (model == Constants.GoogleImagen3FastModelName)
+            if (model == Constants.ImageModels.GoogleImagen3FastModelName)
             {
                 return 0.025;
             }
 
-            if (model == Constants.StableDiffusion35MediumModelName)
+            if (model == Constants.ImageModels.StableDiffusion35MediumModelName)
             {
                 return 0.035;
             }
 
-            if (model == Constants.BlackForestLabsFluxSchnell)
+            if (model == Constants.ImageModels.BlackForestLabsFluxSchnell)
             {
                 return 0.003;
             }

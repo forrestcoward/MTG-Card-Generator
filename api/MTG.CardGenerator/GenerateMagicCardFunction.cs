@@ -95,7 +95,7 @@ namespace MTG.CardGenerator
             log.LogInformation($"User prompt: {rawUserPrompt?.Replace("\n", string.Empty)}");
 
             var model = req.GetQueryParam("model");
-            var imageModel = req.GetQueryParam("imageModel") ?? Constants.Dalle2ModelName;
+            var imageModel = req.GetQueryParam("imageModel") ?? Constants.ImageModels.Dalle2ModelName;
             var includeExplanation = bool.TryParse(req.GetQueryParam("includeExplanation"), out bool result) && result;
             var generateImagePrompt = bool.TryParse(req.GetQueryParam("generateImagePrompt"), out bool hd) && hd;
             var extraCreative = bool.TryParse(req.GetQueryParam("extraCreative"), out bool ec) && ec;
@@ -116,7 +116,7 @@ namespace MTG.CardGenerator
 
             // If a user brings their own OpenAI API key, we need to check if they are using a valid OpenAI image model.
             if (!string.IsNullOrWhiteSpace(userSuppliedApiKey) &&
-                (!imageModel.Equals(Constants.Dalle2ModelName) && !imageModel.Equals(Constants.Dalle3ModelName)))
+                (!imageModel.Equals(Constants.ImageModels.Dalle2ModelName) && !imageModel.Equals(Constants.ImageModels.Dalle3ModelName)))
             {
                 return await req.CreateJsonResponse(HttpStatusCode.BadRequest, new
                 {

@@ -46,12 +46,12 @@ namespace MTG.CardGenerator
 
             if (card.Type == CardType.Creature)
             {
-                if (imageModel == Constants.Dalle2ModelName)
+                if (imageModel == Constants.ImageModels.Dalle2ModelName)
                 {
                     prompt = $"'An image of {card.Name}, a {card.TypeLine}: {card.FlavorText}. {artistStyle}";
                 }
 
-                if (imageModel == Constants.Dalle3ModelName)
+                if (imageModel == Constants.ImageModels.Dalle3ModelName)
                 {
                     // Dalle 3 does not like the flavor text in the prompt usually. It leads to a lot of text in the images.
                     prompt = $"An image of {card.Name}, a {card.TypeLine}. {artistStyle}";
@@ -88,7 +88,7 @@ namespace MTG.CardGenerator
             log.LogInformation($"{model} image prompt: {prompt}");
             var operationName = "Generate Card Image";
 
-            if (model == Constants.BlackForestLabsFluxSchnell)
+            if (model == Constants.ImageModels.BlackForestLabsFluxSchnell)
             {
                 var replicateClient = new ReplicateApiClient(replicateApiKey.Key);
                 var input = new
@@ -107,7 +107,7 @@ namespace MTG.CardGenerator
                 return outputUrl;
             }
 
-            if (model == Constants.StableDiffusion35MediumModelName)
+            if (model == Constants.ImageModels.StableDiffusion35MediumModelName)
             {
                 var replicateClient = new ReplicateApiClient(replicateApiKey.Key);
                 var input = new
@@ -125,7 +125,7 @@ namespace MTG.CardGenerator
                 return outputUrl;
             }
 
-            if (model == Constants.GoogleImagen3FastModelName)
+            if (model == Constants.ImageModels.GoogleImagen3FastModelName)
             {
                 var replicateClient = new ReplicateApiClient(replicateApiKey.Key);
                 var input = new
@@ -146,20 +146,20 @@ namespace MTG.CardGenerator
                 return outputUrl;
             }
 
-            if (model != Constants.Dalle2ModelName && model != Constants.Dalle3ModelName)
+            if (model != Constants.ImageModels.Dalle2ModelName && model != Constants.ImageModels.Dalle3ModelName)
             {
-                throw new Exception($"Invalid image model: {model}. Expecting '{Constants.Dalle2ModelName}', '{Constants.Dalle3ModelName}', or '{Constants.GoogleImagen3FastModelName}'.");
+                throw new Exception($"Invalid image model: {model}. Expecting '{Constants.ImageModels.Dalle2ModelName}', '{Constants.ImageModels.Dalle3ModelName}', or '{Constants.ImageModels.GoogleImagen3FastModelName}'.");
             }
 
             var openAIService = new OpenAIService(new OpenAIOptions() { ApiKey = openAIApiKey.Key });
 
-            if (model == Constants.Dalle2ModelName && prompt.Length > 1000)
+            if (model == Constants.ImageModels.Dalle2ModelName && prompt.Length > 1000)
             {
                 log.LogInformation("Truncating prompt to 1000 characters because this is the dall-e-2 limit.");
                 prompt = prompt[..1000];
             }
 
-            if (model == Constants.Dalle3ModelName && prompt.Length > 4000)
+            if (model == Constants.ImageModels.Dalle3ModelName && prompt.Length > 4000)
             {
                 log.LogInformation("Truncating prompt to 4000 characters because this is the dall-e-3 limit.");
                 prompt = prompt[..4000];
@@ -171,7 +171,7 @@ namespace MTG.CardGenerator
                 N = 1,
                 Size = size,
                 Model = model,
-                Quality = model == Constants.Dalle2ModelName ? null : "standard",
+                Quality = model == Constants.ImageModels.Dalle2ModelName ? null : "standard",
                 ResponseFormat = StaticValues.ImageStatics.ResponseFormat.Url
             });
 

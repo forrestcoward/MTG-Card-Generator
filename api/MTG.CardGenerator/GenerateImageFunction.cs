@@ -82,7 +82,7 @@ namespace MTG.CardGenerator
                 return await req.CreateErrorResponse(HttpStatusCode.BadRequest, "No OpenAI API key was found.");
             }
 
-            var imageModel = Constants.Dalle3ModelName;
+            var imageModel = Constants.ImageModels.Dalle3ModelName;
             var imageSize = StaticValues.ImageStatics.Size.Size1024;
             var incurredCost = new Cost();
 
@@ -163,7 +163,7 @@ namespace MTG.CardGenerator
                 return await req.CreateErrorResponse(HttpStatusCode.BadRequest, errorMessage);
             }
 
-            var options = ImageGenerator.GetImageOptionsForCard(card, Constants.Dalle3ModelName);
+            var options = ImageGenerator.GetImageOptionsForCard(card, Constants.ImageModels.Dalle3ModelName);
             var openAIApiKey = new APIKey()
             {
                 Key = Environment.GetEnvironmentVariable(Constants.OpenAIApiKey),
