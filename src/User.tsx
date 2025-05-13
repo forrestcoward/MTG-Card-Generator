@@ -3,5 +3,8 @@ export interface User {
   numberOfCardsGenerated: number;
   numberOfCardsRated: number;
   numberOfFreeCardsGeneratedToday: number;
-  allowedFreeCardGenerationsPerDay: number;
+  numberOfFreeCardsAllowedPerDay: number;
+  totalCostOfCardsGeneratedToday: number;
+  remainingDailySpendLimit: number;
+  dailySpendLimit: number;
 }

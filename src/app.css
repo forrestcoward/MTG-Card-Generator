@@ -312,6 +312,26 @@ input:checked + .slider:before {
   background-color: #b1b1b1a4;
 }
 
+.dailySpendNotification {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: 14px;
+  color: rgb(236, 75, 75);
+  margin: 5px;
+  padding: 3px;
+}
+
+.dailySpendNotification a {
+  color:rgb(255, 255, 255);
+  text-decoration: none;
+}
+
+.dailySpendNotification a:hover {
+  color:rgb(148, 153, 160);
+  text-decoration: underline;
+}
+
 .newFeatureNotification {
   position: absolute;
   top: 0;

@@ -20,7 +20,7 @@ namespace MTG.CardGenerator
         public bool ExtraCreative { get; set; }
         public string Source { get; set; }
         public int NumCards { get; set; }
-        public RequestMetadata Metadata { get; set; }
+        public CardRequestMetadata Metadata { get; set; }
     }
 
     public class CardResult
@@ -62,7 +62,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
 
         private const int MaxPromptCharacters = 500;
 
-        public static async Task<CardResult> Generate(CardGenerationRequest request, string apiKey, Microsoft.Extensions.Logging.ILogger log)
+        public static async Task<CardResult> Generate(CardGenerationRequest request, APIKey openAIApiKey, Microsoft.Extensions.Logging.ILogger log)
         {
             var systemPrompt = string.Empty;
             var cost = new Cost();
@@ -147,7 +147,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             log.LogInformation($"generateImage: {request.ImageModel != "none"}");
             log.LogInformation($"numCards: {request.NumCards}");
 
-            var openAIService = new OpenAIService(new OpenAIOptions() { ApiKey = apiKey });
+            var openAIService = new OpenAIService(new OpenAIOptions() { ApiKey = openAIApiKey.Key });
             var openAICards = Array.Empty<BasicCard>();
             var cardIterations = new List<BasicCard>();
 
@@ -157,7 +157,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 {
                     attemptsToGenerateCard++;
 
-                    var response = await GenerateOpenAICardResponse(openAIService, "Generate Initial Card", systemPrompt, userPromptToSubmit, gptModel, cost, log);
+                    var response = await GenerateOpenAICardResponse(openAIService, "Generate Initial Card", systemPrompt, userPromptToSubmit, gptModel, cost, !string.IsNullOrWhiteSpace(request.Metadata.UserSuppliedApiKey), log);
                     openAICards = response.Item1;
                     openAIResponse = response.Item2;
                     cardIterations.AddRange(openAICards);
@@ -181,7 +181,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                         You should return the card JSON with the updated 'oracleText' field.
                         Do not explain the cards or explain your reasoning. Only return the JSON with the updated `oracleText` that incorporates the new mechanics.";
 
-                        response = await GenerateOpenAICardResponse(openAIService, "Add Mechanics To Card", extraCreativeSystemPrompt, userPrompt, gptModel, cost, log);
+                        response = await GenerateOpenAICardResponse(openAIService, "Add Mechanics To Card", extraCreativeSystemPrompt, userPrompt, gptModel, cost, !string.IsNullOrWhiteSpace(request.Metadata.UserSuppliedApiKey), log);
                         openAICards = response.Item1;
                         openAIResponse = response.Item2;
                         cardIterations.AddRange(openAICards);
@@ -214,7 +214,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
 
                         **Think step-by-step**.";
 
-                        response = await GenerateOpenAICardResponse(openAIService, "Verify Card Consistency", checkConsistencySystemPrompt, userPrompt, gptModel, cost, log);
+                        response = await GenerateOpenAICardResponse(openAIService, "Verify Card Consistency", checkConsistencySystemPrompt, userPrompt, gptModel, cost, !string.IsNullOrWhiteSpace(request.Metadata.UserSuppliedApiKey), log);
                         openAICards = response.Item1;
                         openAIResponse = response.Item2;
                         cardIterations.AddRange(openAICards);
@@ -282,7 +282,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
         }
 
         // Generate a set of cards from OpenAI. Returns the parsed cards and the raw OpenAI response.
-        public static async Task<(BasicCard[], string)> GenerateOpenAICardResponse(OpenAIService service, string requestName, string systemPrompt, string userPrompt, string gptModel, Cost cost, ILogger log)
+        public static async Task<(BasicCard[], string)> GenerateOpenAICardResponse(OpenAIService service, string requestName, string systemPrompt, string userPrompt, string gptModel, Cost cost, bool userBroughtAPIKey, ILogger log)
         {
             var response = await service.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
             {
@@ -297,7 +297,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             }
 
             var openAIResponse = response.Choices[0].Message.Content;
-            cost.AddChatCost(response);
+            cost.AddChatCost(response, wasUserCharged: userBroughtAPIKey, operationName: requestName);
             log?.LogInformation($"[{requestName}] OpenAI response: ({response.Model}):{Environment.NewLine}{openAIResponse}");
 
             try

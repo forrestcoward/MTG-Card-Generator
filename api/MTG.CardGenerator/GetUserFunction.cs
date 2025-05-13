@@ -23,6 +23,12 @@ namespace MTG.CardGenerator
             public long NumberOfFreeCardsGeneratedToday { get; set; }
             [JsonProperty("numberOfFreeCardsAllowedPerDay")]
             public long AllowedFreeCardGenerationsPerDay { get; set; }
+            [JsonProperty("dailySpendLimit")]
+            public double DailySpendLimit { get; set; }
+            [JsonProperty("totalCostOfCardsGeneratedToday")]
+            public double TotalCostOfCardsGeneratedToday { get; set; }
+            [JsonProperty("remainingDailySpendLimit")]
+            public double RemainingDailySpendLimit { get; set; }
         }
 
         // Gets the user information (or creates a new user if a record does not exist yet).
@@ -61,6 +67,9 @@ namespace MTG.CardGenerator
                 NumberOfCardsRated = user.NumberOfCardsRated,
                 NumberOfFreeCardsGeneratedToday = user.NumberOfFreeCardsGeneratedToday,
                 AllowedFreeCardGenerationsPerDay = user.AllowedFreeCardGenerationsPerDay != -1 ? user.AllowedFreeCardGenerationsPerDay : GenerateMagicCardFunction.AllowedFreeGenerationsPerDay,
+                DailySpendLimit = user.DailySpendLimit != -1 ? user.DailySpendLimit : GenerateMagicCardFunction.DefaultDailySpendLimit,
+                TotalCostOfCardsGeneratedToday = user.TotalCostOfCardsGeneratedToday,
+                RemainingDailySpendLimit = user.DailySpendLimit != -1 ? user.DailySpendLimit - user.TotalCostOfCardsGeneratedToday : GenerateMagicCardFunction.DefaultDailySpendLimit - user.TotalCostOfCardsGeneratedToday,
             });
 
             return await req.CreateJsonResponse(HttpStatusCode.OK, json);

@@ -9,7 +9,6 @@
         public const string ValidateBearerToken = "ValidateBearerToken";
         public const string OpenAIApiKey = "OPENAI_API_KEY";
         public const string ReplicateApiKey = "REPLICATE_API_KEY";
-        public const string OpenAIApiKeyLoggedIn = "OpenAIAPIKeyLoggedIn";
         public const string AzureFunctionsEnvironment = "AZURE_FUNCTIONS_ENVIRONMENT";
         public const string CosmosDBEndpointUrl = "CosmosDBEndpointUrl";
         public const string CosmosDBAccessKey = "CosmosDBAccessKey";

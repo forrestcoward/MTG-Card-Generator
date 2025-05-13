@@ -1,5 +1,8 @@
 ﻿using Betalgo.Ranul.OpenAI.ObjectModels.ResponseModels;
+using Microsoft.Azure.Cosmos.Serialization.HybridRow;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
+using System.Diagnostics.Contracts;
 
 namespace MTG.CardGenerator
 {
@@ -8,14 +11,85 @@ namespace MTG.CardGenerator
         [JsonProperty("totalCost")]
         public double TotalCost { get; set; }
 
-        public void AddChatCost(ChatCompletionCreateResponse result)
+        [JsonProperty("costToUserApiKeys")]
+        public double CostToUserApiKeys { get; set; }
+
+        [JsonProperty("costToWebsiteApiKeys")]
+        public double CostToWebsiteApiKeys { get; set; }
+
+        [JsonProperty("charges")]
+        public List<Charge> Charges { get; set; } = new List<Charge>();
+
+        public class Charge()
         {
-            TotalCost += Pricing.GetCost(result);
+            [JsonProperty("operationName")]
+            public string OperationName { get; set; }
+            [JsonProperty("model")]
+            public string Model { get; set; }
+            [JsonProperty("cost")]
+            public double Cost { get; set; }
+            [JsonProperty("wasUserCharged")]
+            public bool WasUserCharged { get; set; }
         }
 
-        public void AddImageCost(string imageSize, string imageModel)
+        public void AddChatCost(ChatCompletionCreateResponse result, bool wasUserCharged, string operationName)
         {
-            TotalCost += Pricing.GetImageCost(imageSize, imageModel);
+            Contract.Assert(CostToUserApiKeys + CostToWebsiteApiKeys == TotalCost, "TotalCost should be the sum of User and Website costs.");
+            var cost = Pricing.GetCost(result);
+            TotalCost += cost;
+
+            if (wasUserCharged)
+            {
+                CostToUserApiKeys += cost;
+            }
+            else
+            {
+                CostToWebsiteApiKeys += cost;
+            }
+
+            Charges.Add(new Charge()
+            {
+                Cost = cost,
+                Model = result.Model,
+                OperationName = operationName,
+                WasUserCharged = wasUserCharged,
+            });
+        }
+
+        public void AddImageCost(string imageSize, string imageModel, bool wasUserCharged, string operationName)
+        {
+            Contract.Assert(CostToUserApiKeys + CostToWebsiteApiKeys == TotalCost, "TotalCost should be the sum of User and Website costs.");
+            var cost = Pricing.GetImageCost(imageSize, imageModel);
+            TotalCost += cost;
+
+            if (wasUserCharged)
+            {
+                CostToUserApiKeys += cost;
+            }
+            else
+            {
+                CostToWebsiteApiKeys += cost;
+            }
+
+            Charges.Add(new Charge()
+            {
+                Cost = cost,
+                Model = imageModel,
+                OperationName = operationName,
+                WasUserCharged = wasUserCharged,
+            });
+        }
+
+        // Merge two Cost objects into a new Cost object with combined charges and summed costs.
+        public Cost Merge(Cost other)
+        {
+            return new Cost
+            {
+                TotalCost = TotalCost + other.TotalCost,
+                CostToUserApiKeys = CostToUserApiKeys + other.CostToUserApiKeys,
+                CostToWebsiteApiKeys = CostToWebsiteApiKeys + other.CostToWebsiteApiKeys,
+                Charges = Charges.Concat(other.Charges).ToList()
+            };
         }
     }
 
@@ -47,7 +121,7 @@ namespace MTG.CardGenerator
 
             if (cost == null)
             {
-                return 0;
+                throw new Exception($"Model '{result.Model}' not found in pricing list.");
             }
 
             return (result.Usage.PromptTokens * cost.InputPrice) + (result.Usage.CompletionTokens.Value * cost.OutputPrice);
@@ -96,7 +170,7 @@ namespace MTG.CardGenerator
                 return 0.003;
             }
 
-            return 0;
+            throw new Exception($"Image model '{model}' and size '{size}' not found in pricing list.");
         }
     }
 }

@@ -77,6 +77,18 @@ namespace MTG.CardGenerator.Models
         public string FunnyExplanation { get; set; }
     }
 
+    public class MagicCardResponseCost
+    {
+        [JsonProperty("userRemainingDailySpendLimit")]
+        public double UserRemainingDailySpendLimit { get; set; }
+        [JsonProperty("cost")]
+        public double Cost { get; set; }
+        [JsonProperty("userIncurredCost")]
+        public double UserIncurredCost { get; set; }
+        [JsonProperty("serverIncurredCost")]
+        public double ServerIncurredCost { get; set; }
+    }
+
     /// <summary>
     /// Represents a generated card that we return through API responses.
     /// </summary>

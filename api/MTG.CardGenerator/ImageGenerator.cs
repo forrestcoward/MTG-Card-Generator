@@ -72,13 +72,25 @@ namespace MTG.CardGenerator
             };
         }
 
-        public static async Task<string> GenerateImage(string prompt, string model, string size, string openAIApiKey, string replicateApiKey, ILogger log, Cost cost = null)
+        /// <summary>
+        /// Generates an image using the specified model and prompt.
+        /// </summary>
+        /// <param name="prompt">the prompt</param>
+        /// <param name="model">the model</param>
+        /// <param name="size">the model size, if using DALL-E</param>
+        /// <param name="openAIApiKey">the OpenAI API key</param>
+        /// <param name="replicateApiKey">the Replicate API key</param>
+        /// <param name="cost">the cost object (updated with charge to generate the image)</param>
+        /// <param name="log">the logger object</param>
+        /// <returns>the image url</returns>
+        public static async Task<string> GenerateImage(string prompt, string model, string size, APIKey openAIApiKey, APIKey replicateApiKey, Cost cost, ILogger log)
         {
             log.LogInformation($"{model} image prompt: {prompt}");
+            var operationName = "Generate Card Image";
 
             if (model == Constants.BlackForestLabsFluxSchnell)
             {
-                var replicateClient = new ReplicateApiClient(replicateApiKey);
+                var replicateClient = new ReplicateApiClient(replicateApiKey.Key);
                 var input = new
                 {
                     prompt = prompt,
@@ -91,13 +103,13 @@ namespace MTG.CardGenerator
                     go_fast = true
                 };
                 var outputUrl = await replicateClient.RunPredictionAsync("black-forest-labs/flux-schnell", input);
-                cost?.AddImageCost(size, model);
+                cost.AddImageCost(size, model, wasUserCharged: replicateApiKey.IsUserSupplied, operationName: operationName);
                 return outputUrl;
             }
 
             if (model == Constants.StableDiffusion35MediumModelName)
             {
-                var replicateClient = new ReplicateApiClient(replicateApiKey);
+                var replicateClient = new ReplicateApiClient(replicateApiKey.Key);
                 var input = new
                 {
                     prompt = prompt,
@@ -109,13 +121,13 @@ namespace MTG.CardGenerator
                     output_quality = 90
                 };
                 var outputUrl = await replicateClient.RunPredictionAsync("stability-ai/stable-diffusion-3.5-medium", input);
-                cost?.AddImageCost(size, model);
+                cost.AddImageCost(size, model, wasUserCharged: replicateApiKey.IsUserSupplied, operationName: operationName);
                 return outputUrl;
             }
 
             if (model == Constants.GoogleImagen3FastModelName)
             {
-                var replicateClient = new ReplicateApiClient(replicateApiKey);
+                var replicateClient = new ReplicateApiClient(replicateApiKey.Key);
                 var input = new
                 {
                     prompt = prompt,
@@ -130,7 +142,7 @@ namespace MTG.CardGenerator
 
                 var outputUrl = await replicateClient.RunPredictionAsync("google/imagen-3-fast", input);
 
-                cost?.AddImageCost(size, model);
+                cost.AddImageCost(size, model, wasUserCharged: replicateApiKey.IsUserSupplied, operationName: operationName);
                 return outputUrl;
             }
 
@@ -139,7 +151,7 @@ namespace MTG.CardGenerator
                 throw new Exception($"Invalid image model: {model}. Expecting '{Constants.Dalle2ModelName}', '{Constants.Dalle3ModelName}', or '{Constants.GoogleImagen3FastModelName}'.");
             }
 
-            var openAIService = new OpenAIService(new OpenAIOptions() { ApiKey = openAIApiKey });
+            var openAIService = new OpenAIService(new OpenAIOptions() { ApiKey = openAIApiKey.Key });
 
             if (model == Constants.Dalle2ModelName && prompt.Length > 1000)
             {
@@ -163,7 +175,7 @@ namespace MTG.CardGenerator
                 ResponseFormat = StaticValues.ImageStatics.ResponseFormat.Url
             });
 
-            cost?.AddImageCost(size, model);
+            cost.AddImageCost(size, model, wasUserCharged: openAIApiKey.IsUserSupplied, operationName: operationName);
 
             if (!imageResult.Successful)
             {
@@ -174,11 +186,11 @@ namespace MTG.CardGenerator
             return imageResult.Results.First().Url;
         }
 
-        public static async Task<string> GenerateDetailedImagePrompt(ImageGenerationOptions options, string openAIApiKey, ILogger log)
+        public static async Task<string> GenerateDetailedImagePrompt(ImageGenerationOptions options, APIKey openAIApiKey, Cost cost, ILogger log)
         {
             var openAIService = new OpenAIService(new OpenAIOptions()
             {
-                ApiKey = openAIApiKey
+                ApiKey = openAIApiKey.Key
             });
 
             var prompt = @$"Please generate a descriptive description that could be used to depict an image of the following text (the description should reflect the artists style listed in the text). 
@@ -196,6 +208,7 @@ Only output the description, nothing else.";
                 Model = Betalgo.Ranul.OpenAI.ObjectModels.Models.Gpt_4_1,
             });
 
+            cost.AddChatCost(result, wasUserCharged: openAIApiKey.IsUserSupplied, operationName: "Generated Detailed Image Prompt");
             return result.Choices.First().Message.Content;
         }
     }

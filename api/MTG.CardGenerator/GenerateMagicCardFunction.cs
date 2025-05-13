@@ -1,6 +1,7 @@
 using Betalgo.Ranul.OpenAI.ObjectModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using DarkLoop.Azure.Functions.Authorization;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.DurableTask;
@@ -12,6 +13,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using System.Net;
+using static MTG.CardGenerator.ImageGenerator;
 
 namespace MTG.CardGenerator
 {
@@ -21,14 +23,18 @@ namespace MTG.CardGenerator
         {
             [JsonProperty("cards")]
             public IEnumerable<MagicCardResponse> Cards { get; set; }
+            [JsonProperty("costs")]
+            public MagicCardResponseCost Costs { get; set; }
         }
 
-        public class ImageOptions
+        public class GenerateImageRequest
         {
             public MagicCard Card { get; set; }
             public ImageGenerator.ImageGenerationOptions Options { get; set; }
-            public string OpenAIApiKey { get; set; }
-            public string ReplicateApiKey { get; set; }
+            public APIKey OpenAIApiKey { get; set; }
+            public APIKey ReplicateApiKey { get; set; }
+            // The cost associated with generating an image for this request.
+            public Cost Cost { get; set; }
         }
 
         public class ImageGenerationResult
@@ -36,37 +42,37 @@ namespace MTG.CardGenerator
             public string TemporaryImageUrl { get; set; }
             public string ImageUrl { get; set; }
             public ImageGenerator.ImageGenerationOptions Options { get; set; }
+            public Cost Cost { get; set; }
         }
 
         public class StoreCardRecordsInput
         {
             public CardResult CardResult { get; set; }
             public CardGenerationRequest Request { get; set; }
-            public string ApiKey { get; set; }
         }
 
         public class PrepareImageGenerationInput
         {
             public MagicCard Card { get; set; }
             public string ImageModel { get; set; }
-            public string OpenAIApiKey { get; set; }
-            public string ReplicateApiKey { get; set; }
+            public APIKey OpenAIApiKey { get; set; }
+            public APIKey ReplicateApiKey { get; set; }
         }
 
         public class UpdateUserRecordInput
         {
             public CardGenerationRequest Request { get; set; }
             public int NumberOfCardsGenerated { get; set; }
-            public double TotalCost { get; set; }
+            public Cost Cost { get; set; }
         }
 
         public class CardContentInput
         {
             public CardGenerationRequest Request { get; set; }
-            public string ApiKey { get; set; }
+            public APIKey OpenAIAPIKey { get; set; }
         }
 
-        public class RequestMetadata
+        public class CardRequestMetadata
         {
             public string UserName { get; set; }
             public string UserSubject { get; set; }
@@ -76,13 +82,11 @@ namespace MTG.CardGenerator
             public string Origin { get; set; }
         }
 
-        private const float DefaultTemperature = 1;
-        private const float CreativeTemperature = 1.3F;
-
         public const int AllowedFreeGenerationsPerDay = 5;
+        public const double DefaultDailySpendLimit = 1.0; // $1 per day
 
         [Function("GenerateMagicCard")]
-        [FunctionAuthorize]
+        [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
         public static async Task<HttpResponseData> HttpStart([HttpTrigger(AuthorizationLevel.Anonymous, "GET")] HttpRequestData req, [DurableClient(TaskHub = "%DurableTaskHubName%")] DurableTaskClient client, FunctionContext context)
         {
             var log = context.GetLogger<GenerateMagicCardFunction>();
@@ -100,7 +104,7 @@ namespace MTG.CardGenerator
             var userSuppliedApiKey = req.GetQueryParam("openAIApiKey");
             var source = req.GetQueryParam("source");
 
-            var numCards = 5;
+            var numCards = 1;
             if (int.TryParse(req.GetQueryParam("numCards"), out int parsedNumCards))
             {
                 numCards = Math.Clamp(parsedNumCards, 1, 1);
@@ -112,7 +116,17 @@ namespace MTG.CardGenerator
             var userSubject = Extensions.GetClaim(jwtToken, "sub", defaultValue: "Anonymous");
             var userLoggedIn = !userSubject.Equals("Anonymous", StringComparison.OrdinalIgnoreCase);
 
-            // Check for free tier usage limits.
+            // If a user brings their own OpenAI API key, we need to check if they are using a valid OpenAI image model.
+            if (!string.IsNullOrWhiteSpace(userSuppliedApiKey) &&
+                (!imageModel.Equals(Constants.Dalle2ModelName) && !imageModel.Equals(Constants.Dalle3ModelName)))
+            {
+                return await req.CreateJsonResponse(HttpStatusCode.BadRequest, new
+                {
+                    error = "Please select an OpenAI image model (dalle-2 or dalle-3) when bringing your own OpenAI API key."
+                });
+            }
+
+            // Check for free tier usage limits (spend-based).
             if (userLoggedIn && string.IsNullOrWhiteSpace(userSuppliedApiKey))
             {
                 var usersCosmosClient = new UsersClient(log);
@@ -120,19 +134,25 @@ namespace MTG.CardGenerator
 
                 if (user != null && !user.IsAdmin)
                 {
-                    var allowedFreeCardGenerationsPerDay = user.AllowedFreeCardGenerationsPerDay == -1 ?
-                        AllowedFreeGenerationsPerDay : user.AllowedFreeCardGenerationsPerDay;
+                    var dailySpendLimit = user.DailySpendLimit > 0 ? user.DailySpendLimit : DefaultDailySpendLimit;
+                    var today = DateTime.Now.ToUniversalTime().Date;
+                    var userSpendToday = (user.LastActiveTime?.Date == today) ? user.TotalCostOfCardsGeneratedToday : 0.0;
 
-                    if (user.LastActiveTime?.Date == DateTime.Now.ToUniversalTime().Date &&
-                        user.NumberOfFreeCardsGeneratedToday >= allowedFreeCardGenerationsPerDay)
+                    if (userSpendToday >= dailySpendLimit)
                     {
-                        var errorMessage = $"You have exceeded your number of free generations per day ({AllowedFreeGenerationsPerDay}). Please enter your own OpenAI API key (https://platform.openai.com/api-keys) to continue generating.";
-                        return await req.CreateErrorResponse(HttpStatusCode.TooManyRequests, errorMessage);
+                        var errorMessage = $"You have exceeded your daily free spend limit (${dailySpendLimit:0.00}). Please enter your own OpenAI API key (https://platform.openai.com/api-keys) to continue generating.";
+                        var details = new
+                        {
+                            error = errorMessage,
+                            dailySpendLimit,
+                            totalCostOfCardsGeneratedToday = userSpendToday
+                        };
+                        return await req.CreateJsonResponse(HttpStatusCode.TooManyRequests, details);
                     }
                 }
             }
 
-            var requestMetadata = new RequestMetadata
+            var requestMetadata = new CardRequestMetadata
             {
                 UserName = userName,
                 UserSubject = userSubject,
@@ -174,19 +194,15 @@ namespace MTG.CardGenerator
             var log = context.CreateReplaySafeLogger<GenerateMagicCardFunction>();
             var request = context.GetInput<CardGenerationRequest>();
             var output = new GenerateMagicCardFunctionResponse();
-            ImageGenerator.ImageGenerationOptions imageOptions = null;
 
             try
             {
-                // 1. Validate the API key.
-                var apiKey = await context.CallActivityAsync<string>(nameof(ValidateAndGetApiKey), request);
-                if (string.IsNullOrEmpty(apiKey))
-                {
-                    throw new Exception("Please log in or supply your own OpenAI API key in the settings to generate Magic: The Gathering cards!");
-                }
+                // 1. Retrieve API keys.
+                var openAIApiKey = await context.CallActivityAsync<APIKey>(nameof(ValidateAndGetOpenAIAPIKey), request);
+                var replicateApiKey = await context.CallActivityAsync<APIKey>(nameof(ValidateAndGetReplicateAPIKey), request);
 
                 // 2. Generate card content.
-                var cardResult = await context.CallActivityAsync<CardResult>(nameof(GenerateCardContent), new CardContentInput { Request = request, ApiKey = apiKey });
+                var cardResult = await context.CallActivityAsync<CardResult>(nameof(GenerateCardContent), new CardContentInput { Request = request, OpenAIAPIKey = openAIApiKey });
 
                 if (cardResult.Cards.Length == 0)
                 {
@@ -199,53 +215,67 @@ namespace MTG.CardGenerator
                 {
                     foreach (var card in cardResult.Cards)
                     {
-                        // Generate image options.
-                        var options = await context.CallActivityAsync<ImageOptions>(nameof(PrepareImageGeneration), new PrepareImageGenerationInput() { Card = card, ImageModel = request.ImageModel, OpenAIApiKey = apiKey, ReplicateApiKey = Environment.GetEnvironmentVariable(Constants.ReplicateApiKey) });
+                        var imageGenerationDefaultOptions = ImageGenerator.GetImageOptionsForCard(card, request.ImageModel);
 
-                        imageOptions = options.Options;
+                        var generateImageRequest = new GenerateImageRequest()
+                        {
+                            Card = card,
+                            Options = imageGenerationDefaultOptions,
+                            OpenAIApiKey = openAIApiKey,
+                            ReplicateApiKey = replicateApiKey,
+                            Cost = new Cost()
+                        };
 
                         // Generate detailed image prompt if requested.
                         if (request.GenerateImagePrompt)
                         {
-                            options = await context.CallActivityAsync<ImageOptions>(nameof(GenerateDetailedImagePrompt), options);
-                            imageOptions = options.Options;
+                            // Get back the updated request with the detailed prompt and cost.
+                            generateImageRequest = await context.CallActivityAsync<GenerateImageRequest>(nameof(GenerateDetailedImagePrompt), generateImageRequest);
                         }
 
                         // Generate image.
-                        var imageResult = await context.CallActivityAsync<ImageGenerationResult>(nameof(GenerateCardImage), options);
+                        var imageResult = await context.CallActivityAsync<ImageGenerationResult>(nameof(GenerateCardImage), generateImageRequest);
 
                         // Update the card with image information.
                         card.TemporaryImageUrl = imageResult.TemporaryImageUrl;
                         card.ImageUrl = imageResult.ImageUrl;
-                        imageOptions = imageResult.Options;
 
-                        // Add cost info.
-                        cardResult.Cost.AddImageCost(imageOptions.Size, imageOptions.Model);
+                        // Merge cost information.
+                        cardResult.Cost = cardResult.Cost.Merge(imageResult.Cost);
                     }
                 }
 
                 // 4. Store card records in database.
-                await context.CallActivityAsync(nameof(StoreCardRecords), new StoreCardRecordsInput() { CardResult = cardResult, Request = request, ApiKey = apiKey });
+                await context.CallActivityAsync(nameof(StoreCardRecords), new StoreCardRecordsInput() { CardResult = cardResult, Request = request });
 
                 // 5. Update user record.
                 if (request.Metadata.UserLoggedIn)
                 {
-                    await context.CallActivityAsync(nameof(UpdateUserRecord), new UpdateUserRecordInput() { Request = request, NumberOfCardsGenerated = cardResult.Cards.Length, TotalCost = cardResult.Cost.TotalCost });
+                    var user = await context.CallActivityAsync<User>(nameof(UpdateUserRecord), new UpdateUserRecordInput() { Request = request, NumberOfCardsGenerated = cardResult.Cards.Length, Cost = cardResult.Cost });
+                    var dailySpendLimit = user.DailySpendLimit > 0 ? user.DailySpendLimit : DefaultDailySpendLimit;
+                    var remainingSpendLimit = dailySpendLimit - user.TotalCostOfCardsGeneratedToday;
+
+                    output.Costs = new MagicCardResponseCost()
+                    {
+                        Cost = cardResult.Cost.TotalCost,
+                        UserIncurredCost = cardResult.Cost.CostToUserApiKeys,
+                        ServerIncurredCost = cardResult.Cost.CostToWebsiteApiKeys,
+                        UserRemainingDailySpendLimit = remainingSpendLimit,
+                    };
                 }
 
-                // 6. Prepare final response with telemetry.
+                // 6. Prepare final response.
                 output.Cards = cardResult.Cards.Select(x => new MagicCardResponse(x, x.Id, includeTemporaryImage: true));
                 var json = JsonConvert.SerializeObject(output);
 
-                // 7. Log telemetry
+                // 7. Log telemetry.
                 var finalResponse = await context.CallActivityAsync<string>(
                     nameof(LogTelemetry),
                     new FinalResponseData
                     {
                         Json = json,
                         CardResult = cardResult,
-                        Request = request,
-                        ImageOptions = imageOptions
+                        Request = request
                     });
 
                 context.SetCustomStatus("success");
@@ -261,25 +291,40 @@ namespace MTG.CardGenerator
             }
         }
 
-        [Function("ValidateAndGetApiKey")]
-        public static string ValidateAndGetApiKey([ActivityTrigger] CardGenerationRequest request, ILogger log)
+        [Function("ValidateAndGetOpenAIAPIKey")]
+        public static APIKey ValidateAndGetOpenAIAPIKey([ActivityTrigger] CardGenerationRequest request, ILogger log)
         {
-            var apiKeyToUse = request.Metadata.UserSuppliedApiKey;
+            var userSuppliedKey = request.Metadata.UserSuppliedApiKey;
 
-            if (string.IsNullOrWhiteSpace(apiKeyToUse))
+            if (!string.IsNullOrWhiteSpace(userSuppliedKey))
             {
-                if (request.Metadata.UserLoggedIn)
+                return new APIKey()
                 {
-                    apiKeyToUse = Environment.GetEnvironmentVariable(Constants.OpenAIApiKeyLoggedIn);
-                }
-
-                if (string.IsNullOrWhiteSpace(apiKeyToUse))
-                {
-                    apiKeyToUse = Environment.GetEnvironmentVariable(Constants.OpenAIApiKey);
-                }
+                    Key = userSuppliedKey,
+                    IsUserSupplied = true,
+                    Name = "Open AI API Key"
+                };
             }
 
-            return apiKeyToUse;
+            var apiKeyToUse = Environment.GetEnvironmentVariable(Constants.OpenAIApiKey);
+
+            return new APIKey()
+            {
+                Key = apiKeyToUse,
+                IsUserSupplied = false,
+                Name = "Open AI API Key"
+            };
+        }
+
+        [Function("ValidateAndGetReplicateAPIKey")]
+        public static APIKey ValidateAndGetReplicateAPIKey([ActivityTrigger] CardGenerationRequest request, ILogger log)
+        {
+            return new APIKey()
+            {
+                Key = Environment.GetEnvironmentVariable(Constants.ReplicateApiKey),
+                IsUserSupplied = false,
+                Name = "Open AI API Key"
+            };
         }
 
         [Function("GenerateCardContent")]
@@ -287,45 +332,33 @@ namespace MTG.CardGenerator
         {
             var log = functionContext.GetLogger(nameof(GenerateCardContent));
             var request = context.Request;
-            var apiKey = context.ApiKey;
+            var apiKey = context.OpenAIAPIKey;
             return await GenerateCard.Generate(request, apiKey, log);
         }
 
-        [Function("PrepareImageGeneration")]
-        public static ImageOptions PrepareImageGeneration([ActivityTrigger] PrepareImageGenerationInput context, FunctionContext functionContext)
-        {
-            var log = functionContext.GetLogger(nameof(PrepareImageGeneration));
-            var options = ImageGenerator.GetImageOptionsForCard(context.Card, context.ImageModel);
-
-            return new ImageOptions
-            {
-                Card = context.Card,
-                Options = options,
-                OpenAIApiKey = context.OpenAIApiKey,
-                ReplicateApiKey = context.ReplicateApiKey
-            };
-        }
-
         [Function("GenerateDetailedImagePrompt")]
-        public static async Task<ImageOptions> GenerateDetailedImagePrompt([ActivityTrigger] ImageOptions imageOptions, FunctionContext functionContext)
+        public static async Task<GenerateImageRequest> GenerateDetailedImagePrompt([ActivityTrigger] GenerateImageRequest imageOptions, FunctionContext functionContext)
         {
             var log = functionContext.GetLogger(nameof(GenerateDetailedImagePrompt));
+            var incurredCost = new Cost();
             var detailedPrompt = await ImageGenerator.GenerateDetailedImagePrompt(
                 imageOptions.Options,
                 imageOptions.OpenAIApiKey,
+                incurredCost,
                 log);
 
             imageOptions.Options.Prompt = detailedPrompt;
+            imageOptions.Cost = incurredCost;
             return imageOptions;
         }
 
         [Function("GenerateCardImage")]
-        public static async Task<ImageGenerationResult> GenerateCardImage([ActivityTrigger] ImageOptions imageOptions, FunctionContext functionContext)
+        public static async Task<ImageGenerationResult> GenerateCardImage([ActivityTrigger] GenerateImageRequest generateImageRequest, FunctionContext functionContext)
         {
             var log = functionContext.GetLogger(nameof(GenerateCardImage));
             var stopwatch = Stopwatch.StartNew();
 
-            var tempUrl = await ImageGenerator.GenerateImage(imageOptions.Options.Prompt, imageOptions.Options.Model, imageOptions.Options.Size, imageOptions.OpenAIApiKey, imageOptions.ReplicateApiKey, log);
+            var tempUrl = await ImageGenerator.GenerateImage(generateImageRequest.Options.Prompt, generateImageRequest.Options.Model, generateImageRequest.Options.Size, generateImageRequest.OpenAIApiKey, generateImageRequest.ReplicateApiKey, generateImageRequest.Cost, log);
 
             var finalUrl = tempUrl;
 
@@ -349,16 +382,17 @@ namespace MTG.CardGenerator
             log.LogMetric("CreateImageAsync_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
                 properties: new Dictionary<string, object>()
                 {
-                    { "imagePrompt", imageOptions.Options.Prompt },
-                    { "imageModel", imageOptions.Options.Model },
-                    { "imageSize", imageOptions.Options.Size }
+                    { "imagePrompt", generateImageRequest.Options.Prompt },
+                    { "imageModel", generateImageRequest.Options.Model },
+                    { "imageSize", generateImageRequest.Options.Size }
                 });
 
             return new ImageGenerationResult
             {
                 TemporaryImageUrl = tempUrl,
                 ImageUrl = finalUrl,
-                Options = imageOptions.Options
+                Options = generateImageRequest.Options,
+                Cost = generateImageRequest.Cost // Pass through the cost onto the return object.
             };
         }
 
@@ -368,7 +402,6 @@ namespace MTG.CardGenerator
             var log = functionContext.GetLogger(nameof(StoreCardRecords));
             var cardResult = context.CardResult;
             var request = context.Request;
-            var apiKey = context.ApiKey;
             var cosmosDatabaseId = Extensions.GetSettingOrThrow(Constants.CosmosDBDatabaseId);
             var cardsClient = new CardsClient();
 
@@ -417,12 +450,12 @@ namespace MTG.CardGenerator
         }
 
         [Function("UpdateUserRecord")]
-        public static async Task UpdateUserRecord([ActivityTrigger] UpdateUserRecordInput context, FunctionContext functionContext)
+        public static async Task<User> UpdateUserRecord([ActivityTrigger] UpdateUserRecordInput context, FunctionContext functionContext)
         {
             var log = functionContext.GetLogger(nameof(UpdateUserRecord));
             var request = context.Request;
             var cardCount = context.NumberOfCardsGenerated;
-            var totalCost = context.TotalCost;
+            var cost = context.Cost;
 
             try
             {
@@ -438,13 +471,23 @@ namespace MTG.CardGenerator
                     });
                 }
 
-                await usersCosmosClient.UserGeneratedCard(user, request.Metadata.UserSubject, cardCount, totalCost, !string.IsNullOrWhiteSpace(request.Metadata.UserSuppliedApiKey));
+                var updatedUser = await usersCosmosClient.UserGeneratedCard(
+                    user,
+                    request.Metadata.UserSubject,
+                    cardCount,
+                    cost,
+                    !string.IsNullOrWhiteSpace(request.Metadata.UserSuppliedApiKey)
+                );
+
                 log.LogInformation($"Updated user record for user '{request.Metadata.UserSubject}' in database.");
+
+                return user;
             }
             catch (Exception ex)
             {
                 // Non-fatal to overall operation.
                 log.LogError($"Failed to create or update user record: {ex}");
+                return null;
             }
         }
 
@@ -453,7 +496,6 @@ namespace MTG.CardGenerator
             public string Json { get; set; }
             public CardResult CardResult { get; set; }
             public CardGenerationRequest Request { get; set; }
-            public ImageGenerator.ImageGenerationOptions ImageOptions { get; set; }
         }
 
         [Function("LogTelemetry")]
@@ -475,7 +517,6 @@ namespace MTG.CardGenerator
                     new Dictionary<string, object>()
                     {
                         { "estimatedCost", responseData.CardResult.Cost.TotalCost },
-                        { "imageSize", responseData.ImageOptions?.Size },
                         { "imageModel", responseData.Request.ImageModel },
                         { "generateImage", responseData.Request.ImageModel != "none" },
                         { "includeExplanation", responseData.Request.IncludeExplanation.ToString() },

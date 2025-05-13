@@ -29,28 +29,52 @@ namespace MTG.CardGenerator.CosmosClients
             return await PatchDocument<User>(userSubject, userSubject, operations);
         }
 
-        public async Task<ItemResponse<User>> UserGeneratedCard(User user, string userSubject, int numberOfNewCards, double cardGenerationEstimatedCost, bool userSuppliedApiKey)
+        public async Task<ItemResponse<User>> UserGeneratedCard(User user, string userSubject, int numberOfNewCards, Cost cost, bool userSuppliedApiKey)
         {
             var operations = new List<PatchOperation>
             {
-                PatchOperation.Increment("/totalCostOfCardsGenerated", cardGenerationEstimatedCost),
+                PatchOperation.Increment("/totalCostOfCardsGenerated", cost.CostToWebsiteApiKeys),
                 PatchOperation.Increment("/numberOfCardsGenerated", numberOfNewCards),
                 PatchOperation.Add("/lastActiveTime", DateTime.Now.ToUniversalTime())
             };
 
-            if (user.LastActiveTime?.Date != DateTime.Now.ToUniversalTime().Date)
+            var today = DateTime.Now.ToUniversalTime().Date;
+            if (user.LastActiveTime?.Date != today)
             {
-                // If this is the first time the user has generated today, reset their number of free card generations allowed in the day.
-                operations.Add(PatchOperation.Replace("/numberOfFreeCardsGeneratedToday", 0));
+                // Reset daily spend and free card count at start of new day
+                operations.Add(PatchOperation.Set("/totalCostOfCardsGeneratedToday", 0.0));
+                operations.Add(PatchOperation.Set("/numberOfFreeCardsGeneratedToday", 0));
             }
 
             if (!userSuppliedApiKey)
             {
-                // Otherwise, increment the number of cards generated today.
+                // Only increment daily spend if not using user-supplied API key
+                operations.Add(PatchOperation.Increment("/totalCostOfCardsGeneratedToday", cost.CostToWebsiteApiKeys));
                 operations.Add(PatchOperation.Increment("/numberOfFreeCardsGeneratedToday", numberOfNewCards));
             }
 
             return await PatchDocument<User>(userSubject, userSubject, operations);
+        }
+
+        // Helper to reset daily spend (can be called at login or start of day).
+        public async Task ResetUserDailySpend(string userSubject)
+        {
+            var operations = new List<PatchOperation>
+            {
+                PatchOperation.Set("/totalCostOfCardsGeneratedToday", 0.0),
+                PatchOperation.Set("/numberOfFreeCardsGeneratedToday", 0)
+            };
+            await PatchDocument<User>(userSubject, userSubject, operations);
+        }
+
+        // Helper to update daily spend limit.
+        public async Task UpdateDailySpendLimit(string userSubject, double dailySpendLimit)
+        {
+            var operations = new List<PatchOperation>
+            {
+                PatchOperation.Set("/dailySpendLimit", dailySpendLimit)
+            };
+            await PatchDocument<User>(userSubject, userSubject, operations);
         }
 
         public async Task<ItemResponse<User>> UserRatedCard(string userSubject)

@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { UserContext } from './UserContext';
 import { CardDisplay  } from './Card';
-import { GenerateMagicCardRequest } from './CallAPI';
+import { GenerateMagicCardRequest, GetUserInfo } from './CallAPI';
 import { isMobileDevice, setCardContainerSize } from './Utility';
 import { TutorialCard } from './TutorialCard';
 import PopOutSettingsMenu from './PopOutSettingsMenu';
@@ -12,6 +12,7 @@ import './mana.min.css';
 import './mtg-card.css';
 import './app.css';
 import { LoadingSpinner } from './LoadingSpinner';
+import { User } from './User';
 
 export interface SettingGroup {
   name: string;
@@ -143,6 +144,7 @@ export function MTGCardGenerator() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settings, setSettings] = useState([modelSettingsGroup, imageSettingsGroup, cardGenerationSettingsGroup]);
   const [cards, setCards] = useState([TutorialCard]);
+  const [user, setUser] = useState<User|undefined>(undefined);
   const [currentError, setCurrentError] = useState('');
   const [defaultCardWidth, setDefaultCardWidth] = useState(setCardContainerSize());
   const [showNewFeatureNotification] = useState(false);
@@ -154,9 +156,19 @@ export function MTGCardGenerator() {
     const updateCardSize = () => {
       setDefaultCardWidth(setCardContainerSize());
     };
+    getUserInfo();
     window.addEventListener('resize', updateCardSize);
     return () => window.removeEventListener('resize', updateCardSize);
   }, []);
+
+  const getUserInfo = () => {
+    GetUserInfo(msalInstance).then(user => {
+      setUser(user);
+    }).catch(error => {
+      setCurrentError("Erorr getting user");
+      console.error("Error in getUserInfo: " + error);
+    });
+  };
 
   function allSettings(): Setting[] {
     return settings.map(settingGroup => settingGroup.settings).flat();
@@ -184,6 +196,10 @@ export function MTGCardGenerator() {
     return setting?.id ?? defaultImageModel
   }
 
+  // Helper function to format currency to nearest cent
+  const formatCurrency = (amount: number): string => {
+    return amount.toFixed(2);
+  };
 
   function handleSettingUpdate(updatedSetting: string, newValue: boolean) {
     // Flatten all settings.
@@ -218,8 +234,9 @@ export function MTGCardGenerator() {
     const openAIAPIKey = userContext?.openAIAPIKey
     GenerateMagicCardRequest(prompt, model, imageModel, showCardExplanations(), highQualityImages(), numCards, extraCreative(), openAIAPIKey!, msalInstance).then(generatedCards => {
       setResponse(JSON.stringify(generatedCards))
-      setCards([...generatedCards, ...cards])
+      setCards([...generatedCards.cards, ...cards])
       setIsLoading(false)
+      getUserInfo()
     }).catch((error: Error) => {
       setCurrentError(error.message)
       setIsLoading(false)
@@ -242,6 +259,13 @@ export function MTGCardGenerator() {
             </a>
           </div>
           }
+          <div className='dailySpendNotification'>
+            {user && (
+                  <span className="spend-limit" style={{ fontSize: '0.9rem', marginLeft: '10px', whiteSpace: 'nowrap' }}>
+                    Daily Spend: ${formatCurrency(user.remainingDailySpendLimit)} / ${formatCurrency(user.dailySpendLimit)}
+                  </span>
+                )}
+          </div>
           <p>Generate a Magic: The Gathering card...</p>
           <label>
             <input type='text' className='userInputPrompt' placeholder={defaultPrompt} onChange={(event) => {setPrompt(event.target.value)}} value={prompt} />
@@ -252,8 +276,6 @@ export function MTGCardGenerator() {
               <tr>
                 <td>
                   <button className='generateButton' type='submit' onClick={() => handleSubmit()} disabled={isLoading}>Generate!</button>
-                </td>
-                <td>
                 </td>
                 <td>
                   <LoadingSpinner isLoading={isLoading} />
