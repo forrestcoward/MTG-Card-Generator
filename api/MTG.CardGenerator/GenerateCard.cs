@@ -297,7 +297,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             }
 
             var openAIResponse = response.Choices[0].Message.Content;
-            cost.AddChatCost(response, wasUserCharged: userBroughtAPIKey, operationName: requestName);
+            cost.AddChatCost(response, wasUserCharged: userBroughtAPIKey, operationName: requestName, log);
             log?.LogInformation($"[{requestName}] OpenAI response: ({response.Model}):{Environment.NewLine}{openAIResponse}");
 
             try

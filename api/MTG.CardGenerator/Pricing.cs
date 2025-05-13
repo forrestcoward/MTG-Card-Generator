@@ -1,6 +1,8 @@
 ﻿using Betalgo.Ranul.OpenAI.ObjectModels.ResponseModels;
+using Castle.Core.Logging;
 using Microsoft.Azure.Cosmos.Serialization.HybridRow;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Diagnostics.Contracts;
 
@@ -32,8 +34,14 @@ namespace MTG.CardGenerator
             public bool WasUserCharged { get; set; }
         }
 
-        public void AddChatCost(ChatCompletionCreateResponse result, bool wasUserCharged, string operationName)
+        public void AddChatCost(ChatCompletionCreateResponse result, bool wasUserCharged, string operationName, Microsoft.Extensions.Logging.ILogger logger)
         {
+            if (result == null)
+            {
+                logger.LogError($"ChatCompletionCreateResponse is null. Cannot calculate cost for operation '{operationName}'.");
+                return;
+            }
+
             Contract.Assert(CostToUserApiKeys + CostToWebsiteApiKeys == TotalCost, "TotalCost should be the sum of User and Website costs.");
             var cost = Pricing.GetCost(result);
             TotalCost += cost;

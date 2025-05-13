@@ -11,6 +11,7 @@ export interface UserContextType {
   userError: string;
   openAIAPIKey: string;
   setOpenAIAPIKey: (key: string) => void;
+  refreshUser: () => void; // Add this
 }
 
 export const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -58,6 +59,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUserError(e.message || 'Failed to fetch user info');
         setUserLoading(false);
       });
+  };
+
+  // Expose a refreshUser function for manual refresh
+  const refreshUser = () => {
+    fetchUserInfo(userAccount);
   };
 
   // Initial account setup.
@@ -118,7 +124,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [instance]);
 
   return (
-    <UserContext.Provider value={{ userAccount, user, userLoading, userError, openAIAPIKey, setOpenAIAPIKey }}>
+    <UserContext.Provider value={{ userAccount, user, userLoading, userError, openAIAPIKey, setOpenAIAPIKey, refreshUser }}>
       {children}
     </UserContext.Provider>
   );

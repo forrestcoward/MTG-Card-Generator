@@ -1,7 +1,6 @@
 using Betalgo.Ranul.OpenAI.ObjectModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using DarkLoop.Azure.Functions.Authorization;
-using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.DurableTask;
@@ -13,7 +12,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using System.Net;
-using static MTG.CardGenerator.ImageGenerator;
 
 namespace MTG.CardGenerator
 {
@@ -83,7 +81,7 @@ namespace MTG.CardGenerator
         }
 
         public const int AllowedFreeGenerationsPerDay = 5;
-        public const double DefaultDailySpendLimit = 1.0; // $1 per day
+        public const double DefaultDailySpendLimit = 0.7; // $1 per day
 
         [Function("GenerateMagicCard")]
         [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]
@@ -271,7 +269,7 @@ namespace MTG.CardGenerator
                 // 7. Log telemetry.
                 var finalResponse = await context.CallActivityAsync<string>(
                     nameof(LogTelemetry),
-                    new FinalResponseData
+                    new FinalTelemetryData
                     {
                         Json = json,
                         CardResult = cardResult,
@@ -323,7 +321,7 @@ namespace MTG.CardGenerator
             {
                 Key = Environment.GetEnvironmentVariable(Constants.ReplicateApiKey),
                 IsUserSupplied = false,
-                Name = "Open AI API Key"
+                Name = "Replicate API Key"
             };
         }
 
@@ -491,7 +489,7 @@ namespace MTG.CardGenerator
             }
         }
 
-        public class FinalResponseData
+        public class FinalTelemetryData
         {
             public string Json { get; set; }
             public CardResult CardResult { get; set; }
@@ -499,7 +497,7 @@ namespace MTG.CardGenerator
         }
 
         [Function("LogTelemetry")]
-        public static string LogTelemetry([ActivityTrigger] FinalResponseData responseData, FunctionContext functionContext)
+        public static string LogTelemetry([ActivityTrigger] FinalTelemetryData responseData, FunctionContext functionContext)
         {
             var log = functionContext.GetLogger(nameof(LogTelemetry));
             try

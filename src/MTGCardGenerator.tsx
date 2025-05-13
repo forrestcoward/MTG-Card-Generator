@@ -152,6 +152,7 @@ export function MTGCardGenerator() {
   const user = userContext?.user;
   const userLoading = userContext?.userLoading;
   const userError = userContext?.userError;
+  const refreshUser = userContext?.refreshUser;
   const { instance: msalInstance } = useMsal();
 
   useEffect(() => {
@@ -228,6 +229,7 @@ export function MTGCardGenerator() {
       setResponse(JSON.stringify(generatedCards))
       setCards([...generatedCards.cards, ...cards])
       setIsLoading(false)
+      if (refreshUser) refreshUser(); // Refresh user info after generating a card
     }).catch((error: Error) => {
       setCurrentError(error.message)
       setIsLoading(false)
@@ -250,13 +252,6 @@ export function MTGCardGenerator() {
             </a>
           </div>
           }
-          <div className='dailySpendNotification'>
-            {user && (
-                  <span className="spend-limit" style={{ fontSize: '0.9rem', marginLeft: '10px', whiteSpace: 'nowrap' }}>
-                    Daily Spend: ${formatCurrency(user.remainingDailySpendLimit)} / ${formatCurrency(user.dailySpendLimit)}
-                  </span>
-                )}
-          </div>
           <p>Generate a Magic: The Gathering card...</p>
           <label>
             <input type='text' className='userInputPrompt' placeholder={defaultPrompt} onChange={(event) => {setPrompt(event.target.value)}} value={prompt} />

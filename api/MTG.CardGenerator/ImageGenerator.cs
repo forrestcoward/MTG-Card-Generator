@@ -208,7 +208,7 @@ Only output the description, nothing else.";
                 Model = Betalgo.Ranul.OpenAI.ObjectModels.Models.Gpt_4_1,
             });
 
-            cost.AddChatCost(result, wasUserCharged: openAIApiKey.IsUserSupplied, operationName: "Generated Detailed Image Prompt");
+            cost.AddChatCost(result, wasUserCharged: openAIApiKey.IsUserSupplied, operationName: "Generated Detailed Image Prompt", log);
             return result.Choices.First().Message.Content;
         }
     }
