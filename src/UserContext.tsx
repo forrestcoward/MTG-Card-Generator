@@ -1,11 +1,17 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { AccountInfo, EventType } from '@azure/msal-browser';
 import { useMsal } from '@azure/msal-react';
+import { GetUserInfo } from './CallAPI';
+import { User } from './User';
 
 export interface UserContextType {
   userAccount: AccountInfo | null;
+  user: User | undefined;
+  userLoading: boolean;
+  userError: string;
   openAIAPIKey: string;
   setOpenAIAPIKey: (key: string) => void;
+  refreshUser: () => void;
 }
 
 export const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -18,27 +24,69 @@ export const useUserAccount = () => {
   return context.userAccount;
 };
 
+export const useUser = () => {
+  const context = useContext(UserContext);
+  if (!context) {
+    throw new Error('useUser must be used within a UserProvider');
+  }
+  return { user: context.user, loading: context.userLoading, error: context.userError };
+};
+
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { instance } = useMsal();
   const [userAccount, setUserAccount] = useState<AccountInfo | null>(null);
   const [openAIAPIKey, setOpenAIAPIKey] = useState<string>('');
+  const [user, setUser] = useState<User | undefined>(undefined);
+  const [userLoading, setUserLoading] = useState<boolean>(false);
+  const [userError, setUserError] = useState<string>('');
 
-  // Initial account setup
+  const fetchUserInfo = (account: AccountInfo | null) => {  
+    if (!account) {
+      setUser(undefined);
+      setUserLoading(false);
+      setUserError('');
+      return;
+    }
+    setUserLoading(true);
+    setUserError('');
+    GetUserInfo(instance)
+      .then(u => {
+        setUser(u);
+        setUserLoading(false);
+      })
+      .catch(e => {
+        setUser(undefined);
+        setUserError(e.message || 'Failed to fetch user info');
+        setUserLoading(false);
+      });
+  };
+
+  const refreshUser = () => {
+    fetchUserInfo(userAccount);
+  };
+
+  // Initial account setup.
   useEffect(() => {
     const currentAccount = instance.getActiveAccount();
     if (currentAccount) {
       setUserAccount(currentAccount);
+      fetchUserInfo(currentAccount);
     } else {
-      // If no active account, try to get the first account
       const allAccounts = instance.getAllAccounts();
       if (allAccounts.length > 0) {
         instance.setActiveAccount(allAccounts[0]);
         setUserAccount(allAccounts[0]);
+        fetchUserInfo(allAccounts[0]);
+      } else {
+        setUserAccount(null);
+        setUser(undefined);
+        setUserLoading(false);
+        setUserError('');
       }
     }
   }, [instance]);
 
-  // Listen for auth events
+  // Listen for auth events.
   useEffect(() => {
     const callbackId = instance.addEventCallback((event) => {
       if (
@@ -47,17 +95,21 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         event.eventType === EventType.ACCOUNT_ADDED ||
         event.eventType === EventType.ACCOUNT_REMOVED
       ) {
-        // Update user account state when auth events occur
         const currentAccount = instance.getActiveAccount();
         if (currentAccount) {
           setUserAccount(currentAccount);
+          fetchUserInfo(currentAccount);
         } else {
           const allAccounts = instance.getAllAccounts();
           if (allAccounts.length > 0) {
             instance.setActiveAccount(allAccounts[0]);
             setUserAccount(allAccounts[0]);
+            fetchUserInfo(allAccounts[0]);
           } else {
             setUserAccount(null);
+            setUser(undefined);
+            setUserLoading(false);
+            setUserError('');
           }
         }
       }
@@ -71,7 +123,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [instance]);
 
   return (
-    <UserContext.Provider value={{ userAccount, openAIAPIKey, setOpenAIAPIKey }}>
+    <UserContext.Provider value={{ userAccount, user, userLoading, userError, openAIAPIKey, setOpenAIAPIKey, refreshUser }}>
       {children}
     </UserContext.Provider>
   );

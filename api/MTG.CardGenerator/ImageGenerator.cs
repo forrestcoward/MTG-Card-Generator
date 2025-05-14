@@ -46,24 +46,19 @@ namespace MTG.CardGenerator
 
             if (card.Type == CardType.Creature)
             {
-                if (imageModel == Constants.Dalle2ModelName)
+                if (imageModel == Constants.ImageModels.Dalle2ModelName)
                 {
                     prompt = $"'An image of {card.Name}, a {card.TypeLine}: {card.FlavorText}. {artistStyle}";
                 }
 
-                if (imageModel == Constants.Dalle3ModelName)
+                if (imageModel == Constants.ImageModels.Dalle3ModelName)
                 {
                     // Dalle 3 does not like the flavor text in the prompt usually. It leads to a lot of text in the images.
                     prompt = $"An image of {card.Name}, a {card.TypeLine}. {artistStyle}";
                 }
             }
 
-            if (card.Type == CardType.Instant ||
-                card.Type == CardType.Sorcery ||
-                card.Type == CardType.Enchantment ||
-                card.Type == CardType.Artifact ||
-                card.Type == CardType.Enchantment ||
-                card.Type == CardType.Artifact)
+            if (card.Type == CardType.Instant || card.Type == CardType.Sorcery || card.Type == CardType.Enchantment || card.Type == CardType.Artifact || card.Type == CardType.Enchantment || card.Type == CardType.Artifact)
             {
                 prompt = $"An image of {card.Name}: {card.FlavorText}. {artistStyle}";
             }
@@ -77,27 +72,94 @@ namespace MTG.CardGenerator
             };
         }
 
-        public static async Task<string> GenerateImage(string prompt, string model, string size, string apiKey, ILogger log, Cost cost = null)
+        /// <summary>
+        /// Generates an image using the specified model and prompt.
+        /// </summary>
+        /// <param name="prompt">the prompt</param>
+        /// <param name="model">the model</param>
+        /// <param name="size">the model size, if using DALL-E</param>
+        /// <param name="openAIApiKey">the OpenAI API key</param>
+        /// <param name="replicateApiKey">the Replicate API key</param>
+        /// <param name="cost">the cost object (updated with charge to generate the image)</param>
+        /// <param name="log">the logger object</param>
+        /// <returns>the image url</returns>
+        public static async Task<string> GenerateImage(string prompt, string model, string size, APIKey openAIApiKey, APIKey replicateApiKey, Cost cost, ILogger log)
         {
-            if (model != Constants.Dalle2ModelName && model != Constants.Dalle3ModelName)
+            log.LogInformation($"{model} image prompt: {prompt}");
+            var operationName = "Generate Card Image";
+
+            if (model == Constants.ImageModels.BlackForestLabsFluxSchnell)
             {
-                throw new Exception($"Invalid image model: {model}. Expecting '{Constants.Dalle2ModelName}' or '{Constants.Dalle3ModelName}'.");
+                var replicateClient = new ReplicateApiClient(replicateApiKey.Key);
+                var input = new
+                {
+                    prompt = prompt,
+                    num_outputs = 1,
+                    num_inference_steps = 4,
+                    output_format = "png",
+                    aspect_ratio = "1:1",
+                    output_quality = 90,
+                    disable_safety_checker = false,
+                    go_fast = true
+                };
+                var outputUrl = await replicateClient.RunPredictionAsync("black-forest-labs/flux-schnell", input);
+                cost.AddImageCost(size, model, wasUserCharged: replicateApiKey.IsUserSupplied, operationName: operationName);
+                return outputUrl;
             }
 
-            var openAIService = new OpenAIService(new OpenAIOptions()
+            if (model == Constants.ImageModels.StableDiffusion35MediumModelName)
             {
-                ApiKey = apiKey
-            });
+                var replicateClient = new ReplicateApiClient(replicateApiKey.Key);
+                var input = new
+                {
+                    prompt = prompt,
+                    cfg = 5,
+                    prompt_strength = .85,
+                    steps = 40,
+                    output_format = "png",
+                    aspect_ratio = "1:1",
+                    output_quality = 90
+                };
+                var outputUrl = await replicateClient.RunPredictionAsync("stability-ai/stable-diffusion-3.5-medium", input);
+                cost.AddImageCost(size, model, wasUserCharged: replicateApiKey.IsUserSupplied, operationName: operationName);
+                return outputUrl;
+            }
 
-            log.LogInformation($"{model} image prompt: {prompt}");
+            if (model == Constants.ImageModels.GoogleImagen3FastModelName)
+            {
+                var replicateClient = new ReplicateApiClient(replicateApiKey.Key);
+                var input = new
+                {
+                    prompt = prompt,
+                    num_inference_steps = 4,
+                    num_outputs = 1,
+                    output_format = "png",
+                    aspect_ratio = "1:1",
+                    disable_safety_checker = true,
+                    go_fast = true,
+                    megapixels = 1
+                };
 
-            if (model == Constants.Dalle2ModelName && prompt.Length > 1000)
+                var outputUrl = await replicateClient.RunPredictionAsync("google/imagen-3-fast", input);
+
+                cost.AddImageCost(size, model, wasUserCharged: replicateApiKey.IsUserSupplied, operationName: operationName);
+                return outputUrl;
+            }
+
+            if (model != Constants.ImageModels.Dalle2ModelName && model != Constants.ImageModels.Dalle3ModelName)
+            {
+                throw new Exception($"Invalid image model: {model}. Expecting '{Constants.ImageModels.Dalle2ModelName}', '{Constants.ImageModels.Dalle3ModelName}', or '{Constants.ImageModels.GoogleImagen3FastModelName}'.");
+            }
+
+            var openAIService = new OpenAIService(new OpenAIOptions() { ApiKey = openAIApiKey.Key });
+
+            if (model == Constants.ImageModels.Dalle2ModelName && prompt.Length > 1000)
             {
                 log.LogInformation("Truncating prompt to 1000 characters because this is the dall-e-2 limit.");
                 prompt = prompt[..1000];
             }
 
-            if (model == Constants.Dalle3ModelName && prompt.Length > 4000)
+            if (model == Constants.ImageModels.Dalle3ModelName && prompt.Length > 4000)
             {
                 log.LogInformation("Truncating prompt to 4000 characters because this is the dall-e-3 limit.");
                 prompt = prompt[..4000];
@@ -109,29 +171,32 @@ namespace MTG.CardGenerator
                 N = 1,
                 Size = size,
                 Model = model,
-                Quality = model == Constants.Dalle2ModelName ? null : "standard",
+                Quality = model == Constants.ImageModels.Dalle2ModelName ? null : "standard",
                 ResponseFormat = StaticValues.ImageStatics.ResponseFormat.Url
             });
 
-            cost?.AddImageCost(size, model);
+            cost.AddImageCost(size, model, wasUserCharged: openAIApiKey.IsUserSupplied, operationName: operationName);
 
             if (!imageResult.Successful)
             {
+                // TODO: Error.Message is often empty. This happens when the prompt is deemed inappropriate.
                 throw new Exception($"Failed to generate image: {imageResult.Error.Message}");
             }
 
             return imageResult.Results.First().Url;
         }
 
-        public static async Task<string> GenerateDetailedImagePrompt(ImageGenerationOptions options, string apiKey, ILogger log)
+        public static async Task<string> GenerateDetailedImagePrompt(ImageGenerationOptions options, APIKey openAIApiKey, Cost cost, ILogger log)
         {
             var openAIService = new OpenAIService(new OpenAIOptions()
             {
-                ApiKey = apiKey
+                ApiKey = openAIApiKey.Key
             });
 
             var prompt = @$"Please generate a descriptive description that could be used to depict an image of the following text (the description should reflect the artists style listed in the text). 
-The text is the following: {options.Prompt}";
+The text is the following: {options.Prompt}
+
+Only output the description, nothing else.";
 
             var result = await openAIService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
             {
@@ -143,6 +208,7 @@ The text is the following: {options.Prompt}";
                 Model = Betalgo.Ranul.OpenAI.ObjectModels.Models.Gpt_4_1,
             });
 
+            cost.AddChatCost(result, wasUserCharged: openAIApiKey.IsUserSupplied, operationName: "Generated Detailed Image Prompt", log);
             return result.Choices.First().Message.Content;
         }
     }

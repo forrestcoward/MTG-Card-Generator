@@ -204,6 +204,18 @@ export async function GetUserMagicCards(msal: IPublicClientApplication): Promise
   return GetCardsAPICall('GetMagicCards', msal);
 }
 
+export interface CardGenerationCosts {
+  userRemainingDailySpendLimit: number;
+  cost: number;
+  userIncurredCost: number;
+  serverIncurredCost: number;
+}
+
+export interface CardGenerationResult {
+  cards: MagicCard[];
+  costs: CardGenerationCosts;
+}
+
 export async function GenerateMagicCardRequest(
   userPrompt: string,
   model: string,
@@ -214,7 +226,7 @@ export async function GenerateMagicCardRequest(
   extraCreative: boolean,
   openAIApiKey: string,
   msal: IPublicClientApplication
-): Promise<MagicCard[]> {
+): Promise<CardGenerationResult> {
   let url = getApiUrl('GenerateMagicCard');
   var token = await RetrieveMsalToken(msal, ["https://mtgcardgenerator.onmicrosoft.com/api/generate.mtg.card"]);
 
@@ -252,7 +264,7 @@ export async function GenerateMagicCardRequest(
 }
 
 // New function to poll durable function status
-async function pollDurableFunctionStatus(instanceId: string, token: AuthenticationResult | undefined): Promise<MagicCard[]> {
+async function pollDurableFunctionStatus(instanceId: string, token: AuthenticationResult | undefined): Promise<CardGenerationResult> {
   const maxAttempts = 120; // Maximum polling attempts (4 minutes with 3-second intervals)
   const pollIntervalMs = 4000; // Polling interval in milliseconds
   const statusUrl = getApiUrl(`GetMagicCardGenerationStatus?instanceId=${instanceId}`);
@@ -262,17 +274,25 @@ async function pollDurableFunctionStatus(instanceId: string, token: Authenticati
       const statusResponse = await MakeHttpCall("GET", statusUrl, undefined, {}, token);
       const status = JSON.parse(statusResponse);
 
-      // Check if the orchestration has completed
+      // Check if the orchestration has completed.
       if (status.runtimeStatus === "Completed") {
         if (status.customStatus === "error") {
           // Handle custom error status
           throw new Error(status.output || "An error occurred during card generation.");
         }
-        // Parse the output from the orchestration
+        // Parse the output from the orchestration.
         const output = JSON.parse(status.output);
-        return output.cards.map((card: any) => new MagicCard(card));
+        return {
+          cards: output.cards.map((card: any) => new MagicCard(card)),
+          costs: output.costs || { 
+            userRemainingDailySpendLimit: 0, 
+            cost: 0, 
+            userIncurredCost: 0, 
+            serverIncurredCost: 0 
+          }
+        };
       } else if (status.runtimeStatus === "Failed") {
-        // Handle failure
+        // Handle failure.
         let errorMessage;
         try {
           const parsedOutput = JSON.parse(status.output);
@@ -285,7 +305,7 @@ async function pollDurableFunctionStatus(instanceId: string, token: Authenticati
         throw new Error("Card generation was canceled or terminated");
       }
 
-      // Wait before polling again
+      // Wait before polling again.
       await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
     } catch (error) {
       console.error('Error polling durable function status:', error);
@@ -333,7 +353,7 @@ async function MakeHttpCall(method:string, url:string, body?:any, params?:Record
   }
 
   try {
-    const requestInit:RequestInit ={
+    const requestInit:RequestInit = {
       method: method,
       headers: headers
     }
@@ -349,17 +369,16 @@ async function MakeHttpCall(method:string, url:string, body?:any, params?:Record
       return data;
     }
 
-    // Try to parse the error message from the API response
-    try {
-      const errorObj = JSON.parse(data);
-      if (errorObj.error) {
-        throw new Error(errorObj.error.message || errorObj.error || data);
-      }
-    } catch (parseError) {
-      // If parsing fails, use the raw error text
+    if (response.status === 401) {
+      throw new Error("Please login to generate Magic: The Gathering cards! Making an account is free and just requires an email address.");
     }
 
-    throw new Error(data);
+    var error = data;
+    try {
+      const errorObj = JSON.parse(data);
+      error = errorObj.error.message || errorObj.error || data
+    } catch (e) { }
+    throw new Error(error);
   } catch (error) {
     console.error('Error fetching data:', error);
     throw error;

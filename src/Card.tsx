@@ -545,509 +545,476 @@ interface CardDisplayState {
   availableImageUrls: GenerateImageResponse[];
 }
 
-export class CardDisplay extends React.Component<CardDisplayProps, CardDisplayState> {
+function CardDisplayInner(props: CardDisplayProps) {
+  const userContext = React.useContext(UserContext);
+  const [state, setState] = React.useState<CardDisplayState>({
+    card: props.card,
+    editMode: false,
+    nameUpdate: props.card.name,
+    oracleTextUpdate: props.card.oracleText,
+    typeUpdate: props.card.typeLine,
+    manaCostUpdate: props.card.manaCost,
+    powerAndToughnessUpdate: props.card.pt,
+    useTemporaryImage: true,
+    showCardMenu: props.showCardMenu,
+    increaseSizeAllowed: true,
+    decreaseSizeAllowed: true,
+    cardWidth: props.cardWidth,
+    showSizeAdjustmentButtons: !isMobileDevice() || Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0) > 900,
+    imageEditorPrompt: "",
+    imageEditorError: "",
+    showImageEditor: false,
+    isImageLoading: false,
+    availableImageUrls: props.card.alternativeImageUrls?.map(url => ({ imageUrl: url, temporaryUrl: url })) || [],
+  });
 
-  constructor(props: CardDisplayProps) {
-    super(props);
+  React.useEffect(() => {
+    state.card.adjustFontSize();
+  }, [state.card.oracleText, state.card.typeLine, state.card.name, state.editMode]);
 
-    const viewportWidth = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
+  function handleImagePromptUpdate(event: React.ChangeEvent<HTMLTextAreaElement>) {
+    setState(prev => ({ ...prev, imageEditorPrompt: event.target.value }));
+  }
 
-    let availableCardImagesUrls:GenerateImageResponse[] = []
+  function handleCardNameUpdate(event: React.ChangeEvent<HTMLInputElement>) {
+    setState(prev => ({ ...prev, nameUpdate: event.target.value }));
+  }
 
-    if (this.props.card.imageUrl || this.props.card.temporaryImageUrl) {
-      availableCardImagesUrls.push({"imageUrl": this.props.card.imageUrl, "temporaryUrl": this.props.card.temporaryImageUrl})
+  function handleCardTypeUpdate(event: React.ChangeEvent<HTMLInputElement>) {
+    setState(prev => ({ ...prev, typeUpdate: event.target.value }));
+  }
+
+  function handleCardOracleTextUpdate(event: React.ChangeEvent<HTMLTextAreaElement>) {
+    setState(prev => ({ ...prev, oracleTextUpdate: event.target.value }));
+  }
+
+  function handleCardManaCostUpdate(event: React.ChangeEvent<HTMLInputElement>) {
+    setState(prev => ({ ...prev, manaCostUpdate: event.target.value.trim() }));
+  }
+
+  function handleCardPowerAndToughnessUpdate(event: React.ChangeEvent<HTMLInputElement>) {
+    setState(prev => ({ ...prev, powerAndToughnessUpdate: event.target.value.trim() }));
+  }
+
+  function updateEditMode() {
+    if (!props.allowEdits) {
+      return;
     }
 
-    this.props.card.alternativeImageUrls?.forEach(url => {
-      availableCardImagesUrls.push({"imageUrl": url, "temporaryUrl": url})
-    })
-
-    this.state = {
-      card: props.card,
-      editMode: false,
-      nameUpdate: props.card.name,
-      oracleTextUpdate: props.card.oracleText,
-      typeUpdate: props.card.typeLine,
-      manaCostUpdate: props.card.manaCost,
-      powerAndToughnessUpdate: props.card.pt,
-      useTemporaryImage: true,
-      showCardMenu: props.showCardMenu,
-      increaseSizeAllowed: true,
-      decreaseSizeAllowed: true,
-      cardWidth: props.cardWidth,
-      showSizeAdjustmentButtons: !isMobileDevice() || viewportWidth > 900,
-      imageEditorPrompt: "",
-      imageEditorError: "",
-      showImageEditor: false,
-      isImageLoading: false,
-      availableImageUrls: availableCardImagesUrls,
-    };
-
-    this.handleCardNameUpdate = this.handleCardNameUpdate.bind(this);
-    this.handleCardOracleTextUpdate = this.handleCardOracleTextUpdate.bind(this);
-    this.handleCardTypeUpdate = this.handleCardTypeUpdate.bind(this);
-    this.handleCardManaCostUpdate = this.handleCardManaCostUpdate.bind(this);
-    this.handleCardPowerAndToughnessUpdate = this.handleCardPowerAndToughnessUpdate.bind(this);
-    this.handleImagePromptUpdate = this.handleImagePromptUpdate.bind(this);
-    this.updateImageUrl = this.updateImageUrl.bind(this);
-    this.getImagePrompt = this.getImagePrompt.bind(this);
-    this.toggleShowImageEditor = this.toggleShowImageEditor.bind(this);
+    var updatedCard = MagicCard.clone(state.card, true);
+    updatedCard.name = state.nameUpdate;
+    updatedCard.oracleText = state.oracleTextUpdate;
+    updatedCard.typeLine = state.typeUpdate;
+    updatedCard.manaCost = state.manaCostUpdate;
+    updatedCard.pt = state.powerAndToughnessUpdate;
+    setState(prev => ({ ...prev, editMode: !prev.editMode, card: updatedCard }));
   }
 
-  componentDidUpdate(prevProps: Readonly<CardDisplayProps>, prevState: Readonly<CardDisplayState>, snapshot?: any): void {
-    if (this.state.card.oracleText != prevState.card.oracleText || 
-      this.state.card.typeLine != prevState.card.typeLine ||
-      this.state.card.name != prevState.card.name ||
-      this.state.editMode != prevState.editMode) {
-        this.state.card.adjustFontSize()
-    }
-  }
-
-  componentDidMount(): void {
-    this.state.card.adjustFontSize()
-  }
-
-  handleImagePromptUpdate(event: React.ChangeEvent<HTMLTextAreaElement>) {
-    this.setState({ imageEditorPrompt: event.target.value });
-  }
-
-  handleCardNameUpdate(event: React.ChangeEvent<HTMLInputElement>) {
-    this.setState({ nameUpdate: event.target.value });
-  }
-
-  handleCardTypeUpdate(event: React.ChangeEvent<HTMLInputElement>) {
-    this.setState({ typeUpdate: event.target.value });
-  }
-
-  handleCardOracleTextUpdate(event: React.ChangeEvent<HTMLTextAreaElement>) {
-    this.setState({ oracleTextUpdate: event.target.value });
-  }
-
-  handleCardManaCostUpdate(event: React.ChangeEvent<HTMLInputElement>) {
-    this.setState({ manaCostUpdate: event.target.value.trim() });
-  }
-
-  handleCardPowerAndToughnessUpdate(event: React.ChangeEvent<HTMLInputElement>) {
-    this.setState({ powerAndToughnessUpdate: event.target.value.trim() });
-  }
-
-  updateEditMode() {
-    if (!this.props.allowEdits) {
-      return
-    }
-
-    var updatedCard = MagicCard.clone(this.state.card, true)
-    updatedCard.name = this.state.nameUpdate
-    updatedCard.oracleText = this.state.oracleTextUpdate
-    updatedCard.typeLine = this.state.typeUpdate
-    updatedCard.manaCost = this.state.manaCostUpdate
-    updatedCard.pt = this.state.powerAndToughnessUpdate
-    this.setState({ editMode: !this.state.editMode, card: updatedCard })
-  }
-
-  handleCardDownload() {
-    // Bit of a hack, but html-to-image cannot render the card if the image url is directly from Dall-e due to CORS.
-    // We need to serve up the compressed images we stored in our own backend instead.
-    // Note that the Dall-e image URL is short lived and will not last ever, we just display it initially because it is higher resolution.
-    // So when the user wants to download, we need to temporarily display our compressed version of the image.
-    this.setState({ useTemporaryImage: false })
-    this.state.card.toImage().then(blob => {
+  function handleCardDownload() {
+    setState(prev => ({ ...prev, useTemporaryImage: false }));
+    state.card.toImage().then(blob => {
       if (blob != null) {
-        saveAs(blob, `${this.state.card.name}.png`);
+        saveAs(blob, `${state.card.name}.png`);
       }
     }).catch(error => {
-      console.error("Error downloading card as image: " + error.message)
+      console.error("Error downloading card as image: " + error.message);
     }).finally(() => {
-      this.setState({ useTemporaryImage: true })
-    })
+      setState(prev => ({ ...prev, useTemporaryImage: true }));
+    });
   }
 
-  handleArtDownload() {
-    // Temporary art is higher quality, so prefer that if we have it.
-    var img = this.state.card.temporaryImageUrl ? this.state.card.temporaryImageUrl : this.state.card.imageUrl
+  function handleArtDownload() {
+    var img = state.card.temporaryImageUrl ? state.card.temporaryImageUrl : state.card.imageUrl;
     window.open(img, '_blank');
   }
 
-  increaseCardSize(increase: number) {
-    var newWidth = this.state.cardWidth + increase
-    this.state.card.adjustCardSize(newWidth)
-    this.updateSizeToggles(newWidth)
+  function increaseCardSize(increase: number) {
+    var newWidth = state.cardWidth + increase;
+    state.card.adjustCardSize(newWidth);
+    updateSizeToggles(newWidth);
   }
 
-  decreaseCardSize(decrease: number) {
-    var newWidth = this.state.cardWidth - decrease
-    this.state.card.adjustCardSize(newWidth)
-    this.updateSizeToggles(newWidth)
+  function decreaseCardSize(decrease: number) {
+    var newWidth = state.cardWidth - decrease;
+    state.card.adjustCardSize(newWidth);
+    updateSizeToggles(newWidth);
   }
 
-  updateImageUrl(imageUrls: GenerateImageResponse) {
-    var updatedCard = MagicCard.clone(this.state.card, true)
-    updatedCard.imageUrl = imageUrls.imageUrl
-    updatedCard.temporaryImageUrl = imageUrls.temporaryUrl
-    this.setState({ card: updatedCard })
+  function updateImageUrl(imageUrls: GenerateImageResponse) {
+    var updatedCard = MagicCard.clone(state.card, true);
+    updatedCard.imageUrl = imageUrls.imageUrl;
+    updatedCard.temporaryImageUrl = imageUrls.temporaryUrl;
+    setState(prev => ({ ...prev, card: updatedCard }));
   }
 
-  toggleShowImageEditor() {
-    this.setState({showImageEditor: !this.state.showImageEditor})
+  function toggleShowImageEditor() {
+    setState(prev => ({ ...prev, showImageEditor: !prev.showImageEditor }));
   }
 
-  getImagePrompt() {
-    this.setState({ isImageLoading: true, imageEditorError: "" })
-    GetImagePrompt(this.state.card, msalInstance).then(prompt => {
-      this.setState({ isImageLoading:false, imageEditorError: "", imageEditorPrompt: prompt})
+  function getImagePrompt() {
+    setState(prev => ({ ...prev, isImageLoading: true, imageEditorError: "" }));
+    GetImagePrompt(state.card, msalInstance).then(prompt => {
+      setState(prev => ({ ...prev, isImageLoading: false, imageEditorError: "", imageEditorPrompt: prompt }));
     }).catch((error: Error) => {
       let msg = error.message;
-      this.setState({ isImageLoading: false, imageEditorError: msg })
+      setState(prev => ({ ...prev, isImageLoading: false, imageEditorError: msg }));
     });
   }
 
-  generateNewImage() {
-    this.setState({ isImageLoading: true, imageEditorError: "" })
-    const openAIApiKey = (this.context as UserContextType).openAIAPIKey;
-    GenerateNewCardImage(this.state.imageEditorPrompt, this.state.card.databaseId, openAIApiKey, msalInstance).then(imageUrls => {
-      var updatedCard = MagicCard.clone(this.state.card, true)
-      updatedCard.imageUrl = imageUrls.imageUrl
-      updatedCard.temporaryImageUrl = imageUrls.temporaryUrl
-      this.state.availableImageUrls.push(imageUrls)
-      this.setState({ 
-        card: updatedCard, 
-        isImageLoading:false, 
-        imageEditorError: "", 
-        availableImageUrls: this.state.availableImageUrls })
+  function generateNewImage() {
+    setState(prev => ({ ...prev, isImageLoading: true, imageEditorError: "" }));
+    var openAIApiKey = userContext?.openAIAPIKey;
+    if (!openAIApiKey) {
+      openAIApiKey = "";
+    }
+    GenerateNewCardImage(state.imageEditorPrompt, state.card.databaseId, openAIApiKey, msalInstance).then(imageUrls => {
+      var updatedCard = MagicCard.clone(state.card, true);
+      updatedCard.imageUrl = imageUrls.imageUrl;
+      updatedCard.temporaryImageUrl = imageUrls.temporaryUrl;
+      const newAvailableImageUrls = [...state.availableImageUrls, imageUrls];
+      setState(prev => ({
+        ...prev,
+        card: updatedCard,
+        isImageLoading: false,
+        imageEditorError: "",
+        availableImageUrls: newAvailableImageUrls
+      }));
+      if (userContext?.refreshUser) userContext.refreshUser();
     }).catch((error: Error) => {
       let msg = error.message;
       if (msg.includes("This request has been blocked by our content filters") ||
-      msg.includes("Your request was rejected as a result of our safety system")) {
+        msg.includes("Your request was rejected as a result of our safety system")) {
         msg = "Your prompt was deemed inappropriate and blocked by automated safety systems."
       }
-      this.setState({ isImageLoading: false, imageEditorError: msg })
+      setState(prev => ({ ...prev, isImageLoading: false, imageEditorError: msg }));
     });
   }
 
-  private updateSizeToggles(newWidth: number) {
+  function updateSizeToggles(newWidth: number) {
     if (newWidth <= 330) {
-      this.setState({ increaseSizeAllowed: true, decreaseSizeAllowed: false, cardWidth: newWidth })
+      setState(prev => ({ ...prev, increaseSizeAllowed: true, decreaseSizeAllowed: false, cardWidth: newWidth }));
     }
 
     if (newWidth >= 330) {
-      this.setState({ increaseSizeAllowed: true, decreaseSizeAllowed: true, cardWidth: newWidth })
+      setState(prev => ({ ...prev, increaseSizeAllowed: true, decreaseSizeAllowed: true, cardWidth: newWidth }));
     }
   }
 
-  render() {
-    const card = this.state.card;
-    const cardIsTutorialCard = card.databaseId == "-1" // Tutorial card.
+  const card = state.card;
+  const cardIsTutorialCard = card.databaseId == "-1";
 
-    const oracleEditTextAreaRows = card.textDisplay.length * 3;
-    const cardMenuIconFontSize = "40px";
-    const optionsMenuItemStyle : React.CSSProperties = {marginLeft:5}
-    const optionsMenuIconStyle : React.CSSProperties = {fontSize:30}
+  const oracleEditTextAreaRows = card.textDisplay.length * 3;
+  const cardMenuIconFontSize = "40px";
+  const optionsMenuItemStyle : React.CSSProperties = {marginLeft:5};
+  const optionsMenuIconStyle : React.CSSProperties = {fontSize:30};
 
-    const menuItems = [
-      {
-        key: '1',
-        label: (
-          <Tooltip placement="left">
-            <CloudDownloadOutlined style={optionsMenuIconStyle} />
-            <span style={optionsMenuItemStyle}>Download Card</span>
-          </Tooltip>
-        ),
-        onClick: this.handleCardDownload.bind(this)
-      },
-      {
-        key: '2',
-        label: (
-          <Tooltip placement="left">
-            <CloudDownloadOutlined style={optionsMenuIconStyle} />
-            <span style={optionsMenuItemStyle}>Download Art</span>
-          </Tooltip>
-        ),
-        onClick: this.handleArtDownload.bind(this)
-      },
-      this.state.editMode ? 
-      {
-        key: '3',
-        label: (
-          <Tooltip title="Save the card text" placement='left'>
-            <SaveFilled style={optionsMenuIconStyle} />
-            <span style={optionsMenuItemStyle}>Save</span>
-          </Tooltip>
-        ),
-        onClick: this.updateEditMode.bind(this)
-      }
-      : 
-      {
-        key: '3',
-        label: (
-          <Tooltip title="Modify the card text" placement='left'>
-            <EditOutlined style={optionsMenuIconStyle} />
-            <span style={optionsMenuItemStyle}>Edit Text</span>
-          </Tooltip>
-        ),
-        onClick: this.updateEditMode.bind(this)
-      }
-      ];
-
-    const copyLinkMenuItem = { 
-      key: '4',
+  const menuItems = [
+    {
+      key: '1',
       label: (
-        <div>
-          <CopyOutlined style={optionsMenuIconStyle} />
-          <span style={optionsMenuItemStyle}>Copy Link</span>
-        </div>
-      ),
-      onClick: async () => {
-        await copyTextToClipboard(card.getCardUrl())
-      }
-    }
-
-    const updateImageItem = {
-      key: '5',
-      label: (
-        <Tooltip title="Regenerate the card image" placement='left'>
-          <FileImageOutlined style={optionsMenuIconStyle} />
-          <span style={optionsMenuItemStyle}>Image Editor</span>
+        <Tooltip placement="left">
+          <CloudDownloadOutlined style={optionsMenuIconStyle} />
+          <span style={optionsMenuItemStyle}>Download Card</span>
         </Tooltip>
       ),
-      onClick: async () => {
-        this.toggleShowImageEditor()
-      }
-    }
-
-    if (card.databaseId) {
-      menuItems.push(copyLinkMenuItem)
-    }
-
-    if (this.props.allowImageUpdate && !cardIsTutorialCard)
+      onClick: handleCardDownload
+    },
     {
-      menuItems.push(updateImageItem)
+      key: '2',
+      label: (
+        <Tooltip placement="left">
+          <CloudDownloadOutlined style={optionsMenuIconStyle} />
+          <span style={optionsMenuItemStyle}>Download Art</span>
+        </Tooltip>
+      ),
+      onClick: handleArtDownload
+    },
+    state.editMode ? 
+    {
+      key: '3',
+      label: (
+        <Tooltip title="Save the card text" placement='left'>
+          <SaveFilled style={optionsMenuIconStyle} />
+          <span style={optionsMenuItemStyle}>Save</span>
+        </Tooltip>
+      ),
+      onClick: updateEditMode
     }
+    : 
+    {
+      key: '3',
+      label: (
+        <Tooltip title="Modify the card text" placement='left'>
+          <EditOutlined style={optionsMenuIconStyle} />
+          <span style={optionsMenuItemStyle}>Edit Text</span>
+        </Tooltip>
+      ),
+      onClick: updateEditMode
+    }
+  ];
 
-    const height = ((this.props.cardWidth * 3.6) / 2.5)
-    const imageEditorWidth = isMobileDevice() ? this.props.cardWidth : this.props.cardWidth - 100
-    const haveCardImage = card.imageUrl || card.temporaryImageUrl
+  const copyLinkMenuItem = { 
+    key: '4',
+    label: (
+      <div>
+        <CopyOutlined style={optionsMenuIconStyle} />
+        <span style={optionsMenuItemStyle}>Copy Link</span>
+      </div>
+    ),
+    onClick: async () => {
+      await copyTextToClipboard(card.getCardUrl())
+    }
+  }
 
-    let fullCard = (
-      <div style={{display:"flex", flexWrap:"wrap"}}>
-        <div>
-          <div id={`card-${card.id}`} className="card-container" style={{width: `${this.props.cardWidth}px`, height: `${height}px`}}>
-            <div id={`card-background-${card.id}`} className={card.cardDivClassName}></div>
-              <div className="card-frame">
-                <div id={`title-container-${card.id}`} className={card.cardFrameHeaderClassName}>
-                  <div id={`name-${card.id}`} style={{alignSelf:"center"}} className="name name-type-size">
-                    {!this.state.editMode ?
-                      <div>{card.name}</div> :
-                      <input className="card-edit-name" type="text" value={this.state.nameUpdate} onChange={this.handleCardNameUpdate} />
-                    }
-                  </div>
-                  {!this.state.editMode ?
-                      <div id={`mana-${card.id}`} className="mana-symbols">
-                        {card.manaCostTokens.map((manaCostToken, i) => (
-                          <i key={card.id + "-manaToken-"+ i} className={MagicCard.getManaClassNameForTitle(manaCostToken) + " manaCost " + `manaCost-${card.id}`} id="mana-icon"></i>
-                        ))}
-                      </div> :
-                      <div className="card-edit-manaCost-container">
-                        <input className="card-edit-manaCost" type="text" value={this.state.manaCostUpdate} onChange={this.handleCardManaCostUpdate} />
-                      </div>
+  const updateImageItem = {
+    key: '5',
+    label: (
+      <Tooltip title="Regenerate the card image" placement='left'>
+        <FileImageOutlined style={optionsMenuIconStyle} />
+        <span style={optionsMenuItemStyle}>Image Editor</span>
+      </Tooltip>
+    ),
+    onClick: async () => {
+      toggleShowImageEditor()
+    }
+  }
+
+  if (card.databaseId) {
+    menuItems.push(copyLinkMenuItem)
+  }
+
+  if (props.allowImageUpdate && !cardIsTutorialCard)
+  {
+    menuItems.push(updateImageItem)
+  }
+
+  const height = ((props.cardWidth * 3.6) / 2.5);
+  const imageEditorWidth = isMobileDevice() ? props.cardWidth : props.cardWidth - 100;
+  const haveCardImage = card.imageUrl || card.temporaryImageUrl;
+
+  let fullCard = (
+    <div style={{display:"flex", flexWrap:"wrap"}}>
+      <div>
+        <div id={`card-${card.id}`} className="card-container" style={{width: `${props.cardWidth}px`, height: `${height}px`}}>
+          <div id={`card-background-${card.id}`} className={card.cardDivClassName}></div>
+            <div className="card-frame">
+              <div id={`title-container-${card.id}`} className={card.cardFrameHeaderClassName}>
+                <div id={`name-${card.id}`} style={{alignSelf:"center"}} className="name name-type-size">
+                  {!state.editMode ?
+                    <div>{card.name}</div> :
+                    <input className="card-edit-name" type="text" value={state.nameUpdate} onChange={handleCardNameUpdate} />
                   }
                 </div>
-                <div className={card.cardFrameArtClassName}>
-                  {!haveCardImage ? 
-                    <div style={{width:"100%", height:"100%", backgroundColor:"black", color:"white", position:"relative"}}>
-                      <Button style={{position:"absolute", bottom:0, right:0, margin:5, display: (this.state.showImageEditor || !this.props.allowImageUpdate || !this.state.useTemporaryImage) ? 'none' : 'inline-block' }} 
-                      type="primary" 
-                      icon={<RightCircleOutlined />} 
-                      size="small" 
-                      onClick={() => {this.setState({showImageEditor: true})}}>
-                        Create Image
-                      </Button>
+                {!state.editMode ?
+                    <div id={`mana-${card.id}`} className="mana-symbols">
+                      {card.manaCostTokens.map((manaCostToken, i) => (
+                        <i key={card.id + "-manaToken-"+ i} className={MagicCard.getManaClassNameForTitle(manaCostToken) + " manaCost " + `manaCost-${card.id}`} id="mana-icon"></i>
+                      ))}
+                    </div> :
+                    <div className="card-edit-manaCost-container">
+                      <input className="card-edit-manaCost" type="text" value={state.manaCostUpdate} onChange={handleCardManaCostUpdate} />
                     </div>
-                  : (this.state.useTemporaryImage && card.temporaryImageUrl) ?
-                    <Image onLoad={() => this.state.card.adjustFontSize()} preview={this.props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.temporaryImageUrl ? card.temporaryImageUrl : card.imageUrl} /> :
-                    <Image onLoad={() => this.state.card.adjustFontSize()} preview={this.props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.imageUrl} />
-                  }
-                </div>
-                <div id={`type-container-${card.id}`} className={card.cardFrameTypeLineClassName}>
-                  {!this.state.editMode ?
-                      <h1 id={`type-${card.id}`} className="type name-type-size">{card.typeLine}</h1> :
-                      <input className="card-edit-type" type="text" value={this.state.typeUpdate} onChange={this.handleCardTypeUpdate} />
-                    }
-                  <div id={`set-${card.id}`} className="mana-symbols">
-                    <i className="ms ms-dfc-ignite" id="mana-icon"></i>
-                  </div>
-                </div>
-                <div className={card.cardFrameTextBoxClassName}>
-                  <div className={card.cardFrameContentClassName}>
-                    <div className="description ftb-inner-margin">
-                      {!this.state.editMode ?
-                        <div>
-                          {card.textDisplay.map((line, i) => (
-                            <p key={card.id + "-text-" + i} dangerouslySetInnerHTML={{ __html: line }}></p>
-                          ))}
-                        </div> 
-                        :
-                        <textarea className="card-edit-text" value={this.state.oracleTextUpdate} rows={oracleEditTextAreaRows} onChange={this.handleCardOracleTextUpdate} />
-                      }
-                    </div>
-                    <p className="description">
-                    </p>
-                    <p className="flavour-text">
-                      {card.flavorText}
-                    </p>
-                    {card.pt &&
-                      <div className="power-and-toughness-frame">
-                        <div id={`pt-${card.id}`} className="power-and-toughness power-and-toughness-size">
-                          {!this.state.editMode ?
-                            <div>{card.pt}</div> :
-                            <input className="card-edit-pt" type="text" value={this.state.powerAndToughnessUpdate} onChange={this.handleCardPowerAndToughnessUpdate} />
-                          }
-                        </div>
-                      </div>
-                    }
-                    </div>
-                </div>
-                <div id={`frame-bottom-${card.id}`} className="frame-bottom-info inner-margin">
-                  <div className="fbi-left">
-                    <p>{card.setNumberDisplay} {card.rarityDisplay}</p>
-                    <p>OpenAI &#x2022; <img className="paintbrush" src={whitePaintBrush} alt="paintbrush icon" />Custom Magic</p>
-                  </div>
-                  <div className="fbi-center" onClick={(e) => { this.updateEditMode()}}></div>
-                  <div className="fbi-right">
-                      &#x99; &amp; &#169; 2023 Chat GPT Turbo
-                  </div>
-                </div>
-              </div>
-          </div>
-          { this.state.showCardMenu &&
-          <div className="card-menu">
-            <Tooltip title={<div><b>Prompt: </b>{this.state.card.userPrompt}</div>} placement="left">
-              <QuestionCircleOutlined style={{fontSize: cardMenuIconFontSize, marginLeft:3}} />
-            </Tooltip>
-            { card.explanation ?
-            <Tooltip title={
-              <div>
-                <b>About This Card</b>
-                <br/>
-                <br/>
-                {card.explanation}
-                <br/>
-                <br/>
-                {card.funnyExplanation}
-              </div>
-            } overlayInnerStyle={{width:320, backgroundColor:'rgba(0, 0, 0, 0.93)' }} placement="left" >
-              <InfoCircleOutlined style={{fontSize: cardMenuIconFontSize, marginLeft:3}} />
-            </Tooltip>
-            : null
-            }
-            { this.state.showSizeAdjustmentButtons &&
-            <Button type="text" size="middle" shape="circle" disabled={!this.state.increaseSizeAllowed}>
-              <ZoomInOutlined onClick={() => this.increaseCardSize(30)} style={{fontSize: cardMenuIconFontSize, marginRight:-4}} />
-            </Button>
-            }
-            { this.state.showSizeAdjustmentButtons &&
-            <Button type="text" size="middle" shape="circle" disabled={!this.state.decreaseSizeAllowed}>
-              <ZoomOutOutlined onClick={() => this.decreaseCardSize(30)} style={{fontSize: cardMenuIconFontSize, marginRight:-7}} />
-            </Button>
-            }
-            <Dropdown menu={{items: menuItems}}>
-              <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
-                <CaretDownFilled style={{fontSize: cardMenuIconFontSize}} />
-              </a>
-            </Dropdown>
-          </div>
-          }
-        </div>
-        { /* Image editor. */ }
-        { (this.props.allowImageUpdate && this.state.showImageEditor && !cardIsTutorialCard) &&
-          <div id={`card-image-flow-${card.id}`} className="card-image-update-container" style={{width: `${imageEditorWidth}px`, display:"flex", alignItems:"center", flexDirection:"column" }}>
-            <table style={{width: "100%"}}>
-              <tbody>
-                <tr>
-                  <td style={{display: "flex", position: "relative"}}>
-                    { /* Invisible spacer to maintain center alignment. */ }
-                    <div style={{visibility: 'hidden', flex: 1}} />
-                    { /* Centered content. */ }
-                    <p style={{color: "white", margin:0, position: 'absolute', top: '50%', transform: 'translateY(-50%)', width: '100%', textAlign: 'center'}}>Image Prompt</p>
-                    { /* Right-aligned button. */ }
-                    <div style={{flex: 1, display: 'flex', justifyContent: 'flex-end', margin:8}}>
-                      <Button size="small" type="default" icon={<CloseOutlined />} onClick={() => {this.setState({showImageEditor: false})}} />
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            { /* Image prompt text area. */ }
-            <table style={{marginLeft:10, marginRight:10, width:"-webkit-fill-available"}}>
-              <tbody>
-                <tr>
-                  <td>
-                    <textarea disabled={this.state.isImageLoading} maxLength={1500} onChange={this.handleImagePromptUpdate} value={this.state.imageEditorPrompt} 
-                    style={{height:120, width:"100%", resize:"none"}} />
-                  </td>
-                  <td>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            { /* Generate buttons and loading icon. */ }
-            <table>
-              <tbody>
-                <tr>
-                  <td>
-                    <Button 
-                      className={this.state.isImageLoading ? "custom-disabled-btn" : ""} 
-                      size="small" 
-                      type="primary" 
-                      disabled={this.state.isImageLoading} 
-                      style={{ marginTop:3}} 
-                      icon={<CaretRightOutlined />}
-                      onClick={() => this.generateNewImage()}>
-                      Generate Image
-                    </Button>
-                    <Button 
-                      className={this.state.isImageLoading ? "custom-disabled-btn" : ""} 
-                      size="small" 
-                      type="primary" 
-                      disabled={this.state.isImageLoading} 
-                      style={{marginLeft:10, marginTop:10}} 
-                      icon={<BulbOutlined />}
-                      onClick={() => this.getImagePrompt()}>
-                      Generate Prompt
-                    </Button>
-                  </td>
-                </tr>
-                { this.state.isImageLoading &&
-                <tr style={{display:"grid", justifyContent:"center", marginTop:5}}>
-                  <td>
-                    <LoadingSpinner isLoading={this.state.isImageLoading} />
-                  </td>
-                </tr>
                 }
-              </tbody>
-            </table>
-            { this.state.imageEditorError &&
-            <div style={{marginLeft: 10}}>
-              <h3 style={{ color: 'red' }}>{this.state.imageEditorError}</h3>
-            </div>
-            }
-            { /* Card image gallery. */ }
-            <div>
-              <div style={{margin:10, display:"flex", flexWrap:"wrap", justifyContent:"center"}}>
-              {
-                this.state.availableImageUrls.map(imageUrl => (
-                  <div style={{margin:3}}  className="image-hover-animation">
-                    <Image style={{border:"1px solid #cbcaca"}} height={90} width={90} preview={false} src={imageUrl.imageUrl ?? imageUrl.temporaryUrl} onClick={() => {this.updateImageUrl(imageUrl)}} />
+              </div>
+              <div className={card.cardFrameArtClassName}>
+                {!haveCardImage ? 
+                  <div style={{width:"100%", height:"100%", backgroundColor:"black", color:"white", position:"relative"}}>
+                    <Button style={{position:"absolute", bottom:0, right:0, margin:5, display: (state.showImageEditor || !props.allowImageUpdate || !state.useTemporaryImage) ? 'none' : 'inline-block' }} 
+                    type="primary" 
+                    icon={<RightCircleOutlined />} 
+                    size="small" 
+                    onClick={() => {setState(prev => ({ ...prev, showImageEditor: true }))}}>
+                      Create Image
+                    </Button>
                   </div>
-                ))
-              }
+                : (state.useTemporaryImage && card.temporaryImageUrl) ?
+                  <Image onLoad={() => state.card.adjustFontSize()} preview={props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.temporaryImageUrl ? card.temporaryImageUrl : card.imageUrl} /> :
+                  <Image onLoad={() => state.card.adjustFontSize()} preview={props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.imageUrl} />
+                }
+              </div>
+              <div id={`type-container-${card.id}`} className={card.cardFrameTypeLineClassName}>
+                {!state.editMode ?
+                    <h1 id={`type-${card.id}`} className="type name-type-size">{card.typeLine}</h1> :
+                    <input className="card-edit-type" type="text" value={state.typeUpdate} onChange={handleCardTypeUpdate} />
+                  }
+                <div id={`set-${card.id}`} className="mana-symbols">
+                  <i className="ms ms-dfc-ignite" id="mana-icon"></i>
+                </div>
+              </div>
+              <div className={card.cardFrameTextBoxClassName}>
+                <div className={card.cardFrameContentClassName}>
+                  <div className="description ftb-inner-margin">
+                    {!state.editMode ?
+                      <div>
+                        {card.textDisplay.map((line, i) => (
+                          <p key={card.id + "-text-" + i} dangerouslySetInnerHTML={{ __html: line }}></p>
+                        ))}
+                      </div> 
+                      :
+                      <textarea className="card-edit-text" value={state.oracleTextUpdate} rows={oracleEditTextAreaRows} onChange={handleCardOracleTextUpdate} />
+                    }
+                  </div>
+                  <p className="description">
+                  </p>
+                  <p className="flavour-text">
+                    {card.flavorText}
+                  </p>
+                  {card.pt &&
+                    <div className="power-and-toughness-frame">
+                      <div id={`pt-${card.id}`} className="power-and-toughness power-and-toughness-size">
+                        {!state.editMode ?
+                          <div>{card.pt}</div> :
+                          <input className="card-edit-pt" type="text" value={state.powerAndToughnessUpdate} onChange={handleCardPowerAndToughnessUpdate} />
+                        }
+                      </div>
+                    </div>
+                  }
+                  </div>
+              </div>
+              <div id={`frame-bottom-${card.id}`} className="frame-bottom-info inner-margin">
+                <div className="fbi-left">
+                  <p>{card.setNumberDisplay} {card.rarityDisplay}</p>
+                  <p>OpenAI &#x2022; <img className="paintbrush" src={whitePaintBrush} alt="paintbrush icon" />Custom Magic</p>
+                </div>
+                <div className="fbi-center" onClick={(e) => { updateEditMode()}}></div>
+                <div className="fbi-right">
+                    &#169; 2025 MTG Card Generator
+                </div>
               </div>
             </div>
-          </div>
+        </div>
+        { state.showCardMenu &&
+        <div className="card-menu">
+          <Tooltip title={<div><b>Prompt: </b>{state.card.userPrompt}</div>} placement="left">
+            <QuestionCircleOutlined style={{fontSize: cardMenuIconFontSize, marginLeft:3}} />
+          </Tooltip>
+          { card.explanation ?
+          <Tooltip title={
+            <div>
+              <b>About This Card</b>
+              <br/>
+              <br/>
+              {card.explanation}
+              <br/>
+              <br/>
+              {card.funnyExplanation}
+            </div>
+          } overlayInnerStyle={{width:320, backgroundColor:'rgba(0, 0, 0, 0.93)' }} placement="left" >
+            <InfoCircleOutlined style={{fontSize: cardMenuIconFontSize, marginLeft:3}} />
+          </Tooltip>
+          : null
+          }
+          { state.showSizeAdjustmentButtons &&
+          <Button type="text" size="middle" shape="circle" disabled={!state.increaseSizeAllowed}>
+            <ZoomInOutlined onClick={() => increaseCardSize(30)} style={{fontSize: cardMenuIconFontSize, marginRight:-4}} />
+          </Button>
+          }
+          { state.showSizeAdjustmentButtons &&
+          <Button type="text" size="middle" shape="circle" disabled={!state.decreaseSizeAllowed}>
+            <ZoomOutOutlined onClick={() => decreaseCardSize(30)} style={{fontSize: cardMenuIconFontSize, marginRight:-7}} />
+          </Button>
+          }
+          <Dropdown menu={{items: menuItems}}>
+            <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
+              <CaretDownFilled style={{fontSize: cardMenuIconFontSize}} />
+            </a>
+          </Dropdown>
+        </div>
         }
       </div>
-    )
+      { /* Image editor. */ }
+      { (props.allowImageUpdate && state.showImageEditor && !cardIsTutorialCard) &&
+        <div id={`card-image-flow-${card.id}`} className="card-image-update-container" style={{width: `${imageEditorWidth}px`, display:"flex", alignItems:"center", flexDirection:"column" }}>
+          <table style={{width: "100%"}}>
+            <tbody>
+              <tr>
+                <td style={{display: "flex", position: "relative"}}>
+                  { /* Invisible spacer to maintain center alignment. */ }
+                  <div style={{visibility: 'hidden', flex: 1}} />
+                  { /* Centered content. */ }
+                  <p style={{color: "white", margin:0, position: 'absolute', top: '50%', transform: 'translateY(-50%)', width: '100%', textAlign: 'center'}}>Image Prompt</p>
+                  { /* Right-aligned button. */ }
+                  <div style={{flex: 1, display: 'flex', justifyContent: 'flex-end', margin:8}}>
+                    <Button size="small" type="default" icon={<CloseOutlined />} onClick={() => {setState(prev => ({ ...prev, showImageEditor: false }))}} />
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          { /* Image prompt text area. */ }
+          <table style={{marginLeft:10, marginRight:10, width:"-webkit-fill-available"}}>
+            <tbody>
+              <tr>
+                <td>
+                  <textarea disabled={state.isImageLoading} maxLength={1500} onChange={handleImagePromptUpdate} value={state.imageEditorPrompt} 
+                  style={{height:120, width:"100%", resize:"none"}} />
+                </td>
+                <td>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          { /* Generate buttons and loading icon. */ }
+          <table>
+            <tbody>
+              <tr>
+                <td>
+                  <Button 
+                    className={state.isImageLoading ? "custom-disabled-btn" : ""} 
+                    size="small" 
+                    type="primary" 
+                    disabled={state.isImageLoading} 
+                    style={{ marginTop:3}} 
+                    icon={<CaretRightOutlined />}
+                    onClick={() => generateNewImage()}>
+                    Generate Image
+                  </Button>
+                  <Button 
+                    className={state.isImageLoading ? "custom-disabled-btn" : ""} 
+                    size="small" 
+                    type="primary" 
+                    disabled={state.isImageLoading} 
+                    style={{marginLeft:10, marginTop:10}} 
+                    icon={<BulbOutlined />}
+                    onClick={() => getImagePrompt()}>
+                    Generate Prompt
+                  </Button>
+                </td>
+              </tr>
+              { state.isImageLoading &&
+              <tr style={{display:"grid", justifyContent:"center", marginTop:5}}>
+                <td>
+                  <LoadingSpinner isLoading={state.isImageLoading} />
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+          { state.imageEditorError &&
+          <div style={{marginLeft: 10}}>
+            <h3 style={{ color: 'red' }}>{state.imageEditorError}</h3>
+          </div>
+          }
+          { /* Card image gallery. */ }
+          <div>
+            <div style={{margin:10, display:"flex", flexWrap:"wrap", justifyContent:"center"}}>
+            {
+              state.availableImageUrls.map(imageUrl => (
+                <div style={{margin:3}}  className="image-hover-animation">
+                  <Image style={{border:"1px solid #cbcaca"}} height={90} width={90} preview={false} src={imageUrl.imageUrl ?? imageUrl.temporaryUrl} onClick={() => {updateImageUrl(imageUrl)}} />
+                </div>
+              ))
+            }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  )
 
-    return fullCard
-  }
+  return fullCard;
 }
-CardDisplay.contextType = UserContext;
+
+export function CardDisplay(props: CardDisplayProps) {
+  return <CardDisplayInner {...props} />;
+}

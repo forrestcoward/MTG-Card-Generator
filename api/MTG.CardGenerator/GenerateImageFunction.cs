@@ -61,19 +61,20 @@ namespace MTG.CardGenerator
             var user = await usersCosmosClient.GetUserRecord(userSubject);
             var cardRecord = await cardsClient.GetMagicCardRecord(cardId);
             var cardHasAnImage = !string.IsNullOrWhiteSpace(cardRecord.Card.ImageUrl);
+            var userSuppliedOpenAIApiKey = true;
 
-            // Regular users must provide their own key in order to generate an image beyond the first.
-            if (string.IsNullOrEmpty(openAIApiKey) && cardHasAnImage && !user.IsAdmin)
+            // Enforce daily spend limit for logged-in users without their own API key.
+            var spendLimitResponse = await Extensions.CheckAndEnforceDailySpendLimit(user, openAIApiKey, req, log, GenerateMagicCardFunction.DefaultDailySpendLimit);
+            if (spendLimitResponse != null)
             {
-                log.LogMetric("GenerateNewCardImage_Rejected", 1, properties: new Dictionary<string, object>() { { "userSubject", userSubject } });
-                return await req.CreateErrorResponse(HttpStatusCode.BadRequest, "Please set your own OpenAI API key in the settings to generate images beyond the first.");
+                return spendLimitResponse;
             }
 
             // If no key is provided, use the one from the environment if the card has not had an image generated before (or the user is an admin).
-            if (string.IsNullOrEmpty(openAIApiKey) && (!cardHasAnImage || user.IsAdmin))
+            if (string.IsNullOrEmpty(openAIApiKey))
             {
-                openAIApiKey = Environment.GetEnvironmentVariable(Constants.OpenAIApiKeyLoggedIn) ??
-                               Environment.GetEnvironmentVariable(Constants.OpenAIApiKey);
+                openAIApiKey = Environment.GetEnvironmentVariable(Constants.OpenAIApiKey);
+                userSuppliedOpenAIApiKey = false;
             }
 
             if (string.IsNullOrWhiteSpace(openAIApiKey))
@@ -81,9 +82,25 @@ namespace MTG.CardGenerator
                 return await req.CreateErrorResponse(HttpStatusCode.BadRequest, "No OpenAI API key was found.");
             }
 
-            var imageModel = Constants.Dalle3ModelName;
+            var imageModel = Constants.ImageModels.Dalle3ModelName;
             var imageSize = StaticValues.ImageStatics.Size.Size1024;
-            var url = await ImageGenerator.GenerateImage(prompt, imageModel, imageSize, openAIApiKey, log);
+            var incurredCost = new Cost();
+
+            var openAIAPIKey = new APIKey()
+            {
+                Key = openAIApiKey,
+                Name = "Open AI API Key",
+                IsUserSupplied = userSuppliedOpenAIApiKey
+            };
+
+            var replicateAPIKey = new APIKey()
+            {
+                Key = Environment.GetEnvironmentVariable(Constants.ReplicateApiKey),
+                Name = "Replicate API Key",
+                IsUserSupplied = false
+            };
+
+            var url = await ImageGenerator.GenerateImage(prompt, imageModel, imageSize, openAIAPIKey, replicateAPIKey, incurredCost, log);
 
             var blobStorageName = Extensions.GetSettingOrThrow(Constants.BlobStorageName);
             var blobStorageEndpoint = Extensions.GetSettingOrThrow(Constants.BlobStorageEndpoint);
@@ -100,6 +117,8 @@ namespace MTG.CardGenerator
             {
                 await cardsClient.AddAlternativeImageId(cardRecord, storeImageResult.ImageId.ToString());
             }
+
+            await usersCosmosClient.UserGeneratedImageOperation(user, userSubject, incurredCost);
 
             log.LogMetric("GenerateNewCardImage_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
                 properties: new Dictionary<string, object>()
@@ -144,9 +163,16 @@ namespace MTG.CardGenerator
                 return await req.CreateErrorResponse(HttpStatusCode.BadRequest, errorMessage);
             }
 
-            var options = ImageGenerator.GetImageOptionsForCard(card, Constants.Dalle3ModelName);
-            var apiKey = Environment.GetEnvironmentVariable(Constants.OpenAIApiKey);
-            var prompt = await ImageGenerator.GenerateDetailedImagePrompt(options, apiKey, log);
+            var options = ImageGenerator.GetImageOptionsForCard(card, Constants.ImageModels.Dalle3ModelName);
+            var openAIApiKey = new APIKey()
+            {
+                Key = Environment.GetEnvironmentVariable(Constants.OpenAIApiKey),
+                Name = "Open AI API Key",
+                IsUserSupplied = false
+            };
+
+            var incurredCost = new Cost();
+            var prompt = await ImageGenerator.GenerateDetailedImagePrompt(options, openAIApiKey, incurredCost,log);
 
             stopwatch.Stop();
             log.LogMetric("GetImagePrompt_DurationSeconds", stopwatch.Elapsed.TotalSeconds);

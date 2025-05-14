@@ -2,15 +2,22 @@ import { AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from '@azure/
 import { loginRequest } from './AuthConfig';
 import React from 'react';
 import "./nav-bar.css";
-import { useUserAccount } from './UserContext';
+import { useUserAccount, UserContext } from './UserContext';
 // @ts-ignore
 import githubIcon from "./card-backgrounds/github-mark-white.png"
-import { Dropdown, Space } from 'antd';
-import { CaretDownFilled, DatabaseOutlined, FireOutlined, HomeOutlined, InstagramOutlined, LogoutOutlined } from '@ant-design/icons';
+import { Dropdown, Space, Tooltip } from 'antd';
+import { CaretDownFilled, DatabaseOutlined, FireOutlined, HomeOutlined, InstagramOutlined, LogoutOutlined, DollarCircleOutlined } from '@ant-design/icons';
 
 export const NavigationBar = () => {
     const { instance } = useMsal();
     const userAccount = useUserAccount();
+    const userContext = React.useContext(UserContext);
+    const user = userContext?.user;
+
+    // Helper function to format currency to nearest cent
+    const formatCurrency = (amount: number): string => {
+      return amount?.toFixed(2);
+    };
 
     const handleLogin = () => {
       let mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
@@ -42,6 +49,24 @@ export const NavigationBar = () => {
         instance.logoutPopup();
     };
     
+    // Add spend info as a dropdown item if user is present
+    const spendInfoDropdownItem = user ? {
+      key: 'spend-info',
+      label: (
+        <Tooltip
+          title="This is your remaining daily spend limit for generating cards. It resets every 24 hours. To reduce costs, choose a cheaper image model or do not generate images. Using your own API key will not affect this limit."
+          placement="left"
+        >
+          <span style={{ color: 'inherit' }}>
+            <DollarCircleOutlined style={{ color: '#52c41a', marginRight: 4 }} />
+            ${formatCurrency(user.remainingDailySpendLimit)} / ${formatCurrency(user.dailySpendLimit)}
+          </span>
+        </Tooltip>
+      ),
+      disabled: true,
+      style: { cursor: 'default', color: 'inherit' }
+    } : null;
+
     const items = [
       {
         key: '1',
@@ -70,6 +95,8 @@ export const NavigationBar = () => {
         ),
         icon: <FireOutlined />,
       },
+      // Insert spend info below "Rate Cards"
+      ...(spendInfoDropdownItem ? [spendInfoDropdownItem] : []),
       {
         key: '4',
         label: (
@@ -102,10 +129,10 @@ export const NavigationBar = () => {
               <li>
                 <Dropdown menu={{ items }}>
                   <a onClick={(e) => e.preventDefault()}>
-                    <div className='navbar-item'>
+                    <div className='navbar-item' style={{display: 'flex', alignItems: 'center', gap: 10}}>
                       <Space>
                         <div>
-                          {userAccount?.name ? userAccount.name : 'Unknown'}
+                          {user?.userName ? user.userName : (userAccount?.name ? userAccount.name : 'Unknown')}
                         </div>
                         <CaretDownFilled />
                       </Space>

@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Rate, Table, Tag } from 'antd';
 import { EventMessage, EventType } from '@azure/msal-browser';
 import { CardDisplay, CardGenerationRecord, MagicCard } from './Card';
 import { Loader } from './Loader';
 import { AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from '@azure/msal-react';
-import { GetCardToRate, RateCard, GetTopCards, GetUserInfo } from './CallAPI';
+import { GetCardToRate, RateCard, GetTopCards } from './CallAPI';
 
 import "./mana.min.css";
 import "./mtg-card.css";
 import "./app.css";
 import { setCardContainerSize } from './Utility';
 import { CardPreview } from './CardPreview';
-import { User } from './User';
+import { UserContext } from './UserContext';
 
 export function CardRating() {
   const [card, setCard] = useState<MagicCard|undefined>(undefined);
@@ -20,7 +20,10 @@ export function CardRating() {
   const [errorMessage, setErrorMessage] = useState("");
   const [cardWidth] = useState(setCardContainerSize());
   const [topCards, setTopCards] = useState<CardGenerationRecord[]>([]);
-  const [user, setUser] = useState<User|undefined>(undefined);
+  const userContext = useContext(UserContext);
+  const user = userContext?.user;
+  const userLoading = userContext?.userLoading;
+  const userError = userContext?.userError;
   const { instance: msalInstance } = useMsal();
 
   useEffect(() => {
@@ -36,17 +39,7 @@ export function CardRating() {
     getTopCards();
   }, []);
 
-  const getUserInfo = () => {
-    GetUserInfo(msalInstance).then(user => {
-      setUser(user);
-    }).catch(error => {
-      setErrorMessage(error.message);
-      console.error("Error in getUserInfo: " + error);
-    });
-  };
-
   const getRandomCard = () => {
-    getUserInfo();
     GetCardToRate(msalInstance).then(record => {
       const newCard = new MagicCard(record.card);
       setCard(newCard);

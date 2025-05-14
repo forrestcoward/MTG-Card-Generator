@@ -19,16 +19,20 @@ namespace MTG.CardGenerator.Models
         public long NumberOfCardsRated { get; set; } = 0;
         [JsonProperty("lastActiveTime")]
         public DateTime? LastActiveTime { get; set; } = null;
+        [JsonProperty("isAdmin")]
+        public bool IsAdmin { get; set; } = false;
+        [JsonProperty("openAIApiKey")]
+        public string OpenAIAPIKey { get; set; }
+        [JsonProperty("dailySpendLimit")]
+        public double DailySpendLimit { get; set; } = -1.0;
+        [JsonProperty("totalCostOfCardsGeneratedToday")]
+        public double TotalCostOfCardsGeneratedToday { get; set; } = 0.0;
         [JsonProperty("totalCostOfCardsGenerated")]
         public double TotalCostOfCardsGenerated { get; set; } = 0;
         [JsonProperty("numberOfFreeCardsGeneratedToday")]
         public int NumberOfFreeCardsGeneratedToday { get; set; } = 0;
         [JsonProperty("allowedFreeCardGenerationsPerDay")]
         public int AllowedFreeCardGenerationsPerDay { get; set; } = -1;
-        [JsonProperty("isAdmin")]
-        public bool IsAdmin { get; set; } = false;
-        [JsonProperty("openAIApiKey")]
-        public string OpenAIAPIKey { get; set; }
     }
 
     /// <summary>

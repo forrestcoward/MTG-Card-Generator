@@ -1,5 +1,10 @@
 ﻿using Betalgo.Ranul.OpenAI.ObjectModels.ResponseModels;
+using Castle.Core.Logging;
+using Microsoft.Azure.Cosmos.Serialization.HybridRow;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System.Diagnostics.Contracts;
 
 namespace MTG.CardGenerator
 {
@@ -8,14 +13,91 @@ namespace MTG.CardGenerator
         [JsonProperty("totalCost")]
         public double TotalCost { get; set; }
 
-        public void AddChatCost(ChatCompletionCreateResponse result)
+        [JsonProperty("costToUserApiKeys")]
+        public double CostToUserApiKeys { get; set; }
+
+        [JsonProperty("costToWebsiteApiKeys")]
+        public double CostToWebsiteApiKeys { get; set; }
+
+        [JsonProperty("charges")]
+        public List<Charge> Charges { get; set; } = new List<Charge>();
+
+        public class Charge()
         {
-            TotalCost += Pricing.GetCost(result);
+            [JsonProperty("operationName")]
+            public string OperationName { get; set; }
+            [JsonProperty("model")]
+            public string Model { get; set; }
+            [JsonProperty("cost")]
+            public double Cost { get; set; }
+            [JsonProperty("wasUserCharged")]
+            public bool WasUserCharged { get; set; }
         }
 
-        public void AddImageCost(string imageSize, string imageModel)
+        public void AddChatCost(ChatCompletionCreateResponse result, bool wasUserCharged, string operationName, Microsoft.Extensions.Logging.ILogger logger)
         {
-            TotalCost += Pricing.GetImageCost(imageSize, imageModel);
+            if (result == null)
+            {
+                logger.LogError($"ChatCompletionCreateResponse is null. Cannot calculate cost for operation '{operationName}'.");
+                return;
+            }
+
+            Contract.Assert(CostToUserApiKeys + CostToWebsiteApiKeys == TotalCost, "TotalCost should be the sum of User and Website costs.");
+            var cost = Pricing.GetCost(result);
+            TotalCost += cost;
+
+            if (wasUserCharged)
+            {
+                CostToUserApiKeys += cost;
+            }
+            else
+            {
+                CostToWebsiteApiKeys += cost;
+            }
+
+            Charges.Add(new Charge()
+            {
+                Cost = cost,
+                Model = result.Model,
+                OperationName = operationName,
+                WasUserCharged = wasUserCharged,
+            });
+        }
+
+        public void AddImageCost(string imageSize, string imageModel, bool wasUserCharged, string operationName)
+        {
+            Contract.Assert(CostToUserApiKeys + CostToWebsiteApiKeys == TotalCost, "TotalCost should be the sum of User and Website costs.");
+            var cost = Pricing.GetImageCost(imageSize, imageModel);
+            TotalCost += cost;
+
+            if (wasUserCharged)
+            {
+                CostToUserApiKeys += cost;
+            }
+            else
+            {
+                CostToWebsiteApiKeys += cost;
+            }
+
+            Charges.Add(new Charge()
+            {
+                Cost = cost,
+                Model = imageModel,
+                OperationName = operationName,
+                WasUserCharged = wasUserCharged,
+            });
+        }
+
+        // Merge two Cost objects into a new Cost object with combined charges and summed costs.
+        public Cost Merge(Cost other)
+        {
+            return new Cost
+            {
+                TotalCost = TotalCost + other.TotalCost,
+                CostToUserApiKeys = CostToUserApiKeys + other.CostToUserApiKeys,
+                CostToWebsiteApiKeys = CostToWebsiteApiKeys + other.CostToWebsiteApiKeys,
+                Charges = Charges.Concat(other.Charges).ToList()
+            };
         }
     }
 
@@ -47,7 +129,7 @@ namespace MTG.CardGenerator
 
             if (cost == null)
             {
-                return 0;
+                throw new Exception($"Model '{result.Model}' not found in pricing list.");
             }
 
             return (result.Usage.PromptTokens * cost.InputPrice) + (result.Usage.CompletionTokens.Value * cost.OutputPrice);
@@ -56,32 +138,47 @@ namespace MTG.CardGenerator
         public static double GetImageCost(string size, string model)
         {
             var s = size.ToString();
-            if (s == "1024x1024" && model == Constants.Dalle2ModelName)
+            if (s == "1024x1024" && model == Constants.ImageModels.Dalle2ModelName)
             {
                 return .02;
             }
 
-            if (s == "512x512" && model == Constants.Dalle2ModelName)
+            if (s == "512x512" && model == Constants.ImageModels.Dalle2ModelName)
             {
                 return .018;
             }
 
-            if (s == "256x256" && model == Constants.Dalle2ModelName)
+            if (s == "256x256" && model == Constants.ImageModels.Dalle2ModelName)
             {
                 return .016;
             }
 
-            if (s == "1024x1024" && model == Constants.Dalle3ModelName)
+            if (s == "1024x1024" && model == Constants.ImageModels.Dalle3ModelName)
             {
                 return .04;
             }
 
-            if ((s == "1024x1792" || s == "1792x1024") && model == Constants.Dalle3ModelName)
+            if ((s == "1024x1792" || s == "1792x1024") && model == Constants.ImageModels.Dalle3ModelName)
             {
                 return .08;
             }
 
-            return 0;
+            if (model == Constants.ImageModels.GoogleImagen3FastModelName)
+            {
+                return 0.025;
+            }
+
+            if (model == Constants.ImageModels.StableDiffusion35MediumModelName)
+            {
+                return 0.035;
+            }
+
+            if (model == Constants.ImageModels.BlackForestLabsFluxSchnell)
+            {
+                return 0.003;
+            }
+
+            throw new Exception($"Image model '{model}' and size '{size}' not found in pricing list.");
         }
     }
 }
