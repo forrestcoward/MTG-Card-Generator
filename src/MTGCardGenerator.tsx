@@ -66,16 +66,6 @@ const imageSettings = [
     details: 'Imagen 3 is DeepMind’s latest text-to-image generative model, focusing on high-quality image generation with improved detail, lighting, and reduced artifacts.'
   },
   { 
-    name: "Stable Diffusion 3.5", 
-    id: 'stable-diffusion-3.5-medium', 
-    value: false, 
-    description: 'Stable Diffusion 3.5 model.', 
-    group: 'image-settings',
-    url: 'https://replicate.com/stability-ai/stable-diffusion-3.5-medium',
-    pricing: '$0.035 per image',
-    details: 'Stable Diffusion 3.5 Medium is a Multimodal Diffusion Transformer with improvements (MMDiT-x) text-to-image model that features improved performance in image quality, typography, complex prompt understanding, and resource-efficiency.'
-  },
-  { 
     name: "Black Forest Flux", 
     id: 'black-forest-labs-flux-schnell', 
     value: false, 
@@ -84,6 +74,16 @@ const imageSettings = [
     url: 'https://replicate.com/black-forest-labs/flux-schnell',
     pricing: '$0.003 per image',
     details: 'FLUX.1 [schnell] is a 12 billion parameter rectified flow transformer capable of generating images from text descriptions. A fast generation model tailored for local development and personal use.'
+  },
+  { 
+    name: "Stable Diffusion 3.5", 
+    id: 'stable-diffusion-3.5-medium', 
+    value: false, 
+    description: 'Stable Diffusion 3.5 model.', 
+    group: 'image-settings',
+    url: 'https://replicate.com/stability-ai/stable-diffusion-3.5-medium',
+    pricing: '$0.035 per image',
+    details: 'Stable Diffusion 3.5 Medium is a Multimodal Diffusion Transformer with improvements (MMDiT-x) text-to-image model that features improved performance in image quality, typography, complex prompt understanding, and resource-efficiency.'
   },
   { 
     name: 'Dalle-2', 

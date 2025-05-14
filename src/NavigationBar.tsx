@@ -54,7 +54,7 @@ export const NavigationBar = () => {
       key: 'spend-info',
       label: (
         <Tooltip
-          title="This is your remaining daily spend limit for generating cards. It resets every 24 hours. Using your own API key will not affect this limit."
+          title="This is your remaining daily spend limit for generating cards. It resets every 24 hours. To reduce costs, choose a cheaper image model or do not generate images. Using your own API key will not affect this limit."
           placement="left"
         >
           <span style={{ color: 'inherit' }}>
