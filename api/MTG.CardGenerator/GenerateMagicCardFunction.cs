@@ -81,7 +81,7 @@ namespace MTG.CardGenerator
         }
 
         public const int AllowedFreeGenerationsPerDay = 5;
-        public const double DefaultDailySpendLimit = 0.7; // $1 per day
+        public const double DefaultDailySpendLimit = 0.5;
 
         [Function("GenerateMagicCard")]
         [FunctionAuthorize(Policy = Constants.APIAuthorizationScope)]

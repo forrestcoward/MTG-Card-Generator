@@ -370,7 +370,7 @@ async function MakeHttpCall(method:string, url:string, body?:any, params?:Record
     }
 
     if (response.status === 401) {
-      throw new Error("Please login to generate Magic: The Gathering cards!");
+      throw new Error("Please login to generate Magic: The Gathering cards! Making an account is free and just requires an email address.");
     }
 
     var error = data;

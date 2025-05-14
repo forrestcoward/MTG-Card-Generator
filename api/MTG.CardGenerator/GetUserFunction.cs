@@ -19,10 +19,6 @@ namespace MTG.CardGenerator
             public long NumberOfCardsGenerated { get; set; }
             [JsonProperty("numberOfCardsRated")]
             public long NumberOfCardsRated { get; set; }
-            [JsonProperty("numberOfFreeCardsGeneratedToday")]
-            public long NumberOfFreeCardsGeneratedToday { get; set; }
-            [JsonProperty("numberOfFreeCardsAllowedPerDay")]
-            public long AllowedFreeCardGenerationsPerDay { get; set; }
             [JsonProperty("dailySpendLimit")]
             public double DailySpendLimit { get; set; }
             [JsonProperty("totalCostOfCardsGeneratedToday")]
@@ -60,13 +56,14 @@ namespace MTG.CardGenerator
                 log.LogInformation($"Created user record for user '{userSubject}' in database.");
             }
 
+            // Perform a no-op operation to update the last active time and reset daily spend limits if next day.
+            user = await usersClient.UserGeneratedImageOperation(user, userSubject, new Cost());
+
             var json = JsonConvert.SerializeObject(new GetUserFunctionResponse()
             {
                 UserName = user.UserName,
                 NumberOfCardsGenerated = user.NumberOfCardsGenerated,
                 NumberOfCardsRated = user.NumberOfCardsRated,
-                NumberOfFreeCardsGeneratedToday = user.NumberOfFreeCardsGeneratedToday,
-                AllowedFreeCardGenerationsPerDay = user.AllowedFreeCardGenerationsPerDay != -1 ? user.AllowedFreeCardGenerationsPerDay : GenerateMagicCardFunction.AllowedFreeGenerationsPerDay,
                 DailySpendLimit = user.DailySpendLimit != -1 ? user.DailySpendLimit : GenerateMagicCardFunction.DefaultDailySpendLimit,
                 TotalCostOfCardsGeneratedToday = user.TotalCostOfCardsGeneratedToday,
                 RemainingDailySpendLimit = user.DailySpendLimit != -1 ? user.DailySpendLimit - user.TotalCostOfCardsGeneratedToday : GenerateMagicCardFunction.DefaultDailySpendLimit - user.TotalCostOfCardsGeneratedToday,
