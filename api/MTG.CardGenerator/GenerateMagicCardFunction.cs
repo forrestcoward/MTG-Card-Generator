@@ -1,5 +1,3 @@
-using Betalgo.Ranul.OpenAI;
-using Betalgo.Ranul.OpenAI.Managers;
 using Betalgo.Ranul.OpenAI.ObjectModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using DarkLoop.Azure.Functions.Authorization;
@@ -14,51 +12,15 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using System.Net;
-using System.Text.RegularExpressions;
 
 namespace MTG.CardGenerator
 {
     public class GenerateMagicCardFunction
     {
-        private class OpenAIMagicCardResponse
-        {
-            public BasicCard[] Cards { get; set; }
-        }
-
         public class GenerateMagicCardFunctionResponse
         {
             [JsonProperty("cards")]
             public IEnumerable<MagicCardResponse> Cards { get; set; }
-        }
-
-        public class CardGenerationRequest
-        {
-            public string RawUserPrompt { get; set; }
-            public string Model { get; set; }
-            public string ImageModel { get; set; }
-            public bool IncludeExplanation { get; set; }
-            public bool GenerateImagePrompt { get; set; }
-            public bool ExtraCreative { get; set; }
-            public string UserSuppliedApiKey { get; set; }
-            public string Source { get; set; }
-            public int NumCards { get; set; }
-            public string UserName { get; set; }
-            public string UserSubject { get; set; }
-            public string Host { get; set; }
-            public string Origin { get; set; }
-            public bool UserLoggedIn { get; set; }
-        }
-
-        public class CardResult
-        {
-            public MagicCard[] Cards { get; set; }
-            public string OpenAIResponse { get; set; }
-            public float Temperature { get; set; }
-            public int TokensUsed { get; set; }
-            public string ActualGPTModelUsed { get; set; }
-            public string SystemPrompt { get; set; }
-            public Cost Cost { get; set; }
-            public int AttemptsToGenerateCard { get; set; }
         }
 
         public class ImageOptions
@@ -102,32 +64,20 @@ namespace MTG.CardGenerator
             public string ApiKey { get; set; }
         }
 
-        private const string GenerateCreativeCardSystemPrompt = $@"
-You are an assistant who works as a Magic: The Gathering card designer. The cards you generate should be as creative as possible and utilize Magic: The Gathering card mechanics in unique and interesting ways, ideally mixing multiple mechanics and keywords together in novel ways and have good synergy with other cards or archetypes. The cards you are known to generate elicit a 'wow, cool, that's a great idea!' response from players and leave them surprised by the card that generated. Remember, be extra creative!
-You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'oracleText', 'flavorText', 'pt', and 'rarity'.
-Do not explain the cards or explain your reasoning. Only return the JSON of cards named 'cards'.";
-
-        private const string GenerateCreativeCardSystemPromptWithExplanation = $@"
-You are an assistant who works as a Magic: The Gathering card designer. The cards you generate should be as creative as possible and utilize Magic: The Gathering card mechanics in unique and interesting ways, ideally mixing multiple mechanics and keywords together in novel ways and have good synergy with other cards or archetypes. The cards you are known to generate elicit a 'wow, cool, that's a great idea!' response from players and leave them surprised by the card that generated. Remember, be extra creative!
-You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'oracleText', 'flavorText', 'pt', 'rarity', 'explanation', and 'funnyExplanation' properties. The 'explanation' property should explain why the card was created the way it was. The 'funnyExplanation' property should be a hilarious explanation of why the card was created the way it was.
-Do not explain the cards or explain your reasoning. Only return the JSON of cards named 'cards'.";
-
-        private const string GenerateCardSystemPrompt = $@"
-You are an assistant who works as a Magic: The Gathering card designer. You like complex cards with interesting mechanics. The cards you generate should obey the Magic 'color pie' design rules and obey the the Magic: The Gathering comprehensive rules.
-You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'oracleText', 'flavorText', 'pt', and 'rarity'.
-Do not explain the cards or explain your reasoning. Only return the JSON of cards named 'cards'.";
-
-        private const string GenerateCardSystemPromptWithExplanation = $@"
-You are an assistant who works as a Magic: The Gathering card designer. You like complex cards with interesting mechanics. The cards you generate should obey the Magic 'color pie' design rules. The cards you generate should also obey the the Magic: The Gathering comprehensive rules as much as possible.
-You should return a JSON array named 'cards' where each entry represents a card you generated for the user based on their request. Each card must include the 'name', 'manaCost', 'type', 'oracleText', 'flavorText', 'pt', 'rarity', 'explanation', and 'funnyExplanation' properties. The 'explanation' property should explain why the card was created the way it was. The 'funnyExplanation' property should be a hilarious explanation of why the card was created the way it was.
-Do not explain the cards or explain your reasoning. Only return the JSON of cards named 'cards'.";
+        public class RequestMetadata
+        {
+            public string UserName { get; set; }
+            public string UserSubject { get; set; }
+            public string UserSuppliedApiKey { get; set; }
+            public bool UserLoggedIn { get; set; }
+            public string Host { get; set; }
+            public string Origin { get; set; }
+        }
 
         private const float DefaultTemperature = 1;
         private const float CreativeTemperature = 1.3F;
 
-        public const int AllowedFreeGenerationsPerDay = 3;
-
-        private const int MaxPromptCharacters = 500;
+        public const int AllowedFreeGenerationsPerDay = 5;
 
         [Function("GenerateMagicCard")]
         [FunctionAuthorize]
@@ -148,7 +98,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             var userSuppliedApiKey = req.GetQueryParam("openAIApiKey");
             var source = req.GetQueryParam("source");
 
-            var numCards = 1;
+            var numCards = 5;
             if (int.TryParse(req.GetQueryParam("numCards"), out int parsedNumCards))
             {
                 numCards = Math.Clamp(parsedNumCards, 1, 1);
@@ -174,11 +124,21 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     if (user.LastActiveTime?.Date == DateTime.Now.ToUniversalTime().Date &&
                         user.NumberOfFreeCardsGeneratedToday >= allowedFreeCardGenerationsPerDay)
                     {
-                        var errorMessage = $"You have exceeded your number of free generations per day ({AllowedFreeGenerationsPerDay}). Please enter your own OpenAI API key (https://platform.openai.com/api-keys) to continue generating. Sorry, this is a cost saving measure that I continue to scale back on :(";
+                        var errorMessage = $"You have exceeded your number of free generations per day ({AllowedFreeGenerationsPerDay}). Please enter your own OpenAI API key (https://platform.openai.com/api-keys) to continue generating.";
                         return await req.CreateErrorResponse(HttpStatusCode.TooManyRequests, errorMessage);
                     }
                 }
             }
+
+            var requestMetadata = new RequestMetadata
+            {
+                UserName = userName,
+                UserSubject = userSubject,
+                UserSuppliedApiKey = userSuppliedApiKey,
+                UserLoggedIn = userLoggedIn,
+                Host = req.Url.Host,
+                Origin = req.Headers.TryGetValues("Origin", out var origins) ? origins.FirstOrDefault() : string.Empty
+            };
 
             var request = new CardGenerationRequest
             {
@@ -188,14 +148,9 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 IncludeExplanation = includeExplanation,
                 GenerateImagePrompt = generateImagePrompt,
                 ExtraCreative = extraCreative,
-                UserSuppliedApiKey = userSuppliedApiKey,
                 Source = source,
                 NumCards = numCards,
-                UserName = userName,
-                UserSubject = userSubject,
-                UserLoggedIn = userLoggedIn,
-                Host = req.Url.Host,
-                Origin = req.Headers.TryGetValues("Origin", out var origins) ? origins.FirstOrDefault() : string.Empty
+                Metadata = requestMetadata,
             };
 
             var instanceId = await client.ScheduleNewOrchestrationInstanceAsync("GenerateMagicCardOrchestrator", request);
@@ -271,7 +226,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 await context.CallActivityAsync(nameof(StoreCardRecords), new StoreCardRecordsInput() { CardResult = cardResult, Request = request, ApiKey = apiKey });
 
                 // 5. Update user record.
-                if (request.UserLoggedIn)
+                if (request.Metadata.UserLoggedIn)
                 {
                     await context.CallActivityAsync(nameof(UpdateUserRecord), new UpdateUserRecordInput() { Request = request, NumberOfCardsGenerated = cardResult.Cards.Length, TotalCost = cardResult.Cost.TotalCost });
                 }
@@ -297,7 +252,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             catch (Exception ex)
             {
                 // Set the orchestration's customStatus to "error" when an exception occurs.
-                var errorMessage = FormatErrorMessage(ex, request.RawUserPrompt, request.UserSuppliedApiKey != null, request.UserLoggedIn);
+                var errorMessage = FormatErrorMessage(ex, request.RawUserPrompt, request.Metadata.UserSuppliedApiKey != null, request.Metadata.UserLoggedIn);
                 log.LogError(ex, errorMessage);
                 context.SetCustomStatus("error");
                 return errorMessage;
@@ -307,11 +262,11 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
         [Function("ValidateAndGetApiKey")]
         public static string ValidateAndGetApiKey([ActivityTrigger] CardGenerationRequest request, ILogger log)
         {
-            var apiKeyToUse = request.UserSuppliedApiKey;
+            var apiKeyToUse = request.Metadata.UserSuppliedApiKey;
 
             if (string.IsNullOrWhiteSpace(apiKeyToUse))
             {
-                if (request.UserLoggedIn)
+                if (request.Metadata.UserLoggedIn)
                 {
                     apiKeyToUse = Environment.GetEnvironmentVariable(Constants.OpenAIApiKeyLoggedIn);
                 }
@@ -331,68 +286,44 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             var log = functionContext.GetLogger(nameof(GenerateCardContent));
             var request = context.Request;
             var apiKey = context.ApiKey;
-            var systemPrompt = string.Empty;
-            var cost = new Cost();
-            var openAIResponse = string.Empty;
-            var tokensUsed = 0;
-            var attemptsToGenerateCard = 0;
-            var actualGPTModelUsed = string.Empty;
+            return await GenerateCard.Generate(request, apiKey, log);
+        }
 
-            // Process raw user prompt.
-            var rawUserPrompt = request.RawUserPrompt ?? string.Empty;
-            if (rawUserPrompt.Length > MaxPromptCharacters)
-            {
-                log.LogWarning($"Truncating user prompt to {MaxPromptCharacters} characters.");
-                rawUserPrompt = rawUserPrompt[..MaxPromptCharacters];
-            }
+        [Function("PrepareImageGeneration")]
+        public static ImageOptions PrepareImageGeneration([ActivityTrigger] PrepareImageGenerationInput context, FunctionContext functionContext)
+        {
+            var log = functionContext.GetLogger(nameof(PrepareImageGeneration));
+            var options = ImageGenerator.GetImageOptionsForCard(context.Card, context.ImageModel);
 
-            if (string.IsNullOrWhiteSpace(rawUserPrompt))
+            return new ImageOptions
             {
-                rawUserPrompt = "that is from the Dominaria plane.";
-            }
+                Card = context.Card,
+                Options = options,
+                ApiKey = context.ApiKey
+            };
+        }
 
-            // Determine system prompt based on settings.
-            var temperature = request.ExtraCreative ? CreativeTemperature : DefaultTemperature;
-            if (request.ExtraCreative && request.IncludeExplanation)
-            {
-                systemPrompt = GenerateCreativeCardSystemPromptWithExplanation;
-            }
-            else if (request.ExtraCreative && !request.IncludeExplanation)
-            {
-                systemPrompt = GenerateCreativeCardSystemPrompt;
-            }
-            else if (!request.ExtraCreative && request.IncludeExplanation)
-            {
-                systemPrompt = GenerateCardSystemPromptWithExplanation;
-            }
-            else
-            {
-                systemPrompt = GenerateCardSystemPrompt;
-            }
+        [Function("GenerateDetailedImagePrompt")]
+        public static async Task<ImageOptions> GenerateDetailedImagePrompt([ActivityTrigger] ImageOptions imageOptions, FunctionContext functionContext)
+        {
+            var log = functionContext.GetLogger(nameof(GenerateDetailedImagePrompt));
+            var detailedPrompt = await ImageGenerator.GenerateDetailedImagePrompt(
+                imageOptions.Options,
+                imageOptions.ApiKey,
+                log);
 
-            // Format user prompt.
-            var userPromptToSubmit = $"Please generate me one Magic: The Gathering card that has the following description: {rawUserPrompt}";
-            if (request.NumCards > 1)
-            {
-                userPromptToSubmit = $"Please generate me {request.NumCards} different Magic: The Gathering cards based on the following description: {rawUserPrompt}";
-            }
+            imageOptions.Options.Prompt = detailedPrompt;
+            return imageOptions;
+        }
 
-            // Select model and response format.
-            var gptModel = Betalgo.Ranul.OpenAI.ObjectModels.Models.Gpt_3_5_Turbo;
-            var chatResponseFormat = ChatCompletionCreateRequest.ResponseFormats.Text;
-            if (!string.IsNullOrWhiteSpace(request.Model))
-            {
-                if (request.Model.StartsWith("gpt-4", StringComparison.OrdinalIgnoreCase))
-                {
-                    gptModel = Betalgo.Ranul.OpenAI.ObjectModels.Models.Gpt_4o_mini;
-                    chatResponseFormat = ChatCompletionCreateRequest.ResponseFormats.Json;
-                }
-                else if (request.Model.StartsWith("gpt-3.5", StringComparison.OrdinalIgnoreCase))
-                {
-                    gptModel = Betalgo.Ranul.OpenAI.ObjectModels.Models.Gpt_3_5_Turbo;
-                    chatResponseFormat = ChatCompletionCreateRequest.ResponseFormats.Text;
-                }
-            }
+        [Function("GenerateCardImage")]
+        public static async Task<ImageGenerationResult> GenerateCardImage([ActivityTrigger] ImageOptions imageOptions, FunctionContext functionContext)
+        {
+            var log = functionContext.GetLogger(nameof(GenerateCardImage));
+            var stopwatch = Stopwatch.StartNew();
+
+            var tempUrl = await ImageGenerator.GenerateImage(imageOptions.Options.Prompt, imageOptions.Options.Model, imageOptions.Options.Size, imageOptions.ApiKey, log);
+            var finalUrl = tempUrl;
 
             log.LogInformation($"model: {request.Model}");
             log.LogInformation($"imageModel: {request.ImageModel}");
@@ -404,77 +335,83 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
 
             var openAIService = new OpenAIService(new OpenAIOptions()
             {
-                ApiKey = apiKey
-            });
+                var blobStorageName = Extensions.GetSettingOrThrow(Constants.BlobStorageName);
+                var blobStorageEndpoint = Extensions.GetSettingOrThrow(Constants.BlobStorageEndpoint);
+                var blobStorageContainerName = Extensions.GetSettingOrThrow(Constants.BlobStorageContainerName);
+                var blobStorageAccessKey = Extensions.GetSettingOrThrow(Constants.BlobStorageAccessKey);
 
-            var openAICards = Array.Empty<BasicCard>();
-
-            for (var attempt = 0; attempt < 5; attempt++)
+                var storeImageResult = await Extensions.StoreImageInBlobAsync(tempUrl, blobStorageName, blobStorageEndpoint, blobStorageContainerName, blobStorageAccessKey, log: log);
+                finalUrl = storeImageResult.Url;
+            }
+            catch (Exception ex)
             {
-                attemptsToGenerateCard++;
-                var stopwatch = Stopwatch.StartNew();
+                // Non-fatal to overall operation.
+                log.LogError($"Failed to store card image in database: {ex}");
+            }
 
-                var response = await openAIService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
+            stopwatch.Stop();
+            log.LogMetric("CreateImageAsync_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
+                properties: new Dictionary<string, object>()
                 {
-                    Messages = [ChatMessage.FromUser(userPromptToSubmit), ChatMessage.FromSystem(systemPrompt)],
-                    Model = gptModel,
-                    Temperature = temperature,
-                    ChatResponseFormat = chatResponseFormat,
+                    { "imagePrompt", imageOptions.Options.Prompt },
+                    { "imageModel", imageOptions.Options.Model },
+                    { "imageSize", imageOptions.Options.Size }
                 });
 
-                if (!response.Successful)
-                {
-                    throw new Exception(response.Error.Message);
-                }
+            return new ImageGenerationResult
+            {
+                TemporaryImageUrl = tempUrl,
+                ImageUrl = finalUrl,
+                Options = imageOptions.Options
+            };
+        }
 
-                actualGPTModelUsed = response.Model;
-                tokensUsed += response.Usage.TotalTokens;
-                cost.AddChatCost(response);
+        [Function("StoreCardRecords")]
+        public static async Task StoreCardRecords([ActivityTrigger] StoreCardRecordsInput context, FunctionContext functionContext)
+        {
+            var log = functionContext.GetLogger(nameof(StoreCardRecords));
+            var cardResult = context.CardResult;
+            var request = context.Request;
+            var apiKey = context.ApiKey;
+            var cosmosDatabaseId = Extensions.GetSettingOrThrow(Constants.CosmosDBDatabaseId);
+            var cardsClient = new CardsClient();
 
-                openAIResponse = response.Choices[0].Message.Content;
-
-                stopwatch.Stop();
-                log?.LogMetric("CreateChatCompletionsAsync_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
-                    properties: new Dictionary<string, object>()
-                    {
-                        { "attemptNumber", attemptsToGenerateCard },
-                        { "estimatedCost", Pricing.GetCost(response) },
-                        { "includeExplanation", request.IncludeExplanation.ToString() },
-                        { "extraCreative", request.ExtraCreative },
-                        { "model", actualGPTModelUsed },
-                        { "systemPrompt", systemPrompt },
-                        { "temperature", temperature },
-                        { "tokensUsed", response.Usage.TotalTokens },
-                        { "userSubject", request.UserSubject },
-                        { "userPrompt", userPromptToSubmit },
-                        { "userSuppliedKey", !string.IsNullOrWhiteSpace(request.UserSuppliedApiKey) }
-                    });
-
-                log?.LogInformation($"OpenAI response ({actualGPTModelUsed}):{Environment.NewLine}{openAIResponse}");
-
+            foreach (var card in cardResult.Cards)
+            {
                 try
                 {
-                    var deserialized = JsonConvert.DeserializeObject<OpenAIMagicCardResponse>(openAIResponse);
-                    openAICards = deserialized.Cards;
-                }
-                catch (JsonReaderException)
-                {
-                    log?.LogWarning($"The initial response was not valid JSON.");
-                    var captures = new Regex(@"(?<json>\{(.*)\})", RegexOptions.Singleline).GetNamedGroupsMatches(openAIResponse);
-                    if (captures.TryGetValue("json", out string value))
+                    // Store the card in the database
+                    var cardGenerationRecord = new CardGenerationRecord()
                     {
-                        try
+                        Id = card.Id,
+                        GenerationMetadata = new GenerationMetaData()
                         {
-                            var deserialized = JsonConvert.DeserializeObject<OpenAIMagicCardResponse>(value);
-                            if (deserialized != null && deserialized.Cards != null)
-                            {
-                                openAICards = deserialized.Cards;
-                            }
-                        }
-                        catch (JsonReaderException)
+                            UserPrompt = request.RawUserPrompt,
+                            SystemPrompt = cardResult.SystemPrompt,
+                            ImagePrompt = card.TemporaryImageUrl != null ? "Image generated" : null,
+                            Model = cardResult.ActualGPTModelUsed,
+                            ImageSize = request.ImageModel != "none" ? StaticValues.ImageStatics.Size.Size1024 : null,
+                            ImageStyle = null,
+                            ImageModel = request.ImageModel,
+                            OpenAIResponse = cardResult.OpenAIResponse,
+                            IncludeExplanation = request.IncludeExplanation,
+                            ExtraCreative = request.ExtraCreative,
+                            UserSupplied = !string.IsNullOrWhiteSpace(request.Metadata.UserSuppliedApiKey),
+                            EstimatedCost = cardResult.Cost.TotalCost,
+                            Timestamp = DateTime.Now.ToUniversalTime(),
+                            Host = request.Metadata.Host,
+                            Origin = request.Metadata.Origin
+                        },
+                        User = new CardUserMetadata()
                         {
-                        }
-                    }
+                            UserName = request.Metadata.UserName,
+                            UserSubject = request.Metadata.UserSubject,
+                        },
+                        Card = card,
+                    };
+
+                    await cardsClient.AddItemToContainerAsync(cardGenerationRecord);
+                    log.LogInformation($"Wrote card generation record to database '{cosmosDatabaseId}'.");
                 }
                 catch (JsonSerializationException)
                 {
@@ -644,6 +581,135 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                     log.LogError($"Failed to store card in database: {ex}");
                 }
             }
+        }
+
+        [Function("UpdateUserRecord")]
+        public static async Task UpdateUserRecord([ActivityTrigger] UpdateUserRecordInput context, FunctionContext functionContext)
+        {
+            var log = functionContext.GetLogger(nameof(UpdateUserRecord));
+            var request = context.Request;
+            var cardCount = context.NumberOfCardsGenerated;
+            var totalCost = context.TotalCost;
+
+            try
+            {
+                var usersCosmosClient = new UsersClient(log);
+                var user = await usersCosmosClient.GetUserRecord(request.Metadata.UserSubject);
+
+                if (user == null)
+                {
+                    user = await usersCosmosClient.AddItemToContainerAsync(new User()
+                    {
+                        UserName = request.Metadata.UserName,
+                        UserSubject = request.Metadata.UserSubject,
+                    });
+                }
+
+                await usersCosmosClient.UserGeneratedCard(user, request.Metadata.UserSubject, cardCount, totalCost, !string.IsNullOrWhiteSpace(request.Metadata.UserSuppliedApiKey));
+                log.LogInformation($"Updated user record for user '{request.Metadata.UserSubject}' in database.");
+            }
+            catch (Exception ex)
+            {
+                // Non-fatal to overall operation.
+                log.LogError($"Failed to create or update user record: {ex}");
+            }
+        }
+
+        public class FinalResponseData
+        {
+            public string Json { get; set; }
+            public CardResult CardResult { get; set; }
+            public CardGenerationRequest Request { get; set; }
+            public ImageGenerator.ImageGenerationOptions ImageOptions { get; set; }
+        }
+
+        [Function("LogTelemetry")]
+        public static string LogTelemetry([ActivityTrigger] FinalResponseData responseData, FunctionContext functionContext)
+        {
+            var log = functionContext.GetLogger(nameof(LogTelemetry));
+            try
+            {
+                log?.LogInformation($"API JSON response:{Environment.NewLine}{JToken.Parse(responseData.Json)}");
+
+                var userPromptToSubmit = $"Please generate me one Magic: The Gathering card that has the following description: {responseData.Request.RawUserPrompt}";
+                if (responseData.Request.NumCards > 1)
+                {
+                    userPromptToSubmit = $"Please generate me {responseData.Request.NumCards} different Magic: The Gathering cards based on the following description: {responseData.Request.RawUserPrompt}";
+                }
+
+                log?.LogInformation($"Estimated cost: ${responseData.CardResult.Cost.TotalCost}");
+                log?.LogMetric("GenerateMagicCard_EstimatedCost", responseData.CardResult.Cost.TotalCost,
+                    new Dictionary<string, object>()
+                    {
+                        { "estimatedCost", responseData.CardResult.Cost.TotalCost },
+                        { "imageSize", responseData.ImageOptions?.Size },
+                        { "imageModel", responseData.Request.ImageModel },
+                        { "generateImage", responseData.Request.ImageModel != "none" },
+                        { "includeExplanation", responseData.Request.IncludeExplanation.ToString() },
+                        { "generateImagePrompt", responseData.Request.GenerateImagePrompt.ToString() },
+                        { "extraCreative", responseData.Request.ExtraCreative.ToString() },
+                        { "model", responseData.CardResult.ActualGPTModelUsed },
+                        { "systemPrompt", responseData.CardResult.SystemPrompt },
+                        { "userSubject", responseData.Request.Metadata.UserSubject },
+                        { "userPrompt", userPromptToSubmit },
+                        { "source", responseData.Request.Source }
+                    });
+            }
+            catch (Exception ex)
+            {
+                log?.LogError(ex, "Error occurred during telemetry logging");
+            }
+
+            return responseData.Json;
+        }
+
+        private static string FormatErrorMessage(Exception exception, string rawUserPrompt, bool userSuppliedKey, bool userLoggedIn)
+        {
+            var errorMessage = $"Error during card generation: {exception.Message}";
+
+            if (exception.Message.ContainsIgnoreCase("Your request was rejected as a result of our safety system"))
+            {
+                errorMessage = $"Error: Your request to generate a card for prompt '{rawUserPrompt}' was rejected as a result of the AI language model safety system. Please try again.";
+            }
+
+            if (exception.Message.ContainsIgnoreCase("That model is currently overloaded with other requests"))
+            {
+                errorMessage = $"Error: Your request to generate a card for prompt '{rawUserPrompt}' failed because the AI language model is overloaded with requests. Please try again or use a different model.";
+            }
+
+            if (exception.Message.ContainsIgnoreCase("You exceeded your current quota"))
+            {
+                if (userSuppliedKey)
+                {
+                    errorMessage = $"Error: The OpenAI API key you provided has exceeded its quota. Please adjust your usage limits or increase your quota to continue using this API key.";
+                }
+                else if (!userSuppliedKey && userLoggedIn)
+                {
+                    errorMessage = $"Error: The OpenAI API key used by this website has exceeded its quota. Please set your own OpenAI API key in the settings to continue generating Magic: The Gathering cards!";
+                }
+                else
+                {
+                    errorMessage = $"Error: The OpenAI API key used by this website has exceeded its quota. Please try logging in or supplying your own OpenAI API key in the settings to continue generating Magic: The Gathering cards!";
+                }
+            }
+
+            if (exception.Message.ContainsIgnoreCase("OpenAI rejected your authorization") || exception.Message.ContainsIgnoreCase("Incorrect API key provided"))
+            {
+                if (userSuppliedKey)
+                {
+                    errorMessage = $"Error: The OpenAI API key you provided is invalid. Please check the integrity of this API key.";
+                }
+                else if (!userSuppliedKey && userLoggedIn)
+                {
+                    errorMessage = $"Error: The OpenAI API key provided by this website was invalid. Please supply your own Open AI API key in the settings to continue generating Magic: The Gathering cards!";
+                }
+                else
+                {
+                    errorMessage = $"Error: Please log in or supply your own Open AI API key in the settings to generate Magic: The Gathering cards!";
+                }
+            }
+
+            return errorMessage;
         }
 
         [Function("UpdateUserRecord")]

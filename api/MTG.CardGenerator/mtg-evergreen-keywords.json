@@ -1,0 +1,160 @@
+[
+  {
+    "keyword": "Deathtouch",
+    "reminder_text": "Deathtouch",
+    "examples": [
+      "Deathtouch"
+    ],
+    "notes": "Makes creatures lethal versus any blocker; strong on black and green creature themes.",
+    "type": "Evergreen keyword"
+  },
+  {
+    "keyword": "Defender",
+    "reminder_text": "Defender",
+    "examples": [
+      "Defender"
+    ],
+    "notes": "Limits creatures to defensive roles; commonly found on walls and blockers.",
+    "type": "Evergreen keyword"
+  },
+  {
+    "keyword": "Double strike",
+    "reminder_text": "Double strike",
+    "examples": [
+      "Double strike",
+    ],
+    "notes": "Allows creatures to hit twice in combat; powerful on aggressive creatures.",
+    "type": "Evergreen keyword"
+  },
+  {
+    "keyword": "Equip {cost}",
+    "reminder_text": "Equip {cost} (Attach this equipment to target creature you control by paying its equip cost.)",
+    "examples": [
+      "Equip {2}",
+      "Equip {2} (Attach this equipment to target creature you control by paying its equip cost.)"
+    ],
+    "notes": "Attaches artifact to creatures; enables modular stat boosts and abilities.",
+    "type": "Evergreen keyword"
+  },
+  {
+    "keyword": "First strike",
+    "reminder_text": "First strike",
+    "examples": [
+      "First strike"
+    ],
+    "notes": "Provides combat advantage by striking earlier; common on knights and warriors.",
+    "type": "Evergreen keyword"
+  },
+  {
+    "keyword": "Flash",
+    "reminder_text": "Flash (You may cast this spell any time you could cast an instant.)",
+    "examples": [
+      "Flash",
+      "Flash (You may cast this spell any time you could cast an instant.)"
+    ],
+    "notes": "Allows surprise plays and instant-speed interactions; used on control elements.",
+    "type": "Evergreen keyword"
+  },
+  {
+    "keyword": "Flying",
+    "reminder_text": "Flying",
+    "examples": [
+      "Flying"
+    ],
+    "notes": "Grants aerial evasion; one of the most common evasion mechanics.",
+    "type": "Evergreen keyword"
+  },
+  {
+    "keyword": "Haste",
+    "reminder_text": "Haste",
+    "examples": [
+      "Haste"
+    ],
+    "notes": "Bypasses summoning sickness; enables immediate impact.",
+    "type": "Evergreen keyword"
+  },
+  {
+    "keyword": "Hexproof",
+    "reminder_text": "Hexproof",
+    "examples": [
+      "Hexproof"
+    ],
+    "notes": "Protects against targeted removal; similar to shroud but allows self-targeting.",
+    "type": "Evergreen keyword"
+  },
+  {
+    "keyword": "Indestructible",
+    "reminder_text": "Indestructible (This permanent can't be destroyed by damage or effects that say destroy.)",
+    "examples": [
+      "Indestructible",
+      "Indestructible (This permanent can't be destroyed by damage or effects that say destroy.)"
+    ],
+    "notes": "Survives lethal damage and destroy effects; common on artifacts and colorless creatures.",
+    "type": "Evergreen keyword"
+  },
+  {
+    "keyword": "Lifelink",
+    "reminder_text": "Lifelink",
+    "examples": [
+      "Lifelink"
+    ],
+    "notes": "Combines offense with life gain; stabilizes life totals in combat.",
+    "type": "Evergreen keyword"
+  },
+  {
+    "keyword": "Menace",
+    "reminder_text": "Menace",
+    "examples": [
+      "Menace"
+    ],
+    "notes": "Increases blocking cost, enabling more consistent damage.",
+    "type": "Evergreen keyword"
+  },
+  {
+    "keyword": "Protection from (quality)",
+    "reminder_text": "Protection from (quality) (This creature can't be damaged, enchanted, equipped, blocked, or targeted by anything with that quality.)",
+    "examples": [
+      "Protection from red",
+      "Protection from red (This creature can't be damaged, enchanted, equipped, blocked, or targeted by red.)"
+    ],
+    "notes": "Shields against specific sources; versatile defense mechanic.",
+    "type": "Evergreen keyword"
+  },
+  {
+    "keyword": "Prowess",
+    "reminder_text": "Prowess (Whenever you cast a noncreature spell, this creature gets +1/+1 until end of turn.)",
+    "examples": [
+      "Prowess",
+      "Prowess (Whenever you cast a noncreature spell, this creature gets +1/+1 until end of turn.)"
+    ],
+    "notes": "Rewards spell casting with creature growth; popular in Izzet decks.",
+    "type": "Evergreen keyword"
+  },
+  {
+    "keyword": "Reach",
+    "reminder_text": "Reach",
+    "examples": [
+      "Reach"
+    ],
+    "notes": "Provides defense against flyers; commonly on green creatures.",
+    "type": "Evergreen keyword"
+  },
+  {
+    "keyword": "Trample",
+    "reminder_text": "Trample",
+    "examples": [
+      "Trample"
+    ],
+    "notes": "Ensures some damage even when blocked; classic aggression mechanic.",
+    "type": "Evergreen keyword"
+  },
+  {
+    "keyword": "Vigilance",
+    "reminder_text": "Vigilance",
+    "examples": [
+      "Vigilance"
+    ],
+    "notes": "Allows creatures to attack without leaving back blockers; often on soldiers and knights.",
+    "type": "Evergreen keyword"
+  }
+]

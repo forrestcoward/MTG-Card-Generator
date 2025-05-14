@@ -1,0 +1,159 @@
+[
+  {
+    "keyword": "Counter",
+    "reminder_text": "",
+    "examples": [
+      "Counter target spell.",
+      "Counter target noncreature spell.",
+      "Counter target spell unless its controller pays {3}.",
+      "Counter target activated ability.",
+      "Counter target spell with converted mana cost X or less.",
+      "Counter target ability.",
+      "Counter target instant or sorcery spell.",
+      "Counter target spell that an opponent controls."
+    ],
+    "notes": "Negates spells or abilities before they resolve, often used in control strategies. Only valid on instants and creatures with flash.",
+    "type": "Evergreen action"
+  },
+  {
+    "keyword": "Exile",
+    "reminder_text": "",
+    "examples": [
+      "Exile target permanent.",
+      "Exile target creature.",
+      "Exile target card from a graveyard.",
+      "Exile all cards from target player's graveyard.",
+      "Exile target nonland permanent.",
+      "Exile target enchantment.",
+      "Exile target artifact or enchantment.",
+      "Exile target spell on the stack."
+    ],
+    "notes": "Permanently removes cards from play, preventing most forms of recursion.",
+    "type": "Evergreen action"
+  },
+  {
+    "keyword": "Fight",
+    "reminder_text": "",
+    "examples": [
+      "Fight target creature you control and target creature an opponent controls.",
+      "Fight two target creatures.",
+      "When this enters the battlefield, it fights target creature.",
+      "As an additional cost to cast this spell, sacrifice a creature: target creature you control fights target creature an opponent controls.",
+      "Fight target creature you control and target creature with flying.",
+      "Whenever this creature fights, draw a card.",
+      "Fight target creature with the greatest toughness."
+    ],
+    "notes": "Allows creatures to exchange damage directly outside of combat.",
+    "type": "Evergreen action"
+  },
+  {
+    "keyword": "Mill",
+    "reminder_text": "",
+    "examples": [
+      "Target player mills 3 cards.",
+      "Each opponent mills two cards.",
+      "Mill four cards.",
+      "When this enters the battlefield, mill five cards.",
+      "Target player mills six cards and you gain 2 life.",
+      "Whenever you mill a card, scry 1."
+    ],
+    "notes": "Discards cards from an opponent's library to fuel graveyard strategies or win via decking.",
+    "type": "Evergreen action"
+  },
+  {
+    "keyword": "Sacrifice",
+    "reminder_text": "",
+    "examples": [
+      "Sacrifice a creature: you gain 1 life.",
+      "Sacrifice an artifact: deal 2 damage to any target.",
+      "As an additional cost to cast this spell, sacrifice a land.",
+      "When you sacrifice a creature, scry 1.",
+      "Sacrifice a permanent: draw two cards.",
+      "Each player sacrifices a creature.",
+      "Sacrifice a creature: add {B}{B}.",
+      "Sacrifice a token: create a 4/4 Dragon token."
+    ],
+    "notes": "Forces a player to sacrifice a permanent to gain an effect.",
+    "type": "Evergreen action"
+  },
+  {
+    "keyword": "Enters",
+    "reminder_text": "",
+    "examples": [
+      "When this creature enters the battlefield, create a 1/1 white Spirit creature token with flying.",
+      "When this creature enters the battlefield, another target creature you control gets +1/+1 until end of turn.",
+      "When this creature enters the battlefield, create X Treasure tokens, where X is the number of creatures you control.",
+      "When this creature or another creature with power 4 or greater enters the battlefield under your control, you gain 3 life and draw a card.",
+      "When this land enters the battlefield, it enters tapped unless you pay {1}.",
+      "When this enters the battlefield, exile target card from a graveyard.",
+      "When this enters the battlefield, it deals 1 damage to any target.",
+      "When this enters the battlefield, you may return target artifact card from your graveyard to your hand."
+    ],
+    "notes": "Triggers abilities or effects when a permanent enters the battlefield. This can be used to create tokens, draw cards, gain life, or trigger any other effect.",
+    "type": "Evergreen action"
+  },
+  {
+    "keyword": "Dies",
+    "reminder_text": "",
+    "examples": [
+      "When this creature dies, draw a card.",
+      "When this creature dies, you may return target creature card from your graveyard to your hand.",
+      "When this creature dies, create a 2/2 white Knight creature token.",
+      "When this creature dies, it deals 3 damage to any target.",
+      "When this creature dies, you gain life equal to its power.",
+      "When this creature dies, each opponent sacrifices a creature.",
+      "When this creature dies, return target artifact card from your graveyard to the battlefield tapped.",
+      "When this creature dies, create a 1/1 green Saproling creature token."
+    ],
+    "notes": "Triggers abilities or effects when a creature is put into a graveyard from the battlefield. Useful for card draw, recursion, token generation, life gain, damage, and more.",
+    "type": "Evergreen action"
+  },
+  {
+    "keyword": "Scry X",
+    "reminder_text": "",
+    "examples": [
+      "Scry 1.",
+      "Scry 2.",
+      "Scry 3, then draw a card.",
+      "Scry 4, then you may put a creature card from your hand onto the battlefield.",
+      "Scry X, then target player mills X cards.",
+      "Scry 2, then gain 2 life.",
+      "Scry 5.",
+      "Scry 3, then reveal the top card of your library and put it into your hand if it's a land."
+    ],
+    "notes": "Improves card quality by filtering your draws.",
+    "type": "Evergreen action"
+  },
+  {
+    "keyword": "Tap",
+    "reminder_text": "",
+    "examples": [
+      "{T}: Add {G}.",
+      "{T}: Destroy target creature.",
+      "{R}, {T}: Deal 2 damage to any target.",
+      "{T}, Sacrifice this creature: Draw a card.",
+      "{T}: You gain 1 life.",
+      "{3}{W}, {T}: Create a 5/5 colorless Vehicle artifact token named Zeppelin with flying and crew 3.",
+      "{1}, {T}: Untap target creature.",
+      "{1}, {T}: Create a Food token."
+    ],
+    "notes": "Denotes activation or cost payment. Tapping can be used in conjunction with any other ability or effect.",
+    "type": "Evergreen action"
+  },
+  {
+    "keyword": "Untap",
+    "reminder_text": "",
+    "examples": [
+      "Untap target creature.",
+      "Untap target land.",
+      "Untap target artifact.",
+      "Untap all creatures you control.",
+      "Untap target permanent.",
+      "Untap two target creatures.",
+      "Untap each creature you control.",
+      "Untap target creature. It gains vigilance until end of turn."
+    ],
+    "notes": "Refreshes permanents for use; can be used as a cost for certain abilities.",
+    "type": "Evergreen action"
+  }
+]

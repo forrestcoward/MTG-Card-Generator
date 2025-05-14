@@ -20,25 +20,23 @@ namespace MTG.CardGenerator
         // Choose randomly for each card.
         private static readonly string[] Artists =
         [
-            "Greg Kutkowski style, digital, fantasy art.",
-            "Greg Kutkowski style, digital, fantasy art.",
-            "Greg Kutkowski style, digital, fantasy art.",
-            "Greg Kutkowski style, digital, fantasy art.",
-            "Greg Kutkowski style, digital, fantasy art.",
-            "Greg Kutkowski style, digital, fantasy art.",
-            "Greg Kutkowski style, digital, fantasy art.",
-            "Greg Kutkowski style, digital, fantasy art.",
+            "Rebecca Guay style, digital, fantasy art.",
+            "Seb Mckinnon style, digital, fantasy art.",
+            "Terese Nielsen style, digital, fantasy art.",
+            "Christopher Rush style, digital, fantasy art.",
+            "Veronique Meignaud style, digital, fantasy art.",
+            "Adam Paquette style, digital, fantasy art.",
+            "John Avon style, digital, fantasy art.",
+            "Johannes Voss style, digital, fantasy art.",
+            "Willian Munny style, digital, fantasy art.",
             "Greg Kutkowski style, digital, fantasy art.",
             "Greg Kutkowski style, digital, fantasy art.",
             "Greg Kutkowski style, digital, fantasy art.",
             "Greg Kutkowski style, digital, fantasy art.",
             "Terese Nielsen style, digital, fantasy art. ",
-            "Veronique Meignaud style, digital, fantasy art.",
-            "Veronique Meignaud style, digital, fantasy art.",
-            "Wassily Kandinsky, abstract art.",
-            "Vincent van Gogh, impressionist style.",
-            "Salvador Dali, surrealism style",
-            "Salvador Dali, surrealism style"
+            "Wassily Kandinsky, abstract, fantasy art.",
+            "Vincent van Gogh, impressionist, fantasy style.",
+            "Salvador Dali, surrealism, fantasy style",
         ];
 
         public static ImageGenerationOptions GetImageOptionsForCard(MagicCard card, string imageModel)
@@ -142,7 +140,7 @@ The text is the following: {options.Prompt}";
                     ChatMessage.FromUser(prompt),
                 ],
 
-                Model = Betalgo.Ranul.OpenAI.ObjectModels.Models.Gpt_4o_mini,
+                Model = Betalgo.Ranul.OpenAI.ObjectModels.Models.Gpt_4_1,
             });
 
             return result.Choices.First().Message.Content;
