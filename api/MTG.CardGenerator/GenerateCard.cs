@@ -68,7 +68,6 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             var cost = new Cost();
             var openAIResponse = string.Empty;
             var attemptsToGenerateCard = 0;
-            var gptModelUsed = string.Empty;
             var maxAttempts = 3;
 
             // Process raw user prompt.
@@ -273,7 +272,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 Cards = cards,
                 CardIterations = parsedCardIterations,
                 OpenAIResponse = openAIResponse,
-                ActualGPTModelUsed = gptModelUsed,
+                ActualGPTModelUsed = gptModel.ToString(),
                 SystemPrompt = systemPrompt,
                 Cost = cost,
             };

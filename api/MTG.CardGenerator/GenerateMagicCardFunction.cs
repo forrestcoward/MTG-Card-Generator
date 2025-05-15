@@ -499,6 +499,7 @@ namespace MTG.CardGenerator
                         { "systemPrompt", responseData.CardResult.SystemPrompt },
                         { "userSubject", responseData.Request.Metadata.UserSubject },
                         { "userPrompt", userPromptToSubmit },
+                        { "userSuppliedKey", !string.IsNullOrWhiteSpace(responseData.Request.Metadata.UserSuppliedApiKey) },
                         { "source", responseData.Request.Source }
                     });
             }
