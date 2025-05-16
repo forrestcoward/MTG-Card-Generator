@@ -38,36 +38,39 @@ namespace MTG.CardGenerator.CosmosClients
             return userCards;
         }
 
-        public async Task<CardGenerationRecord> GetCardToRate(ILogger log)
+        public async Task<CardGenerationRecord> GetCardToRate(int createdInLastXMonths = 2, ILogger log = null)
         {
-            for (var attempt = 0; attempt < 30; attempt++)
+            for (var attempt = 0; attempt < 40; attempt++)
             {
                 var param = GetRandomAlphanumericCharacter();
-                if (attempt > 20)
+                if (attempt > 30)
                 {
                     param = GetRandomAlphanumericCharacter() + GetRandomAlphanumericCharacter();
                 }
 
-                // WHERE STARTSWITH(c.magicCards[0].imageUrl, 'https://mtgcardgen')
+                var oneMonthAgoUtc = DateTime.UtcNow.AddMonths(createdInLastXMonths * -1);
+                var epochMonthsAgo = (int)(oneMonthAgoUtc - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+
                 var queryDefinition = new QueryDefinitionWrapper(@$"
                     SELECT * FROM c
-                    WHERE c.generationMetadata.imageModel = 'dall-e-3'
-                    AND c.card.imageUrl != ''
-                    AND c.generationMetadata.model = 'gpt-4-1106-preview'
-                    AND STARTSWITH(c.id, @param)")
+                    WHERE c.card.imageUrl != ''
+                    AND STARTSWITH(c.id, @param)
+                    AND c._ts > @epochMonthsAgo
+                    ")
+               .WithParameter("@epochMonthsAgo", epochMonthsAgo)
                .WithParameter("@param", param);
 
-                var records = await QueryCosmosDB<CardGenerationRecord>(queryDefinition.QueryDefinition);
+                var records = await QueryCosmosDB<CardGenerationRecord>(queryDefinition.QueryDefinition, log: log);
 
                 if (records.Count != 0)
                 {
-                    log.LogInformation($"Found {records.Count} card records starting with '{param}'.");
+                    log?.LogInformation($"Found {records.Count} card records starting with '{param}'.");
                     var randomIndex = Random.Next(0, records.Count);
                     return records[randomIndex];
                 }
                 else
                 {
-                    log.LogWarning("No card records found starting with '{param}'. Trying again...", param);
+                    log?.LogWarning("No card records found starting with '{param}'. Trying again...", param);
                 }
             }
 
@@ -146,12 +149,18 @@ namespace MTG.CardGenerator.CosmosClients
 
         public async Task<List<CardGenerationRecord>> GetTopCards(int top, int requiredNumberOfVotes)
         {
+            var oneMonthAgoUtc = DateTime.UtcNow.AddMonths(-2);
+            var epochMonthsAgo = (int)(oneMonthAgoUtc - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+
             var queryDefinition = new QueryDefinitionWrapper(@$"
                 SELECT *
                 FROM c
                 WHERE IS_DEFINED(c.rating)
                 AND c.rating.numberOfVotes >= @requiredNumberOfVotes
-                ORDER BY c.rating.averageScore DESC OFFSET 0 LIMIT @top")
+                AND c._ts > @epochMonthsAgo
+                ORDER BY c.rating.averageScore DESC OFFSET 0 LIMIT @top
+                ")
+                .WithParameter("@epochMonthsAgo", epochMonthsAgo)
                 .WithParameter("@top", top)
                 .WithParameter("@requiredNumberOfVotes", requiredNumberOfVotes);
 

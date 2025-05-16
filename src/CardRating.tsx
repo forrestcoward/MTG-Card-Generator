@@ -171,7 +171,7 @@ export function CardRating() {
             </tr>
             <tr style={{justifyContent:"center", marginTop:5, display:"grid", backgroundColor: "#857dff0f"}}>
               <td>
-                <h2>Top 100 User Cards</h2>
+                <h2>Top 100 User Cards (Last Two Months)</h2>
               </td>
             </tr>
             <tr>

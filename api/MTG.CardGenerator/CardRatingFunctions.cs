@@ -25,7 +25,7 @@ namespace MTG.CardGenerator
             var log = context.GetLogger<CardRatingFunctions>();
             var stopwatch = Stopwatch.StartNew();
             var cardsClient = new CardsClient(log);
-            var card = await cardsClient.GetCardToRate(log);
+            var card = await cardsClient.GetCardToRate(log: log);
 
             log.LogMetric("GetCardToRate_DurationSeconds", stopwatch.Elapsed.TotalSeconds,
                 properties: new Dictionary<string, object>()
