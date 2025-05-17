@@ -1,6 +1,8 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using Betalgo.Ranul.OpenAI.ObjectModels.RealtimeModels;
+using MTG.CardGenerator.Exceptions;
 using MTG.CardGenerator.Models;
 
 namespace MTG.CardGenerator
@@ -19,11 +21,12 @@ namespace MTG.CardGenerator
         /// <summary>
         /// Runs a prediction on Replicate and polls until completion.
         /// </summary>
+        /// <param name="prompt">The prompt</param>
         /// <param name="model">Model name, e.g. "google/imagen-3-fast"</param>
         /// <param name="input">Input object for the model (will be serialized as JSON)</param>
         /// <returns>The output URL or value as a string</returns>
         /// <exception cref="Exception">Throws if the prediction fails or is canceled</exception>
-        public async Task<string> RunPredictionAsync(string model, object input)
+        public async Task<string> RunPredictionAsync(string prompt, string model, object input)
         {
             var url = $"https://api.replicate.com/v1/models/{model}/predictions";
             var payload = new { input };
@@ -39,7 +42,7 @@ namespace MTG.CardGenerator
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
-                throw new Exception($"Replicate API request failed: {response.StatusCode} - {errorContent}");
+                throw new FailedToGenerateImageException($"Replicate API request failed: {response.StatusCode} - {errorContent}", prompt, model);
             }
 
             var responseJson = await response.Content.ReadAsStringAsync();
@@ -47,7 +50,7 @@ namespace MTG.CardGenerator
 
             if (prediction == null)
             {
-                throw new Exception("Failed to deserialize Replicate API response.");
+                throw new FailedToGenerateImageException("Failed to deserialize Replicate API response", prompt, model);
             }
 
             if (prediction.Urls == null || string.IsNullOrEmpty(prediction.Urls.Get))
@@ -103,7 +106,9 @@ namespace MTG.CardGenerator
                 prediction = JsonSerializer.Deserialize<ReplicatePredictionResponse>(pollJson);
 
                 if (prediction == null)
+                {
                     throw new Exception("Failed to deserialize Replicate API polling response.");
+                }
             }
 
             if (prediction.Status == ReplicatePredictionStatus.Succeeded && !string.IsNullOrEmpty(outputUrl))
@@ -112,7 +117,7 @@ namespace MTG.CardGenerator
             }
             else
             {
-                throw new Exception($"Replicate API prediction failed or canceled. Status: {prediction.Status}. Error: {errorMsg ?? "Unknown error."}");
+                throw new FailedToGenerateImageException($"Replicate '{model}' API failed with error '{errorMsg}' for '{prompt}'", prompt, model);
             }
         }
     }

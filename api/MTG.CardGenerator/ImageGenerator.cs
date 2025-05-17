@@ -3,6 +3,7 @@ using Betalgo.Ranul.OpenAI.Managers;
 using Betalgo.Ranul.OpenAI.ObjectModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using Microsoft.Extensions.Logging;
+using MTG.CardGenerator.Exceptions;
 using MTG.CardGenerator.Models;
 
 namespace MTG.CardGenerator
@@ -102,7 +103,7 @@ namespace MTG.CardGenerator
                     disable_safety_checker = false,
                     go_fast = true
                 };
-                var outputUrl = await replicateClient.RunPredictionAsync("black-forest-labs/flux-schnell", input);
+                var outputUrl = await replicateClient.RunPredictionAsync(prompt, "black-forest-labs/flux-schnell", input);
                 cost.AddImageCost(size, model, wasUserCharged: replicateApiKey.IsUserSupplied, operationName: operationName);
                 return outputUrl;
             }
@@ -120,31 +121,31 @@ namespace MTG.CardGenerator
                     aspect_ratio = "1:1",
                     output_quality = 90
                 };
-                var outputUrl = await replicateClient.RunPredictionAsync("stability-ai/stable-diffusion-3.5-medium", input);
+                var outputUrl = await replicateClient.RunPredictionAsync(prompt, "stability-ai/stable-diffusion-3.5-medium", input);
                 cost.AddImageCost(size, model, wasUserCharged: replicateApiKey.IsUserSupplied, operationName: operationName);
                 return outputUrl;
             }
 
-            if (model == Constants.ImageModels.GoogleImagen3FastModelName)
-            {
-                var replicateClient = new ReplicateApiClient(replicateApiKey.Key);
-                var input = new
+                if (model == Constants.ImageModels.GoogleImagen3FastModelName)
                 {
-                    prompt = prompt,
-                    num_inference_steps = 4,
-                    num_outputs = 1,
-                    output_format = "png",
-                    aspect_ratio = "1:1",
-                    disable_safety_checker = true,
-                    go_fast = true,
-                    megapixels = 1
-                };
+                    var replicateClient = new ReplicateApiClient(replicateApiKey.Key);
+                    var input = new
+                    {
+                        prompt = prompt,
+                        num_inference_steps = 4,
+                        num_outputs = 1,
+                        output_format = "png",
+                        aspect_ratio = "1:1",
+                        disable_safety_checker = true,
+                        go_fast = true,
+                        megapixels = 1
+                    };
 
-                var outputUrl = await replicateClient.RunPredictionAsync("google/imagen-3-fast", input);
+                    var outputUrl = await replicateClient.RunPredictionAsync(prompt, "google/imagen-3-fast", input);
 
-                cost.AddImageCost(size, model, wasUserCharged: replicateApiKey.IsUserSupplied, operationName: operationName);
-                return outputUrl;
-            }
+                    cost.AddImageCost(size, model, wasUserCharged: replicateApiKey.IsUserSupplied, operationName: operationName);
+                    return outputUrl;
+                }
 
             if (model != Constants.ImageModels.Dalle2ModelName && model != Constants.ImageModels.Dalle3ModelName)
             {
@@ -177,10 +178,14 @@ namespace MTG.CardGenerator
 
             cost.AddImageCost(size, model, wasUserCharged: openAIApiKey.IsUserSupplied, operationName: operationName);
 
-            if (!imageResult.Successful)
+            if (!imageResult.Successful && !string.IsNullOrWhiteSpace(imageResult.Error?.Message))
             {
-                // TODO: Error.Message is often empty. This happens when the prompt is deemed inappropriate.
-                throw new Exception($"Failed to generate image: {imageResult.Error.Message}");
+                throw new FailedToGenerateImageException($"Failed to generate an image with model '{model}': {imageResult.Error.Message}", prompt, model);
+            }
+
+            if (!imageResult.Successful && imageResult.Error?.Type == "invalid_request_error" && string.IsNullOrWhiteSpace(imageResult.Error?.Message))
+            {
+                throw new FailedToGenerateImageException($"Failed to generate an image with model '{model}' because of an inappropriate prompt: {prompt}", prompt, model);
             }
 
             return imageResult.Results.First().Url;
