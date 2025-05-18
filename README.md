@@ -1,7 +1,7 @@
 # Magic: The Gathering Card Generator
 
 ## [https://www.mtgcardgenerator.com](https://www.mtgcardgenerator.com/)
-The Magic: The Gathering Card Generator is a project that uses AI (particuarlly, OpenAI's offerings) to generate realistic Magic: The Gathering cards. Generated cards are beautifully rendered using CSS.
+The Magic: The Gathering Card Generator is a project that uses AI to generate realistic Magic: The Gathering cards. Generated cards are rendered beautifully using just CSS.
 
 Users can enter a prompt describing the type of Magic card they would like to generate, and the response will be a be a rendered image of a realistic card that matches the prompt. Here is an [example card generation](https://www.mtgcardgenerator.com/Card?id=732874ce-468e-4823-8605-2cceea9626c5):
 
@@ -9,22 +9,18 @@ Users can enter a prompt describing the type of Magic card they would like to ge
   <img src="cards\Cutlery-Cohort.png" width=420>
 </p> 
 
-# Chat GPT Integration
-
-The MTG Card Generator is now available as an [OpenAI GPT](https://chatgpt.com/gpts). Check it out [here](https://chatgpt.com/g/g-gyWs4hFFS-mtg-card-generator).
-
-
 # Features
 
 * Users supply an open ended prompt describing the Magic card they would like to generate. Users may:
-    * Choose the language model (current only `gpt-4o-mini` is supported)
-    * Choose the image model (`dall-e 2`, `dall-e 3` etc.) or supply their own image prompt.
+    * Choose the language model (`gpt-41`, `gpt-40`, `gpt-o3` etc.)
+    * Choose the image model (`imagen 3`, `dall-e 2`, `dall-e 3` etc.) or supply their own image prompt.
     * Select a number of other fun options such as asking the AI explain itself or asking for extra creative cards.
     * Resize, download, or share generated card links.
 
-* Generated cards are rendered beautifully using CSS and look like real Magic cards. Realistic card background and symbols are used, and card text is scaled appropriately to fill the content.
+* Generated cards are rendered beautifully using just CSS and look like real Magic cards. Realistic card background and symbols are used, and card text is scaled appropriately to fill the content.
 
-* Users may optionally login to have their card generation history stored for viewing later.
+* Users may login to a daily free spent limit for generating and images (this limit resets each day).
+  * User's card generation history stored for viewing later.
 
 * A rating page is available to score and view top cards.
 
@@ -49,28 +45,46 @@ The API is located at https://mtgcardgenerator.azurewebsites.net/api/GenerateMag
 
 ### Sample Response
 
+The response from https://mtgcardgenerator.azurewebsites.net/api/GenerateMagicCard will return an `id` you can use to track the request.
+
+```
+{ 
+  "id": "75f60a63dc874f2999bf0316f5c5a0d4" 
+}
+```
+
+Poll the `GetMagicCardGenerationStatus` endpoint e.g. https://mtgcardgenerator.azurewebsites.net/api/GetMagicCardGenerationStatus?instanceId={id} to get the status and eventual outcome of the request. The `runtimeStatus` will be `Completed` when the card is ready.
+
 ```
 {
-   "cards":[
-      {
-         "id": "969f10c2-66f4-40e4-be96-8dd0341fd0c4",
-         "name": "Djurge, the Timebender",
-         "manaCost": "{3}{U}{U}{U}",
-         "type": "Creature",
-         "typeLine": "Legendary Creature - Human Wizard",
-         "oracleText": "When Djurge, the Timebender enters the battlefield, you may exile target nonland permanent. Its controller puts it into their library second from the top.\nAt the beginning of your upkeep, you may exile the top card of your library. If you do, you may cast it without paying its mana cost.",
-         "flavorText": "Time is but a mere thread for Djurge, the weaver of history.",
-         "colorIdentity": "Blue",
-         "rarity": "Mythic Rare",
-         "pt": "4/4",
-         "explanation": null,
-         "funnyExplanation": null,
-         "userPrompt": "A card from the Dominaria plane.",
-         "imageUrl": "<link>",
-         "temporaryImageUrl": "<link>",
-         "url":"https://www.mtgcardgenerator.com/Card?id=969f10c2-66f4-40e4-be96-8dd0341fd0c4"
-      }
-   ]
+  {
+    "id": "75f60a63dc874f2999bf0316f5c5a0d4",
+    "runtimeStatus": "Completed",
+    "customStatus": "success",
+    "output": 
+    {  
+      "cards":[
+        {
+          "id": "969f10c2-66f4-40e4-be96-8dd0341fd0c4",
+          "name": "Djurge, the Timebender",
+          "manaCost": "{3}{U}{U}{U}",
+          "type": "Creature",
+          "typeLine": "Legendary Creature - Human Wizard",
+          "oracleText": "When Djurge, the Timebender enters the battlefield, you may exile target nonland permanent. Its controller puts it into their library second from the top.\nAt the beginning of your upkeep, you may exile the top card of your library. If you do, you may cast it without paying its mana cost.",
+          "flavorText": "Time is but a mere thread for Djurge, the weaver of history.",
+          "colorIdentity": "Blue",
+          "rarity": "Mythic Rare",
+          "pt": "4/4",
+          "explanation": null,
+          "funnyExplanation": null,
+          "userPrompt": "A card from the Dominaria plane.",
+          "imageUrl": "<link>",
+          "temporaryImageUrl": "<link>",
+          "url":"https://www.mtgcardgenerator.com/Card?id=969f10c2-66f4-40e4-be96-8dd0341fd0c4"
+        }
+      ]
+    }
+  }
 }
 ``````
 
@@ -102,9 +116,11 @@ There are two components to this project:
   },
   "Values": {
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-    "FUNCTIONS_WORKER_RUNTIME": "dotnet",
-    // OpenAI settings.
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "DurableTaskHubName": "mtgcardgeneratorlocalhub",
+    // API keys.
     "OPENAI_API_KEY": "",
+    "REPLICATE_API_KEY": "",
     // Bearer token validation settings.
     "ValidateBearerToken": false,
     "ValidJWTAuthority": "https://mtgcardgenerator.b2clogin.com/mtgcardgenerator.onmicrosoft.com/B2C_1_signup_signin",
@@ -123,7 +139,7 @@ There are two components to this project:
 }
 ```
 
-You will need to fill in the missing values which include supplying an Open AI API key, an Azure Cosmos DB, and an Azure Blob storage. Set `ValidateBearerToken` to false to skip any API authentication when running the Azure function emulator locally (per function authorization is implemented). Or, you may utilize the [Azure B2C instance]((https://learn.microsoft.com/en-us/azure/active-directory-b2c/overview)) that has been set up for this website with the values provided above to test the login experience.
+You will need to fill in the missing values which include supplying an [Open AI API key](https://platform.openai.com/api-keys), [Replicate API key](https://replicate.com/account/api-tokens), an Azure Cosmos DB, and an Azure Blob storage. Set `ValidateBearerToken` to false to skip any API authentication when running the Azure function emulator locally (per function authorization is implemented). Or, you may utilize the [Azure B2C instance]((https://learn.microsoft.com/en-us/azure/active-directory-b2c/overview)) that has been set up for this website with the values provided above to test the login experience.
 
 3. Start the `MTG.CardGenerator` project to launch the Azure function emulator over local host.
 

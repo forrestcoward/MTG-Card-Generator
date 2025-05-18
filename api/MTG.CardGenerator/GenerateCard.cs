@@ -281,7 +281,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
         }
 
         // Generate a set of cards from OpenAI. Returns the parsed cards and the raw OpenAI response.
-        public static async Task<(BasicCard[], string)> GenerateOpenAICardResponse(OpenAIService service, string requestName, string systemPrompt, string userPrompt, string gptModel, Cost cost, bool userBroughtAPIKey, ILogger log)
+        private static async Task<(BasicCard[], string)> GenerateOpenAICardResponse(OpenAIService service, string requestName, string systemPrompt, string userPrompt, string gptModel, Cost cost, bool userBroughtAPIKey, ILogger log)
         {
             var response = await service.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
             {

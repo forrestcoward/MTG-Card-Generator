@@ -103,7 +103,7 @@ namespace MTG.CardGenerator
                     disable_safety_checker = false,
                     go_fast = true
                 };
-                var outputUrl = await replicateClient.RunPredictionAsync(prompt, "black-forest-labs/flux-schnell", input);
+                var outputUrl = await replicateClient.ExecuteRelicateAPI(prompt, "black-forest-labs/flux-schnell", input);
                 cost.AddImageCost(size, model, wasUserCharged: replicateApiKey.IsUserSupplied, operationName: operationName);
                 return outputUrl;
             }
@@ -121,7 +121,7 @@ namespace MTG.CardGenerator
                     aspect_ratio = "1:1",
                     output_quality = 90
                 };
-                var outputUrl = await replicateClient.RunPredictionAsync(prompt, "stability-ai/stable-diffusion-3.5-medium", input);
+                var outputUrl = await replicateClient.ExecuteRelicateAPI(prompt, "stability-ai/stable-diffusion-3.5-medium", input);
                 cost.AddImageCost(size, model, wasUserCharged: replicateApiKey.IsUserSupplied, operationName: operationName);
                 return outputUrl;
             }
@@ -141,7 +141,7 @@ namespace MTG.CardGenerator
                         megapixels = 1
                     };
 
-                    var outputUrl = await replicateClient.RunPredictionAsync(prompt, "google/imagen-3-fast", input);
+                    var outputUrl = await replicateClient.ExecuteRelicateAPI(prompt, "google/imagen-3-fast", input);
 
                     cost.AddImageCost(size, model, wasUserCharged: replicateApiKey.IsUserSupplied, operationName: operationName);
                     return outputUrl;
@@ -185,7 +185,7 @@ namespace MTG.CardGenerator
 
             if (!imageResult.Successful && imageResult.Error?.Type == "invalid_request_error" && string.IsNullOrWhiteSpace(imageResult.Error?.Message))
             {
-                throw new FailedToGenerateImageException($"Failed to generate an image with model '{model}' because of an inappropriate prompt: {prompt}", prompt, model);
+                throw new FailedToGenerateImageException($"Failed to generate an image with model '{model}' because of an inappropriate prompt", prompt, model);
             }
 
             return imageResult.Results.First().Url;

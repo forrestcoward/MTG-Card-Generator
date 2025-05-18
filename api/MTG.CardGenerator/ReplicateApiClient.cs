@@ -1,9 +1,8 @@
+using MTG.CardGenerator.Exceptions;
+using MTG.CardGenerator.Models;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using Betalgo.Ranul.OpenAI.ObjectModels.RealtimeModels;
-using MTG.CardGenerator.Exceptions;
-using MTG.CardGenerator.Models;
 
 namespace MTG.CardGenerator
 {
@@ -25,8 +24,7 @@ namespace MTG.CardGenerator
         /// <param name="model">Model name, e.g. "google/imagen-3-fast"</param>
         /// <param name="input">Input object for the model (will be serialized as JSON)</param>
         /// <returns>The output URL or value as a string</returns>
-        /// <exception cref="Exception">Throws if the prediction fails or is canceled</exception>
-        public async Task<string> RunPredictionAsync(string prompt, string model, object input)
+        public async Task<string> ExecuteRelicateAPI(string prompt, string model, object input)
         {
             var url = $"https://api.replicate.com/v1/models/{model}/predictions";
             var payload = new { input };
@@ -50,7 +48,7 @@ namespace MTG.CardGenerator
 
             if (prediction == null)
             {
-                throw new FailedToGenerateImageException("Failed to deserialize Replicate API response", prompt, model);
+                throw new Exception("Failed to deserialize Replicate API response");
             }
 
             if (prediction.Urls == null || string.IsNullOrEmpty(prediction.Urls.Get))
@@ -117,7 +115,14 @@ namespace MTG.CardGenerator
             }
             else
             {
-                throw new FailedToGenerateImageException($"Replicate '{model}' API failed with error '{errorMsg}' for '{prompt}'", prompt, model);
+                if (errorMsg.Contains("output was flagged as sensitive"))
+                {
+                    throw new FailedToGenerateImageException($"Failed to generate an image with model '{model}' because of an inappropriate prompt", prompt, model);
+                }
+                else
+                {
+                    throw new FailedToGenerateImageException($"Replicate '{model}' API failed with error '{errorMsg}'", prompt, model);
+                }
             }
         }
     }
