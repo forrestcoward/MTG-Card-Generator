@@ -75,6 +75,7 @@ namespace MTG.CardGenerator
             public string UserName { get; set; }
             public string UserSubject { get; set; }
             public string UserSuppliedApiKey { get; set; }
+            public bool IsOpenAIGpt { get; set; }
             public bool UserLoggedIn { get; set; }
             public string Host { get; set; }
             public string Origin { get; set; }
@@ -108,11 +109,30 @@ namespace MTG.CardGenerator
                 numCards = Math.Clamp(parsedNumCards, 1, 1);
             }
 
-            // Extract user info from JWT token.
-            var jwtToken = req.ReadJwtToken();
-            var userName = Extensions.GetClaim(jwtToken, "name", defaultValue: "Anonymous");
-            var userSubject = Extensions.GetClaim(jwtToken, "sub", defaultValue: "Anonymous");
-            var userLoggedIn = !userSubject.Equals("Anonymous", StringComparison.OrdinalIgnoreCase);
+            // Extract user info.
+            string userName = "Anonymous";
+            string userSubject = "Anonymous";
+            bool userLoggedIn = false;
+            bool isOpenAIGpt = false;
+
+            // Check if this request is from the OpenAI Card Generator GPT.
+            if (Extensions.HasCardGeneratorGPTToken(req))
+            {
+                // Use the special OpenAI Card Generator GPT identity.
+                userName = Extensions.GetCardGeneratorGPTUsername();
+                userSubject = Extensions.GetCardGeneratorGPTUserSubject();
+                userLoggedIn = true;
+                isOpenAIGpt = true;
+                log.LogInformation("This request is from the Open AI Card Generator GPT.");
+            }
+            else
+            {
+                // Extract from JWT token.
+                var jwtToken = req.ReadJwtToken();
+                userName = Extensions.GetClaim(jwtToken, "name", defaultValue: "Anonymous");
+                userSubject = Extensions.GetClaim(jwtToken, "sub", defaultValue: "Anonymous");
+                userLoggedIn = !userSubject.Equals("Anonymous", StringComparison.OrdinalIgnoreCase);
+            }
 
             // If a user brings their own OpenAI API key, we need to check if they are using a valid OpenAI image model.
             if (!string.IsNullOrWhiteSpace(userSuppliedApiKey) &&
@@ -127,10 +147,14 @@ namespace MTG.CardGenerator
             // Enforce daily spend limit for logged-in users without their own API key.
             var usersCosmosClient = new UsersClient(log);
             var user = await usersCosmosClient.GetUserRecord(userSubject);
-            var spendLimitResponse = await Extensions.CheckAndEnforceDailySpendLimit(user, userSuppliedApiKey, req, log, GenerateMagicCardFunction.DefaultDailySpendLimit);
-            if (spendLimitResponse != null)
+
+            if (!isOpenAIGpt)
             {
-                return spendLimitResponse;
+                var spendLimitResponse = await Extensions.CheckAndEnforceDailySpendLimit(user, userSuppliedApiKey, req, log, GenerateMagicCardFunction.DefaultDailySpendLimit);
+                if (spendLimitResponse != null)
+                {
+                    return spendLimitResponse;
+                }
             }
 
             var requestMetadata = new CardRequestMetadata
@@ -139,6 +163,7 @@ namespace MTG.CardGenerator
                 UserSubject = userSubject,
                 UserSuppliedApiKey = userSuppliedApiKey,
                 UserLoggedIn = userLoggedIn,
+                IsOpenAIGpt = isOpenAIGpt,
                 Host = req.Url.Host,
                 Origin = req.Headers.TryGetValues("Origin", out var origins) ? origins.FirstOrDefault() : string.Empty
             };
@@ -500,7 +525,8 @@ namespace MTG.CardGenerator
                         { "userSubject", responseData.Request.Metadata.UserSubject },
                         { "userPrompt", userPromptToSubmit },
                         { "userSuppliedKey", !string.IsNullOrWhiteSpace(responseData.Request.Metadata.UserSuppliedApiKey) },
-                        { "source", responseData.Request.Source }
+                        { "source", responseData.Request.Source },
+                        { "isOpenAIGpt", responseData.Request.Metadata.IsOpenAIGpt }
                     });
             }
             catch (Exception ex)

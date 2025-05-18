@@ -13,6 +13,61 @@ namespace MTG.CardGenerator
     {
         private static readonly HttpClient Client = new();
 
+        private const string CardGeneratorGPTUsername = "CardGeneratorOpenAIGPT";
+        private const string CardGeneratorGPTUserSubject = "e6d3c964-db34-4e19-a915-d8333c19c173";
+
+        // Helper method to check if a token is the Open AI Card Generator GPT access code.
+        public static bool IsCardGeneratorGPTAccessToken(string token)
+        {
+            if (string.IsNullOrEmpty(token))
+            {
+                return false;
+            }
+
+            var specialAccessCode = Environment.GetEnvironmentVariable(Constants.OpenAICardGeneratorGPTAccessCode);
+            return !string.IsNullOrEmpty(specialAccessCode) && token == specialAccessCode;
+        }
+
+        // Helper method to get the token from an Authorization header.
+        public static string GetBearerTokenFromHeader(string authHeader)
+        {
+            if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            return authHeader.Replace("Bearer ", string.Empty);
+        }
+
+        // Helper method to extract the bearer token from an HttpRequestData.
+        public static string GetBearerTokenFromRequest(HttpRequestData request)
+        {
+            if (!request.Headers.TryGetValues("Authorization", out var authValues))
+            {
+                return null;
+            }
+
+            var authHeader = authValues.FirstOrDefault() ?? string.Empty;
+            return GetBearerTokenFromHeader(authHeader);
+        }
+
+        // Helper method that checks if the request has the Open AI Card Generator access code.
+        public static bool HasCardGeneratorGPTToken(HttpRequestData request)
+        {
+            var token = GetBearerTokenFromRequest(request);
+            return IsCardGeneratorGPTAccessToken(token);
+        }
+
+        public static string GetCardGeneratorGPTUsername()
+        {
+            return CardGeneratorGPTUsername;
+        }
+
+        public static string GetCardGeneratorGPTUserSubject()
+        {
+            return CardGeneratorGPTUserSubject;
+        }
+
         // Helper to check if user has exceeded daily spend limit and return a 429 response if so.
         public static async Task<HttpResponseData> CheckAndEnforceDailySpendLimit(User user, string userSuppliedApiKey, HttpRequestData req, ILogger log, double defaultDailySpendLimit)
         {
@@ -51,15 +106,19 @@ namespace MTG.CardGenerator
         {
             try
             {
-                if (!request.Headers.TryGetValues("Authorization", out var authValues))
+                var token = GetBearerTokenFromRequest(request);
+                if (token == null)
                 {
                     return null;
                 }
 
-                var authHeader = authValues.FirstOrDefault() ?? string.Empty;
-                var jwtToken = authHeader.Replace("Bearer ", string.Empty);
-                var token = new JwtSecurityTokenHandler().ReadJwtToken(jwtToken);
-                return token;
+                if (IsCardGeneratorGPTAccessToken(token))
+                {
+                    return null;
+                }
+
+                var jwtToken = new JwtSecurityTokenHandler().ReadJwtToken(token);
+                return jwtToken;
             }
             catch (Exception ex)
             {
@@ -70,6 +129,18 @@ namespace MTG.CardGenerator
 
         public static string GetClaim(this HttpRequestData req, string claimName, string defaultValue = "")
         {
+            if (HasCardGeneratorGPTToken(req))
+            {
+                if (claimName == "name")
+                {
+                    return GetCardGeneratorGPTUsername();
+                }
+                else if (claimName == "sub")
+                {
+                    return GetCardGeneratorGPTUserSubject();
+                }
+            }
+
             var jwtToken = req.ReadJwtToken();
             return jwtToken.GetClaim(claimName, defaultValue);
         }
@@ -101,6 +172,12 @@ namespace MTG.CardGenerator
             var validateBearerToken = Environment.GetEnvironmentVariable(Constants.ValidateBearerToken) == null ||
                 bool.Parse(Environment.GetEnvironmentVariable(Constants.ValidateBearerToken));
 
+            if (HasCardGeneratorGPTToken(req))
+            {
+                return GetCardGeneratorGPTUserSubject();
+            }
+
+            // Regular JWT token handling
             JwtSecurityToken jwtToken = null;
             if (validateBearerToken)
             {

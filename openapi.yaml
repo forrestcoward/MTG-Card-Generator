@@ -1,73 +1,166 @@
-openapi: 3.0.1
+openapi: 3.1.0
 info:
   title: Magic The Gathering Card (MTG) Generator
-  description: An API that generates unique MTG cards using OpenAI's language models, based on user-defined prompts.
-  version: 'v1'
+  description: >
+    An API that generates unique MTG cards using OpenAI's language
+    models, based on user-defined prompts. You must supply your own
+    OpenAI API key.
+  version: v1
 servers:
   - url: https://mtgcardgenerator.azurewebsites.net/api
 paths:
   /GenerateMagicCard:
     get:
       operationId: generateMagicCard
-      summary: Generates a Magic The Gathering card based on a user prompt.
+      summary: >
+        Initiates a request to generate a Magic: The Gathering card.
       parameters:
-        - name: userPrompt
+        - name: prompt
           in: query
-          required: false
+          required: true
           schema:
             type: string
-          description: A user-defined prompt describing the desired attributes of the MTG card.
+          description: The prompt to use to generate the card.
         - name: model
           in: query
           required: false
           schema:
             type: string
             enum:
-              - gpt-4
-              - gpt-3.5
-          description: The OpenAI model to use. Defaults to 'gpt-3.5'.
+              - gpt-41
+              - gpt-40
+              - gpt-o3
+          description: The OpenAI language model to use.
+        - name: imageModel
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - imagen-3-fast
+              - black-forest-labs-flux-schnell
+              - stable-diffusion-3.5-medium
+              - dall-e-3
+              - dall-e-2
+              - none
+          description: >
+            The OpenAI model to use for generating the card image.
+            Defaults to `imagen-3-fast`. Use `none` to skip image gen.
         - name: includeExplanation
           in: query
           required: false
           schema:
             type: boolean
-          description: Whether to include a detailed explanation and a humorous explanation for the card.
-        - name: highQualityImage
+          description: >
+            If `true`, includes `explanation` and `funnyExplanation` in
+            the final card object.
+        - name: extraCreative
           in: query
           required: false
           schema:
             type: boolean
-          description: Specifies if a high-quality image should be generated.
+          description: >
+            If `true`, uses a more creative prompt and higher temperature for
+            more imaginative mechanics.
+        - name: generateImagePrompt
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: >
+            If `true`, auto-generates an art prompt to drive more unique imagery.
         - name: openAIApiKey
           in: query
           required: false
           schema:
             type: string
-          description: User-supplied OpenAI API key. Optional.
+          description: Your own OpenAI API key.
       responses:
-        "200":
-          description: A successfully generated MTG card.
+        '200':
+          description: Returns an ID to poll for status.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenerateMagicCardResponse'
-        "429":
+                $ref: '#/components/schemas/MagicCardGenerationResponse'
+        '429':
           description: Exceeded free generation limit.
-        "500":
+        '500':
           description: Internal server error or generation issue.
+  /GetMagicCardGenerationStatus:
+    get:
+      operationId: getMagicCardGenerationStatus
+      summary: >
+        Retrieves the current status and, when complete, the generated cards.
+      parameters:
+        - name: instanceId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: The ID returned by `/GenerateMagicCard`.
+      responses:
+        '200':
+          description: Status of the card-generation request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerationStatusResponse'
+        '404':
+          description: No generation request found for the given `instanceId`.
 components:
   schemas:
-    GenerateMagicCardResponse:
+    MagicCardGenerationResponse:
       type: object
+      required:
+        - id
       properties:
-        cards:
-          type: array
-          items:
-            $ref: '#/components/schemas/MagicCardResponse'
-          description: An array of generated MTG cards.
-    MagicCardResponse:
+        id:
+          type: string
+          description: Unique identifier to poll for generation status.
+    GenerationStatusResponse:
       type: object
+      required:
+        - id
+        - runtimeStatus
+        - customStatus
+        - output
       properties:
+        id:
+          type: string
+          description: The same `instanceId` you polled.
+        runtimeStatus:
+          type: string
+          description: One of `Pending`, `Running`, `Completed`, `Failed`, etc.
+        customStatus:
+          type: string
+          description: Application-level status, e.g. `success` or `error`.
+        output:
+          type: object
+          description: Present only when `runtimeStatus` is `Completed`.
+          properties:
+            cards:
+              type: array
+              items:
+                $ref: '#/components/schemas/CardResponse'
+    CardResponse:
+      type: object
+      required:
+        - id
+        - name
+        - manaCost
+        - type
+        - typeLine
+        - oracleText
+        - flavorText
+        - colorIdentity
+        - rarity
+        - pt
+        - userPrompt
+        - url
+      properties:
+        id:
+          type: string
+          description: Unique identifier for this generated card.
         name:
           type: string
         manaCost:
@@ -86,13 +179,29 @@ components:
           type: string
         pt:
           type: string
+          description: Power/Toughness (for creatures).
         explanation:
           type: string
+          nullable: true
+          description: AI’s reasoning, if requested.
         funnyExplanation:
           type: string
+          nullable: true
+          description: AI’s humorous reasoning, if requested.
         userPrompt:
           type: string
+          description: The original prompt you supplied.
         imageUrl:
           type: string
+          format: uri
+          description: Final, stable image URL.
         temporaryImageUrl:
           type: string
+          format: uri
+          description: Temporary image URL (expires after a short period).
+        url:
+          type: string
+          format: uri
+          description: >
+            A link to view this card on your website, e.g.
+            `https://www.mtgcardgenerator.com/Card?id={id}`.

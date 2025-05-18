@@ -22,6 +22,7 @@
         public const string CognitiveSearchConnectionKey = "CognitiveSearchConnectionKey";
         public const string CognitiveSearchCardSearchIndexName = "CognitiveSearchCardSearchIndexName";
         public const string WebsiteUrl = "WebsiteUrl";
+        public const string OpenAICardGeneratorGPTAccessCode = "OpenAICardGeneratorGPTAccessCode";
         // Constants.
         public const string APIAuthorizationScope = "generate.mtg.card";
         public const string CosmosDBCardsCollectionName = "generated-cards";

@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 
 namespace MTG.CardGenerator
 {
@@ -112,6 +113,33 @@ namespace MTG.CardGenerator
                             ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
                         };
                     }
+
+                    // Add special token handling to intercept the Open AI Card Generator GPT access code.
+                    // This is a special case where we want to allow access without a valid JWT token.
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = context =>
+                        {
+                            if (context.Request.Headers.TryGetValue("Authorization", out var authValues))
+                            {
+                                var authHeader = authValues.FirstOrDefault() ?? string.Empty;
+                                var token = Extensions.GetBearerTokenFromHeader(authHeader);
+
+                                if (token != null && Extensions.IsCardGeneratorGPTAccessToken(token))
+                                {
+                                    // Create a ClaimsPrincipal for the special access code user
+                                    var identity = new ClaimsIdentity(JwtBearerDefaults.AuthenticationScheme);
+                                    identity.AddClaim(new Claim("sub", Extensions.GetCardGeneratorGPTUserSubject()));
+                                    identity.AddClaim(new Claim("name", Extensions.GetCardGeneratorGPTUsername()));
+                                    identity.AddClaim(new Claim("http://schemas.microsoft.com/identity/claims/scope", Constants.APIAuthorizationScope));
+                                    context.Principal = new ClaimsPrincipal(identity);
+                                    context.Success();
+                                    return Task.CompletedTask;
+                                }
+                            }
+                            return Task.CompletedTask;
+                        }
+                    };
                 });
 
             services.AddFunctionsAuthorization(options =>
