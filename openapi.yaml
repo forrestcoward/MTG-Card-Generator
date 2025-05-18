@@ -15,7 +15,7 @@ paths:
       summary: >
         Initiates a request to generate a Magic: The Gathering card.
       parameters:
-        - name: prompt
+        - name: userPrompt
           in: query
           required: true
           schema:

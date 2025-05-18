@@ -399,20 +399,5 @@ namespace MTG.CardGenerator
         {
             return source?.IndexOf(toCheck, System.StringComparison.OrdinalIgnoreCase) >= 0;
         }
-
-        public static string GetAsObfuscatedSecret(this string input, int x)
-        {
-            ArgumentNullException.ThrowIfNull(input);
-
-            if (x > input.Length / 2)
-            {
-                return string.Empty;
-            }
-
-            var firstX = input[..x];
-            var lastX = input.Substring(input.Length - x, x);
-
-            return $"{firstX}*********{lastX}";
-        }
     }
 }

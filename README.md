@@ -40,7 +40,7 @@ The API is located at https://mtgcardgenerator.azurewebsites.net/api/GenerateMag
 
 | Name | Type | Description |
 |---|---|---|
-| prompt | string | The prompt to use to generate the card. |
+| userPrompt | string | The prompt to use to generate the card. |
 | model | string | The OpenAI language model to use. Values: `gpt-41`, `gpt-40`, `gpt-o3` |
 | imageModel | string | The OpenAI model to use for generating the card image. <br/>Values: `imagen-3-fast`, `black-forest-labs-flux-schnell`, `stable-diffusion-3.5-medium`, `dall-e-3`,`dall-e-2`, `none` |
 | includeExplanation | bool | Whether to include the AI's reasoning in the card text. If `true`, `explanation` and `funnyExplanation` will be included in the response. |
