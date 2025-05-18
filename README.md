@@ -1,6 +1,8 @@
 # Magic: The Gathering Card Generator
 
-## [https://www.mtgcardgenerator.com](https://www.mtgcardgenerator.com/)
+## [https://www.mtgcardgenerator.com](https://www.mtgcardgenerator.com/) (or follow us on [instagram](https://www.instagram.com/mtg.cardgenerator/))
+
+
 The Magic: The Gathering Card Generator is a project that uses AI to generate realistic Magic: The Gathering cards. Generated cards are rendered beautifully using just CSS.
 
 Users can enter a prompt describing the type of Magic card they would like to generate, and the response will be a be a rendered image of a realistic card that matches the prompt. Here is an [example card generation](https://www.mtgcardgenerator.com/Card?id=732874ce-468e-4823-8605-2cceea9626c5):
@@ -12,8 +14,8 @@ Users can enter a prompt describing the type of Magic card they would like to ge
 # Features
 
 * Users supply an open ended prompt describing the Magic card they would like to generate. Users may:
-    * Choose the language model (`gpt-41`, `gpt-40`, `gpt-o3` etc.)
-    * Choose the image model (`imagen 3`, `dall-e 2`, `dall-e 3` etc.) or supply their own image prompt.
+    * Choose the language model.
+    * Choose the image model or supply their own image prompt.
     * Select a number of other fun options such as asking the AI explain itself or asking for extra creative cards.
     * Resize, download, or share generated card links.
 
@@ -23,7 +25,6 @@ Users can enter a prompt describing the type of Magic card they would like to ge
   * User's card generation history stored for viewing later.
 
 * A rating page is available to score and view top cards.
-
 
 # API
 
@@ -36,8 +37,8 @@ The API is located at https://mtgcardgenerator.azurewebsites.net/api/GenerateMag
 | Name | Type | Description |
 |---|---|---|
 | prompt | string | The prompt to use to generate the card. |
-| model | string | The OpenAI language model to use. Use `gpt-4o-mini`. |
-| imageModel | string | The OpenAI model to use for generating the card image. Use `dall-e-3` or `dall-e-2`. |
+| model | string | The OpenAI language model to use. Values: `gpt-41`, `gpt-40`, `gpt-o3` |
+| imageModel | string | The OpenAI model to use for generating the card image. <br/>Values: `imagen-3-fast`, `black-forest-labs-flux-schnell`, `stable-diffusion-3.5-medium`, `dall-e-3`,`dall-e-2`, `none` |
 | includeExplanation | bool | Whether to include the AI's reasoning in the card text. If `true`, `explanation` and `funnyExplanation` will be included in the response. |
 | extraCreative | bool | If `true`, uses a different prompt and higher temperature to generate more creative cards with more interesting usage of keywords and mechanics. |
 | generateImagePrompt | bool | If `true`, use an intelligently generated image prompt to produce more unique and interesting art. |
@@ -63,7 +64,7 @@ Poll the `GetMagicCardGenerationStatus` endpoint e.g. https://mtgcardgenerator.a
     "customStatus": "success",
     "output": 
     {  
-      "cards":[
+      "cards": [
         {
           "id": "969f10c2-66f4-40e4-be96-8dd0341fd0c4",
           "name": "Djurge, the Timebender",
