@@ -33,6 +33,7 @@
             public const string Dalle3ModelName = "dall-e-3";
             public const string Dalle2ModelName = "dall-e-2";
             public const string GoogleImagen3FastModelName = "imagen-3-fast";
+            public const string GoogleImagen4FastModelName = "imagen-4-fast";
             public const string StableDiffusion35MediumModelName = "stable-diffusion-3.5-medium";
             public const string BlackForestLabsFluxSchnell = "black-forest-labs-flux-schnell";
         }

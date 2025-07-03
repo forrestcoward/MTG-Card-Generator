@@ -56,15 +56,26 @@ const modelSettingsGroup : SettingGroup = {
 
 const imageSettings = [
   { 
+    name: 'Imagen 4', 
+    id: 'imagen-4-fast', 
+    value: true, 
+    description: 'Google’s DeepMind Imagen 4 model.', 
+    group: 'image-settings',
+    url: 'https://replicate.com/google/imagen-4-fast',
+    pricing: '$0.02 per image',
+    details: 'Imagen 4 is DeepMind’s latest text-to-image generative model, focusing on high-quality image generation with improved detail, lighting, and reduced artifacts.'
+  },
+  { 
     name: 'Imagen 3', 
     id: 'imagen-3-fast', 
-    value: true, 
+    value: false, 
     description: 'Google’s DeepMind Imagen 3 model.', 
     group: 'image-settings',
     url: 'https://replicate.com/google/imagen-3-fast',
     pricing: '$0.025 per image',
-    details: 'Imagen 3 is DeepMind’s latest text-to-image generative model, focusing on high-quality image generation with improved detail, lighting, and reduced artifacts.'
+    details: 'Imagen 3 is DeepMind’s previous text-to-image generative model, focusing on high-quality image generation with improved detail, lighting, and reduced artifacts.'
   },
+
   { 
     name: "Black Forest Flux", 
     id: 'black-forest-labs-flux-schnell', 

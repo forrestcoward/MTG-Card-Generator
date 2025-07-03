@@ -163,6 +163,11 @@ namespace MTG.CardGenerator
                 return .08;
             }
 
+            if (model == Constants.ImageModels.GoogleImagen4FastModelName)
+            {
+                return .02;
+            }
+
             if (model == Constants.ImageModels.GoogleImagen3FastModelName)
             {
                 return 0.025;

@@ -126,26 +126,25 @@ namespace MTG.CardGenerator
                 return outputUrl;
             }
 
-                if (model == Constants.ImageModels.GoogleImagen3FastModelName)
+            if (model == Constants.ImageModels.GoogleImagen3FastModelName || model == Constants.ImageModels.GoogleImagen4FastModelName)
+            {
+                var replicateClient = new ReplicateApiClient(replicateApiKey.Key);
+                var input = new
                 {
-                    var replicateClient = new ReplicateApiClient(replicateApiKey.Key);
-                    var input = new
-                    {
-                        prompt = prompt,
-                        num_inference_steps = 4,
-                        num_outputs = 1,
-                        output_format = "png",
-                        aspect_ratio = "1:1",
-                        disable_safety_checker = true,
-                        go_fast = true,
-                        megapixels = 1
-                    };
+                    prompt = prompt,
+                    num_inference_steps = 4,
+                    num_outputs = 1,
+                    output_format = "png",
+                    aspect_ratio = "1:1",
+                    disable_safety_checker = true,
+                    go_fast = true,
+                    megapixels = 1
+                };
 
-                    var outputUrl = await replicateClient.ExecuteRelicateAPI(prompt, "google/imagen-3-fast", input);
-
-                    cost.AddImageCost(size, model, wasUserCharged: replicateApiKey.IsUserSupplied, operationName: operationName);
-                    return outputUrl;
-                }
+                var outputUrl = await replicateClient.ExecuteRelicateAPI(prompt, model == Constants.ImageModels.GoogleImagen3FastModelName ? "google/imagen-3-fast" : "google/imagen-4-fast", input);
+                cost.AddImageCost(size, model, wasUserCharged: replicateApiKey.IsUserSupplied, operationName: operationName);
+                return outputUrl;
+            }
 
             if (model != Constants.ImageModels.Dalle2ModelName && model != Constants.ImageModels.Dalle3ModelName)
             {
