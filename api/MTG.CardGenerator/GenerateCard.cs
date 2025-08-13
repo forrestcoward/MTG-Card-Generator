@@ -143,7 +143,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
             log.LogInformation($"generateImagePrompt: {request.GenerateImagePrompt}");
             log.LogInformation($"includeExplanation: {request.IncludeExplanation}");
             log.LogInformation($"extraCreative: {request.ExtraCreative}");
-            log.LogInformation($"generateImage: {request.ImageModel != "none"}");
+            log.LogInformation($"generateImage: {!string.Equals(request.ImageModel, Constants.ImageModels.None, StringComparison.OrdinalIgnoreCase)}");
             log.LogInformation($"numCards: {request.NumCards}");
 
             var openAIService = new OpenAIService(new OpenAIOptions() { ApiKey = openAIApiKey.Key });

@@ -1,3 +1,4 @@
+using Azure.Core;
 using Betalgo.Ranul.OpenAI.ObjectModels;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using DarkLoop.Azure.Functions.Authorization;
@@ -136,7 +137,9 @@ namespace MTG.CardGenerator
 
             // If a user brings their own OpenAI API key, we need to check if they are using a valid OpenAI image model.
             if (!string.IsNullOrWhiteSpace(userSuppliedApiKey) &&
-                (!imageModel.Equals(Constants.ImageModels.Dalle2ModelName) && !imageModel.Equals(Constants.ImageModels.Dalle3ModelName)))
+                (!imageModel.Equals(Constants.ImageModels.None, StringComparison.OrdinalIgnoreCase) &&
+                !imageModel.Equals(Constants.ImageModels.Dalle2ModelName, StringComparison.OrdinalIgnoreCase) &&
+                !imageModel.Equals(Constants.ImageModels.Dalle3ModelName, StringComparison.OrdinalIgnoreCase)))
             {
                 return await req.CreateJsonResponse(HttpStatusCode.BadRequest, new
                 {
@@ -216,7 +219,7 @@ namespace MTG.CardGenerator
                 }
 
                 // 3. Generate card images if requested.
-                var generateImages = request.ImageModel != "none";
+                var generateImages = !string.Equals(request.ImageModel, Constants.ImageModels.None, StringComparison.OrdinalIgnoreCase);
                 if (generateImages)
                 {
                     foreach (var card in cardResult.Cards)
@@ -425,7 +428,7 @@ namespace MTG.CardGenerator
                             SystemPrompt = cardResult.SystemPrompt,
                             ImagePrompt = card.TemporaryImageUrl != null ? "Image generated" : null,
                             Model = cardResult.ActualGPTModelUsed,
-                            ImageSize = request.ImageModel != "none" ? StaticValues.ImageStatics.Size.Size1024 : null,
+                            ImageSize = !string.Equals(request.ImageModel, Constants.ImageModels.None, StringComparison.OrdinalIgnoreCase) ? StaticValues.ImageStatics.Size.Size1024 : null,
                             ImageStyle = null,
                             ImageModel = request.ImageModel,
                             OpenAIResponse = cardResult.OpenAIResponse,
@@ -516,7 +519,7 @@ namespace MTG.CardGenerator
                     {
                         { "estimatedCost", responseData.CardResult.Cost.TotalCost },
                         { "imageModel", responseData.Request.ImageModel },
-                        { "generateImage", responseData.Request.ImageModel != "none" },
+                        { "generateImage", !string.Equals(responseData.Request.ImageModel, Constants.ImageModels.None, StringComparison.OrdinalIgnoreCase) },
                         { "includeExplanation", responseData.Request.IncludeExplanation.ToString() },
                         { "generateImagePrompt", responseData.Request.GenerateImagePrompt.ToString() },
                         { "extraCreative", responseData.Request.ExtraCreative.ToString() },

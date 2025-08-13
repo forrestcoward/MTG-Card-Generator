@@ -30,6 +30,7 @@
 
         public class ImageModels
         {
+            public const string None = "none";
             public const string Dalle3ModelName = "dall-e-3";
             public const string Dalle2ModelName = "dall-e-2";
             public const string GoogleImagen3FastModelName = "imagen-3-fast";
