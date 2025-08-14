@@ -32,7 +32,35 @@ Users can enter a prompt describing the type of Magic card they would like to ge
 
 # API
 
-You can use the public API to generate cards, but you will need to supply your own OpenAI API key. 
+You can use the public API to generate cards, but you will need to supply your own OpenAI API key.
+
+## Authentication
+
+For programmatic access without supplying your own OpenAI API key, you can authenticate using existing credentials:
+
+**Endpoint:** `POST https://mtgcardgenerator.azurewebsites.net/api/Authenticate`
+
+**Request Body:**
+```json
+{
+  "username": "your-email@example.com",
+  "password": "your-password"
+}
+```
+
+**Response:**
+```json
+{
+  "accessToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6...",
+  "expiresIn": 3600,
+  "tokenType": "Bearer"
+}
+```
+
+Include the access token in the `Authorization` header for authenticated requests:
+```
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6...
+```
 
 The API is located at https://mtgcardgenerator.azurewebsites.net/api/GenerateMagicCard.
 
@@ -91,7 +119,7 @@ Poll the `GetMagicCardGenerationStatus` endpoint e.g. https://mtgcardgenerator.a
     }
   }
 }
-``````
+```
 
 # Development Guide
 
