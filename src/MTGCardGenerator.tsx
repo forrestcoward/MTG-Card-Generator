@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { UserContext } from './UserContext';
 import { CardDisplay  } from './Card';
+import { NewCardRenderer } from './NewCardRenderer';
 import { GenerateMagicCardRequest, GetUserInfo } from './CallAPI';
 import { isMobileDevice, setCardContainerSize } from './Utility';
 import { TutorialCard } from './TutorialCard';
@@ -148,12 +149,24 @@ const cardGenerationSettingsGroup : SettingGroup = {
   settings: cardGenerationSettings,
 }
 
+const cardDisplaySettings = [
+  { name: 'Legacy Renderer', id: 'legacy-renderer', value: true, description: 'Use the original card rendering system with full editing capabilities.', group: 'display-settings' },
+  { name: 'New Renderer', id: 'new-renderer', value: false, description: 'Use the new card rendering system with improved visual quality and layout.', group: 'display-settings' },
+]
+
+const cardDisplaySettingsGroup : SettingGroup = {
+  name: 'Card Display',
+  description: 'Choose how cards are rendered on the page.',
+  type: 'radio',
+  settings: cardDisplaySettings,
+}
+
 export function MTGCardGenerator() {
   const [prompt, setPrompt] = useState('');
   const [response, setResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [settings, setSettings] = useState([modelSettingsGroup, imageSettingsGroup, cardGenerationSettingsGroup]);
+  const [settings, setSettings] = useState([modelSettingsGroup, imageSettingsGroup, cardGenerationSettingsGroup, cardDisplaySettingsGroup]);
   const [cards, setCards] = useState([TutorialCard]);
   const [currentError, setCurrentError] = useState('');
   const [defaultCardWidth, setDefaultCardWidth] = useState(setCardContainerSize());
@@ -212,6 +225,11 @@ export function MTGCardGenerator() {
   function getImageSetting(): string {
     let setting = allSettings().find(setting => setting.value == true && setting?.group == 'image-settings')
     return setting?.id ?? defaultImageModel
+  }
+
+  function useNewRenderer(): boolean {
+    let setting = allSettings().find(setting => setting.value == true && setting?.group == 'display-settings')
+    return setting?.id === 'new-renderer'
   }
 
   function handleSettingUpdate(updatedSetting: string, newValue: boolean) {
@@ -299,14 +317,25 @@ export function MTGCardGenerator() {
         {
           cards.map(card => (
             <div className='cardContainer' key={`card-container-${card.id}`}>
-              <CardDisplay 
-                key={`card-display-${card.id}`} 
-                card={card} 
-                showCardMenu={true} 
-                cardWidth={defaultCardWidth} 
-                allowImagePreview={true} 
-                allowEdits={true} 
-                allowImageUpdate={true} />
+              {useNewRenderer() ? (
+                <NewCardRenderer 
+                  key={`new-card-display-${card.id}`} 
+                  card={card} 
+                  showCardMenu={true} 
+                  cardWidth={defaultCardWidth} 
+                  allowImagePreview={true} 
+                  allowEdits={true} 
+                  allowImageUpdate={true} />
+              ) : (
+                <CardDisplay 
+                  key={`card-display-${card.id}`} 
+                  card={card} 
+                  showCardMenu={true} 
+                  cardWidth={defaultCardWidth} 
+                  allowImagePreview={true} 
+                  allowEdits={true} 
+                  allowImageUpdate={true} />
+              )}
             </div>
           ))
         }
