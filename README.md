@@ -32,35 +32,7 @@ Users can enter a prompt describing the type of Magic card they would like to ge
 
 # API
 
-You can use the public API to generate cards, but you will need to supply your own OpenAI API key.
-
-## Authentication
-
-For programmatic access without supplying your own OpenAI API key, you can authenticate using existing credentials:
-
-**Endpoint:** `POST https://mtgcardgenerator.azurewebsites.net/api/Authenticate`
-
-**Request Body:**
-```json
-{
-  "username": "your-email@example.com",
-  "password": "your-password"
-}
-```
-
-**Response:**
-```json
-{
-  "accessToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6...",
-  "expiresIn": 3600,
-  "tokenType": "Bearer"
-}
-```
-
-Include the access token in the `Authorization` header for authenticated requests:
-```
-Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6...
-```
+A public API is available to generate cards.
 
 The API is located at https://mtgcardgenerator.azurewebsites.net/api/GenerateMagicCard.
 
@@ -69,12 +41,12 @@ The API is located at https://mtgcardgenerator.azurewebsites.net/api/GenerateMag
 | Name | Type | Description |
 |---|---|---|
 | userPrompt | string | The prompt to use to generate the card. |
-| model | string | The OpenAI language model to use. Values: `gpt-41`, `gpt-40`, `gpt-o3` |
-| imageModel | string | The OpenAI model to use for generating the card image. <br/>Values: `imagen-3-fast`, `black-forest-labs-flux-schnell`, `stable-diffusion-3.5-medium`, `dall-e-3`,`dall-e-2`, `none` |
+| model | string | The OpenAI language model to use. Allowed values: `gpt-41`, `gpt-40`, `gpt-o3` |
+| imageModel | string | The OpenAI model to use for generating the card image. <br/>Allowed values: `imagen-4-fast`, `imagen-3-fast`, `black-forest-labs-flux-schnell`, `stable-diffusion-3.5-medium`, `dall-e-3`,`dall-e-2`, `none` |
 | includeExplanation | bool | Whether to include the AI's reasoning in the card text. If `true`, `explanation` and `funnyExplanation` will be included in the response. |
 | extraCreative | bool | If `true`, uses a different prompt and higher temperature to generate more creative cards with more interesting usage of keywords and mechanics. |
 | generateImagePrompt | bool | If `true`, use an intelligently generated image prompt to produce more unique and interesting art. |
-| openAIApiKey | string | Your OpenAI API key. |
+| openAIApiKey | string | Your OpenAI API key. The API will **never** store your key. An API key must be provided when the user's daily spend runs out. |
 
 ### Sample Response
 
@@ -119,6 +91,34 @@ Poll the `GetMagicCardGenerationStatus` endpoint e.g. https://mtgcardgenerator.a
     }
   }
 }
+```
+
+## Authentication
+
+An authentication endpoint is provided for convenience for retrieving the access token associated with your account.
+
+**Endpoint:** `POST https://mtgcardgenerator.azurewebsites.net/api/Authenticate`
+
+**Request Body:**
+```json
+{
+  "username": "your-email@example.com",
+  "password": "your-password"
+}
+```
+
+**Response:**
+```json
+{
+  "accessToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6...",
+  "expiresIn": 3600,
+  "tokenType": "Bearer"
+}
+```
+
+Include the access token in the `Authorization` header for authenticated requests to the API.
+```
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6...
 ```
 
 # Development Guide
