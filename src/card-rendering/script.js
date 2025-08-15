@@ -12,7 +12,7 @@ function parseOracle(str) {
   str = str.replace(manaRegex, (match, group) => {
     const key = `{${group}}`;
     const iconUri = IconsHelper.getManaIcon(key);
-    return iconUri ? `<img src="${iconUri}" class="ms">` : match;
+    return iconUri ? `<img src="${iconUri}" class="card-ms">` : match;
   });
   // Wrap text in parentheses with a special class.
   str = str.replace(/\([^)]+\)/g, (match) => `<span class="oracle-reminder">${match}</span>`);
@@ -68,7 +68,7 @@ function setupTextResizing(cardEl, props) {
   // Create a function to handle initial setup once the DOM is ready
   const setupElements = () => {
     // Resize card name
-    const nameEl = cardEl.querySelector('.name');
+    const nameEl = cardEl.querySelector('.card-name');
     if (nameEl) {
       const nameResizeObserver = new ResizeObserver(() => {
         resizeTextHorizontally(nameEl);
@@ -553,9 +553,9 @@ function buildPlaneswalkerCardHTML(props, card) {
     <div class="inner-frame"></div>
     <div class="legendary-crown" style="display: none;"></div>
     <div class="top-line">
-      <span class="name">${props.card_face.printed_name || props.card_face.name}</span>
+      <span class="card-name">${props.card_face.printed_name || props.card_face.name}</span>
       <div class="mana-cost">
-        ${props.mana_cost.map(uri => `<img src="${uri}" class="ms">`).join("")}
+        ${props.mana_cost.map(uri => `<img src="${uri}" class="card-ms">`).join("")}
       </div>
     </div>
     <div class="mid-line">
@@ -625,9 +625,9 @@ function buildSagaCardHTML(props, card) {
     <div class="inner-frame"></div>
     <div class="legendary-crown" style="${props.has_legendary_crown ? '' : 'display: none;'}"></div>
     <div class="top-line">
-      <span class="name">${props.card_face.printed_name || props.card_face.name}</span>
+      <span class="card-name">${props.card_face.printed_name || props.card_face.name}</span>
       <div class="mana-cost">
-        ${props.mana_cost.map(uri => `<img src="${uri}" class="ms">`).join("")}
+        ${props.mana_cost.map(uri => `<img src="${uri}" class="card-ms">`).join("")}
       </div>
     </div>
     <div class="oracle saga-oracle">
@@ -679,9 +679,9 @@ function buildDefaultCardHTML(props, card) {
     <div class="inner-background"></div>
     <div class="inner-frame"></div>
     <div class="top-line">
-      <span class="name">${props.card_face.printed_name || props.card_face.name}</span>
+      <span class="card-name">${props.card_face.printed_name || props.card_face.name}</span>
       <div class="mana-cost">
-        ${props.mana_cost.map(uri => `<img src="${uri}" class="ms">`).join("")}
+        ${props.mana_cost.map(uri => `<img src="${uri}" class="card-ms">`).join("")}
       </div>
     </div>
     <div class="mid-line">
@@ -775,17 +775,29 @@ function createMTGCard(card, scale = 1, renderMargin = 1) {
  * Event Listener: Render Card on Click
  * =======================================================
  */
-document.getElementById("render-button").addEventListener("click", function () {
-  const jsonText = document.getElementById("card-json").value;
-  let card;
-  try {
-    card = JSON.parse(jsonText);
-  } catch (e) {
-    alert("Invalid JSON: " + e.message);
-    alert("Invalid JSON: " + e.message);
-    return;
-  }
-  const container = document.getElementById("card-container");
-  container.innerHTML = "";
-  container.appendChild(createMTGCard(card, 1, 1));
-});
+// If this script is used on the standalone demo page it wires up a button
+// to render JSON into the demo container. When this file is imported as a
+// side-effect in the React app those demo elements won't exist; guard the
+// binding to avoid throwing exceptions during module import.
+const _renderButton = document.getElementById("render-button");
+if (_renderButton) {
+  _renderButton.addEventListener("click", function () {
+    const jsonInput = document.getElementById("card-json");
+    if (!jsonInput) return;
+
+    const jsonText = jsonInput.value !== undefined ? jsonInput.value : (jsonInput.textContent || "");
+    let card;
+    try {
+      card = JSON.parse(jsonText);
+    } catch (e) {
+      // Use String(e) to avoid assuming Error type
+      alert("Invalid JSON: " + String(e));
+      return;
+    }
+
+    const container = document.getElementById("card-container");
+    if (!container) return;
+    container.innerHTML = "";
+    container.appendChild(createMTGCard(card, 1, 1));
+  });
+}

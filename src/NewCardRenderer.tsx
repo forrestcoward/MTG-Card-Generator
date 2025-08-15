@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { MagicCard } from './Card';
-import { createSimpleCard, cardStyles, CardData } from './SimpleCardRenderer';
+import CreateMTGCard from './card-rendering/CreateMTGCard';
 
 // Import the card rendering styles
 import './card-rendering/style.css';
@@ -15,7 +15,7 @@ interface NewCardRendererProps {
 }
 
 // Convert MagicCard to the format expected by the new renderer
-function convertMagicCardToNewFormat(card: MagicCard): CardData {
+function convertMagicCardToNewFormat(card: MagicCard): any {
   return {
     name: card.name,
     mana_cost: card.manaCost,
@@ -37,16 +37,6 @@ function convertMagicCardToNewFormat(card: MagicCard): CardData {
   };
 }
 
-// Add styles to document if not already added
-function addStylesToDocument() {
-  const styleId = 'simple-card-renderer-styles';
-  if (!document.getElementById(styleId)) {
-    const style = document.createElement('style');
-    style.id = styleId;
-    style.textContent = cardStyles;
-    document.head.appendChild(style);
-  }
-}
 
 export const NewCardRenderer: React.FC<NewCardRendererProps> = ({ 
   card, 
@@ -57,33 +47,12 @@ export const NewCardRenderer: React.FC<NewCardRendererProps> = ({
   allowEdits = true 
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // Add styles and render the card
-  useEffect(() => {
-    addStylesToDocument();
-    
-    if (!containerRef.current) return;
-
-    const convertedCard = convertMagicCardToNewFormat(card);
-    const scale = cardWidth / 440; // Adjust scale based on desired width
-    
-    try {
-      const cardElement = createSimpleCard(convertedCard, scale);
-      
-      // Clear container and add new card
-      containerRef.current.innerHTML = '';
-      containerRef.current.appendChild(cardElement);
-    } catch (error) {
-      console.error('Failed to render card with new renderer:', error);
-      // Fallback: show error message
-      if (containerRef.current) {
-        containerRef.current.innerHTML = '<div style="color: red;">Failed to render card with new renderer</div>';
-      }
-    }
-  }, [card, cardWidth]);
+  // Prepare converted data and scale
+  const convertedCard = convertMagicCardToNewFormat(card);
+  const scale = cardWidth / 440; // Adjust scale based on desired width
 
   const downloadCard = async () => {
-    const cardElement = containerRef.current?.querySelector('.simple-mtg-card') as HTMLElement;
+  const cardElement = containerRef.current?.querySelector('.mtg-card') as HTMLElement;
     if (!cardElement) return;
 
     // Load html-to-image if not already loaded
@@ -124,33 +93,9 @@ export const NewCardRenderer: React.FC<NewCardRendererProps> = ({
 
   return (
     <div style={{ position: 'relative' }}>
-      <div ref={containerRef} style={{ width: 'fit-content' }}>
-        {/* Card will be rendered here */}
-      </div>
-      
-      {showCardMenu && (
-        <div style={{ 
-          position: 'absolute', 
-          top: '10px', 
-          right: '10px', 
-          background: 'rgba(255, 255, 255, 0.9)', 
-          borderRadius: '4px',
-          padding: '5px'
-        }}>
-          <button 
-            onClick={downloadCard}
-            style={{ 
-              background: 'none', 
-              border: 'none', 
-              cursor: 'pointer',
-              fontSize: '20px'
-            }}
-            title="Download Card"
-          >
-            📥
-          </button>
+        <div ref={containerRef} style={{ width: 'fit-content' }}>
+          <CreateMTGCard card={convertedCard} scale={scale} renderMargin={1} />
         </div>
-      )}
     </div>
   );
 };

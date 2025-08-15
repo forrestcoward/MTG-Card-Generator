@@ -19,7 +19,8 @@ module.exports = {
     new CopyWebpackPlugin({
       patterns: [
         { from: './openapi.yaml', to: '.well-known/openapi.yaml' },
-        { from: './privacy-policy.txt', to: '.well-known/privacy-policy.txt'}
+        { from: './privacy-policy.txt', to: '.well-known/privacy-policy.txt'},
+        { from: './src/card-rendering/assets', to: 'assets' }
       ]
     })
   ],

@@ -366,7 +366,7 @@
 }
 
 /* ======================== NAME & ORIGINAL NAME ======================== */
-.name {
+.card-name {
   font-size: calc(9.454pt + (100/53.8)vw);
   max-font-size: 12pt;
   flex-shrink: 1;
@@ -411,14 +411,14 @@
 
 /* ======================== MANA COST ======================== */
 .mana-cost {
-  font-size: 6.4pt;
+  font-size: 7pt;
   display: flex;
   gap: 0.24mm;
   margin-top: -0.4mm;
   white-space: nowrap;
 }
-.mana-cost .ms,
-.adventure-mana-cost .ms {
+.mana-cost .card-ms,
+.adventure-mana-cost .card-ms {
   width: 1.35em;
   height: 1.35em;
   border-radius: 50%;
@@ -491,7 +491,7 @@
   pointer-events: initial;
   user-select: initial;
 }
-.oracle .ms {
+.oracle .card-ms {
   width: 0.8em;
   margin: 0 0.07em;
   vertical-align: baseline;
