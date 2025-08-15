@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { UserContext } from './UserContext';
 import { CardDisplay  } from './Card';
-import { NewCardRenderer } from './NewCardRenderer';
+import { MTGRenderDisplay } from './MTGRender';
 import { GenerateMagicCardRequest, GetUserInfo } from './CallAPI';
 import { isMobileDevice, setCardContainerSize } from './Utility';
 import { TutorialCard } from './TutorialCard';
@@ -318,8 +318,8 @@ export function MTGCardGenerator() {
           cards.map(card => (
             <div className='cardContainer' key={`card-container-${card.id}`}>
               {useNewRenderer() ? (
-                <NewCardRenderer 
-                  key={`new-card-display-${card.id}`} 
+                <MTGRenderDisplay 
+                  key={`mtgrender-card-display-${card.id}`} 
                   card={card} 
                   showCardMenu={true} 
                   cardWidth={defaultCardWidth} 

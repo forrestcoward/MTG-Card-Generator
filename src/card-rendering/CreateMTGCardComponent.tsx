@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import './style.css';
-import { createMTGCard } from './mtgCardRenderer';
+import { createMTGCard } from './script';
 
 declare global {
   interface Window {
@@ -20,7 +20,7 @@ interface CreateMTGCardProps {
  * It mounts the produced HTMLElement into a container div so the original
  * HTML/CSS/JS behavior is preserved while providing a React component API.
  */
-export const CreateMTGCard: React.FC<CreateMTGCardProps> = ({ card, scale = 1, renderMargin = 1, className }) => {
+export const CreateMTGCardComponent : React.FC<CreateMTGCardProps> = ({ card, scale = 1, renderMargin = 1, className }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -55,4 +55,4 @@ export const CreateMTGCard: React.FC<CreateMTGCardProps> = ({ card, scale = 1, r
   return <div ref={containerRef} />;
 };
 
-export default CreateMTGCard;
+export default CreateMTGCardComponent;

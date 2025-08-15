@@ -920,39 +920,5 @@ function createMTGCard(card: Card, scale: number = 1, renderMargin: number = 1):
   return cardEl;
 }
 
-// Export the function for use in modules and expose globally for legacy compatibility
-(window as any).createMTGCard = createMTGCard;
-
-/* =======================================================
- * Event Listener: Render Card on Click
- * =======================================================
- */
-// If this script is used on the standalone demo page it wires up a button
-// to render JSON into the demo container. When this file is imported as a
-// side-effect in the React app those demo elements won't exist; guard the
-// binding to avoid throwing exceptions during module import.
-const _renderButton = document.getElementById("render-button");
-if (_renderButton) {
-  _renderButton.addEventListener("click", function () {
-    const jsonInput = document.getElementById("card-json") as HTMLInputElement | HTMLTextAreaElement | null;
-    if (!jsonInput) return;
-
-    const jsonText = jsonInput.value !== undefined ? jsonInput.value : (jsonInput.textContent || "");
-    let card: Card;
-    try {
-      card = JSON.parse(jsonText);
-    } catch (e) {
-      // Use String(e) to avoid assuming Error type
-      alert("Invalid JSON: " + String(e));
-      return;
-    }
-
-    const container = document.getElementById("card-container");
-    if (!container) return;
-    container.innerHTML = "";
-    container.appendChild(createMTGCard(card, 1, 1));
-  });
-}
-
 export { createMTGCard };
 export default createMTGCard;
