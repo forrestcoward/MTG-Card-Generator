@@ -11,8 +11,6 @@ import {
   ZoomOutOutlined 
 } from '@ant-design/icons';
 import { copyTextToClipboard, isMobileDevice } from './Utility';
-
-// Import the card rendering styles
 import './card-rendering/style.css';
 import CreateMTGCardComponent from './card-rendering/CreateMTGCardComponent';
 import type { Card } from './card-rendering/script';
@@ -26,7 +24,7 @@ interface MTGRenderProps {
   allowEdits?: boolean;
 }
 
-// Convert MagicCard to the format expected by the new renderer
+// Convert MagicCard to the format expected by the new renderer.
 function convertMagicCardToNewFormat(card: MagicCard): Card {
   return {
     name: card.name,
@@ -59,39 +57,41 @@ export const MTGRenderDisplay : React.FC<MTGRenderProps> = ({
   allowEdits = true 
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  
-  // State management for the card menu
   const [currentWidth, setCurrentWidth] = useState(cardWidth);
   const [increaseSizeAllowed, setIncreaseSizeAllowed] = useState(true);
   const [decreaseSizeAllowed, setDecreaseSizeAllowed] = useState(true);
   const [actualSize, setActualSize] = useState({ width: cardWidth, height: cardWidth * 1.4 });
-  
-  // Prepare converted data and scale
+  const [actualSizeWithMenu, setActualSizeWithMenu] = useState({ width: cardWidth, height: cardWidth * 1.4 });
+
   const convertedCard = convertMagicCardToNewFormat(card);
   const scale = currentWidth * 1.7 / cardWidth;
 
-  // Measure actual size after transform
+  // For this card renderer, a CSS transform is used to scale the size, but CSS transform does not impact the size of the container objects, 
+  // so we update manually to adjust for the transformed size.
   useEffect(() => {
     const measureActualSize = () => {
       const cardElement = document.getElementById(`mtgcardrender-${card.id}`);
       const cardMenu = document.getElementById(`mtgcardrender-menu-${card.id}`);
+
       if (cardElement && cardMenu) {
         const cardRect = cardElement.getBoundingClientRect();
         const menuRect = cardMenu.getBoundingClientRect();
         const newHeight = cardRect.height + menuRect.height;
-        setActualSize({ width: cardRect.width, height: newHeight });
+        setActualSize({ width: cardRect.width, height: cardRect.height });
+        setActualSizeWithMenu({ width: cardRect.width, height: newHeight });
       } else if (cardElement) {
         const cardRect = cardElement.getBoundingClientRect();
         setActualSize({ width: cardRect.width, height: cardRect.height });
+        setActualSizeWithMenu({ width: cardRect.width, height: cardRect.height });
       }
     };
 
-    // Measure after a short delay to ensure rendering is complete
-    const timeoutId = setTimeout(measureActualSize, 100);
+    // Measure after a short delay to ensure rendering is complete.
+    const timeoutId = setTimeout(measureActualSize, 0);
     return () => clearTimeout(timeoutId);
   }, [currentWidth, card.id]);
 
-  // Initialize size toggles
+  // Initialize size toggles.
   useEffect(() => {
     updateSizeToggles(currentWidth);
   }, [currentWidth]);
@@ -106,13 +106,13 @@ export const MTGRenderDisplay : React.FC<MTGRenderProps> = ({
     }
   };
 
-  const increaseCardSize = (increase: number = 30) => {
+  const increaseCardSize = (increase: number) => {
     const newWidth = currentWidth + increase;
     setCurrentWidth(newWidth);
     updateSizeToggles(newWidth);
   };
 
-  const decreaseCardSize = (decrease: number = 30) => {
+  const decreaseCardSize = (decrease: number) => {
     const newWidth = currentWidth - decrease;
     setCurrentWidth(newWidth);
     updateSizeToggles(newWidth);
@@ -146,7 +146,6 @@ export const MTGRenderDisplay : React.FC<MTGRenderProps> = ({
       }
     }
 
-    // Use html-to-image to download the card
     const htmlToImage = (window as any).htmlToImage;
     try {
       const dataUrl = await htmlToImage.toPng(cardElement, {
@@ -165,8 +164,7 @@ export const MTGRenderDisplay : React.FC<MTGRenderProps> = ({
     }
   };
 
-  // Menu configuration
-  const cardIsTutorialCard = card.databaseId === "-1";
+  // Menu configuration.
   const cardMenuIconFontSize = "40px";
   const optionsMenuItemStyle: React.CSSProperties = { marginLeft: 5 };
   const optionsMenuIconStyle: React.CSSProperties = { fontSize: 30 };
@@ -217,7 +215,9 @@ export const MTGRenderDisplay : React.FC<MTGRenderProps> = ({
       style={{
         paddingTop: 20,
         width: actualSize.width,
-        height: actualSize.height,
+        height: actualSizeWithMenu.height,
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       <div 
@@ -226,7 +226,11 @@ export const MTGRenderDisplay : React.FC<MTGRenderProps> = ({
           height: actualSize.height,
         }}
       >
-        <div id={`mtgcardrender-${card.id}`} ref={containerRef} style={{ width: 'fit-content', transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+        <div id={`mtgcardrender-${card.id}`} style={{ 
+          width: 'fit-content', 
+          transform: `scale(${scale})`, 
+          transformOrigin: 'top left' 
+        }}>
           <CreateMTGCardComponent 
             key={`${card.id}-${currentWidth}`} 
             card={convertedCard} 
@@ -234,12 +238,16 @@ export const MTGRenderDisplay : React.FC<MTGRenderProps> = ({
             renderMargin={1} 
           />
         </div>
-                {true && (
-          <div id={`mtgcardrender-menu-${card.id}`}>
-            <Tooltip title={<div><b>Prompt: </b>{card.userPrompt}</div>} placement="left">
-              <QuestionCircleOutlined style={{fontSize: cardMenuIconFontSize, marginLeft: 3}} />
-            </Tooltip>
-            
+      </div>
+        
+      {true && (
+        <div id={`mtgcardrender-menu-${card.id}`} style={{ 
+          display: 'flex',
+          justifyContent: 'right'
+        }}>
+          <Tooltip title={<div><b>Prompt: </b>{card.userPrompt}</div>} placement="left">
+            <QuestionCircleOutlined style={{fontSize: cardMenuIconFontSize, marginLeft: 3, marginTop: 3}} />
+          </Tooltip>
             {card.explanation && (
               <Tooltip 
                 title={
@@ -285,8 +293,6 @@ export const MTGRenderDisplay : React.FC<MTGRenderProps> = ({
             </Dropdown>
           </div>
         )}
-      </div>
-
     </div>
   );
 };
