@@ -215,8 +215,6 @@ export const MTGRenderDisplay : React.FC<MTGRenderProps> = ({
   return (
     <div 
       style={{
-        display: "flex", 
-        flexWrap: "wrap",
         paddingTop: 20,
         width: actualSize.width,
         height: actualSize.height,
@@ -224,7 +222,6 @@ export const MTGRenderDisplay : React.FC<MTGRenderProps> = ({
     >
       <div 
         style={{ 
-          position: 'relative',
           width: actualSize.width,
           height: actualSize.height,
         }}
