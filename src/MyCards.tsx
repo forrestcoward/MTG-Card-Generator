@@ -10,6 +10,7 @@ import { AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from "@azure/
 import { Loader } from "./Loader";
 import PopOutSettingsMenu from "./PopOutSettingsMenu";
 import { SettingsButton } from "./SettingsButton";
+import { MTGRenderDisplay } from "./MTGRender";
 
 export function MyCards() {
   const [cards, setCards] = React.useState<MagicCard[]>([]);
@@ -65,7 +66,7 @@ export function MyCards() {
       {
         cards.map(card => (
           <div className="cardContainer" key={`card-container-${card.id}`}>
-            <CardDisplay 
+            <MTGRenderDisplay 
               key={`card-display-${card.id}`} 
               card={card} showCardMenu={true} 
               cardWidth={cardWidth} 

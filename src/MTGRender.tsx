@@ -68,15 +68,21 @@ export const MTGRenderDisplay : React.FC<MTGRenderProps> = ({
   
   // Prepare converted data and scale
   const convertedCard = convertMagicCardToNewFormat(card);
-  const scale = currentWidth / cardWidth; // Scale relative to the original cardWidth
+  const scale = currentWidth * 1.7 / cardWidth;
 
   // Measure actual size after transform
   useEffect(() => {
     const measureActualSize = () => {
       const cardElement = document.getElementById(`mtgcardrender-${card.id}`);
-      if (cardElement) {
-        const rect = cardElement.getBoundingClientRect();
-        setActualSize({ width: rect.width, height: rect.height });
+      const cardMenu = document.getElementById(`mtgcardrender-menu-${card.id}`);
+      if (cardElement && cardMenu) {
+        const cardRect = cardElement.getBoundingClientRect();
+        const menuRect = cardMenu.getBoundingClientRect();
+        const newHeight = cardRect.height + menuRect.height;
+        setActualSize({ width: cardRect.width, height: newHeight });
+      } else if (cardElement) {
+        const cardRect = cardElement.getBoundingClientRect();
+        setActualSize({ width: cardRect.width, height: cardRect.height });
       }
     };
 
@@ -211,21 +217,19 @@ export const MTGRenderDisplay : React.FC<MTGRenderProps> = ({
       style={{
         display: "flex", 
         flexWrap: "wrap",
-        width: `${actualSize.width}px`, // Use measured actual size
-        height: `${actualSize.height}px`, // Use measured actual size
-        overflow: 'visible',
+        paddingTop: 20,
+        width: actualSize.width,
+        height: actualSize.height,
       }}
     >
       <div 
         style={{ 
           position: 'relative',
-          transform: `scale(${scale})`,
-          transformOrigin: 'top left',
-          width: `${cardWidth}px`, // Base size before transform
-          height: `${cardWidth * 1.4}px`, // Base size before transform
+          width: actualSize.width,
+          height: actualSize.height,
         }}
       >
-        <div id={`mtgcardrender-${card.id}`} ref={containerRef} style={{ width: 'fit-content' }}>
+        <div id={`mtgcardrender-${card.id}`} ref={containerRef} style={{ width: 'fit-content', transform: `scale(${scale})`, transformOrigin: 'top left' }}>
           <CreateMTGCardComponent 
             key={`${card.id}-${currentWidth}`} 
             card={convertedCard} 
@@ -233,9 +237,8 @@ export const MTGRenderDisplay : React.FC<MTGRenderProps> = ({
             renderMargin={1} 
           />
         </div>
-        
-        {true && (
-          <div className="card-menu">
+                {true && (
+          <div id={`mtgcardrender-menu-${card.id}`}>
             <Tooltip title={<div><b>Prompt: </b>{card.userPrompt}</div>} placement="left">
               <QuestionCircleOutlined style={{fontSize: cardMenuIconFontSize, marginLeft: 3}} />
             </Tooltip>
@@ -263,7 +266,7 @@ export const MTGRenderDisplay : React.FC<MTGRenderProps> = ({
             {showSizeAdjustmentButtons && (
               <Button type="text" size="middle" shape="circle" disabled={!increaseSizeAllowed}>
                 <ZoomInOutlined 
-                  onClick={() => increaseCardSize(30)} 
+                  onClick={() => increaseCardSize(60)} 
                   style={{fontSize: cardMenuIconFontSize, marginRight: -4}} 
                 />
               </Button>
@@ -272,7 +275,7 @@ export const MTGRenderDisplay : React.FC<MTGRenderProps> = ({
             {showSizeAdjustmentButtons && (
               <Button type="text" size="middle" shape="circle" disabled={!decreaseSizeAllowed}>
                 <ZoomOutOutlined 
-                  onClick={() => decreaseCardSize(30)} 
+                  onClick={() => decreaseCardSize(60)} 
                   style={{fontSize: cardMenuIconFontSize, marginRight: -7}} 
                 />
               </Button>
@@ -286,6 +289,7 @@ export const MTGRenderDisplay : React.FC<MTGRenderProps> = ({
           </div>
         )}
       </div>
+
     </div>
   );
 };
