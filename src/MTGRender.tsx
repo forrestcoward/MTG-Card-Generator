@@ -64,10 +64,26 @@ export const MTGRenderDisplay : React.FC<MTGRenderProps> = ({
   const [currentWidth, setCurrentWidth] = useState(cardWidth);
   const [increaseSizeAllowed, setIncreaseSizeAllowed] = useState(true);
   const [decreaseSizeAllowed, setDecreaseSizeAllowed] = useState(true);
+  const [actualSize, setActualSize] = useState({ width: cardWidth, height: cardWidth * 1.4 });
   
   // Prepare converted data and scale
   const convertedCard = convertMagicCardToNewFormat(card);
-  const scale = currentWidth / 440; // Adjust scale based on current width
+  const scale = currentWidth / cardWidth; // Scale relative to the original cardWidth
+
+  // Measure actual size after transform
+  useEffect(() => {
+    const measureActualSize = () => {
+      const cardElement = document.getElementById(`mtgcardrender-${card.id}`);
+      if (cardElement) {
+        const rect = cardElement.getBoundingClientRect();
+        setActualSize({ width: rect.width, height: rect.height });
+      }
+    };
+
+    // Measure after a short delay to ensure rendering is complete
+    const timeoutId = setTimeout(measureActualSize, 100);
+    return () => clearTimeout(timeoutId);
+  }, [currentWidth, card.id]);
 
   // Initialize size toggles
   useEffect(() => {
@@ -191,10 +207,31 @@ export const MTGRenderDisplay : React.FC<MTGRenderProps> = ({
   }
 
   return (
-    <div id={`mtgcardrender-${card.id}`} style={{display: "flex", flexWrap: "wrap"}}>
-      <div>
-        <div ref={containerRef} style={{ width: 'fit-content' }}>
-          <CreateMTGCardComponent card={convertedCard} scale={scale} renderMargin={1} />
+    <div 
+      style={{
+        display: "flex", 
+        flexWrap: "wrap",
+        width: `${actualSize.width}px`, // Use measured actual size
+        height: `${actualSize.height}px`, // Use measured actual size
+        overflow: 'visible',
+      }}
+    >
+      <div 
+        style={{ 
+          position: 'relative',
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
+          width: `${cardWidth}px`, // Base size before transform
+          height: `${cardWidth * 1.4}px`, // Base size before transform
+        }}
+      >
+        <div id={`mtgcardrender-${card.id}`} ref={containerRef} style={{ width: 'fit-content' }}>
+          <CreateMTGCardComponent 
+            key={`${card.id}-${currentWidth}`} 
+            card={convertedCard} 
+            scale={1} 
+            renderMargin={1} 
+          />
         </div>
         
         {true && (
