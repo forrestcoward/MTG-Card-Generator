@@ -41,8 +41,6 @@
   font-size: 3mm;
   text-rendering: geometricPrecision;
   box-sizing: border-box;
-  transform: scale(2);
-  transform-origin: top left;
 }
 
 /* -------------------- Planeswalker Specific Styles -------------------- */

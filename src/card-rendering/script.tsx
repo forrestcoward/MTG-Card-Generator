@@ -921,4 +921,5 @@ function createMTGCard(card: Card, scale: number = 1, renderMargin: number = 1):
 }
 
 export { createMTGCard };
+export type { Card };
 export default createMTGCard;

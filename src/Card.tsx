@@ -149,8 +149,8 @@ export class MagicCard {
     this.typeLine = card.typeLine
     this.text = card.text
     this.oracleText = card.oracleText
-    this.power = 0
-    this.toughness = 0
+    this.power = card.power
+    this.toughness = card.toughness
     this._colorIdentity = ""
     this.flavorText = card.flavorText
     this.pt = card.pt

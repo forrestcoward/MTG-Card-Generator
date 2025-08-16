@@ -15,6 +15,7 @@ import { copyTextToClipboard, isMobileDevice } from './Utility';
 // Import the card rendering styles
 import './card-rendering/style.css';
 import CreateMTGCardComponent from './card-rendering/CreateMTGCardComponent';
+import type { Card } from './card-rendering/script';
 
 interface MTGRenderProps {
   card: MagicCard;
@@ -26,7 +27,7 @@ interface MTGRenderProps {
 }
 
 // Convert MagicCard to the format expected by the new renderer
-function convertMagicCardToNewFormat(card: MagicCard): any {
+function convertMagicCardToNewFormat(card: MagicCard): Card {
   return {
     name: card.name,
     mana_cost: card.manaCost,
@@ -190,7 +191,7 @@ export const MTGRenderDisplay : React.FC<MTGRenderProps> = ({
   }
 
   return (
-    <div style={{display: "flex", flexWrap: "wrap"}}>
+    <div id={`mtgcardrender-${card.id}`} style={{display: "flex", flexWrap: "wrap"}}>
       <div>
         <div ref={containerRef} style={{ width: 'fit-content' }}>
           <CreateMTGCardComponent card={convertedCard} scale={scale} renderMargin={1} />
