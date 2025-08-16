@@ -838,7 +838,8 @@ function buildDefaultCardHTML(props: CardProps, card: Card): string {
       <div class="type-line">${props.card_face.type_line}</div>
       ${props.set_icon_uri ? `<div class="set-icon-container"><img class="set-icon" src="${props.set_icon_uri}"></div>` : ""}
     </div>
-    <div class="illustration"></div>
+    <div class="illustration">
+    </div>
     <div class="oracle normal-oracle">
       ${props.oracle_lines.map(line => `<div class="oracle-inner">${line}</div>`).join("")}
       ${props.card_face.flavor_text ? `<div class="oracle-flavor"><hr>${props.card_face.flavor_text}</div>` : ""}

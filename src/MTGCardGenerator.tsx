@@ -150,8 +150,8 @@ const cardGenerationSettingsGroup : SettingGroup = {
 }
 
 const cardDisplaySettings = [
-  { name: 'Legacy Renderer', id: 'legacy-renderer', value: true, description: 'Use the original card rendering system with full editing capabilities.', group: 'display-settings' },
-  { name: 'New Renderer', id: 'new-renderer', value: false, description: 'Use the new card rendering system with improved visual quality and layout.', group: 'display-settings' },
+  { name: 'Default', id: 'legacy-renderer', value: true, description: '', group: 'display-settings' },
+  { name: 'MTGRender.TK', id: 'new-renderer', value: false, description: 'Render cards using the layout seen at https://www.mtgrender.tk', group: 'display-settings' },
 ]
 
 const cardDisplaySettingsGroup : SettingGroup = {
