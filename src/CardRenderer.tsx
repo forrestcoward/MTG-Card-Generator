@@ -3,7 +3,7 @@ import { UserContext } from './UserContext';
 import { Image, Dropdown, Tooltip, Button } from 'antd';
 import { BulbOutlined, CaretDownFilled, CaretRightOutlined, CloseOutlined, CloudDownloadOutlined, CopyOutlined, EditOutlined, 
   FileImageOutlined, InfoCircleOutlined, QuestionCircleOutlined, RightCircleOutlined, SaveFilled, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons';
-import { adjustTextHeightBasedOnChildrenClientOffsetHeight, adjustTextHeightBasedOnClientHeight, copyTextToClipboard, getBaseUrl, getChildrenClientOffsetHeight, getRandomInt, isMobileDevice } from "./Utility";
+import { adjustTextHeightBasedOnChildrenClientOffsetHeight, adjustTextHeightBasedOnClientHeight, copyTextToClipboard, getBaseUrl, getChildrenClientOffsetHeight, isMobileDevice } from "./Utility";
 import { saveAs } from 'file-saver';
 
 // @ts-ignore
@@ -12,65 +12,12 @@ import { toBlob } from 'html-to-image';
 import { GenerateImageResponse, GenerateNewCardImage, GetImagePrompt, UploadImageToAzure } from "./CallAPI";
 import { msalInstance } from "./Index";
 import { LoadingSpinner } from "./LoadingSpinner";
-
-export interface BasicCard {
-  name: string,
-  manaCost: string,
-  typeLine: string,
-  type: string,
-  text: string,
-  oracleText: string,
-  power: number,
-  toughness: number,
-  colorIdentity: string
-  pt: string,
-  flavorText: string,
-  rarity: string,
-  imageUrl: string,
-  temporaryImageUrl: string,
-  userPrompt: string,
-  explanation: string,
-  funnyExplanation: string,
-  id: string // Database id for lookup.
-  alternativeImageUrls: string[]
-  url: string
-}
-
-enum ColorIdentity {
-  White = "w",
-  Blue = "u",
-  Black = "b",
-  Green = "g",
-  Red = "r",
-  Colorless = "c",
-  Azorius = "uw",
-  Dimir = "ub",
-  Rakdos = "br",
-  Gruul = "rg",
-  Selesnya = "wg",
-  Orzhov = "wb",
-  Izzet = "ur",
-  Golgari = "bg",
-  Boros = "rw",
-  Simic = "ug",
-  ThreePlusColored = "mc",
-  Unknown = "unknown",
-}
-
-enum CardType {
-  Creature,
-  Instant,
-  Sorcery,
-  Enchantment,
-  Artifact,
-  Land,
-  Unknown
-}
+import { MagicCard } from "./models/MagicCard";
 
 const manaTokens : string[] = ["{G}", "{W}", "{U}", "{B}", "{R}", "{0}", "{1}", "{2}", "{3}", 
 "{4}", "{5}", "{6}", "{7}", "{8}", "{9}", "{10}", "{C}", "{T}", "{X}"]
 
-const manaTokenToCssCharacter : Record<string, string> = {
+export const manaTokenToCssCharacter : Record<string, string> = {
   "{G}": "g",
   "{W}": "w",
   "{U}": "u",
@@ -92,421 +39,7 @@ const manaTokenToCssCharacter : Record<string, string> = {
   "{X}": "x",
 }
 
-export interface CardRating {
-  numberOfVotes: number,
-  totalScore: number,
-  averageScore: number,
-}
-
-export interface GenerationMetadata {
-  model: string,
-}
-
-export interface UserRecord {
-  username: string,
-}
-
-export interface CardGenerationRecords {
-  cards: CardGenerationRecord[]
-}
-
-export interface CardGenerationRecord {
-  id: string // Database id for lookup.
-  user: UserRecord
-  card: BasicCard
-  rating: CardRating
-  generationMetadata: GenerationMetadata
-}
-
-export class MagicCard {
-  name: string
-  manaCost: string
-  typeLine: string
-  type: string
-  text: string
-  oracleText: string
-  power: number
-  toughness: number
-  _colorIdentity: string
-  pt: string
-  flavorText: string
-  rarity: string
-  imageUrl: string
-  temporaryImageUrl: string
-  setNumberDisplay: string
-  id: string // DOM id.
-  databaseId: string // Database id for lookup.
-  userPrompt: string
-  explanation: string
-  funnyExplanation: string
-  alternativeImageUrls: string[]
-  url: string
-
-  constructor(card: BasicCard) {
-    this.name = card.name
-    this.manaCost = card.manaCost
-    this.type = card.type
-    this.typeLine = card.typeLine
-    this.text = card.text
-    this.oracleText = card.oracleText
-    this.power = card.power
-    this.toughness = card.toughness
-    this._colorIdentity = ""
-    this.flavorText = card.flavorText
-    this.pt = card.pt
-    this.rarity = card.rarity
-    this.imageUrl = card.imageUrl
-    this.temporaryImageUrl = card.temporaryImageUrl
-    this.setNumberDisplay = getRandomInt(0, 451) + "/" + 451
-    this.id = getRandomInt(0, 1000000000).toString()
-    this.userPrompt = card.userPrompt
-    this.explanation = card.explanation
-    this.funnyExplanation = card.funnyExplanation
-    this.databaseId = card.id
-    this.alternativeImageUrls = card.alternativeImageUrls
-    this.url = card.url
-  }
-
-  static clone(card: MagicCard, sameId: boolean): MagicCard {
-    let newCard = new MagicCard(card)
-    newCard.setNumberDisplay = card.setNumberDisplay
-    if (sameId) {
-      newCard.id = card.id
-    } else {
-      newCard.id = getRandomInt(0, 1000000000).toString()
-    }
-
-    newCard.databaseId = card.databaseId
-    return newCard
-  }
-
-  get manaCostTokens(): string[] {
-    return this.getManaCostTokens(this.manaCost);
-  }
-
-  private getManaCostTokens(tokensToParse: string): string[] {
-    var r: RegExp = /\{(.*?)\}/g
-    var match = tokensToParse.match(r)
-    var manaCostTokens:string[] = []
-    if (match) {
-      match?.forEach(m => manaCostTokens.push(m))
-    }
-    return manaCostTokens;
-  }
-
-  get colorIdentity(): ColorIdentity {
-    var white = false;
-    var blue = false;
-    var black = false;
-    var red = false;
-    var green = false;
-  
-    var manaCostTokens = this.manaCostTokens;
-    if (!this.manaCostTokens) return ColorIdentity.Unknown
-    if (manaCostTokens.includes("{W}")) white = true 
-    if (manaCostTokens.includes("{U}")) blue = true
-    if (manaCostTokens.includes("{B}")) black = true
-    if (manaCostTokens.includes("{R}")) red = true
-    if (manaCostTokens.includes("{G}")) green = true
-  
-    if ( white && !blue && !black && !red && !green) return ColorIdentity.White
-    if (!white &&  blue && !black && !red && !green) return ColorIdentity.Blue
-    if (!white && !blue &&  black && !red && !green) return ColorIdentity.Black
-    if (!white && !blue && !black &&  red && !green) return ColorIdentity.Red
-    if (!white && !blue && !black && !red &&  green) return ColorIdentity.Green
-    if (!white && !blue && !black && !red && !green) return ColorIdentity.Colorless
-  
-    if ( white &&  blue && !black && !red && !green) return ColorIdentity.Azorius
-    if (!white &&  blue &&  black && !red && !green) return ColorIdentity.Dimir
-    if (!white && !blue &&  black &&  red && !green) return ColorIdentity.Rakdos
-    if (!white && !blue && !black &&  red &&  green) return ColorIdentity.Gruul
-    if ( white && !blue && !black && !red &&  green) return ColorIdentity.Selesnya
-    if ( white && !blue &&  black && !red && !green) return ColorIdentity.Orzhov
-    if (!white &&  blue && !black &&  red && !green) return ColorIdentity.Izzet
-    if (!white && !blue &&  black && !red &&  green) return ColorIdentity.Golgari
-    if ( white && !blue && !black &&  red && !green) return ColorIdentity.Boros
-    if (!white &&  blue && !black && !red &&  green) return ColorIdentity.Simic
-  
-    return ColorIdentity.ThreePlusColored;
-  }
-
-  get cardDivClassName() {
-    return `card-background card-background-${this.manaCssClassPostfix}`
-  }
-
-  get cardFrameTypeLineClassName()  {
-    return `frame-type-line frame-${this.manaCssClassPostfix} frame-type-line-${this.manaCssClassPostfix}`
-  }
-
-  get cardFrameHeaderClassName() {
-    return `frame-header frame-${this.manaCssClassPostfix} frame-header-${this.manaCssClassPostfix}`
-  }
-
-  get cardFrameTextBoxClassName() {
-    return `frame-text-box frame-text-box-${this.id} frame-text-box-${this.manaCssClassPostfix} frame-margin`
-  }
-
-  get cardFrameContentClassName() {
-    return `frame-text-box-inner frame-text-box-inner-${this.id}`
-  }
-  
-  get cardFrameArtClassName() {
-    return `frame-art frame-art-${this.manaCssClassPostfix} frame-margin`
-  }
-
-  get rarityDisplay() {
-    var token = ""
-    switch (this.rarity.toLocaleLowerCase()) {
-      case "common": token = "C"; break;
-      case "uncommon": token = "U"; break;
-      case "rare": token = "R"; break;
-      case "mythic": token = "M"; break;
-      case "mythic rare": token = "M"; break;
-    }
-    return token;
-  }
-
-  get cardType(): CardType {
-    var type = this.type.toLocaleLowerCase();
-    if (type.includes("legendary creature") || type.includes("creature")) return CardType.Creature
-    if (type == "instant") return CardType.Instant;
-    if (type == "sorcery") return CardType.Sorcery;
-    if (type.includes("artifact")) return CardType.Artifact;
-    if (type.includes("enchantment")) return CardType.Enchantment;
-    if (type.includes("land")) return CardType.Land;
-    return CardType.Unknown;
-  }
-
-  get textDisplay() {
-    return this.oracleText.split('\n').map(line => this.addManaHtmlToCardTextLine(line));
-  }
-
-  // Gets the CSS postfix to create class names that are differentiated by color identity.
-  private get manaCssClassPostfix() {
-    return this.colorIdentity;
-  }
-
-  // Transforms text representations of mana symbols from OpenAI into HTML that can render those mana symbols using the mana project (https://github.com/andrewgioia/mana).
-  private addManaHtmlToCardTextLine(line: string) {
-    manaTokens.forEach(token => {
-      line = line.replaceAll(token, `<i class=\"${MagicCard.getManaClassName(token)} card-text-mana-token-${this.id}\"></i>`)
-    })
-
-    return line
-  }
-
-  // Gets the matching mana project (https://github.com/andrewgioia/mana) CSS token for <i></i> based on the mana token string.
-  static getManaClassName(manaToken: string) {
-    return `ms ms-${manaTokenToCssCharacter[manaToken]} ms-padding`
-  }
-
-  static getManaClassNameForTitle(manaToken: string) {
-    return `ms ms-${manaTokenToCssCharacter[manaToken]} ms-padding-title`
-  }
-
-  getCardUrl() {
-    return getBaseUrl() + "/Card?id=" + this.databaseId
-  }
-
-  toImage(): Promise<Blob | null> {
-    var node = document.getElementById(`card-${this.id}`)
-    if (!node) {
-      return Promise.reject(new Error('Card node not found in DOM tree to transform to image.'));
-    }
-
-    try {
-      return toBlob(node, { 
-        cacheBust: true,
-        // Get rid of 'margin-top' and 'box-shadow' styles. Causes html-to-image to render incorrectly.
-        style: { 
-          marginTop: '0px',
-          boxShadow: 'none',
-      }, },)
-    }
-    catch (error) {
-      return Promise.reject(error)
-    }
-  }
-
-  async uploadCardBlob(): Promise<string | undefined> {
-    try {
-      const blob = await this.toImage();
-      if (blob) {
-        const url = await UploadImageToAzure(msalInstance, blob, this.id.toString());
-        return url
-      } else {
-        console.log('No image blob available to upload.');
-      }
-    } catch (error) {
-      console.error('Error in image conversion or upload:', error);
-      return undefined
-    }
-  }
-
-  // Adjusts the font sizes on the card to fit within the card dimensions.
-  adjustFontSize() {
-    this.adjustTypeLineSize()
-    this.adjustNameSize()
-    this.adjustFrameBottomSize();
-    this.adjustCardTextSize();
-  }
-
-  increaseSize(increase: number = 40) {
-    const container : HTMLElement | null = document.getElementById(`card-${this.id}`)
-    this.adjustCardSize(container!.clientWidth + increase)
-  }
-
-  decreaseSize(decrease: number = 40) {
-    const container : HTMLElement | null = document.getElementById(`card-${this.id}`)
-    this.adjustCardSize(container!.clientWidth - decrease)
-  }
-
-  adjustCardSize(width: number = 440) {
-    const container : HTMLElement | null = document.getElementById(`card-${this.id}`)
-    if (container == null) {
-      return
-    }
-
-    const height = ((width * 3.6) / 2.5);
-    container!.style.width  = `${width}px`;
-    container!.style.height = `${height}px`;
-
-    const i : HTMLElement | null = document.getElementById(`card-image-flow-${this.id}`)
-    //i!.style.width  = `${width}px`;
-    //i!.style.height = `${height/2}px`;
-
-    this.adjustFontSize();
-  }
-
-  // Adjust type and set icon size relative to the height of their container.
-  private adjustTypeLineSize(ratio:number = .6) {
-    const container : HTMLElement | null = document.getElementById(`type-container-${this.id}`)
-    const nameContainer : HTMLElement | null = document.getElementById(`type-${this.id}`)
-    const manaContainer : HTMLElement | null = document.getElementById(`set-${this.id}`)
-
-    if (!container || !nameContainer || !manaContainer) {
-      return
-    }
-
-    adjustTextHeightBasedOnClientHeight(container, nameContainer, ratio)
-    adjustTextHeightBasedOnChildrenClientOffsetHeight(container, manaContainer, ratio, 4, false)
-
-    const calculateWidth = function() { return nameContainer.scrollWidth + manaContainer.scrollWidth }
-    let prevWidth = 0;
-    let fontSize = parseFloat(window.getComputedStyle(nameContainer, null).getPropertyValue('font-size'));
-
-    while (calculateWidth() > container.offsetWidth && calculateWidth() != prevWidth) {
-      prevWidth = calculateWidth()
-      fontSize--;
-      nameContainer.style.fontSize = fontSize + "px";
-
-      if (fontSize <= 4) {
-        break;
-      }
-    }
-  }
-
-  // Adjust name and mana cost size relative to the height of their container.
-  private adjustNameSize(nameToContainerRatio:number = .6, manaToContainerRatio:number = .75) {
-    const container : HTMLElement | null = document.getElementById(`title-container-${this.id}`)
-    const nameContainer : HTMLElement | null = document.getElementById(`name-${this.id}`)
-    const manaContainer : HTMLElement | null = document.getElementById(`mana-${this.id}`)
-
-    if (!container || !nameContainer || !manaContainer) {
-      return
-    }
-
-    adjustTextHeightBasedOnClientHeight(container, nameContainer, nameToContainerRatio)
-
-    if (manaContainer.children.length != 0) {
-      // Some malformed cards will have no mana value.
-      adjustTextHeightBasedOnChildrenClientOffsetHeight(container, manaContainer, manaToContainerRatio, 4, false)
-    }
-
-    const calculateWidth = function() { return nameContainer.scrollWidth + manaContainer.scrollWidth }
-    let prevWidth = 0;
-    let fontSize = parseFloat(window.getComputedStyle(nameContainer, null).getPropertyValue('font-size'));
-    let offset = 4; // Adjust so mana does not go off card.
-
-    while (calculateWidth() > container.offsetWidth - offset && calculateWidth() != prevWidth) {
-      prevWidth = calculateWidth()
-      fontSize--;
-      nameContainer.style.fontSize = fontSize + "px";
-
-      if (fontSize <= 4) {
-        break;
-      }
-    }
-  }
-
-  // Adjust the size of the bottom frame relative to the card background.
-  private adjustFrameBottomSize(ratio:number = .045, minFontSize:number = 1) {
-    const container : HTMLElement | null = document.getElementById(`card-background-${this.id}`)
-    const nameContainer : HTMLElement | null = document.getElementById(`frame-bottom-${this.id}`)
-
-    if (!container || !nameContainer) {
-      return
-    }
-
-    adjustTextHeightBasedOnClientHeight(container, nameContainer, ratio, minFontSize)
-  }
-
-  private adjustCardTextSize(minFontSize:number = 5, maxFontSize:number = 30) {
-    const container : HTMLElement | null = document.querySelector(`.frame-text-box-${this.id}`)
-    const innerContainer : HTMLElement | null = document.querySelector(`.frame-text-box-inner-${this.id}`)
-    const manaTokens = document.querySelectorAll(`.card-text-mana-token-${this.id}`)
-    const ptContainer = document.getElementById(`pt-${this.id}`)
-    const frameBottom = document.getElementById(`frame-bottom-${this.id}`)
-
-    if (!container || !innerContainer || !frameBottom) {
-      return
-    }
-
-    // Increment or decrement the size of the text and flavor text containers until they fit within the card.
-    // We do not edit the font size of the power and toughness frame because it should be uniform.
-    let textContainer = innerContainer.children[0] as HTMLElement
-    let flavorTextContainer = innerContainer.children[2] as HTMLElement
-
-    const heightOffset = 30
-    let fontSize = parseInt(window.getComputedStyle(textContainer).fontSize)
-
-    // Make the font size larger until it overflows the container.
-    // Make larger first so we can shrink it one notch after.
-    while (getChildrenClientOffsetHeight(innerContainer) < (container.clientHeight - heightOffset)) {
-      fontSize += .5
-      textContainer.style.fontSize = fontSize + 'px'
-      flavorTextContainer.style.fontSize = fontSize + 'px'
-
-      if (ptContainer != null) {
-        ptContainer.style.fontSize = (fontSize + 4) + 'px'
-      }
-
-      if (fontSize > maxFontSize) {
-        break
-      }
-
-      manaTokens.forEach(manaToken => {(manaToken as HTMLElement).style.fontSize = (fontSize-2) + 'px'})
-    }
-
-    // Make the font size smaller until it fits the container.
-    while (getChildrenClientOffsetHeight(innerContainer) > (container.clientHeight - heightOffset)) {
-      fontSize -= .5
-      textContainer.style.fontSize = fontSize + 'px'
-      flavorTextContainer.style.fontSize = fontSize + 'px'
-      manaTokens.forEach(manaToken => {(manaToken as HTMLElement).style.fontSize = (fontSize-2) + 'px'})
-
-      if (ptContainer != null) {
-        ptContainer.style.fontSize = (fontSize + 5) + 'px'
-      }
-
-      if (fontSize <= minFontSize) {
-        break
-      }
-    }
-  }
-}
-
-interface CardDisplayProps {
+interface CardRendererProps {
   // The underlying card.
   card: MagicCard;
   // The initial card width.
@@ -521,7 +54,7 @@ interface CardDisplayProps {
   allowEdits: boolean;
 }
 
-interface CardDisplayState {
+interface CardRendererState {
   card: MagicCard;
   editMode: boolean;
   oracleTextUpdate: string;
@@ -545,9 +78,9 @@ interface CardDisplayState {
   availableImageUrls: GenerateImageResponse[];
 }
 
-function CardDisplayInner(props: CardDisplayProps) {
+export function CardRenderer(props: CardRendererProps) {
   const userContext = React.useContext(UserContext);
-  const [state, setState] = React.useState<CardDisplayState>({
+  const [state, setState] = React.useState<CardRendererState>({
     card: props.card,
     editMode: false,
     nameUpdate: props.card.name,
@@ -569,7 +102,7 @@ function CardDisplayInner(props: CardDisplayProps) {
   });
 
   React.useEffect(() => {
-    state.card.adjustFontSize();
+    adjustFontSize();
   }, [state.card.oracleText, state.card.typeLine, state.card.name, state.editMode]);
 
   function handleImagePromptUpdate(event: React.ChangeEvent<HTMLTextAreaElement>) {
@@ -612,7 +145,7 @@ function CardDisplayInner(props: CardDisplayProps) {
 
   function handleCardDownload() {
     setState(prev => ({ ...prev, useTemporaryImage: false }));
-    state.card.toImage().then(blob => {
+    toImage().then(blob => {
       if (blob != null) {
         saveAs(blob, `${state.card.name}.png`);
       }
@@ -630,13 +163,13 @@ function CardDisplayInner(props: CardDisplayProps) {
 
   function increaseCardSize(increase: number) {
     var newWidth = state.cardWidth + increase;
-    state.card.adjustCardSize(newWidth);
+    adjustCardSize(newWidth);
     updateSizeToggles(newWidth);
   }
 
   function decreaseCardSize(decrease: number) {
     var newWidth = state.cardWidth - decrease;
-    state.card.adjustCardSize(newWidth);
+    adjustCardSize(newWidth);
     updateSizeToggles(newWidth);
   }
 
@@ -700,10 +233,277 @@ function CardDisplayInner(props: CardDisplayProps) {
     }
   }
 
+  function cardDivClassName() {
+    return `card-background card-background-${manaCssClassPostfix()}`
+  }
+
+  function cardFrameTypeLineClassName()  {
+    return `frame-type-line frame-${manaCssClassPostfix()} frame-type-line-${manaCssClassPostfix()}`
+  }
+
+  function cardFrameHeaderClassName() {
+    return `frame-header frame-${manaCssClassPostfix()} frame-header-${manaCssClassPostfix()}`
+  }
+
+  function cardFrameTextBoxClassName() {
+    return `frame-text-box frame-text-box-${state.card.id} frame-text-box-${manaCssClassPostfix()} frame-margin`
+  }
+
+  function cardFrameContentClassName() {
+    return `frame-text-box-inner frame-text-box-inner-${state.card.id}`
+  }
+  
+  function cardFrameArtClassName() {
+    return `frame-art frame-art-${manaCssClassPostfix()} frame-margin`
+  }
+
+  function rarityDisplay() {
+    var token = ""
+    switch (state.card.rarity.toLocaleLowerCase()) {
+      case "common": token = "C"; break;
+      case "uncommon": token = "U"; break;
+      case "rare": token = "R"; break;
+      case "mythic": token = "M"; break;
+      case "mythic rare": token = "M"; break;
+    }
+    return token;
+  }
+
+  function cardType(): CardType {
+    var type = state.card.type.toLocaleLowerCase();
+    if (type.includes("legendary creature") || type.includes("creature")) return CardType.Creature
+    if (type == "instant") return CardType.Instant;
+    if (type == "sorcery") return CardType.Sorcery;
+    if (type.includes("artifact")) return CardType.Artifact;
+    if (type.includes("enchantment")) return CardType.Enchantment;
+    if (type.includes("land")) return CardType.Land;
+    return CardType.Unknown;
+  }
+
+  function textDisplay() {
+    return state.card.oracleText.split('\n').map(line => addManaHtmlToCardTextLine(line));
+  }
+
+  // Gets the CSS postfix to create class names that are differentiated by color identity.
+  function manaCssClassPostfix() {
+    return state.card.colorIdentity;
+  }
+
+  // Transforms text representations of mana symbols from OpenAI into HTML that can render those mana symbols using the mana project (https://github.com/andrewgioia/mana).
+  function addManaHtmlToCardTextLine(line: string) {
+    manaTokens.forEach(token => {
+      line = line.replaceAll(token, `<i class=\"${getManaClassName(token)} card-text-mana-token-${state.card.id}\"></i>`)
+    })
+
+    return line
+  }
+
+  // Gets the matching mana project (https://github.com/andrewgioia/mana) CSS token for <i></i> based on the mana token string.
+  function getManaClassName(manaToken: string) {
+    return `ms ms-${manaTokenToCssCharacter[manaToken]} ms-padding`
+  }
+
+  function getManaClassNameForTitle(manaToken: string) {
+    return `ms ms-${manaTokenToCssCharacter[manaToken]} ms-padding-title`
+  }
+
+  function toImage(): Promise<Blob | null> {
+    var node = document.getElementById(`card-${state.card.id}`)
+    if (!node) {
+      return Promise.reject(new Error('Card node not found in DOM tree to transform to image.'));
+    }
+
+    try {
+      return toBlob(node, { 
+        cacheBust: true,
+        // Get rid of 'margin-top' and 'box-shadow' styles. Causes html-to-image to render incorrectly.
+        style: { 
+          marginTop: '0px',
+          boxShadow: 'none',
+      }, },)
+    }
+    catch (error) {
+      return Promise.reject(error)
+    }
+  }
+
+  async function uploadCardBlob(): Promise<string | undefined> {
+    try {
+      const blob = await toImage();
+      if (blob) {
+        const url = await UploadImageToAzure(msalInstance, blob, state.card.id.toString());
+        return url
+      } else {
+        console.log('No image blob available to upload.');
+      }
+    } catch (error) {
+      console.error('Error in image conversion or upload:', error);
+      return undefined
+    }
+  }
+
+  // Adjusts the font sizes on the card to fit within the card dimensions.
+  function adjustFontSize() {
+    adjustTypeLineSize()
+    adjustNameSize()
+    adjustFrameBottomSize();
+    adjustCardTextSize();
+  }
+
+  function increaseSize(increase: number = 40) {
+    const container : HTMLElement | null = document.getElementById(`card-${state.card.id}`)
+    adjustCardSize(container!.clientWidth + increase)
+  }
+
+  function decreaseSize(decrease: number = 40) {
+    const container : HTMLElement | null = document.getElementById(`card-${state.card.id}`)
+    adjustCardSize(container!.clientWidth - decrease)
+  }
+
+  function adjustCardSize(width: number = 440) {
+    const container : HTMLElement | null = document.getElementById(`card-${state.card.id}`)
+    if (container == null) {
+      return
+    }
+
+    const height = ((width * 3.6) / 2.5);
+    container!.style.width  = `${width}px`;
+    container!.style.height = `${height}px`;
+    const i : HTMLElement | null = document.getElementById(`card-image-flow-${state.card.id}`)
+    adjustFontSize();
+  }
+
+  // Adjust type and set icon size relative to the height of their container.
+  function adjustTypeLineSize(ratio:number = .6) {
+    const container : HTMLElement | null = document.getElementById(`type-container-${state.card.id}`)
+    const nameContainer : HTMLElement | null = document.getElementById(`type-${state.card.id}`)
+    const manaContainer : HTMLElement | null = document.getElementById(`set-${state.card.id}`)
+
+    if (!container || !nameContainer || !manaContainer) {
+      return
+    }
+
+    adjustTextHeightBasedOnClientHeight(container, nameContainer, ratio)
+    adjustTextHeightBasedOnChildrenClientOffsetHeight(container, manaContainer, ratio, 4, false)
+
+    const calculateWidth = function() { return nameContainer.scrollWidth + manaContainer.scrollWidth }
+    let prevWidth = 0;
+    let fontSize = parseFloat(window.getComputedStyle(nameContainer, null).getPropertyValue('font-size'));
+
+    while (calculateWidth() > container.offsetWidth && calculateWidth() != prevWidth) {
+      prevWidth = calculateWidth()
+      fontSize--;
+      nameContainer.style.fontSize = fontSize + "px";
+
+      if (fontSize <= 4) {
+        break;
+      }
+    }
+  }
+
+  // Adjust name and mana cost size relative to the height of their container.
+  function adjustNameSize(nameToContainerRatio:number = .6, manaToContainerRatio:number = .75) {
+    const container : HTMLElement | null = document.getElementById(`title-container-${state.card.id}`)
+    const nameContainer : HTMLElement | null = document.getElementById(`name-${state.card.id}`)
+    const manaContainer : HTMLElement | null = document.getElementById(`mana-${state.card.id}`)
+
+    if (!container || !nameContainer || !manaContainer) {
+      return
+    }
+
+    adjustTextHeightBasedOnClientHeight(container, nameContainer, nameToContainerRatio)
+
+    if (manaContainer.children.length != 0) {
+      // Some malformed cards will have no mana value.
+      adjustTextHeightBasedOnChildrenClientOffsetHeight(container, manaContainer, manaToContainerRatio, 4, false)
+    }
+
+    const calculateWidth = function() { return nameContainer.scrollWidth + manaContainer.scrollWidth }
+    let prevWidth = 0;
+    let fontSize = parseFloat(window.getComputedStyle(nameContainer, null).getPropertyValue('font-size'));
+    let offset = 4; // Adjust so mana does not go off card.
+
+    while (calculateWidth() > container.offsetWidth - offset && calculateWidth() != prevWidth) {
+      prevWidth = calculateWidth()
+      fontSize--;
+      nameContainer.style.fontSize = fontSize + "px";
+
+      if (fontSize <= 4) {
+        break;
+      }
+    }
+  }
+
+  // Adjust the size of the bottom frame relative to the card background.
+  function adjustFrameBottomSize(ratio:number = .045, minFontSize:number = 1) {
+    const container : HTMLElement | null = document.getElementById(`card-background-${state.card.id}`)
+    const nameContainer : HTMLElement | null = document.getElementById(`frame-bottom-${state.card.id}`)
+
+    if (!container || !nameContainer) {
+      return
+    }
+
+    adjustTextHeightBasedOnClientHeight(container, nameContainer, ratio, minFontSize)
+  }
+
+  function adjustCardTextSize(minFontSize:number = 5, maxFontSize:number = 30) {
+    const container : HTMLElement | null = document.querySelector(`.frame-text-box-${state.card.id}`)
+    const innerContainer : HTMLElement | null = document.querySelector(`.frame-text-box-inner-${state.card.id}`)
+    const manaTokens = document.querySelectorAll(`.card-text-mana-token-${state.card.id}`)
+    const ptContainer = document.getElementById(`pt-${state.card.id}`)
+    const frameBottom = document.getElementById(`frame-bottom-${state.card.id}`)
+
+    if (!container || !innerContainer || !frameBottom) {
+      return
+    }
+
+    // Increment or decrement the size of the text and flavor text containers until they fit within the card.
+    // We do not edit the font size of the power and toughness frame because it should be uniform.
+    let textContainer = innerContainer.children[0] as HTMLElement
+    let flavorTextContainer = innerContainer.children[2] as HTMLElement
+
+    const heightOffset = 30
+    let fontSize = parseInt(window.getComputedStyle(textContainer).fontSize)
+
+    // Make the font size larger until it overflows the container.
+    // Make larger first so we can shrink it one notch after.
+    while (getChildrenClientOffsetHeight(innerContainer) < (container.clientHeight - heightOffset)) {
+      fontSize += .5
+      textContainer.style.fontSize = fontSize + 'px'
+      flavorTextContainer.style.fontSize = fontSize + 'px'
+
+      if (ptContainer != null) {
+        ptContainer.style.fontSize = (fontSize + 4) + 'px'
+      }
+
+      if (fontSize > maxFontSize) {
+        break
+      }
+
+      manaTokens.forEach(manaToken => {(manaToken as HTMLElement).style.fontSize = (fontSize-2) + 'px'})
+    }
+
+    // Make the font size smaller until it fits the container.
+    while (getChildrenClientOffsetHeight(innerContainer) > (container.clientHeight - heightOffset)) {
+      fontSize -= .5
+      textContainer.style.fontSize = fontSize + 'px'
+      flavorTextContainer.style.fontSize = fontSize + 'px'
+      manaTokens.forEach(manaToken => {(manaToken as HTMLElement).style.fontSize = (fontSize-2) + 'px'})
+
+      if (ptContainer != null) {
+        ptContainer.style.fontSize = (fontSize + 5) + 'px'
+      }
+
+      if (fontSize <= minFontSize) {
+        break
+      }
+    }
+  }
+
   const card = state.card;
   const cardIsTutorialCard = card.databaseId == "-1";
 
-  const oracleEditTextAreaRows = card.textDisplay.length * 3;
+  const oracleEditTextAreaRows = textDisplay().length * 3;
   const cardMenuIconFontSize = "40px";
   const optionsMenuItemStyle : React.CSSProperties = {marginLeft:5};
   const optionsMenuIconStyle : React.CSSProperties = {fontSize:30};
@@ -762,7 +562,7 @@ function CardDisplayInner(props: CardDisplayProps) {
       </div>
     ),
     onClick: async () => {
-      await copyTextToClipboard(card.getCardUrl())
+      await copyTextToClipboard(card.getCardUrl)
     }
   }
 
@@ -796,9 +596,9 @@ function CardDisplayInner(props: CardDisplayProps) {
     <div style={{display:"flex", flexWrap:"wrap"}}>
       <div>
         <div id={`card-${card.id}`} className="card-container" style={{width: `${props.cardWidth}px`, height: `${height}px`}}>
-          <div id={`card-background-${card.id}`} className={card.cardDivClassName}></div>
+          <div id={`card-background-${card.id}`} className={cardDivClassName()}></div>
             <div className="card-frame">
-              <div id={`title-container-${card.id}`} className={card.cardFrameHeaderClassName}>
+              <div id={`title-container-${card.id}`} className={cardFrameHeaderClassName()}>
                 <div id={`name-${card.id}`} style={{alignSelf:"center"}} className="name name-type-size">
                   {!state.editMode ?
                     <div>{card.name}</div> :
@@ -808,7 +608,7 @@ function CardDisplayInner(props: CardDisplayProps) {
                 {!state.editMode ?
                     <div id={`mana-${card.id}`} className="mana-symbols">
                       {card.manaCostTokens.map((manaCostToken, i) => (
-                        <i key={card.id + "-manaToken-"+ i} className={MagicCard.getManaClassNameForTitle(manaCostToken) + " manaCost " + `manaCost-${card.id}`} id="mana-icon"></i>
+                        <i key={card.id + "-manaToken-"+ i} className={getManaClassNameForTitle(manaCostToken) + " manaCost " + `manaCost-${card.id}`} id="mana-icon"></i>
                       ))}
                     </div> :
                     <div className="card-edit-manaCost-container">
@@ -816,7 +616,7 @@ function CardDisplayInner(props: CardDisplayProps) {
                     </div>
                 }
               </div>
-              <div className={card.cardFrameArtClassName}>
+              <div className={cardFrameArtClassName()}>
                 {!haveCardImage ? 
                   <div style={{width:"100%", height:"100%", backgroundColor:"black", color:"white", position:"relative"}}>
                     <Button style={{position:"absolute", bottom:0, right:0, margin:5, display: (state.showImageEditor || !props.allowImageUpdate || !state.useTemporaryImage) ? 'none' : 'inline-block' }} 
@@ -828,11 +628,11 @@ function CardDisplayInner(props: CardDisplayProps) {
                     </Button>
                   </div>
                 : (state.useTemporaryImage && card.temporaryImageUrl) ?
-                  <Image onLoad={() => state.card.adjustFontSize()} preview={props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.temporaryImageUrl ? card.temporaryImageUrl : card.imageUrl} /> :
-                  <Image onLoad={() => state.card.adjustFontSize()} preview={props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.imageUrl} />
+                  <Image onLoad={() => adjustFontSize()} preview={props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.temporaryImageUrl ? card.temporaryImageUrl : card.imageUrl} /> :
+                  <Image onLoad={() => adjustFontSize()} preview={props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.imageUrl} />
                 }
               </div>
-              <div id={`type-container-${card.id}`} className={card.cardFrameTypeLineClassName}>
+              <div id={`type-container-${card.id}`} className={cardFrameTypeLineClassName()}>
                 {!state.editMode ?
                     <h1 id={`type-${card.id}`} className="type name-type-size">{card.typeLine}</h1> :
                     <input className="card-edit-type" type="text" value={state.typeUpdate} onChange={handleCardTypeUpdate} />
@@ -841,12 +641,12 @@ function CardDisplayInner(props: CardDisplayProps) {
                   <i className="ms ms-dfc-ignite" id="mana-icon"></i>
                 </div>
               </div>
-              <div className={card.cardFrameTextBoxClassName}>
-                <div className={card.cardFrameContentClassName}>
+              <div className={cardFrameTextBoxClassName()}>
+                <div className={cardFrameContentClassName()}>
                   <div className="description ftb-inner-margin">
                     {!state.editMode ?
                       <div>
-                        {card.textDisplay.map((line, i) => (
+                        {textDisplay().map((line, i) => (
                           <p key={card.id + "-text-" + i} dangerouslySetInnerHTML={{ __html: line }}></p>
                         ))}
                       </div> 
@@ -873,7 +673,7 @@ function CardDisplayInner(props: CardDisplayProps) {
               </div>
               <div id={`frame-bottom-${card.id}`} className="frame-bottom-info inner-margin">
                 <div className="fbi-left">
-                  <p>{card.setNumberDisplay} {card.rarityDisplay}</p>
+                  <p>{card.setNumberDisplay} {rarityDisplay()}</p>
                   <p>OpenAI &#x2022; <img className="paintbrush" src={whitePaintBrush} alt="paintbrush icon" />Custom Magic</p>
                 </div>
                 <div className="fbi-center" onClick={(e) => { updateEditMode()}}></div>
@@ -1013,8 +813,4 @@ function CardDisplayInner(props: CardDisplayProps) {
   )
 
   return fullCard;
-}
-
-export function CardDisplay(props: CardDisplayProps) {
-  return <CardDisplayInner {...props} />;
 }

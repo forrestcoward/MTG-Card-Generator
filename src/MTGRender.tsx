@@ -1,5 +1,4 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { MagicCard } from './Card';
 import { Button, Dropdown, Tooltip } from 'antd';
 import { 
   CaretDownFilled, 
@@ -14,6 +13,7 @@ import { copyTextToClipboard, isMobileDevice } from './Utility';
 import './card-rendering/style.css';
 import CreateMTGCardComponent from './card-rendering/CreateMTGCardComponent';
 import type { Card } from './card-rendering/script';
+import { MagicCard } from './models/MagicCard';
 
 interface MTGRenderProps {
   card: MagicCard;
@@ -202,7 +202,7 @@ export const MTGRenderDisplay : React.FC<MTGRenderProps> = ({
       </div>
     ),
     onClick: async () => {
-      await copyTextToClipboard(card.getCardUrl())
+      await copyTextToClipboard(card.getCardUrl)
     }
   };
 

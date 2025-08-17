@@ -1,6 +1,7 @@
-import { BasicCard, MagicCard } from "./Card";
 // @ts-ignore
 import tutorialCardWizardImage from './card-backgrounds/wizard.png'
+import { BasicCard } from './models/BasicCard';
+import { MagicCard } from './models/MagicCard';
 
 const _tutorialCard:BasicCard = {
   name: "The M.T.G. Card Creator",
@@ -22,6 +23,7 @@ const _tutorialCard:BasicCard = {
   funnyExplanation: "",
   id: "-1",
   alternativeImageUrls: [],
+  url: ''
 }
 
 export const TutorialCard:MagicCard = new MagicCard(_tutorialCard);

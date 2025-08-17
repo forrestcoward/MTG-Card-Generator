@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Rate, Table, Tag } from 'antd';
 import { EventMessage, EventType } from '@azure/msal-browser';
-import { CardDisplay, CardGenerationRecord, MagicCard } from './Card';
+import { CardRenderer } from './CardRenderer';
 import { Loader } from './Loader';
 import { AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from '@azure/msal-react';
 import { GetCardToRate, RateCard, GetTopCards } from './CallAPI';
@@ -12,6 +12,8 @@ import "./app.css";
 import { setCardContainerSize } from './Utility';
 import { CardPreview } from './CardPreview';
 import { UserContext } from './UserContext';
+import { MagicCard } from './models/MagicCard';
+import { CardGenerationRecord } from './models/CardRating';
 
 export function CardRating() {
   const [card, setCard] = useState<MagicCard|undefined>(undefined);
@@ -141,7 +143,7 @@ export function CardRating() {
             <tr>
               <td>
                 <div className="cardContainer" key={`card-rate-container-${card.id}`} style={{marginTop:15}}>
-                  <CardDisplay 
+                  <CardRenderer 
                     key={`card-rate-display-${card.id}`} 
                     card={card} 
                     showCardMenu={false} 

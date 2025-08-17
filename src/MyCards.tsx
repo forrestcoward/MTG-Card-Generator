@@ -1,6 +1,6 @@
 import { EventMessage, EventType } from "@azure/msal-browser";
 import React, { useEffect, useState } from "react";
-import { CardDisplay, MagicCard } from "./Card";
+import { CardRenderer } from "./CardRenderer";
 import { GetUserMagicCards } from "./CallAPI";
 
 import "./mtg-card.css";
@@ -11,6 +11,7 @@ import { Loader } from "./Loader";
 import PopOutSettingsMenu from "./PopOutSettingsMenu";
 import { SettingsButton } from "./SettingsButton";
 import { MTGRenderDisplay } from "./MTGRender";
+import { MagicCard } from "./models/MagicCard";
 
 export function MyCards() {
   const [cards, setCards] = React.useState<MagicCard[]>([]);

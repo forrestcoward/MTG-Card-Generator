@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { UserContext } from './UserContext';
-import { CardDisplay  } from './Card';
+import { CardRenderer  } from './CardRenderer';
 import { MTGRenderDisplay } from './MTGRender';
 import { GenerateMagicCardRequest } from './CallAPI';
 import { isMobileDevice, setCardContainerSize } from './Utility';
@@ -326,7 +326,7 @@ export function MTGCardGenerator() {
                   allowEdits={true} 
                   allowImageUpdate={true} />
               ) : (
-                <CardDisplay 
+                <CardRenderer 
                   key={`card-display-${card.id}`} 
                   card={card} 
                   showCardMenu={true} 
