@@ -12,6 +12,7 @@ import PopOutSettingsMenu from "./PopOutSettingsMenu";
 import { SettingsButton } from "./SettingsButton";
 import { TkCardRenderer } from "./mtg-tk-card-renderer/TkCardRenderer";
 import { MagicCard } from "./models/MagicCard";
+import { MagicCardToTkCard } from "./models/TkCard";
 
 export function MyCards() {
   const [cards, setCards] = React.useState<MagicCard[]>([]);
@@ -69,7 +70,7 @@ export function MyCards() {
           <div className="cardContainer" key={`card-container-${card.id}`}>
             <TkCardRenderer 
               key={`card-display-${card.id}`} 
-              card={card} showCardMenu={true} 
+              card={MagicCardToTkCard(card)} showCardMenu={true} 
               cardWidth={cardWidth} 
               allowImagePreview={true} 
               allowEdits={true} 

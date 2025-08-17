@@ -9,42 +9,18 @@ import {
   ZoomInOutlined, 
   ZoomOutOutlined 
 } from '@ant-design/icons';
-import { copyTextToClipboard, isMobileDevice } from '../Utility';
+import { copyTextToClipboard, getBaseUrl, isMobileDevice } from '../Utility';
 import './style.css';
 import TKCardCardRendererWrapper from './TkCardRendererWrapper';
-import type { Card } from './RenderCard';
-import { MagicCard } from '../models/MagicCard';
+import { TkCard } from '../models/TkCard';
 
 interface TkCardRendererProps {
-  card: MagicCard;
+  card: TkCard;
   cardWidth: number;
   showCardMenu?: boolean;
   allowImageUpdate?: boolean;
   allowImagePreview?: boolean;
   allowEdits?: boolean;
-}
-
-// Convert MagicCard to the format expected by the new renderer.
-function convertMagicCardToNewFormat(card: MagicCard): Card {
-  return {
-    name: card.name,
-    mana_cost: card.manaCost,
-    type_line: card.typeLine,
-    oracle_text: card.oracleText,
-    power: card.power?.toString() || '',
-    toughness: card.toughness?.toString() || '',
-    flavor_text: card.flavorText,
-    rarity: card.rarity?.toLowerCase() || 'common',
-    colors: card.colorIdentity ? [card.colorIdentity.toUpperCase()] : [],
-    color_identity: card.colorIdentity ? [card.colorIdentity.toUpperCase()] : [],
-    image_uris: {
-      art_crop: card.imageUrl || card.temporaryImageUrl || ''
-    },
-    set: 'GEN',
-    collector_number: '001',
-    artist: 'AI Generated',
-    lang: 'en'
-  };
 }
 
 
@@ -119,7 +95,7 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
   };
 
   const handleArtDownload = () => {
-    const img = card.temporaryImageUrl ? card.temporaryImageUrl : card.imageUrl;
+    const img = card.cardFaces[0].temporaryImageUrl ? card.cardFaces[0].temporaryImageUrl : card.cardFaces[0].imageUrl;
     if (img) {
       window.open(img, '_blank');
     }
@@ -155,7 +131,7 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
       });
       
       const link = document.createElement('a');
-      link.download = `${card.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`;
+      link.download = `${card.cardFaces[0].name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`;
       link.href = dataUrl;
       link.click();
     } catch (error) {
@@ -202,7 +178,7 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
       </div>
     ),
     onClick: async () => {
-      await copyTextToClipboard(card.getCardUrl)
+      await copyTextToClipboard(getBaseUrl() + "/Card?id=" + card.databaseId);
     }
   };
 

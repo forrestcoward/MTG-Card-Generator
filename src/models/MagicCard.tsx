@@ -17,7 +17,7 @@ export class MagicCard {
   rarity: string
   imageUrl: string
   temporaryImageUrl: string
-  setNumberDisplay: string
+  collectorNumber: string
   id: string // DOM id.
   databaseId: string // Database id for lookup.
   userPrompt: string
@@ -41,7 +41,7 @@ export class MagicCard {
     this.rarity = card.rarity
     this.imageUrl = card.imageUrl
     this.temporaryImageUrl = card.temporaryImageUrl
-    this.setNumberDisplay = getRandomInt(0, 451) + "/" + 451
+    this.collectorNumber = getRandomInt(0, 451) + "/" + 451
     this.id = getRandomInt(0, 1000000000).toString()
     this.userPrompt = card.userPrompt
     this.explanation = card.explanation
@@ -53,7 +53,7 @@ export class MagicCard {
 
   static clone(card: MagicCard, sameId: boolean): MagicCard {
     let newCard = new MagicCard(card)
-    newCard.setNumberDisplay = card.setNumberDisplay
+    newCard.collectorNumber = card.collectorNumber
     if (sameId) {
       newCard.id = card.id
     } else {

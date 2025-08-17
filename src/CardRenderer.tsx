@@ -3,7 +3,7 @@ import { UserContext } from './UserContext';
 import { Image, Dropdown, Tooltip, Button } from 'antd';
 import { BulbOutlined, CaretDownFilled, CaretRightOutlined, CloseOutlined, CloudDownloadOutlined, CopyOutlined, EditOutlined, 
   FileImageOutlined, InfoCircleOutlined, QuestionCircleOutlined, RightCircleOutlined, SaveFilled, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons';
-import { adjustTextHeightBasedOnChildrenClientOffsetHeight, adjustTextHeightBasedOnClientHeight, copyTextToClipboard, getBaseUrl, getChildrenClientOffsetHeight, isMobileDevice } from "./Utility";
+import { adjustTextHeightBasedOnChildrenClientOffsetHeight, adjustTextHeightBasedOnClientHeight, copyTextToClipboard, getChildrenClientOffsetHeight, isMobileDevice } from "./Utility";
 import { saveAs } from 'file-saver';
 
 // @ts-ignore
@@ -673,7 +673,7 @@ export function CardRenderer(props: CardRendererProps) {
               </div>
               <div id={`frame-bottom-${card.id}`} className="frame-bottom-info inner-margin">
                 <div className="fbi-left">
-                  <p>{card.setNumberDisplay} {rarityDisplay()}</p>
+                  <p>{card.collectorNumber} {rarityDisplay()}</p>
                   <p>OpenAI &#x2022; <img className="paintbrush" src={whitePaintBrush} alt="paintbrush icon" />Custom Magic</p>
                 </div>
                 <div className="fbi-center" onClick={(e) => { updateEditMode()}}></div>

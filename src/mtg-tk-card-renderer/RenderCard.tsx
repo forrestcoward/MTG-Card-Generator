@@ -2,73 +2,8 @@ import React, { useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Image } from 'antd';
 import { IconsHelper, setsHelper } from './Helpers';
-import { MagicCard } from '../models/MagicCard';
-
-/* =======================================================
- * Type Definitions
- * =======================================================
- */
-
-interface CardFace {
-  name: string;
-  printed_name?: string;
-  mana_cost?: string;
-  type_line?: string;
-  oracle_text?: string;
-  flavor_text?: string;
-  power?: string | number;
-  toughness?: string | number;
-  loyalty?: string | number;
-  colors?: string[];
-  color_identity?: string[];
-  color_indicator?: string[];
-  art_variant?: string;
-  layout?: string;
-  collector_number?: string;
-  mdfc_hint?: string;
-  image_uris?: {
-    art_crop?: string;
-    normal?: string;
-  };
-  illustration_scale?: number;
-  illustration_position?: {
-    x: number;
-    y: number;
-  };
-}
-
-interface Card {
-  name: string;
-  mana_cost?: string;
-  type_line?: string;
-  oracle_text?: string;
-  flavor_text?: string;
-  power?: string | number;
-  toughness?: string | number;
-  loyalty?: string | number;
-  colors?: string[];
-  color_identity?: string[];
-  color_indicator?: string[];
-  layout?: string;
-  frame_effects?: string[];
-  set?: string;
-  set_icon?: string;
-  rarity?: string;
-  lang?: string;
-  artist?: string;
-  collector_number?: string;
-  copyright?: string;
-  card_faces?: CardFace[];
-  image_uris?: {
-    art_crop?: string;
-    normal?: string;
-  };
-  illustration_scale?: number;
-  illustration_position?: {
-    x: number;
-    y: number;
-  };
-}
+import { CardFace } from '../models/CardFace';
+import { TkCard } from '../models/TkCard';
 
 interface PlaneswalkerAbility {
   html: string;
@@ -95,7 +30,7 @@ interface ArchiveFrameColors {
 
 interface CardProps {
   card_face: CardFace;
-  back_face: CardFace;
+  back_face?: CardFace;
   is_land: boolean;
   is_legendary: boolean;
   is_planeswalker: boolean;
@@ -355,88 +290,84 @@ function resizeTextHorizontally(el: HTMLElement): void {
  * Computes and returns an object with properties derived from the card JSON.
  * =======================================================
  */
-function computeCardProps(card: Card, currentFace: number = 0): CardProps {
+function computeCardProps(card: TkCard, currentFace: number = 0): CardProps {
   const props = {} as CardProps;
 
   // Determine primary face (for DFC cards) and back face.
-  props.card_face = (card.card_faces && card.card_faces.length)
-      ? card.card_faces[card.layout === "adventure" ? 0 : currentFace || 0]
-      : card as CardFace;
-  props.back_face = (card.card_faces && card.card_faces.length)
-      ? card.card_faces[(currentFace + 1) % 2]
-      : card as CardFace;
+  props.card_face = card.cardFaces[0]
+  props.back_face = card.cardFaces.length > 1 ? card.cardFaces[1] : undefined
 
   // Determine type booleans.
-  props.is_land = !!(props.card_face.type_line &&
-      (props.card_face.type_line.startsWith("Land") ||
-          props.card_face.type_line.startsWith("Terrain")));
-  props.is_legendary = !!((card.frame_effects && card.frame_effects.includes("legendary")) ||
-      (props.card_face.type_line &&
-          (props.card_face.type_line.startsWith("Legendary") ||
-              props.card_face.type_line.includes("légendaire"))));
-  props.is_planeswalker = !!(props.card_face.type_line &&
-      props.card_face.type_line.toLowerCase().includes("planeswalker"));
+  props.is_land = !!(props.card_face.typeLine &&
+      (props.card_face.typeLine.startsWith("Land") ||
+          props.card_face.typeLine.startsWith("Terrain")));
+  props.is_legendary = !!((card.frameEffects && card.frameEffects.includes("legendary")) ||
+      (props.card_face.typeLine &&
+          (props.card_face.typeLine.startsWith("Legendary") ||
+              props.card_face.typeLine.includes("légendaire"))));
+  props.is_planeswalker = !!(props.card_face.typeLine &&
+      props.card_face.typeLine.toLowerCase().includes("planeswalker"));
   props.has_legendary_crown = props.is_legendary &&
       !props.is_planeswalker &&
-      !(card.frame_effects && card.frame_effects.includes("compasslanddfc"));
+      !(card.frameEffects && card.frameEffects.includes("compasslanddfc"));
   props.is_adventure = card.layout === "adventure";
   props.is_saga = !!(props.card_face.layout === "saga" ||
-      (props.card_face.type_line && props.card_face.type_line.includes("Saga")));
+      (props.card_face.typeLine && props.card_face.typeLine.includes("Saga")));
   props.is_class = !!(props.card_face.layout === "class" ||
-      (props.card_face.type_line && props.card_face.type_line.includes("Class")));
-  props.is_vehicle = !!(props.card_face.type_line &&
-      (props.card_face.type_line.includes("Vehicle") ||
-          props.card_face.type_line.includes("Véhicule")));
-  props.is_dualfaced = !!(card.card_faces && !props.is_adventure);
+      (props.card_face.typeLine && props.card_face.typeLine.includes("Class")));
+  props.is_vehicle = !!(props.card_face.typeLine &&
+      (props.card_face.typeLine.includes("Vehicle") ||
+          props.card_face.typeLine.includes("Véhicule")));
+  props.is_dualfaced = !!(card.cardFaces && !props.is_adventure);
   props.is_mdfc = card.layout === "modal_dfc";
   props.is_transform = card.layout === "transform";
-  props.is_levelup = !!(props.card_face.oracle_text &&
-      (props.card_face.oracle_text.includes("Level up") ||
-          props.card_face.oracle_text.includes("Montée de niveau")));
+  props.is_levelup = !!(props.card_face.oracleText &&
+      (props.card_face.oracleText.includes("Level up") ||
+          props.card_face.oracleText.includes("Montée de niveau")));
 
   // Parse mana cost using our IconsHelper module.
-  props.mana_cost = props.card_face.mana_cost
-      ? IconsHelper.parseManaCost(props.card_face.mana_cost)
+  props.mana_cost = props.card_face.manaCost
+      ? IconsHelper.parseManaCost(props.card_face.manaCost)
       : [];
 
   // Adventure or modal back mana cost.
   props.adventure_mana_cost = [];
-  if (card.card_faces && card.card_faces[1] && card.card_faces[1].mana_cost) {
-    props.adventure_mana_cost = IconsHelper.parseManaCost(card.card_faces[1].mana_cost);
+  if (card.cardFaces && card.cardFaces[1] && card.cardFaces[1].manaCost) {
+    props.adventure_mana_cost = IconsHelper.parseManaCost(card.cardFaces[1].manaCost);
   }
   props.mdfc_back_mana_cost = [];
   if (
-      card.card_faces &&
-      card.card_faces[(currentFace + 1) % 2] &&
-      card.card_faces[(currentFace + 1) % 2].mana_cost
+      card.cardFaces &&
+      card.cardFaces[(currentFace + 1) % 2] &&
+      card.cardFaces[(currentFace + 1) % 2].manaCost
   ) {
-    props.mdfc_back_mana_cost = IconsHelper.parseManaCost(card.card_faces[(currentFace + 1) % 2].mana_cost!);
+    props.mdfc_back_mana_cost = IconsHelper.parseManaCost(card.cardFaces[(currentFace + 1) % 2].manaCost!);
   }
 
   // MDFC hint text.
   if (props.card_face.mdfc_hint)
     props.mdfc_hint_text = props.card_face.mdfc_hint;
-  else if (props.back_face.type_line)
-    props.mdfc_hint_text = props.back_face.type_line.substr(props.back_face.type_line.indexOf("—") + 1).trim();
+  else if (props.back_face?.typeLine)
+    props.mdfc_hint_text = props.back_face.typeLine.substr(props.back_face.typeLine.indexOf("—") + 1).trim();
   else
     props.mdfc_hint_text = "";
 
   // Extended art detection.
-  props.extended_art = ["extended", "full", "full-footer"].includes(props.card_face.art_variant || "");
+  props.extended_art = ["extended", "full", "full-footer"].includes(props.card_face.artVariant || "");
 
   // Oracle text and flavor text.
-  props.oracle_lines = props.card_face.oracle_text
-      ? props.card_face.oracle_text.split("\n").map(parseOracle)
+  props.oracle_lines = props.card_face.oracleText
+      ? props.card_face.oracleText.split("\n").map(parseOracle)
       : [];
-  props.adventure_oracle_lines = (card.card_faces && card.card_faces[1] && card.card_faces[1].oracle_text)
-      ? card.card_faces[1].oracle_text.split("\n").map(parseOracle)
+  props.adventure_oracle_lines = (card.cardFaces && card.cardFaces[1] && card.cardFaces[1].oracleText)
+      ? card.cardFaces[1].oracleText.split("\n").map(parseOracle)
       : [];
-  props.saga_reminder = props.card_face.oracle_text
-      ? parseOracle(props.card_face.oracle_text.split("\n")[0])
+  props.saga_reminder = props.card_face.oracleText
+      ? parseOracle(props.card_face.oracleText.split("\n")[0])
       : "";
   props.class_reminder = props.saga_reminder;
-  if (props.card_face.oracle_text) {
-    const steps = props.card_face.oracle_text.split("\n").filter(s => s.match(/^([IVX]+) — /));
+  if (props.card_face.oracleText) {
+    const steps = props.card_face.oracleText.split("\n").filter(s => s.match(/^([IVX]+) — /));
     props.saga_steps = steps.map(s => {
       const m = s.match(/([IVX]+) — (.+)/);
       if (m) {
@@ -448,16 +379,16 @@ function computeCardProps(card: Card, currentFace: number = 0): CardProps {
   } else {
     props.saga_steps = [];
   }
-  props.class_steps = props.card_face.oracle_text
-      ? props.card_face.oracle_text.split("\n").slice(1).map(line => ({
+  props.class_steps = props.card_face.oracleText
+      ? props.card_face.oracleText.split("\n").slice(1).map(line => ({
         class: "normal",
         html: parseOracle(line)
       }))
       : [];
 
   // Planeswalker abilities.
-  if (props.is_planeswalker && props.card_face.oracle_text) {
-    props.planeswalker_abilities = props.card_face.oracle_text.split("\n").map(line => {
+  if (props.is_planeswalker && props.card_face.oracleText) {
+    props.planeswalker_abilities = props.card_face.oracleText.split("\n").map(line => {
       const ability: PlaneswalkerAbility = { html: parseOracle(line), cost: null };
       const m = line.match(/^[+-−]?(\d+):/);
       if (m) {
@@ -491,7 +422,7 @@ function computeCardProps(card: Card, currentFace: number = 0): CardProps {
     let colors: string[];
     if (face.colors && face.colors.length > 0) colors = face.colors;
     else if (face.color_identity) colors = face.color_identity;
-    else if (face.mana_cost) colors = Array.from(face.mana_cost).filter(c => "WUBRG".includes(c));
+    else if (face.manaCost) colors = Array.from(face.manaCost).filter(c => "WUBRG".includes(c));
     else colors = [];
 
     // Fall back to card color identity if no colors found
@@ -511,7 +442,7 @@ function computeCardProps(card: Card, currentFace: number = 0): CardProps {
     let colorString = sorted_colors.join("");
 
     // Special cases
-    if (contains(face.type_line, ["Artifact", "Artefact", "Artéfact"])) {
+    if (contains(face.typeLine, ["Artifact", "Artefact", "Artéfact"])) {
       return "Artifact";
     }
 
@@ -551,7 +482,7 @@ function computeCardProps(card: Card, currentFace: number = 0): CardProps {
   }
   else if (props.is_saga) folder = "saga_bg";
   else if (props.is_class) folder = "saga_bg";
-  else if (card.frame_effects && card.frame_effects.includes("compasslanddfc") && currentFace === 1)
+  else if (card.frameEffects && card.frameEffects.includes("compasslanddfc") && currentFace === 1)
     folder = "ixalan_bg";
   else folder = "bg";
   props.background = `url(assets/img/${folder}/${props.is_vehicle ? "Vehicle" : props.boxes_colors}.webp)`;
@@ -602,7 +533,7 @@ function computeCardProps(card: Card, currentFace: number = 0): CardProps {
   props.mdfc_hint_color = currentFace === 0 ? "white" : "black";
 
   // Transform icon.
-  props.transform_icon = `url(assets/img/transform${currentFace === 0 ? "" : "_back"}_icons/${(card.frame_effects && card.frame_effects[0]) ? card.frame_effects[0] : "sunmoondfc"}.webp)`;
+  props.transform_icon = `url(assets/img/transform${currentFace === 0 ? "" : "_back"}_icons/${(card.frameEffects && card.frameEffects[0]) ? card.frameEffects[0] : "sunmoondfc"}.webp)`;
 
   // Determine power/toughness box color and top/mid line colors.
   props.pt_box_color = props.is_vehicle || (props.is_transform && currentFace === 1) ? "white" : "black";
@@ -629,13 +560,19 @@ function computeCardProps(card: Card, currentFace: number = 0): CardProps {
   }
 
   // Illustration handling – choose art crop if available.
-  const artCard = props.is_adventure ? card : props.card_face;
+  // const artCard = props.is_adventure ? card : props.card_face;
+  const artCard = props.card_face;
+
+  const artUrl = props.card_face.imageUrl;
+  /*
   let artUrl = "";
   if (artCard.image_uris && artCard.image_uris.art_crop && artCard.image_uris.art_crop.trim() !== "") {
     artUrl = artCard.image_uris.art_crop;
   } else {
     artUrl = "assets/img/placeholder-art.webp";
   }
+  */
+
   props.illustration = `url("${artUrl}")`;
   props.illustration_scale = artCard.illustration_scale || 1;
   if (artCard.illustration_position) {
@@ -698,7 +635,7 @@ function setCardStyles(cardEl: HTMLElement, props: CardProps, scale: number, ren
 /**
  * Returns inner HTML for a planeswalker card.
  */
-function buildPlaneswalkerCardHTML(props: CardProps, card: Card): string {
+function buildPlaneswalkerCardHTML(props: CardProps, card: TkCard): string {
   return `
     <div class="inner-background"></div>
     <div class="illustration behind-textbox"></div>
@@ -706,14 +643,14 @@ function buildPlaneswalkerCardHTML(props: CardProps, card: Card): string {
     <div class="inner-frame"></div>
     <div class="legendary-crown" style="display: none;"></div>
     <div class="top-line">
-      <span class="card-name">${props.card_face.printed_name || props.card_face.name}</span>
+      <span class="card-name">${props.card_face.name}</span>
       <div class="mana-cost">
         ${props.mana_cost.map(uri => `<img src="${uri}" class="card-ms">`).join("")}
       </div>
     </div>
     <div class="mid-line">
       ${props.card_face.color_indicator ? `<img class="color-indicator" src="${props.color_indicator}">` : ""}
-      <div class="type-line">${props.card_face.type_line}</div>
+      <div class="type-line">${props.card_face.typeLine}</div>
       ${props.set_icon_uri ? `<div class="set-icon-container"><img class="set-icon" src="${props.set_icon_uri}"></div>` : ""}
     </div>
     <div class="oracle planeswalker-oracle" style="font-size: 6.48pt;">
@@ -735,9 +672,7 @@ function buildPlaneswalkerCardHTML(props: CardProps, card: Card): string {
     <div class="loyalty">${props.card_face.loyalty}</div>
     <div class="footer">
       <div class="footer-left">
-        <div class="collector-number">${(props.is_adventure || !props.card_face.collector_number)
-      ? card.collector_number
-      : props.card_face.collector_number}</div>
+        <div class="collector-number">${card.collectorNumber}</div>
         <div>
           ${card.set ? `<span class="set">${card.set.toUpperCase()}</span>` : ""}
           ${card.set && card.lang ? "&nbsp;•&nbsp;" : ""}
@@ -757,11 +692,11 @@ function buildPlaneswalkerCardHTML(props: CardProps, card: Card): string {
 /**
  * Returns inner HTML for a saga card.
  */
-function buildSagaCardHTML(props: CardProps, card: Card): string {
+function buildSagaCardHTML(props: CardProps, card: TkCard): string {
   // Extract saga steps based on oracle text format "I — Text", "II — Text", etc.
   const sagaSteps: { number: string; text: string }[] = [];
-  if (props.card_face.oracle_text) {
-    const lines = props.card_face.oracle_text.split('\n');
+  if (props.card_face.oracleText) {
+    const lines = props.card_face.oracleText.split('\n');
     for (const line of lines) {
       const match = line.match(/^([IVX]+) — (.+)$/);
       if (match) {
@@ -778,7 +713,7 @@ function buildSagaCardHTML(props: CardProps, card: Card): string {
     <div class="inner-frame"></div>
     <div class="legendary-crown" style="${props.has_legendary_crown ? '' : 'display: none;'}"></div>
     <div class="top-line">
-      <span class="card-name">${props.card_face.printed_name || props.card_face.name}</span>
+      <span class="card-name">${props.card_face.name}</span>
       <div class="mana-cost">
         ${props.mana_cost.map(uri => `<img src="${uri}" class="card-ms">`).join("")}
       </div>
@@ -800,14 +735,12 @@ function buildSagaCardHTML(props: CardProps, card: Card): string {
     </div>
     <div class="mid-line">
       ${props.card_face.color_indicator ? `<img class="color-indicator" src="${props.color_indicator}">` : ""}
-      <div class="type-line">${props.card_face.type_line}</div>
+      <div class="type-line">${props.card_face.typeLine}</div>
       ${props.set_icon_uri ? `<div class="set-icon-container"><img class="set-icon" src="${props.set_icon_uri}"></div>` : ""}
     </div>
     <div class="footer">
       <div class="footer-left">
-        <div class="collector-number">${(props.is_adventure || !props.card_face.collector_number)
-      ? card.collector_number
-      : props.card_face.collector_number}</div>
+        <div class="collector-number">${card.collectorNumber}</div>
         <div>
           ${card.set ? `<span class="set">${card.set.toUpperCase()}</span>` : ""}
           ${card.set && card.lang ? "&nbsp;•&nbsp;" : ""}
@@ -829,7 +762,7 @@ function buildSagaCardHTML(props: CardProps, card: Card): string {
  */
 interface DefaultCardProps {
   cardProps: CardProps;
-  card: Card;
+  card: TkCard;
 }
 
 /**
@@ -962,7 +895,7 @@ function DefaultCard({ cardProps, card }: DefaultCardProps): React.ReactElement 
       <div className="inner-background"></div>
       <div className="inner-frame"></div>
       <div className="top-line">
-        <span ref={cardNameRef} className="card-name">{cardProps.card_face.printed_name || cardProps.card_face.name}</span>
+        <span ref={cardNameRef} className="card-name">{cardProps.card_face.name}</span>
         <div className="mana-cost">
           {cardProps.mana_cost.map((uri, index) => (
             <img key={index} src={uri} className="card-ms" />
@@ -973,7 +906,7 @@ function DefaultCard({ cardProps, card }: DefaultCardProps): React.ReactElement 
         {cardProps.card_face.color_indicator && (
           <img className="color-indicator" src={cardProps.color_indicator} />
         )}
-        <div ref={typeLineRef} className="type-line">{cardProps.card_face.type_line}</div>
+        <div ref={typeLineRef} className="type-line">{cardProps.card_face.typeLine}</div>
         {cardProps.set_icon_uri && (
           <div className="set-icon-container">
             <img className="set-icon" src={cardProps.set_icon_uri} />
@@ -987,10 +920,10 @@ function DefaultCard({ cardProps, card }: DefaultCardProps): React.ReactElement 
         {cardProps.oracle_lines.map((line, index) => (
           <div key={index} className="oracle-inner" dangerouslySetInnerHTML={{ __html: line }} />
         ))}
-        {cardProps.card_face.flavor_text && (
+        {cardProps.card_face.flavorText && (
           <div className="oracle-flavor">
             <hr />
-            {cardProps.card_face.flavor_text}
+            {cardProps.card_face.flavorText}
           </div>
         )}
       </div>
@@ -1002,9 +935,7 @@ function DefaultCard({ cardProps, card }: DefaultCardProps): React.ReactElement 
       <div className="footer">
         <div className="footer-left">
           <div className="collector-number">
-            {cardProps.is_adventure || !cardProps.card_face.collector_number
-              ? card.collector_number
-              : cardProps.card_face.collector_number}
+            {card.collectorNumber}
           </div>
           <div>
             {card.set && <span className="set">{card.set.toUpperCase()}</span>}
@@ -1025,7 +956,7 @@ function DefaultCard({ cardProps, card }: DefaultCardProps): React.ReactElement 
   );
 }
 
-function RenderCard(card: MagicCard, scale: number = 1, renderMargin: number = 1): HTMLElement {
+function RenderCard(card: TkCard, scale: number = 1, renderMargin: number = 1): HTMLElement {
   const currentFace = 0;
   const props = computeCardProps(card, currentFace);
   const cardEl = document.createElement("div");
@@ -1079,5 +1010,5 @@ function RenderCard(card: MagicCard, scale: number = 1, renderMargin: number = 1
 }
 
 export { RenderCard, DefaultCard };
-export type { Card, CardProps, DefaultCardProps };
+export type { CardProps, DefaultCardProps };
 export default RenderCard;

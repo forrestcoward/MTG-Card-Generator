@@ -1,10 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import './style.css';
 import { RenderCard } from './RenderCard';
-import { MagicCard } from '../models/MagicCard';
+import { TkCard } from '../models/TkCard';
 
 interface TKCardCardRendererWrapperProps {
-  card: MagicCard;
+  card: TkCard;
   scale?: number;
   renderMargin?: number;
   className?: string;
@@ -25,24 +25,18 @@ export const TKCardCardRendererWrapper : React.FC<TKCardCardRendererWrapperProps
     // Clear previous content
     container.innerHTML = '';
 
-    try {
-      const el = RenderCard(card, scale, renderMargin);
-      if (el instanceof HTMLElement) {
-        // Ensure the top-level wrapper keeps any caller-provided className
-        if (className) el.classList.add(className);
-        container.appendChild(el);
-      } else {
-        const err = document.createElement('div');
-        err.style.color = 'red';
-        err.textContent = 'createMTGCard did not return an HTMLElement.';
-        container.appendChild(err);
-      }
-    } catch (e) {
+    const el = RenderCard(card, scale, renderMargin);
+    if (el instanceof HTMLElement) {
+      // Ensure the top-level wrapper keeps any caller-provided className
+      if (className) el.classList.add(className);
+      container.appendChild(el);
+    } else {
       const err = document.createElement('div');
       err.style.color = 'red';
-      err.textContent = `Error rendering card: ${String(e)}`;
+      err.textContent = 'createMTGCard did not return an HTMLElement.';
       container.appendChild(err);
     }
+
 
     // No cleanup necessary; the DOM node is replaced on next render via innerHTML = ''.
   }, [card, scale, renderMargin, className]);
