@@ -45,7 +45,14 @@ export function MagicCardToTkCard(card : MagicCard): TkCard {
     explanation: card.explanation,
     funnyExplanation: card.funnyExplanation,
     url: card.url,
-    rarity: card.rarity,
+    rarity: (() => {
+      const normalizedRarity = card.rarity?.toLowerCase();
+      if (normalizedRarity === 'mythic rare' || normalizedRarity === 'mythic') return 'mythic';
+      if (normalizedRarity === 'rare') return 'rare';
+      if (normalizedRarity === 'uncommon') return 'uncommon';
+      if (normalizedRarity === 'common') return 'common';
+      return 'common';
+    })(),
     collectorNumber: card.collectorNumber,
     layout: '',
     frameEffects: [''],

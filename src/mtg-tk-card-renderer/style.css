@@ -370,7 +370,7 @@
   flex-shrink: 1;
   min-width: 0;
   white-space: nowrap;
-  letter-spacing: 0.034mm;
+  letter-spacing: 0.036mm;
   width: 100%;
   box-sizing: border-box;
 }
@@ -464,7 +464,7 @@
   /*/max-font-size: 10pt;*/
   flex-grow: 1;
   white-space: nowrap;
-  margin-top: -0.2mm;
+  /*margin-top: -0.2mm;*/
   min-width: 0;
 }
 .set-icon-container {
@@ -477,7 +477,7 @@
   margin-top: -0.2mm;
 }
 .set-icon {
-  max-height: 100%;
+  max-height: 90%;
   max-width: 100%;
 }
 

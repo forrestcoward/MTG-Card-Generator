@@ -1,5 +1,7 @@
 /* Helpers converted from helpers.js to a TypeScript module */
 
+import { TkCard } from "../models/TkCard";
+
 export const IconsHelper = (() => {
   const mana_symbols: Record<string, { svg_uri: string }> = {
     "{0}": { svg_uri: "assets/img/symbols/0.svg" },
@@ -141,9 +143,36 @@ export class Sets {
     return this.setsWithIcons.includes(setCode);
   }
 
-  getSetIconUri(card: any) {
-    if (card && card.set_icon) {
-      return card.set_icon;
+  getRandomSetIcon(card: TkCard) {
+    let attempts = 0;
+    while (attempts < 20) {
+      const randomSet = this.setsWithIcons[Math.floor(Math.random() * this.setsWithIcons.length)];
+      const iconPath = `assets/img/set_icons/${randomSet}_${card.rarity || "common"}.webp`;
+      
+      if (this.iconExists(iconPath)) {
+        return iconPath;
+      }
+      
+      attempts++;
+    }
+    
+    return "";
+  }
+
+  private iconExists(path: string): boolean {
+    try {
+      const request = new XMLHttpRequest();
+      request.open('HEAD', path, false);
+      request.send();
+      return request.status === 200;
+    } catch {
+      return false;
+    }
+  }
+
+  getSetIconUri(card: TkCard) {
+    if (card && card.setIcon) {
+      return card.setIcon;
     } else if (card && this.hasIcon(card.set)) {
       return `assets/img/set_icons/${card.set}_${card.rarity || "common"}.webp`;
     } else {

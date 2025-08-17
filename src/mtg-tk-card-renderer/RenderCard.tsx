@@ -585,7 +585,9 @@ function computeCardProps(card: TkCard, currentFace: number = 0): CardProps {
   }
 
   // Set icon URI (using the Sets helper defined in helpers.ts).
-  props.set_icon_uri = setsHelper.getSetIconUri(card);
+
+  // props.set_icon_uri = setsHelper.getSetIconUri(card);
+  props.set_icon_uri = setsHelper.getRandomSetIcon(card);
 
   // Archive frame colors (simplified).
   const archiveColor = (props.card_face.color_identity && props.card_face.color_identity[0]) ? props.card_face.color_identity[0] : "Gold";
