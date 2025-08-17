@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { UserContext } from './UserContext';
 import { CardDisplay  } from './Card';
 import { MTGRenderDisplay } from './MTGRender';
-import { GenerateMagicCardRequest, GetUserInfo } from './CallAPI';
+import { GenerateMagicCardRequest } from './CallAPI';
 import { isMobileDevice, setCardContainerSize } from './Utility';
 import { TutorialCard } from './TutorialCard';
 import PopOutSettingsMenu from './PopOutSettingsMenu';
@@ -13,7 +13,6 @@ import './mana.min.css';
 import './mtg-card.css';
 import './app.css';
 import { LoadingSpinner } from './LoadingSpinner';
-import { User } from './User';
 
 export interface SettingGroup {
   name: string;

@@ -1,5 +1,5 @@
 import React from "react";
-import { UserContext, UserContextType } from './UserContext';
+import { UserContext } from './UserContext';
 import { Image, Dropdown, Tooltip, Button } from 'antd';
 import { BulbOutlined, CaretDownFilled, CaretRightOutlined, CloseOutlined, CloudDownloadOutlined, CopyOutlined, EditOutlined, 
   FileImageOutlined, InfoCircleOutlined, QuestionCircleOutlined, RightCircleOutlined, SaveFilled, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons';

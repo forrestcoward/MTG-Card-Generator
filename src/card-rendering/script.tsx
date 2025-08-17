@@ -1,3 +1,6 @@
+import React, { useEffect, useRef } from 'react';
+import { createRoot } from 'react-dom/client';
+import { Image } from 'antd';
 import { IconsHelper, setsHelper } from './helpers';
 
 /* =======================================================
@@ -821,66 +824,213 @@ function buildSagaCardHTML(props: CardProps, card: Card): string {
 }
 
 /**
- * Returns inner HTML for a default (non-planeswalker) card.
+ * React component for rendering a default (non-planeswalker) card.
  */
-function buildDefaultCardHTML(props: CardProps, card: Card): string {
-  return `
-    <div class="inner-background"></div>
-    <div class="inner-frame"></div>
-    <div class="top-line">
-      <span class="card-name">${props.card_face.printed_name || props.card_face.name}</span>
-      <div class="mana-cost">
-        ${props.mana_cost.map(uri => `<img src="${uri}" class="card-ms">`).join("")}
-      </div>
-    </div>
-    <div class="mid-line">
-      ${props.card_face.color_indicator ? `<img class="color-indicator" src="${props.color_indicator}">` : ""}
-      <div class="type-line">${props.card_face.type_line}</div>
-      ${props.set_icon_uri ? `<div class="set-icon-container"><img class="set-icon" src="${props.set_icon_uri}"></div>` : ""}
-    </div>
-    <div class="illustration">
-    </div>
-    <div class="oracle normal-oracle">
-      ${props.oracle_lines.map(line => `<div class="oracle-inner">${line}</div>`).join("")}
-      ${props.card_face.flavor_text ? `<div class="oracle-flavor"><hr>${props.card_face.flavor_text}</div>` : ""}
-    </div>
-    ${props.card_face.power !== undefined && props.card_face.toughness !== undefined
-      ? `<div class="pt-box">
-           <span>${props.card_face.power}</span>/<span>${props.card_face.toughness}</span>
-         </div>`
-      : ""}
-    <div class="footer">
-      <div class="footer-left">
-        <div class="collector-number">${(props.is_adventure || !props.card_face.collector_number)
-      ? card.collector_number
-      : props.card_face.collector_number}</div>
-        <div>
-          ${card.set ? `<span class="set">${card.set.toUpperCase()}</span>` : ""}
-          ${card.set && card.lang ? "&nbsp;•&nbsp;" : ""}
-          ${card.lang ? `<span class="language">${card.lang.toUpperCase()}</span>` : ""}
-          ${card.artist ? '<span class="artist-icon"> a </span>' : ""}
-          ${card.artist ? `<span class="artist-name">${card.artist}</span>` : ""}
-        </div>
-      </div>
-      <div class="footer-right">
-        <div>&nbsp;</div>
-        <div class="copyright">${card.copyright || `™ & © ${new Date().getFullYear()} Wizards of the Coast`}</div>
-      </div>
-    </div>
-  `;
+interface DefaultCardProps {
+  cardProps: CardProps;
+  card: Card;
 }
 
-/* =======================================================
- * Main Card Creation Function
- * =======================================================
+/**
+ * Custom hook for text resizing functionality
  */
+function useTextResizing(cardProps: CardProps) {
+  const cardNameRef = useRef<HTMLSpanElement>(null);
+  const typeLineRef = useRef<HTMLDivElement>(null);
+  const oracleRef = useRef<HTMLDivElement>(null);
+
+  const resizeTextHorizontally = (el: HTMLElement) => {
+    if (!el) return;
+    // Force a reflow to ensure we have correct dimensions
+    void el.offsetHeight;
+
+    const computedStyle = window.getComputedStyle(el);
+    let fontSize = parseFloat(computedStyle.fontSize);
+    el.style.fontSize = fontSize + "px";
+
+    // Add a small delay to ensure styles are applied
+    setTimeout(() => {
+      while (el.scrollWidth > el.clientWidth && fontSize > 4) {
+        fontSize -= 0.5;
+        el.style.fontSize = fontSize + "px";
+      }
+    }, 0);
+  };
+
+  const resizeOracleText = (oracle: HTMLElement, needsSpace: boolean) => {
+    if (!oracle) return;
+    // Start with a reasonable font size
+    let fontSize = 1.0;
+    oracle.style.fontSize = `${fontSize}em`;
+
+    // Get container dimensions
+    const boxHeight = oracle.clientHeight;
+    const boxWidth = oracle.clientWidth;
+
+    // Reduce font size until content fits
+    while ((oracle.scrollHeight > boxHeight || oracle.scrollWidth > boxWidth) && fontSize > 0.5) {
+      fontSize -= 0.05;
+      oracle.style.fontSize = `${fontSize}em`;
+    }
+
+    // If we need space for P/T box, reduce slightly more
+    if (needsSpace && oracle.scrollHeight > boxHeight * 0.9) {
+      fontSize *= 0.95;
+      oracle.style.fontSize = `${fontSize}em`;
+    }
+  };
+
+  useEffect(() => {
+    // Setup resize observers and initial resizing
+    const observers: (ResizeObserver | MutationObserver)[] = [];
+
+    // Resize card name
+    if (cardNameRef.current) {
+      const nameEl = cardNameRef.current;
+      const nameResizeObserver = new ResizeObserver(() => {
+        resizeTextHorizontally(nameEl);
+      });
+      nameResizeObserver.observe(nameEl);
+      resizeTextHorizontally(nameEl);
+      observers.push(nameResizeObserver);
+
+      const nameObserver = new MutationObserver(() => resizeTextHorizontally(nameEl));
+      nameObserver.observe(nameEl, { childList: true, subtree: true, characterData: true });
+      observers.push(nameObserver);
+    }
+
+    // Resize type line
+    if (typeLineRef.current) {
+      const typeLineEl = typeLineRef.current;
+      const typeLineResizeObserver = new ResizeObserver(() => {
+        resizeTextHorizontally(typeLineEl);
+      });
+      typeLineResizeObserver.observe(typeLineEl);
+      resizeTextHorizontally(typeLineEl);
+      observers.push(typeLineResizeObserver);
+
+      const typeLineObserver = new MutationObserver(() => resizeTextHorizontally(typeLineEl));
+      typeLineObserver.observe(typeLineEl, { childList: true, subtree: true, characterData: true });
+      observers.push(typeLineObserver);
+    }
+
+    // Handle oracle text resizing
+    if (oracleRef.current && !cardProps.is_planeswalker && !cardProps.is_saga) {
+      const oracle = oracleRef.current;
+      const needsSpace = cardProps.card_face.power !== undefined &&
+          cardProps.card_face.toughness !== undefined;
+
+      const oracleResizeObserver = new ResizeObserver(() => {
+        resizeOracleText(oracle, needsSpace);
+      });
+      oracleResizeObserver.observe(oracle);
+      resizeOracleText(oracle, needsSpace);
+      observers.push(oracleResizeObserver);
+
+      const oracleObserver = new MutationObserver(() =>
+          resizeOracleText(oracle, needsSpace)
+      );
+      oracleObserver.observe(oracle, {
+        childList: true,
+        subtree: true,
+        characterData: true
+      });
+      observers.push(oracleObserver);
+    }
+
+    // Cleanup function
+    return () => {
+      observers.forEach(observer => observer.disconnect());
+    };
+  }, [cardProps]);
+
+  return { cardNameRef, typeLineRef, oracleRef };
+}
+
+function DefaultCard({ cardProps, card }: DefaultCardProps): React.ReactElement {
+  const { cardNameRef, typeLineRef, oracleRef } = useTextResizing(cardProps);
+
+  // Extract the URL from the CSS url() string
+  const getImageUrl = (cssUrl: string): string => {
+    const match = cssUrl.match(/url\(["']?([^"']*)["']?\)/);
+    return match ? match[1] : cssUrl;
+  };
+
+  return (
+    <>
+      <div className="inner-background"></div>
+      <div className="inner-frame"></div>
+      <div className="top-line">
+        <span ref={cardNameRef} className="card-name">{cardProps.card_face.printed_name || cardProps.card_face.name}</span>
+        <div className="mana-cost">
+          {cardProps.mana_cost.map((uri, index) => (
+            <img key={index} src={uri} className="card-ms" />
+          ))}
+        </div>
+      </div>
+      <div className="mid-line">
+        {cardProps.card_face.color_indicator && (
+          <img className="color-indicator" src={cardProps.color_indicator} />
+        )}
+        <div ref={typeLineRef} className="type-line">{cardProps.card_face.type_line}</div>
+        {cardProps.set_icon_uri && (
+          <div className="set-icon-container">
+            <img className="set-icon" src={cardProps.set_icon_uri} />
+          </div>
+        )}
+      </div>
+      <div className='illustration'>
+        <Image preview={true} loading="lazy" height={"100%"} width={"100%"} src={getImageUrl(cardProps.illustration)} />
+      </div>
+      <div ref={oracleRef} className="oracle normal-oracle">
+        {cardProps.oracle_lines.map((line, index) => (
+          <div key={index} className="oracle-inner" dangerouslySetInnerHTML={{ __html: line }} />
+        ))}
+        {cardProps.card_face.flavor_text && (
+          <div className="oracle-flavor">
+            <hr />
+            {cardProps.card_face.flavor_text}
+          </div>
+        )}
+      </div>
+      {cardProps.card_face.power !== undefined && cardProps.card_face.toughness !== undefined && (
+        <div className="pt-box">
+          <span>{cardProps.card_face.power}</span>/<span>{cardProps.card_face.toughness}</span>
+        </div>
+      )}
+      <div className="footer">
+        <div className="footer-left">
+          <div className="collector-number">
+            {cardProps.is_adventure || !cardProps.card_face.collector_number
+              ? card.collector_number
+              : cardProps.card_face.collector_number}
+          </div>
+          <div>
+            {card.set && <span className="set">{card.set.toUpperCase()}</span>}
+            {card.set && card.lang && <span>&nbsp;•&nbsp;</span>}
+            {card.lang && <span className="language">{card.lang.toUpperCase()}</span>}
+            {card.artist && <span className="artist-icon"> a </span>}
+            {card.artist && <span className="artist-name">{card.artist}</span>}
+          </div>
+        </div>
+        <div className="footer-right">
+          <div>&nbsp;</div>
+          <div className="copyright">
+            {card.copyright || `™ & © ${new Date().getFullYear()} Wizards of the Coast`}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function createMTGCard(card: Card, scale: number = 1, renderMargin: number = 1): HTMLElement {
   const currentFace = 0;
   const props = computeCardProps(card, currentFace);
   const cardEl = document.createElement("div");
   cardEl.className = "mtg-card";
 
-  // Add special classes for planeswalker, saga, and legendary cards
+  // Add special classes for planeswalker, saga, and legendary cards.
   if (props.is_planeswalker) {
     cardEl.classList.add("planeswalker");
     if (props.is_large_planeswalker) {
@@ -894,19 +1044,27 @@ function createMTGCard(card: Card, scale: number = 1, renderMargin: number = 1):
     cardEl.classList.add("legendary");
   }
 
-  // Set CSS custom properties
   setCardStyles(cardEl, props, scale, renderMargin);
 
   // Build inner HTML based on card type
   if (props.is_planeswalker) {
     cardEl.innerHTML = buildPlaneswalkerCardHTML(props, card);
+    // Set up text resizing for planeswalker cards
+    setupTextResizing(cardEl, props);
   } else if (props.is_saga) {
     cardEl.innerHTML = buildSagaCardHTML(props, card);
+    // Set up text resizing for saga cards
+    setupTextResizing(cardEl, props);
   } else {
-    cardEl.innerHTML = buildDefaultCardHTML(props, card);
+    // Use React component for default cards
+    const reactContainer = document.createElement('div');
+    cardEl.appendChild(reactContainer);
+    const root = createRoot(reactContainer);
+    root.render(React.createElement(DefaultCard, { cardProps: props, card: card }));
   }
 
   // Set illustration background
+  /*
   const illustrationDiv = cardEl.querySelector(".illustration, .illustration.behind-textbox") as HTMLElement;
   if (illustrationDiv) {
     illustrationDiv.style.backgroundImage = props.illustration;
@@ -914,13 +1072,11 @@ function createMTGCard(card: Card, scale: number = 1, renderMargin: number = 1):
     illustrationDiv.style.backgroundPosition = `${props.illustration_position.x} ${props.illustration_position.y}`;
     illustrationDiv.style.backgroundRepeat = "no-repeat";
   }
-
-  // Set up all text resizing with the new unified function
-  setupTextResizing(cardEl, props);
+  */
 
   return cardEl;
 }
 
-export { createMTGCard };
-export type { Card };
+export { createMTGCard, DefaultCard };
+export type { Card, CardProps, DefaultCardProps };
 export default createMTGCard;
