@@ -20,7 +20,7 @@ module.exports = {
       patterns: [
         { from: './openapi.yaml', to: '.well-known/openapi.yaml' },
         { from: './privacy-policy.txt', to: '.well-known/privacy-policy.txt'},
-        { from: './src/card-rendering/assets', to: 'assets' }
+        { from: './src/mtg-tk-card-renderer/assets', to: 'assets' }
       ]
     })
   ],

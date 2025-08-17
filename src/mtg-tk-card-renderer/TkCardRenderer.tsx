@@ -9,13 +9,13 @@ import {
   ZoomInOutlined, 
   ZoomOutOutlined 
 } from '@ant-design/icons';
-import { copyTextToClipboard, isMobileDevice } from './Utility';
-import './card-rendering/style.css';
-import CreateMTGCardComponent from './card-rendering/CreateMTGCardComponent';
-import type { Card } from './card-rendering/script';
-import { MagicCard } from './models/MagicCard';
+import { copyTextToClipboard, isMobileDevice } from '../Utility';
+import './style.css';
+import TKCardCardRendererWrapper from './TkCardRendererWrapper';
+import type { Card } from './RenderCard';
+import { MagicCard } from '../models/MagicCard';
 
-interface MTGRenderProps {
+interface TkCardRendererProps {
   card: MagicCard;
   cardWidth: number;
   showCardMenu?: boolean;
@@ -48,7 +48,7 @@ function convertMagicCardToNewFormat(card: MagicCard): Card {
 }
 
 
-export const MTGRenderDisplay : React.FC<MTGRenderProps> = ({ 
+export const TkCardRenderer : React.FC<TkCardRendererProps> = ({ 
   card, 
   cardWidth, 
   showCardMenu = true,
@@ -63,7 +63,7 @@ export const MTGRenderDisplay : React.FC<MTGRenderProps> = ({
   const [actualSize, setActualSize] = useState({ width: cardWidth, height: cardWidth * 1.4 });
   const [actualSizeWithMenu, setActualSizeWithMenu] = useState({ width: cardWidth, height: cardWidth * 1.4 });
 
-  const convertedCard = convertMagicCardToNewFormat(card);
+  //const convertedCard = convertMagicCardToNewFormat(card);
   const scale = currentWidth * 1.7 / cardWidth;
 
   // For this card renderer, a CSS transform is used to scale the size, but CSS transform does not impact the size of the container objects, 
@@ -231,9 +231,9 @@ export const MTGRenderDisplay : React.FC<MTGRenderProps> = ({
           transform: `scale(${scale})`, 
           transformOrigin: 'top left' 
         }}>
-          <CreateMTGCardComponent 
+          <TKCardCardRendererWrapper 
             key={`${card.id}-${currentWidth}`} 
-            card={convertedCard} 
+            card={card} 
             scale={1} 
             renderMargin={1} 
           />

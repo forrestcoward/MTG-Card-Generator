@@ -10,7 +10,7 @@ import { AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from "@azure/
 import { Loader } from "./Loader";
 import PopOutSettingsMenu from "./PopOutSettingsMenu";
 import { SettingsButton } from "./SettingsButton";
-import { MTGRenderDisplay } from "./MTGRender";
+import { TkCardRenderer } from "./mtg-tk-card-renderer/TkCardRenderer";
 import { MagicCard } from "./models/MagicCard";
 
 export function MyCards() {
@@ -67,7 +67,7 @@ export function MyCards() {
       {
         cards.map(card => (
           <div className="cardContainer" key={`card-container-${card.id}`}>
-            <MTGRenderDisplay 
+            <TkCardRenderer 
               key={`card-display-${card.id}`} 
               card={card} showCardMenu={true} 
               cardWidth={cardWidth} 

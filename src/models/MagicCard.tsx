@@ -79,8 +79,8 @@ export class MagicCard {
   }
 
   get getCardUrl(): string {
-      return getBaseUrl() + "/Card?id=" + this.databaseId
-    }
+    return getBaseUrl() + "/Card?id=" + this.databaseId
+  }
 
   get colorIdentity(): ColorIdentity {
     var white = false;

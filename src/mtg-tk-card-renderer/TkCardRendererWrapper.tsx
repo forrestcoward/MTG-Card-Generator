@@ -1,15 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import './style.css';
-import { createMTGCard } from './script';
+import { RenderCard } from './RenderCard';
+import { MagicCard } from '../models/MagicCard';
 
-declare global {
-  interface Window {
-    createMTGCard?: (card: any, scale?: number, renderMargin?: number) => HTMLElement;
-  }
-}
-
-interface CreateMTGCardProps {
-  card: any;
+interface TKCardCardRendererWrapperProps {
+  card: MagicCard;
   scale?: number;
   renderMargin?: number;
   className?: string;
@@ -20,7 +15,7 @@ interface CreateMTGCardProps {
  * It mounts the produced HTMLElement into a container div so the original
  * HTML/CSS/JS behavior is preserved while providing a React component API.
  */
-export const CreateMTGCardComponent : React.FC<CreateMTGCardProps> = ({ card, scale = 1, renderMargin = 1, className }) => {
+export const TKCardCardRendererWrapper : React.FC<TKCardCardRendererWrapperProps> = ({ card, scale = 1, renderMargin = 1, className }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -31,7 +26,7 @@ export const CreateMTGCardComponent : React.FC<CreateMTGCardProps> = ({ card, sc
     container.innerHTML = '';
 
     try {
-      const el = createMTGCard(card, scale, renderMargin);
+      const el = RenderCard(card, scale, renderMargin);
       if (el instanceof HTMLElement) {
         // Ensure the top-level wrapper keeps any caller-provided className
         if (className) el.classList.add(className);
@@ -55,4 +50,4 @@ export const CreateMTGCardComponent : React.FC<CreateMTGCardProps> = ({ card, sc
   return <div ref={containerRef} />;
 };
 
-export default CreateMTGCardComponent;
+export default TKCardCardRendererWrapper;

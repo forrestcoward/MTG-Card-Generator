@@ -366,7 +366,7 @@
 /* ======================== NAME & ORIGINAL NAME ======================== */
 .card-name {
   font-size: calc(9.454pt + (100/53.8)vw);
-  max-font-size: 12pt;
+  /*max-font-size: 12pt;*/
   flex-shrink: 1;
   min-width: 0;
   white-space: nowrap;
@@ -461,7 +461,7 @@
 }
 .type-line {
   font-size: calc(8pt + (100/53.8)vw);
-  max-font-size: 10pt;
+  /*/max-font-size: 10pt;*/
   flex-grow: 1;
   white-space: nowrap;
   margin-top: -0.2mm;

@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Image } from 'antd';
-import { IconsHelper, setsHelper } from './helpers';
+import { IconsHelper, setsHelper } from './Helpers';
+import { MagicCard } from '../models/MagicCard';
 
 /* =======================================================
  * Type Definitions
@@ -1024,7 +1025,7 @@ function DefaultCard({ cardProps, card }: DefaultCardProps): React.ReactElement 
   );
 }
 
-function createMTGCard(card: Card, scale: number = 1, renderMargin: number = 1): HTMLElement {
+function RenderCard(card: MagicCard, scale: number = 1, renderMargin: number = 1): HTMLElement {
   const currentFace = 0;
   const props = computeCardProps(card, currentFace);
   const cardEl = document.createElement("div");
@@ -1077,6 +1078,6 @@ function createMTGCard(card: Card, scale: number = 1, renderMargin: number = 1):
   return cardEl;
 }
 
-export { createMTGCard, DefaultCard };
+export { RenderCard, DefaultCard };
 export type { Card, CardProps, DefaultCardProps };
-export default createMTGCard;
+export default RenderCard;
