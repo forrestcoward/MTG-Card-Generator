@@ -69,7 +69,7 @@ export function CardPreview(props: CardPreviewProps) {
         title={<CardRenderer card={tooltipCard} cardWidth={props.cardWidth-20} showCardMenu={false} allowImagePreview={false} allowEdits={false} allowImageUpdate={false} />}>
         <div id={`title-container-${props.card.id}`} className={cardFrameHeaderClassName()} style={{padding:0, marginTop:0, height:28}} >
           <div id={`name-${props.card.id}`} style={{alignSelf:"center"}} className="name name-type-size">
-            <div>{props.card.name}</div>
+            <div>{props.card.face.name}</div>
           </div>
           <div id={`mana-${props.card.id}`} className="mana-symbols">
             {props.card.manaCostTokens.map((manaCostToken, i) => (

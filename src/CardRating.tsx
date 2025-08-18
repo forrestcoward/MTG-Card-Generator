@@ -156,7 +156,7 @@ export function CardRating() {
             </tr>
             <tr style={{textAlign: "center"}}>
               <td>
-                <h4>Submit Rating For <a href={card.url} target="_blank" style={{textDecoration:"none"}}>{card.name}</a>? (1-5 Stars)</h4>
+                <h4>Submit Rating For <a href={card.url} target="_blank" style={{textDecoration:"none"}}>{card.face.name}</a>? (1-5 Stars)</h4>
               </td>
             </tr>
             { user &&
