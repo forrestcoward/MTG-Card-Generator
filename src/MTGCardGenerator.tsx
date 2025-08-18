@@ -13,7 +13,6 @@ import './mana.min.css';
 import './mtg-card.css';
 import './app.css';
 import { LoadingSpinner } from './LoadingSpinner';
-import { MagicCardToTkCard } from './models/TkCard';
 
 export interface SettingGroup {
   name: string;
@@ -320,7 +319,7 @@ export function MTGCardGenerator() {
               {useNewRenderer() ? (
                 <TkCardRenderer 
                   key={`mtgrender-card-display-${card.id}`} 
-                  card={MagicCardToTkCard(card)} 
+                  card={card} 
                   showCardMenu={true} 
                   cardWidth={defaultCardWidth} 
                   allowImagePreview={true} 

@@ -61,7 +61,7 @@ interface CardRendererState {
   nameUpdate: string;
   typeUpdate : string;
   manaCostUpdate: string;
-  powerAndToughnessUpdate: string;
+  powerAndToughnessUpdate?: string;
 
   useTemporaryImage: boolean;
   showCardMenu: boolean;
@@ -83,11 +83,11 @@ export function CardRenderer(props: CardRendererProps) {
   const [state, setState] = React.useState<CardRendererState>({
     card: props.card,
     editMode: false,
-    nameUpdate: props.card.name,
-    oracleTextUpdate: props.card.oracleText,
-    typeUpdate: props.card.typeLine,
-    manaCostUpdate: props.card.manaCost,
-    powerAndToughnessUpdate: props.card.pt,
+    nameUpdate: props.card.face.name,
+    oracleTextUpdate: props.card.face.oracleText,
+    typeUpdate: props.card.face.typeLine,
+    manaCostUpdate: props.card.face.manaCost,
+    powerAndToughnessUpdate: props.card.face.pt,
     useTemporaryImage: true,
     showCardMenu: props.showCardMenu,
     increaseSizeAllowed: true,
@@ -98,12 +98,12 @@ export function CardRenderer(props: CardRendererProps) {
     imageEditorError: "",
     showImageEditor: false,
     isImageLoading: false,
-    availableImageUrls: props.card.alternativeImageUrls?.map(url => ({ imageUrl: url, temporaryUrl: url })) || [],
+    availableImageUrls: props.card.face.alternativeImageUrls?.map(url => ({ imageUrl: url, temporaryUrl: url })) || [],
   });
 
   React.useEffect(() => {
     adjustFontSize();
-  }, [state.card.oracleText, state.card.typeLine, state.card.name, state.editMode]);
+  }, [state.card.face.oracleText, state.card.face.typeLine, state.card.face.name, state.editMode]);
 
   function handleImagePromptUpdate(event: React.ChangeEvent<HTMLTextAreaElement>) {
     setState(prev => ({ ...prev, imageEditorPrompt: event.target.value }));
@@ -135,11 +135,11 @@ export function CardRenderer(props: CardRendererProps) {
     }
 
     var updatedCard = MagicCard.clone(state.card, true);
-    updatedCard.name = state.nameUpdate;
-    updatedCard.oracleText = state.oracleTextUpdate;
-    updatedCard.typeLine = state.typeUpdate;
-    updatedCard.manaCost = state.manaCostUpdate;
-    updatedCard.pt = state.powerAndToughnessUpdate;
+    updatedCard.face.name = state.nameUpdate;
+    updatedCard.face.oracleText = state.oracleTextUpdate;
+    updatedCard.face.typeLine = state.typeUpdate;
+    updatedCard.face.manaCost = state.manaCostUpdate;
+    updatedCard.face.pt = state.powerAndToughnessUpdate;
     setState(prev => ({ ...prev, editMode: !prev.editMode, card: updatedCard }));
   }
 
@@ -147,7 +147,7 @@ export function CardRenderer(props: CardRendererProps) {
     setState(prev => ({ ...prev, useTemporaryImage: false }));
     toImage().then(blob => {
       if (blob != null) {
-        saveAs(blob, `${state.card.name}.png`);
+        saveAs(blob, `${state.card.face.name}.png`);
       }
     }).catch(error => {
       console.error("Error downloading card as image: " + error.message);
@@ -157,7 +157,7 @@ export function CardRenderer(props: CardRendererProps) {
   }
 
   function handleArtDownload() {
-    var img = state.card.temporaryImageUrl ? state.card.temporaryImageUrl : state.card.imageUrl;
+    var img = state.card.face.temporaryImageUrl ? state.card.face.temporaryImageUrl : state.card.face.imageUrl;
     window.open(img, '_blank');
   }
 
@@ -175,8 +175,8 @@ export function CardRenderer(props: CardRendererProps) {
 
   function updateImageUrl(imageUrls: GenerateImageResponse) {
     var updatedCard = MagicCard.clone(state.card, true);
-    updatedCard.imageUrl = imageUrls.imageUrl;
-    updatedCard.temporaryImageUrl = imageUrls.temporaryUrl;
+    updatedCard.face.imageUrl = imageUrls.imageUrl;
+    updatedCard.face.temporaryImageUrl = imageUrls.temporaryUrl;
     setState(prev => ({ ...prev, card: updatedCard }));
   }
 
@@ -202,8 +202,8 @@ export function CardRenderer(props: CardRendererProps) {
     }
     GenerateNewCardImage(state.imageEditorPrompt, state.card.databaseId, openAIApiKey, msalInstance).then(imageUrls => {
       var updatedCard = MagicCard.clone(state.card, true);
-      updatedCard.imageUrl = imageUrls.imageUrl;
-      updatedCard.temporaryImageUrl = imageUrls.temporaryUrl;
+      updatedCard.face.imageUrl = imageUrls.imageUrl;
+      updatedCard.face.temporaryImageUrl = imageUrls.temporaryUrl;
       const newAvailableImageUrls = [...state.availableImageUrls, imageUrls];
       setState(prev => ({
         ...prev,
@@ -270,7 +270,7 @@ export function CardRenderer(props: CardRendererProps) {
   }
 
   function cardType(): CardType {
-    var type = state.card.type.toLocaleLowerCase();
+    var type = state.card.face.type.toLocaleLowerCase();
     if (type.includes("legendary creature") || type.includes("creature")) return CardType.Creature
     if (type == "instant") return CardType.Instant;
     if (type == "sorcery") return CardType.Sorcery;
@@ -281,7 +281,7 @@ export function CardRenderer(props: CardRendererProps) {
   }
 
   function textDisplay() {
-    return state.card.oracleText.split('\n').map(line => addManaHtmlToCardTextLine(line));
+    return state.card.face.oracleText.split('\n').map(line => addManaHtmlToCardTextLine(line));
   }
 
   // Gets the CSS postfix to create class names that are differentiated by color identity.
@@ -562,7 +562,7 @@ export function CardRenderer(props: CardRendererProps) {
       </div>
     ),
     onClick: async () => {
-      await copyTextToClipboard(card.getCardUrl)
+      await copyTextToClipboard(card.cardUrl)
     }
   }
 
@@ -590,7 +590,7 @@ export function CardRenderer(props: CardRendererProps) {
 
   const height = ((props.cardWidth * 3.6) / 2.5);
   const imageEditorWidth = isMobileDevice() ? props.cardWidth : props.cardWidth - 100;
-  const haveCardImage = card.imageUrl || card.temporaryImageUrl;
+  const haveCardImage = card.face.imageUrl || card.face.temporaryImageUrl;
 
   let fullCard = (
     <div style={{display:"flex", flexWrap:"wrap"}}>
@@ -601,7 +601,7 @@ export function CardRenderer(props: CardRendererProps) {
               <div id={`title-container-${card.id}`} className={cardFrameHeaderClassName()}>
                 <div id={`name-${card.id}`} style={{alignSelf:"center"}} className="name name-type-size">
                   {!state.editMode ?
-                    <div>{card.name}</div> :
+                    <div>{card.face.name}</div> :
                     <input className="card-edit-name" type="text" value={state.nameUpdate} onChange={handleCardNameUpdate} />
                   }
                 </div>
@@ -627,14 +627,14 @@ export function CardRenderer(props: CardRendererProps) {
                       Create Image
                     </Button>
                   </div>
-                : (state.useTemporaryImage && card.temporaryImageUrl) ?
-                  <Image onLoad={() => adjustFontSize()} preview={props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.temporaryImageUrl ? card.temporaryImageUrl : card.imageUrl} /> :
-                  <Image onLoad={() => adjustFontSize()} preview={props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.imageUrl} />
+                : (state.useTemporaryImage && card.face.temporaryImageUrl) ?
+                  <Image onLoad={() => adjustFontSize()} preview={props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.face.temporaryImageUrl ? card.face.temporaryImageUrl : card.face.imageUrl} /> :
+                  <Image onLoad={() => adjustFontSize()} preview={props.allowImagePreview} loading="lazy" height={"100%"} width={"100%"} src={card.face.imageUrl} />
                 }
               </div>
               <div id={`type-container-${card.id}`} className={cardFrameTypeLineClassName()}>
                 {!state.editMode ?
-                    <h1 id={`type-${card.id}`} className="type name-type-size">{card.typeLine}</h1> :
+                    <h1 id={`type-${card.id}`} className="type name-type-size">{card.face.typeLine}</h1> :
                     <input className="card-edit-type" type="text" value={state.typeUpdate} onChange={handleCardTypeUpdate} />
                   }
                 <div id={`set-${card.id}`} className="mana-symbols">
@@ -657,13 +657,13 @@ export function CardRenderer(props: CardRendererProps) {
                   <p className="description">
                   </p>
                   <p className="flavour-text">
-                    {card.flavorText}
+                    {card.face.flavorText}
                   </p>
-                  {card.pt &&
+                  {card.face.pt &&
                     <div className="power-and-toughness-frame">
                       <div id={`pt-${card.id}`} className="power-and-toughness power-and-toughness-size">
                         {!state.editMode ?
-                          <div>{card.pt}</div> :
+                          <div>{card.face.pt}</div> :
                           <input className="card-edit-pt" type="text" value={state.powerAndToughnessUpdate} onChange={handleCardPowerAndToughnessUpdate} />
                         }
                       </div>

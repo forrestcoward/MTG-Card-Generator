@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { Image } from 'antd';
 import { IconsHelper, setsHelper } from './Helpers';
 import { CardFace } from '../models/CardFace';
-import { TkCard } from '../models/TkCard';
+import { MagicCard } from '../models/MagicCard';
 
 interface PlaneswalkerAbility {
   html: string;
@@ -290,7 +290,7 @@ function resizeTextHorizontally(el: HTMLElement): void {
  * Computes and returns an object with properties derived from the card JSON.
  * =======================================================
  */
-function computeCardProps(card: TkCard, currentFace: number = 0): CardProps {
+function computeCardProps(card: MagicCard, currentFace: number = 0): CardProps {
   const props = {} as CardProps;
 
   // Determine primary face (for DFC cards) and back face.
@@ -637,7 +637,7 @@ function setCardStyles(cardEl: HTMLElement, props: CardProps, scale: number, ren
 /**
  * Returns inner HTML for a planeswalker card.
  */
-function buildPlaneswalkerCardHTML(props: CardProps, card: TkCard): string {
+function buildPlaneswalkerCardHTML(props: CardProps, card: MagicCard): string {
   return `
     <div class="inner-background"></div>
     <div class="illustration behind-textbox"></div>
@@ -694,7 +694,7 @@ function buildPlaneswalkerCardHTML(props: CardProps, card: TkCard): string {
 /**
  * Returns inner HTML for a saga card.
  */
-function buildSagaCardHTML(props: CardProps, card: TkCard): string {
+function buildSagaCardHTML(props: CardProps, card: MagicCard): string {
   // Extract saga steps based on oracle text format "I — Text", "II — Text", etc.
   const sagaSteps: { number: string; text: string }[] = [];
   if (props.card_face.oracleText) {
@@ -764,7 +764,7 @@ function buildSagaCardHTML(props: CardProps, card: TkCard): string {
  */
 interface DefaultCardProps {
   cardProps: CardProps;
-  card: TkCard;
+  card: MagicCard;
 }
 
 /**
@@ -958,7 +958,7 @@ function DefaultCard({ cardProps, card }: DefaultCardProps): React.ReactElement 
   );
 }
 
-function RenderCard(card: TkCard, scale: number = 1, renderMargin: number = 1): HTMLElement {
+function RenderCard(card: MagicCard, scale: number = 1, renderMargin: number = 1): HTMLElement {
   const currentFace = 0;
   const props = computeCardProps(card, currentFace);
   const cardEl = document.createElement("div");

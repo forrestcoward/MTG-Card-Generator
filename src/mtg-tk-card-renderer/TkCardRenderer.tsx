@@ -12,17 +12,16 @@ import {
 import { copyTextToClipboard, getBaseUrl, isMobileDevice } from '../Utility';
 import './style.css';
 import TKCardCardRendererWrapper from './TkCardRendererWrapper';
-import { TkCard } from '../models/TkCard';
+import { MagicCard } from '../models/MagicCard';
 
 interface TkCardRendererProps {
-  card: TkCard;
+  card: MagicCard;
   cardWidth: number;
   showCardMenu?: boolean;
   allowImageUpdate?: boolean;
   allowImagePreview?: boolean;
   allowEdits?: boolean;
 }
-
 
 export const TkCardRenderer : React.FC<TkCardRendererProps> = ({ 
   card, 

@@ -1,6 +1,5 @@
 import { EventMessage, EventType } from "@azure/msal-browser";
 import React, { useEffect, useState } from "react";
-import { CardRenderer } from "./CardRenderer";
 import { GetUserMagicCards } from "./CallAPI";
 
 import "./mtg-card.css";
@@ -12,7 +11,6 @@ import PopOutSettingsMenu from "./PopOutSettingsMenu";
 import { SettingsButton } from "./SettingsButton";
 import { TkCardRenderer } from "./mtg-tk-card-renderer/TkCardRenderer";
 import { MagicCard } from "./models/MagicCard";
-import { MagicCardToTkCard } from "./models/TkCard";
 
 export function MyCards() {
   const [cards, setCards] = React.useState<MagicCard[]>([]);
@@ -70,7 +68,7 @@ export function MyCards() {
           <div className="cardContainer" key={`card-container-${card.id}`}>
             <TkCardRenderer 
               key={`card-display-${card.id}`} 
-              card={MagicCardToTkCard(card)} showCardMenu={true} 
+              card={card} showCardMenu={true} 
               cardWidth={cardWidth} 
               allowImagePreview={true} 
               allowEdits={true} 

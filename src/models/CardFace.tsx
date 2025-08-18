@@ -19,6 +19,7 @@ export interface CardFace {
   mdfc_hint?: string;
   imageUrl: string
   temporaryImageUrl: string
+  alternativeImageUrls: string[]
 
   illustration_scale?: number;
   illustration_position?: {

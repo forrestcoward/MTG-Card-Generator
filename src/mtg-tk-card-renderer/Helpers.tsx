@@ -1,6 +1,4 @@
-/* Helpers converted from helpers.js to a TypeScript module */
-
-import { TkCard } from "../models/TkCard";
+import { MagicCard } from "../models/MagicCard";
 
 export const IconsHelper = (() => {
   const mana_symbols: Record<string, { svg_uri: string }> = {
@@ -143,7 +141,7 @@ export class Sets {
     return this.setsWithIcons.includes(setCode);
   }
 
-  getRandomSetIcon(card: TkCard) {
+  getRandomSetIcon(card: MagicCard) {
     let attempts = 0;
     while (attempts < 20) {
       const randomSet = this.setsWithIcons[Math.floor(Math.random() * this.setsWithIcons.length)];
@@ -170,7 +168,7 @@ export class Sets {
     }
   }
 
-  getSetIconUri(card: TkCard) {
+  getSetIconUri(card: MagicCard) {
     if (card && card.setIcon) {
       return card.setIcon;
     } else if (card && this.hasIcon(card.set)) {

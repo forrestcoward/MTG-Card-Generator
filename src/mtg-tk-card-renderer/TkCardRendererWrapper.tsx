@@ -1,10 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import './style.css';
 import { RenderCard } from './RenderCard';
-import { TkCard } from '../models/TkCard';
+import { MagicCard } from '../models/MagicCard';
 
 interface TKCardCardRendererWrapperProps {
-  card: TkCard;
+  card: MagicCard;
   scale?: number;
   renderMargin?: number;
   className?: string;
