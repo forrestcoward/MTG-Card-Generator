@@ -22,31 +22,6 @@ export class MagicCard {
   funnyExplanation: string
   url: string
 
-  /*
-  name: string
-  manaCost: string
-  typeLine: string
-  type: string
-  text: string
-  oracleText: string
-  power: number
-  toughness: number
-  _colorIdentity: string
-  pt: string
-  flavorText: string
-  rarity: string
-  imageUrl: string
-  temporaryImageUrl: string
-  collectorNumber: string
-  id: string // DOM id.
-  databaseId: string // Database id for lookup.
-  userPrompt: string
-  explanation: string
-  funnyExplanation: string
-  alternativeImageUrls: string[]
-  url: string
-  */
-
   toBasicCard(): BasicCard {
     return {
       name: this.cardFaces[0].name,
@@ -111,31 +86,6 @@ export class MagicCard {
     this.set = 'GEN',
     this.artist = 'AI Generated',
     this.lang = 'en'
-
-    /*
-    this.name = card.name
-    this.manaCost = card.manaCost
-    this.type = card.type
-    this.typeLine = card.typeLine
-    this.text = card.text
-    this.oracleText = card.oracleText
-    this.power = card.power
-    this.toughness = card.toughness
-    this._colorIdentity = ""
-    this.flavorText = card.flavorText
-    this.pt = card.pt
-    this.rarity = card.rarity
-    this.imageUrl = card.imageUrl
-    this.temporaryImageUrl = card.temporaryImageUrl
-    this.collectorNumber = getRandomInt(0, 451) + "/" + 451
-    this.id = getRandomInt(0, 1000000000).toString()
-    this.userPrompt = card.userPrompt
-    this.explanation = card.explanation
-    this.funnyExplanation = card.funnyExplanation
-    this.databaseId = card.id
-    this.alternativeImageUrls = card.alternativeImageUrls
-    this.url = card.url
-    */
   }
 
   static clone(card: MagicCard, sameId: boolean): MagicCard {
