@@ -74,6 +74,10 @@ interface CardRendererState {
   // Image editor state.
   showImageEditor: boolean;
   availableImageUrls: GenerateImageResponse[];
+  
+  // Flavor text visibility state.
+  showFlavorText?: boolean;
+  hasManualFlavorTextOverride?: boolean;
 }
 
 export function CardRenderer(props: CardRendererProps) {
@@ -94,11 +98,13 @@ export function CardRenderer(props: CardRendererProps) {
     showSizeAdjustmentButtons: !isMobileDevice() || Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0) > 900,
     showImageEditor: false,
     availableImageUrls: props.card.face.alternativeImageUrls?.map(url => ({ imageUrl: url, temporaryUrl: url })) || [],
+    showFlavorText: true,
+
   });
 
   React.useEffect(() => {
     adjustFontSize();
-  }, [state.card.face.oracleText, state.card.face.typeLine, state.card.face.name, state.editMode]);
+  }, [state.card.face.oracleText, state.card.face.typeLine, state.card.face.name, state.editMode, state.showFlavorText]);
 
   function handleCardNameUpdate(event: React.ChangeEvent<HTMLInputElement>) {
     setState(prev => ({ ...prev, nameUpdate: event.target.value }));
@@ -173,6 +179,15 @@ export function CardRenderer(props: CardRendererProps) {
 
   function toggleShowImageEditor() {
     setState(prev => ({ ...prev, showImageEditor: !prev.showImageEditor }));
+  }
+
+  function toggleFlavorText() {
+    setState(prev => ({ 
+      ...prev, 
+      showFlavorText: !prev.showFlavorText,
+    }));
+    // Trigger font size adjustment after state change
+    setTimeout(() => adjustFontSize(), 0);
   }
 
   function updateSizeToggles(newWidth: number) {
@@ -526,9 +541,11 @@ export function CardRenderer(props: CardRendererProps) {
                   </div>
                   <p className="description">
                   </p>
-                  <p className="flavour-text">
-                    {card.face.flavorText}
-                  </p>
+                  {state.showFlavorText && card.face.flavorText ? (
+                    <p className="flavour-text">
+                      {card.face.flavorText}
+                    </p>
+                  ) : null}
                   {card.face.pt &&
                     <div className="power-and-toughness-frame">
                       <div id={`pt-${card.id}`} className="power-and-toughness power-and-toughness-size">
@@ -572,6 +589,8 @@ export function CardRenderer(props: CardRendererProps) {
           onToggleEditMode={updateEditMode}
           allowImageUpdate={props.allowImageUpdate && !cardIsTutorialCard}
           onToggleImageEditor={toggleShowImageEditor}
+          flavorTextVisible={state.showFlavorText ?? true}
+          onToggleFlavorText={toggleFlavorText}
         />
         }
       </div>

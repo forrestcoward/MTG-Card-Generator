@@ -920,7 +920,7 @@ function DefaultCard({ cardProps, card }: DefaultCardProps): React.ReactElement 
         {cardProps.oracle_lines.map((line, index) => (
           <div key={index} className="oracle-inner" dangerouslySetInnerHTML={{ __html: line }} />
         ))}
-        {cardProps.card_face.flavorText && (
+        {(cardProps.card_face as any).tempShowFlavorText && cardProps.card_face.flavorText && (
           <div className="oracle-flavor">
             <hr />
             {cardProps.card_face.flavorText}

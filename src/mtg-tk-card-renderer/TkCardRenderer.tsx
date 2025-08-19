@@ -23,7 +23,7 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
   showCardMenu = true,
   allowImageUpdate = true,
   allowImagePreview = false,
-  allowEdits = false 
+  allowEdits = false
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentWidth, setCurrentWidth] = useState(cardWidth);
@@ -38,6 +38,9 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
     card.cardFaces[0].alternativeImageUrls?.map(url => ({ imageUrl: url, temporaryUrl: url })) || []
   );
   const [cardData, setCardData] = useState(card);
+  
+  // Flavor text visibility state
+  const [showFlavorText, setShowFlavorText] = useState(true);
 
   //const convertedCard = convertMagicCardToNewFormat(card);
   const scale = currentWidth * 1.7 / cardWidth;
@@ -67,7 +70,7 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
     // Measure after a short delay to ensure rendering is complete.
     const timeoutId = setTimeout(measureActualSize, 0);
     return () => clearTimeout(timeoutId);
-  }, [currentWidth, cardData.id]);
+  }, [currentWidth, cardData.id, showFlavorText]);
 
   // Initialize size toggles.
   useEffect(() => {
@@ -105,6 +108,27 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
 
   const toggleShowImageEditor = () => {
     setShowImageEditor(!showImageEditor);
+  };
+
+  const toggleFlavorText = () => {
+    setShowFlavorText(!showFlavorText);
+    // Trigger remeasurement after state change
+    setTimeout(() => {
+      const cardElement = document.getElementById(`mtgcardrender-${cardData.id}`);
+      const cardMenu = document.getElementById(`mtgcardrender-menu-${cardData.id}`);
+
+      if (cardElement && cardMenu) {
+        const cardRect = cardElement.getBoundingClientRect();
+        const menuRect = cardMenu.getBoundingClientRect();
+        const newHeight = cardRect.height + menuRect.height;
+        setActualSize({ width: cardRect.width, height: cardRect.height });
+        setActualSizeWithMenu({ width: cardRect.width, height: newHeight });
+      } else if (cardElement) {
+        const cardRect = cardElement.getBoundingClientRect();
+        setActualSize({ width: cardRect.width, height: cardRect.height });
+        setActualSizeWithMenu({ width: cardRect.width, height: cardRect.height });
+      }
+    }, 0);
   };
 
   const updateImageUrl = (imageUrls: GenerateImageResponse) => {
@@ -183,7 +207,8 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
               key={`${cardData.id}-${currentWidth}`} 
               card={cardData} 
               scale={1} 
-              renderMargin={1} 
+              renderMargin={1}
+              showFlavorText={showFlavorText}
             />
           </div>
         </div>
@@ -204,6 +229,8 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
             menuId={`mtgcardrender-menu-${cardData.id}`}
             allowImageUpdate={allowImageUpdate && !cardIsTutorialCard}
             onToggleImageEditor={toggleShowImageEditor}
+            flavorTextVisible={showFlavorText}
+            onToggleFlavorText={toggleFlavorText}
           />
         )}
       </div>

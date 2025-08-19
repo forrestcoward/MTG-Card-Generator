@@ -61,17 +61,31 @@ export function MyCards() {
 
     // Update the matching setting.
     let matchingSetting = allSettings.find(setting => setting.name == updatedSetting)
-    if (matchingSetting && (matchingSetting.value != true || !matchingSetting.group)) {
-      matchingSetting.value = newValue
+    if (matchingSetting) {
+      // Find the setting group to check if it's a switch or radio type
+      const settingGroup = newSettings.find(group => group.settings.includes(matchingSetting!));
+      
+      // For switch-type settings, always allow the toggle
+      if (settingGroup?.type === 'switch') {
+        matchingSetting.value = newValue;
+      }
+      // For radio-type settings, only update if not already true or no group specified
+      else if (matchingSetting.value != true || !matchingSetting.group) {
+        matchingSetting.value = newValue;
+      }
     }
 
     // Set all other settings with the same group to false (if a group is specified).
     // For example, use this to allow only a single model setting.
-    allSettings.forEach((setting) => {
-      if (setting.name != updatedSetting && setting.group && setting.group == matchingSetting?.group) {
-        setting.value = false
-      }
-    });
+    // This should only apply to radio-type settings, not switch-type settings.
+    const settingGroup = newSettings.find(group => group.settings.some(s => s.name === updatedSetting));
+    if (settingGroup?.type === 'radio') {
+      allSettings.forEach((setting) => {
+        if (setting.name != updatedSetting && setting.group && setting.group == matchingSetting?.group) {
+          setting.value = false
+        }
+      });
+    }
 
     setSettings(newSettings);
   };

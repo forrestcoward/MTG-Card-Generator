@@ -8,6 +8,7 @@ interface TKCardCardRendererWrapperProps {
   scale?: number;
   renderMargin?: number;
   className?: string;
+  showFlavorText?: boolean;
 }
 
 /**
@@ -15,7 +16,7 @@ interface TKCardCardRendererWrapperProps {
  * It mounts the produced HTMLElement into a container div so the original
  * HTML/CSS/JS behavior is preserved while providing a React component API.
  */
-export const TKCardCardRendererWrapper : React.FC<TKCardCardRendererWrapperProps> = ({ card, scale = 1, renderMargin = 1, className }) => {
+export const TKCardCardRendererWrapper : React.FC<TKCardCardRendererWrapperProps> = ({ card, scale = 1, renderMargin = 1, className, showFlavorText = true }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -25,7 +26,12 @@ export const TKCardCardRendererWrapper : React.FC<TKCardCardRendererWrapperProps
     // Clear previous content
     container.innerHTML = '';
 
-    const el = RenderCard(card, scale, renderMargin);
+    // Create a modified card object with flavor text visibility info
+    const modifiedCard = MagicCard.clone(card, true);
+    // Store the showFlavorText state in a temporary property that RenderCard can access
+    (modifiedCard.cardFaces[0] as any).tempShowFlavorText = showFlavorText;
+
+    const el = RenderCard(modifiedCard, scale, renderMargin);
     if (el instanceof HTMLElement) {
       // Ensure the top-level wrapper keeps any caller-provided className
       if (className) el.classList.add(className);
@@ -39,7 +45,7 @@ export const TKCardCardRendererWrapper : React.FC<TKCardCardRendererWrapperProps
 
 
     // No cleanup necessary; the DOM node is replaced on next render via innerHTML = ''.
-  }, [card, scale, renderMargin, className]);
+  }, [card, scale, renderMargin, className, showFlavorText]);
 
   return <div ref={containerRef} />;
 };

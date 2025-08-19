@@ -5,6 +5,8 @@ import {
   CloudDownloadOutlined, 
   CopyOutlined, 
   EditOutlined,
+  EyeInvisibleOutlined,
+  EyeOutlined,
   FileImageOutlined,
   InfoCircleOutlined, 
   QuestionCircleOutlined, 
@@ -40,6 +42,9 @@ export interface CardMenuProps {
   // Image editor functionality (optional - for CardRenderer).
   allowImageUpdate?: boolean;
   onToggleImageEditor?: () => void;
+  // Flavor text toggle functionality.
+  flavorTextVisible?: boolean;
+  onToggleFlavorText?: () => void;
 }
 
 export const CardMenu: React.FC<CardMenuProps> = ({
@@ -60,6 +65,8 @@ export const CardMenu: React.FC<CardMenuProps> = ({
   onToggleEditMode,
   allowImageUpdate = false,
   onToggleImageEditor,
+  flavorTextVisible = true,
+  onToggleFlavorText,
   menuId
 }) => {
   const optionsMenuItemStyle: React.CSSProperties = { marginLeft: 5 };
@@ -152,6 +159,21 @@ export const CardMenu: React.FC<CardMenuProps> = ({
     };
     
     menuItems.push(updateImageItem);
+  }
+
+  if (card.cardFaces[0].flavorText && onToggleFlavorText) {
+    const flavorTextItem = {
+      key: '6',
+      label: (
+        <Tooltip title={flavorTextVisible ? "Hide flavor text" : "Show flavor text"} placement='left'>
+          {flavorTextVisible ? <EyeInvisibleOutlined style={optionsMenuIconStyle} /> : <EyeOutlined style={optionsMenuIconStyle} />}
+          <span style={optionsMenuItemStyle}>{flavorTextVisible ? "Hide Flavor" : "Show Flavor"}</span>
+        </Tooltip>
+      ),
+      onClick: onToggleFlavorText
+    };
+    
+    menuItems.push(flavorTextItem);
   }
 
   if (!showCardMenu) {
