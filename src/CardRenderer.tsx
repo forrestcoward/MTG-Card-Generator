@@ -5,6 +5,7 @@ import { BulbOutlined, CaretDownFilled, CaretRightOutlined, CloseOutlined, Cloud
   FileImageOutlined, InfoCircleOutlined, QuestionCircleOutlined, RightCircleOutlined, SaveFilled, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons';
 import { adjustTextHeightBasedOnChildrenClientOffsetHeight, adjustTextHeightBasedOnClientHeight, copyTextToClipboard, getChildrenClientOffsetHeight, isMobileDevice } from "./Utility";
 import { saveAs } from 'file-saver';
+import { CardMenu } from './CardMenu';
 
 // @ts-ignore
 import whitePaintBrush from './card-backgrounds/paintbrush-white.png'
@@ -505,88 +506,6 @@ export function CardRenderer(props: CardRendererProps) {
 
   const oracleEditTextAreaRows = textDisplay().length * 3;
   const cardMenuIconFontSize = "40px";
-  const optionsMenuItemStyle : React.CSSProperties = {marginLeft:5};
-  const optionsMenuIconStyle : React.CSSProperties = {fontSize:30};
-
-  const menuItems = [
-    {
-      key: '1',
-      label: (
-        <Tooltip placement="left">
-          <CloudDownloadOutlined style={optionsMenuIconStyle} />
-          <span style={optionsMenuItemStyle}>Download Card</span>
-        </Tooltip>
-      ),
-      onClick: handleCardDownload
-    },
-    {
-      key: '2',
-      label: (
-        <Tooltip placement="left">
-          <CloudDownloadOutlined style={optionsMenuIconStyle} />
-          <span style={optionsMenuItemStyle}>Download Art</span>
-        </Tooltip>
-      ),
-      onClick: handleArtDownload
-    },
-    state.editMode ? 
-    {
-      key: '3',
-      label: (
-        <Tooltip title="Save the card text" placement='left'>
-          <SaveFilled style={optionsMenuIconStyle} />
-          <span style={optionsMenuItemStyle}>Save</span>
-        </Tooltip>
-      ),
-      onClick: updateEditMode
-    }
-    : 
-    {
-      key: '3',
-      label: (
-        <Tooltip title="Modify the card text" placement='left'>
-          <EditOutlined style={optionsMenuIconStyle} />
-          <span style={optionsMenuItemStyle}>Edit Text</span>
-        </Tooltip>
-      ),
-      onClick: updateEditMode
-    }
-  ];
-
-  const copyLinkMenuItem = { 
-    key: '4',
-    label: (
-      <div>
-        <CopyOutlined style={optionsMenuIconStyle} />
-        <span style={optionsMenuItemStyle}>Copy Link</span>
-      </div>
-    ),
-    onClick: async () => {
-      await copyTextToClipboard(card.cardUrl)
-    }
-  }
-
-  const updateImageItem = {
-    key: '5',
-    label: (
-      <Tooltip title="Regenerate the card image" placement='left'>
-        <FileImageOutlined style={optionsMenuIconStyle} />
-        <span style={optionsMenuItemStyle}>Image Editor</span>
-      </Tooltip>
-    ),
-    onClick: async () => {
-      toggleShowImageEditor()
-    }
-  }
-
-  if (card.databaseId) {
-    menuItems.push(copyLinkMenuItem)
-  }
-
-  if (props.allowImageUpdate && !cardIsTutorialCard)
-  {
-    menuItems.push(updateImageItem)
-  }
 
   const height = ((props.cardWidth * 3.6) / 2.5);
   const imageEditorWidth = isMobileDevice() ? props.cardWidth : props.cardWidth - 100;
@@ -684,42 +603,25 @@ export function CardRenderer(props: CardRendererProps) {
             </div>
         </div>
         { state.showCardMenu &&
-        <div className="card-menu">
-          <Tooltip title={<div><b>Prompt: </b>{state.card.userPrompt}</div>} placement="left">
-            <QuestionCircleOutlined style={{fontSize: cardMenuIconFontSize, marginLeft:3}} />
-          </Tooltip>
-          { card.explanation ?
-          <Tooltip title={
-            <div>
-              <b>About This Card</b>
-              <br/>
-              <br/>
-              {card.explanation}
-              <br/>
-              <br/>
-              {card.funnyExplanation}
-            </div>
-          } overlayInnerStyle={{width:320, backgroundColor:'rgba(0, 0, 0, 0.93)' }} placement="left" >
-            <InfoCircleOutlined style={{fontSize: cardMenuIconFontSize, marginLeft:3}} />
-          </Tooltip>
-          : null
-          }
-          { state.showSizeAdjustmentButtons &&
-          <Button type="text" size="middle" shape="circle" disabled={!state.increaseSizeAllowed}>
-            <ZoomInOutlined onClick={() => increaseCardSize(30)} style={{fontSize: cardMenuIconFontSize, marginRight:-4}} />
-          </Button>
-          }
-          { state.showSizeAdjustmentButtons &&
-          <Button type="text" size="middle" shape="circle" disabled={!state.decreaseSizeAllowed}>
-            <ZoomOutOutlined onClick={() => decreaseCardSize(30)} style={{fontSize: cardMenuIconFontSize, marginRight:-7}} />
-          </Button>
-          }
-          <Dropdown menu={{items: menuItems}}>
-            <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
-              <CaretDownFilled style={{fontSize: cardMenuIconFontSize}} />
-            </a>
-          </Dropdown>
-        </div>
+        <CardMenu
+          card={state.card}
+          showCardMenu={state.showCardMenu}
+          showSizeAdjustmentButtons={state.showSizeAdjustmentButtons}
+          cardMenuIconFontSize={cardMenuIconFontSize}
+          increaseSizeAllowed={state.increaseSizeAllowed}
+          decreaseSizeAllowed={state.decreaseSizeAllowed}
+          onIncreaseSize={increaseCardSize}
+          onDecreaseSize={decreaseCardSize}
+          sizeAdjustmentIncrement={30}
+          onDownloadCard={handleCardDownload}
+          onDownloadArt={handleArtDownload}
+          copyLinkUrl={card.cardUrl}
+          editMode={state.editMode}
+          allowEdits={props.allowEdits}
+          onToggleEditMode={updateEditMode}
+          allowImageUpdate={props.allowImageUpdate && !cardIsTutorialCard}
+          onToggleImageEditor={toggleShowImageEditor}
+        />
         }
       </div>
       { /* Image editor. */ }

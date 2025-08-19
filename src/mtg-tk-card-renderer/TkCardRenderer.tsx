@@ -1,18 +1,9 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Button, Dropdown, Tooltip } from 'antd';
-import { 
-  CaretDownFilled, 
-  CloudDownloadOutlined, 
-  CopyOutlined, 
-  InfoCircleOutlined, 
-  QuestionCircleOutlined, 
-  ZoomInOutlined, 
-  ZoomOutOutlined 
-} from '@ant-design/icons';
 import { copyTextToClipboard, getBaseUrl, isMobileDevice } from '../Utility';
 import './style.css';
 import TKCardCardRendererWrapper from './TkCardRendererWrapper';
 import { MagicCard } from '../models/MagicCard';
+import { CardMenu } from '../CardMenu';
 
 interface TkCardRendererProps {
   card: MagicCard;
@@ -141,49 +132,7 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
 
   // Menu configuration.
   const cardMenuIconFontSize = "40px";
-  const optionsMenuItemStyle: React.CSSProperties = { marginLeft: 5 };
-  const optionsMenuIconStyle: React.CSSProperties = { fontSize: 30 };
   const showSizeAdjustmentButtons = !isMobileDevice() || Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0) > 900;
-
-  const menuItems = [
-    {
-      key: '1',
-      label: (
-        <Tooltip placement="left">
-          <CloudDownloadOutlined style={optionsMenuIconStyle} />
-          <span style={optionsMenuItemStyle}>Download Card</span>
-        </Tooltip>
-      ),
-      onClick: downloadCard
-    },
-    {
-      key: '2',
-      label: (
-        <Tooltip placement="left">
-          <CloudDownloadOutlined style={optionsMenuIconStyle} />
-          <span style={optionsMenuItemStyle}>Download Art</span>
-        </Tooltip>
-      ),
-      onClick: handleArtDownload
-    }
-  ];
-
-  const copyLinkMenuItem = {
-    key: '3',
-    label: (
-      <div>
-        <CopyOutlined style={optionsMenuIconStyle} />
-        <span style={optionsMenuItemStyle}>Copy Link</span>
-      </div>
-    ),
-    onClick: async () => {
-      await copyTextToClipboard(getBaseUrl() + "/Card?id=" + card.databaseId);
-    }
-  };
-
-  if (card.databaseId) {
-    menuItems.push(copyLinkMenuItem);
-  }
 
   return (
     <div 
@@ -215,59 +164,22 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
         </div>
       </div>
         
-      {true && (
-        <div id={`mtgcardrender-menu-${card.id}`} style={{ 
-          display: 'flex',
-          justifyContent: 'right'
-        }}>
-          <Tooltip title={<div><b>Prompt: </b>{card.userPrompt}</div>} placement="left">
-            <QuestionCircleOutlined style={{fontSize: cardMenuIconFontSize, marginLeft: 3, marginTop: 3}} />
-          </Tooltip>
-            {card.explanation && (
-              <Tooltip 
-                title={
-                  <div>
-                    <b>About This Card</b>
-                    <br/>
-                    <br/>
-                    {card.explanation}
-                    <br/>
-                    <br/>
-                    {card.funnyExplanation}
-                  </div>
-                } 
-                overlayInnerStyle={{width: 320, backgroundColor: 'rgba(0, 0, 0, 0.93)'}} 
-                placement="left"
-              >
-                <InfoCircleOutlined style={{fontSize: cardMenuIconFontSize, marginLeft: 3}} />
-              </Tooltip>
-            )}
-            
-            {showSizeAdjustmentButtons && (
-              <Button type="text" size="middle" shape="circle" disabled={!increaseSizeAllowed}>
-                <ZoomInOutlined 
-                  onClick={() => increaseCardSize(60)} 
-                  style={{fontSize: cardMenuIconFontSize, marginRight: -4}} 
-                />
-              </Button>
-            )}
-            
-            {showSizeAdjustmentButtons && (
-              <Button type="text" size="middle" shape="circle" disabled={!decreaseSizeAllowed}>
-                <ZoomOutOutlined 
-                  onClick={() => decreaseCardSize(60)} 
-                  style={{fontSize: cardMenuIconFontSize, marginRight: -7}} 
-                />
-              </Button>
-            )}
-            
-            <Dropdown menu={{items: menuItems}}>
-              <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
-                <CaretDownFilled style={{fontSize: cardMenuIconFontSize}} />
-              </a>
-            </Dropdown>
-          </div>
-        )}
+      {showCardMenu && (
+        <CardMenu
+          card={card}
+          showCardMenu={showCardMenu}
+          showSizeAdjustmentButtons={showSizeAdjustmentButtons}
+          cardMenuIconFontSize={cardMenuIconFontSize}
+          increaseSizeAllowed={increaseSizeAllowed}
+          decreaseSizeAllowed={decreaseSizeAllowed}
+          onIncreaseSize={increaseCardSize}
+          onDecreaseSize={decreaseCardSize}
+          sizeAdjustmentIncrement={60}
+          onDownloadCard={downloadCard}
+          onDownloadArt={handleArtDownload}
+          menuId={`mtgcardrender-menu-${card.id}`}
+        />
+      )}
     </div>
   );
 };
