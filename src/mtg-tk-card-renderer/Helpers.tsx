@@ -157,6 +157,28 @@ export class Sets {
     return "";
   }
 
+  getRandomSetIconInfo(rarity: string): { setCode: string; iconUrl: string } {
+    let attempts = 0;
+    while (attempts < 20) {
+      const randomSet = this.setsWithIcons[Math.floor(Math.random() * this.setsWithIcons.length)];
+      const iconPath = `assets/img/set_icons/${randomSet}_${rarity || "common"}.webp`;
+      
+      if (this.iconExists(iconPath)) {
+        return {
+          setCode: randomSet,
+          iconUrl: iconPath
+        };
+      }
+      
+      attempts++;
+    }
+    
+    return {
+      setCode: "",
+      iconUrl: ""
+    };
+  }
+
   private iconExists(path: string): boolean {
     try {
       const request = new XMLHttpRequest();

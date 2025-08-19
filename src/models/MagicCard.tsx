@@ -2,6 +2,7 @@ import { getBaseUrl, getRandomInt } from "../Utility"
 import { BasicCard } from "./BasicCard"
 import { CardFace } from "./CardFace";
 import { ColorIdentity } from "./ColorIdentity"
+import { setsHelper } from "../mtg-tk-card-renderer/Helpers"
 
 export class MagicCard {
   cardFaces: CardFace[];
@@ -9,6 +10,7 @@ export class MagicCard {
   frameEffects?: string[];
   set?: string;
   setIcon?: string;
+  setIconUrl?: string;
   rarity: string;
   lang?: string;
   artist?: string;
@@ -62,29 +64,33 @@ export class MagicCard {
         temporaryImageUrl: card.temporaryImageUrl,
         alternativeImageUrls: card.alternativeImageUrls
       }
-    ],
+    ];
 
-    this.id = getRandomInt(0, 1000000000).toString(),
-    this.databaseId = card.id,
-    this.userPrompt = card.userPrompt,
-    this.explanation = card.explanation,
-    this.funnyExplanation = card.funnyExplanation,
-    this.url = card.url,
+    this.id = getRandomInt(0, 1000000000).toString()
+    this.databaseId = card.id
+    this.userPrompt = card.userPrompt
+    this.explanation = card.explanation
+    this.funnyExplanation = card.funnyExplanation
+    this.url = card.url
     this.rarity = (() => {
       const normalizedRarity = card.rarity?.toLowerCase();
-      if (normalizedRarity === 'mythic rare' || normalizedRarity === 'mythic') return 'mythic';
-      if (normalizedRarity === 'rare') return 'rare';
-      if (normalizedRarity === 'uncommon') return 'uncommon';
-      if (normalizedRarity === 'common') return 'common';
+      if (normalizedRarity === 'mythic rare' || normalizedRarity === 'mythic') return 'mythic'
+      if (normalizedRarity === 'rare') return 'rare'
+      if (normalizedRarity === 'uncommon') return 'uncommon'
+      if (normalizedRarity === 'common') return 'common'
       return 'common';
-    })(),
-    this.collectorNumber = getRandomInt(0, 451).toString()
-    this.layout = '',
-    this.frameEffects = [''],
-    this.copyright = '',
-    this.setIcon = '',
-    this.set = 'GEN',
-    this.artist = 'AI Generated',
+    })();
+    this.collectorNumber = getRandomInt(0, 451).toString();
+    this.layout = ''
+    this.frameEffects = ['']
+    this.copyright = ''
+
+    const setIconInfo = setsHelper.getRandomSetIconInfo(this.rarity);
+    this.setIcon = setIconInfo.setCode;
+    this.setIconUrl = setIconInfo.iconUrl;
+
+    this.set = 'GEN'
+    this.artist = 'AI Generated'
     this.lang = 'en'
   }
 
@@ -93,6 +99,7 @@ export class MagicCard {
     let newCard = new MagicCard(basicCard)
     newCard.collectorNumber = card.collectorNumber
     newCard.setIcon = card.setIcon
+    newCard.setIconUrl = card.setIconUrl
     if (sameId) {
       newCard.id = card.id
     } else {

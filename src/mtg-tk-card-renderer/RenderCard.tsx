@@ -584,10 +584,8 @@ function computeCardProps(card: MagicCard, currentFace: number = 0): CardProps {
     props.illustration_position = { x: "0mm", y: "0mm" };
   }
 
-  // Set icon URI (using the Sets helper defined in helpers.ts).
-
-  // props.set_icon_uri = setsHelper.getSetIconUri(card);
-  props.set_icon_uri = setsHelper.getRandomSetIcon(card);
+  // Set icon URI (using the pre-selected setIconUrl from the card).
+  props.set_icon_uri = card.setIconUrl || "";
 
   // Archive frame colors (simplified).
   const archiveColor = (props.card_face.color_identity && props.card_face.color_identity[0]) ? props.card_face.color_identity[0] : "Gold";
