@@ -43,7 +43,7 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
   const [showFlavorText, setShowFlavorText] = useState(true);
 
   //const convertedCard = convertMagicCardToNewFormat(card);
-  const scale = currentWidth * 1.7 / cardWidth;
+  const scale = currentWidth * 1.9 / cardWidth;
   const cardIsTutorialCard = cardData.databaseId === "-1";
   const imageEditorWidth = isMobileDevice() ? currentWidth : currentWidth - 100;
 

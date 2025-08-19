@@ -49,7 +49,7 @@ export class MagicCard {
   }
 
   constructor(card: BasicCard) {
-    // Parse power and toughness from pt field if individual fields are not provided
+    // Parse power and toughness from pt field if individual fields are not provided.
     let power = card.power;
     let toughness = card.toughness;
     

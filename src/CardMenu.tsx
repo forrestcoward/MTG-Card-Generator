@@ -207,7 +207,7 @@ export const CardMenu: React.FC<CardMenuProps> = ({
           overlayInnerStyle={{width: 320, backgroundColor: 'rgba(0, 0, 0, 0.93)'}} 
           placement="left"
         >
-          <InfoCircleOutlined style={{fontSize: cardMenuIconFontSize, marginLeft: 3}} />
+          <InfoCircleOutlined style={{fontSize: cardMenuIconFontSize, marginLeft: 3, marginTop: 3}} />
         </Tooltip>
       )}
       

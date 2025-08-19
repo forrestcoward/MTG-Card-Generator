@@ -414,7 +414,7 @@ function computeCardProps(card: MagicCard, currentFace: number = 0): CardProps {
 
   // Copyright.
   props.copyright =
-      card.copyright || `™ & © ${new Date().getFullYear()} Wizards of the Coast`;
+      card.copyright || `™ & © ${new Date().getFullYear()} MTG Card Generator`;
 
   // Compute colors.
   function computeColors(face: CardFace): string {
@@ -683,7 +683,7 @@ function buildPlaneswalkerCardHTML(props: CardProps, card: MagicCard): string {
       </div>
       <div class="footer-right">
         <div>&nbsp;</div>
-        <div class="copyright">${card.copyright || `™ & © ${new Date().getFullYear()} Wizards of the Coast`}</div>
+        <div class="copyright">${card.copyright || `™ & © ${new Date().getFullYear()} MTG Card Generator`}</div>
       </div>
     </div>
   `;
@@ -751,7 +751,7 @@ function buildSagaCardHTML(props: CardProps, card: MagicCard): string {
       </div>
       <div class="footer-right">
         <div>&nbsp;</div>
-        <div class="copyright">${card.copyright || `™ & © ${new Date().getFullYear()} Wizards of the Coast`}</div>
+        <div class="copyright">${card.copyright || `™ & © ${new Date().getFullYear()} MTG Card Generator`}</div>
       </div>
     </div>
   `;
@@ -948,7 +948,7 @@ function DefaultCard({ cardProps, card }: DefaultCardProps): React.ReactElement 
         <div className="footer-right">
           <div>&nbsp;</div>
           <div className="copyright">
-            {card.copyright || `™ & © ${new Date().getFullYear()} Wizards of the Coast`}
+            {card.copyright || `™ & © ${new Date().getFullYear()} MTG Card Generator`}
           </div>
         </div>
       </div>
