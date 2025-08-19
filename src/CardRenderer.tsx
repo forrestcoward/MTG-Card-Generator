@@ -10,10 +10,10 @@ import { CardMenu } from './CardMenu';
 // @ts-ignore
 import whitePaintBrush from './card-backgrounds/paintbrush-white.png'
 import { toBlob } from 'html-to-image';
-import { GenerateImageResponse, GenerateNewCardImage, GetImagePrompt, UploadImageToAzure } from "./CallAPI";
+import { GenerateImageResponse, UploadImageToAzure } from "./CallAPI";
 import { msalInstance } from "./Index";
-import { LoadingSpinner } from "./LoadingSpinner";
 import { MagicCard } from "./models/MagicCard";
+import { ImageEditor } from "./ImageEditor";
 
 const manaTokens : string[] = ["{G}", "{W}", "{U}", "{B}", "{R}", "{0}", "{1}", "{2}", "{3}", 
 "{4}", "{5}", "{6}", "{7}", "{8}", "{9}", "{10}", "{C}", "{T}", "{X}"]
@@ -73,9 +73,6 @@ interface CardRendererState {
 
   // Image editor state.
   showImageEditor: boolean;
-  imageEditorPrompt: string;
-  imageEditorError: string;
-  isImageLoading: boolean;
   availableImageUrls: GenerateImageResponse[];
 }
 
@@ -95,20 +92,13 @@ export function CardRenderer(props: CardRendererProps) {
     decreaseSizeAllowed: true,
     cardWidth: props.cardWidth,
     showSizeAdjustmentButtons: !isMobileDevice() || Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0) > 900,
-    imageEditorPrompt: "",
-    imageEditorError: "",
     showImageEditor: false,
-    isImageLoading: false,
     availableImageUrls: props.card.face.alternativeImageUrls?.map(url => ({ imageUrl: url, temporaryUrl: url })) || [],
   });
 
   React.useEffect(() => {
     adjustFontSize();
   }, [state.card.face.oracleText, state.card.face.typeLine, state.card.face.name, state.editMode]);
-
-  function handleImagePromptUpdate(event: React.ChangeEvent<HTMLTextAreaElement>) {
-    setState(prev => ({ ...prev, imageEditorPrompt: event.target.value }));
-  }
 
   function handleCardNameUpdate(event: React.ChangeEvent<HTMLInputElement>) {
     setState(prev => ({ ...prev, nameUpdate: event.target.value }));
@@ -183,45 +173,6 @@ export function CardRenderer(props: CardRendererProps) {
 
   function toggleShowImageEditor() {
     setState(prev => ({ ...prev, showImageEditor: !prev.showImageEditor }));
-  }
-
-  function getImagePrompt() {
-    setState(prev => ({ ...prev, isImageLoading: true, imageEditorError: "" }));
-    GetImagePrompt(state.card, msalInstance).then(prompt => {
-      setState(prev => ({ ...prev, isImageLoading: false, imageEditorError: "", imageEditorPrompt: prompt }));
-    }).catch((error: Error) => {
-      let msg = error.message;
-      setState(prev => ({ ...prev, isImageLoading: false, imageEditorError: msg }));
-    });
-  }
-
-  function generateNewImage() {
-    setState(prev => ({ ...prev, isImageLoading: true, imageEditorError: "" }));
-    var openAIApiKey = userContext?.openAIAPIKey;
-    if (!openAIApiKey) {
-      openAIApiKey = "";
-    }
-    GenerateNewCardImage(state.imageEditorPrompt, state.card.databaseId, openAIApiKey, msalInstance).then(imageUrls => {
-      var updatedCard = MagicCard.clone(state.card, true);
-      updatedCard.face.imageUrl = imageUrls.imageUrl;
-      updatedCard.face.temporaryImageUrl = imageUrls.temporaryUrl;
-      const newAvailableImageUrls = [...state.availableImageUrls, imageUrls];
-      setState(prev => ({
-        ...prev,
-        card: updatedCard,
-        isImageLoading: false,
-        imageEditorError: "",
-        availableImageUrls: newAvailableImageUrls
-      }));
-      if (userContext?.refreshUser) userContext.refreshUser();
-    }).catch((error: Error) => {
-      let msg = error.message;
-      if (msg.includes("This request has been blocked by our content filters") ||
-        msg.includes("Your request was rejected as a result of our safety system")) {
-        msg = "Your prompt was deemed inappropriate and blocked by automated safety systems."
-      }
-      setState(prev => ({ ...prev, isImageLoading: false, imageEditorError: msg }));
-    });
   }
 
   function updateSizeToggles(newWidth: number) {
@@ -624,93 +575,15 @@ export function CardRenderer(props: CardRendererProps) {
         />
         }
       </div>
-      { /* Image editor. */ }
-      { (props.allowImageUpdate && state.showImageEditor && !cardIsTutorialCard) &&
-        <div id={`card-image-flow-${card.id}`} className="card-image-update-container" style={{width: `${imageEditorWidth}px`, display:"flex", alignItems:"center", flexDirection:"column" }}>
-          <table style={{width: "100%"}}>
-            <tbody>
-              <tr>
-                <td style={{display: "flex", position: "relative"}}>
-                  { /* Invisible spacer to maintain center alignment. */ }
-                  <div style={{visibility: 'hidden', flex: 1}} />
-                  { /* Centered content. */ }
-                  <p style={{color: "white", margin:0, position: 'absolute', top: '50%', transform: 'translateY(-50%)', width: '100%', textAlign: 'center'}}>Image Prompt</p>
-                  { /* Right-aligned button. */ }
-                  <div style={{flex: 1, display: 'flex', justifyContent: 'flex-end', margin:8}}>
-                    <Button size="small" type="default" icon={<CloseOutlined />} onClick={() => {setState(prev => ({ ...prev, showImageEditor: false }))}} />
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          { /* Image prompt text area. */ }
-          <table style={{marginLeft:10, marginRight:10, width:"-webkit-fill-available"}}>
-            <tbody>
-              <tr>
-                <td>
-                  <textarea disabled={state.isImageLoading} maxLength={1500} onChange={handleImagePromptUpdate} value={state.imageEditorPrompt} 
-                  style={{height:120, width:"100%", resize:"none"}} />
-                </td>
-                <td>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          { /* Generate buttons and loading icon. */ }
-          <table>
-            <tbody>
-              <tr>
-                <td>
-                  <Button 
-                    className={state.isImageLoading ? "custom-disabled-btn" : ""} 
-                    size="small" 
-                    type="primary" 
-                    disabled={state.isImageLoading} 
-                    style={{ marginTop:3}} 
-                    icon={<CaretRightOutlined />}
-                    onClick={() => generateNewImage()}>
-                    Generate Image
-                  </Button>
-                  <Button 
-                    className={state.isImageLoading ? "custom-disabled-btn" : ""} 
-                    size="small" 
-                    type="primary" 
-                    disabled={state.isImageLoading} 
-                    style={{marginLeft:10, marginTop:10}} 
-                    icon={<BulbOutlined />}
-                    onClick={() => getImagePrompt()}>
-                    Generate Prompt
-                  </Button>
-                </td>
-              </tr>
-              { state.isImageLoading &&
-              <tr style={{display:"grid", justifyContent:"center", marginTop:5}}>
-                <td>
-                  <LoadingSpinner isLoading={state.isImageLoading} />
-                </td>
-              </tr>
-              }
-            </tbody>
-          </table>
-          { state.imageEditorError &&
-          <div style={{marginLeft: 10}}>
-            <h3 style={{ color: 'red' }}>{state.imageEditorError}</h3>
-          </div>
-          }
-          { /* Card image gallery. */ }
-          <div>
-            <div style={{margin:10, display:"flex", flexWrap:"wrap", justifyContent:"center"}}>
-            {
-              state.availableImageUrls.map(imageUrl => (
-                <div style={{margin:3}}  className="image-hover-animation">
-                  <Image style={{border:"1px solid #cbcaca"}} height={90} width={90} preview={false} src={imageUrl.imageUrl ?? imageUrl.temporaryUrl} onClick={() => {updateImageUrl(imageUrl)}} />
-                </div>
-              ))
-            }
-            </div>
-          </div>
-        </div>
-      }
+      <ImageEditor
+        card={state.card}
+        isVisible={props.allowImageUpdate && state.showImageEditor && !cardIsTutorialCard}
+        onClose={() => setState(prev => ({ ...prev, showImageEditor: false }))}
+        onImageUpdate={updateImageUrl}
+        width={imageEditorWidth}
+        availableImageUrls={state.availableImageUrls}
+        onAvailableImageUrlsUpdate={(urls) => setState(prev => ({ ...prev, availableImageUrls: urls }))}
+      />
     </div>
   )
 

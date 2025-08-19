@@ -1,9 +1,12 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { copyTextToClipboard, getBaseUrl, isMobileDevice } from '../Utility';
+import { isMobileDevice } from '../Utility';
 import './style.css';
+import '../mtg-card.css';
 import TKCardCardRendererWrapper from './TkCardRendererWrapper';
 import { MagicCard } from '../models/MagicCard';
 import { CardMenu } from '../CardMenu';
+import { GenerateImageResponse } from '../CallAPI';
+import { ImageEditor } from '../ImageEditor';
 
 interface TkCardRendererProps {
   card: MagicCard;
@@ -19,8 +22,8 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
   cardWidth, 
   showCardMenu = true,
   allowImageUpdate = true,
-  allowImagePreview = true,
-  allowEdits = true 
+  allowImagePreview = false,
+  allowEdits = false 
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentWidth, setCurrentWidth] = useState(cardWidth);
@@ -29,15 +32,24 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
   const [actualSize, setActualSize] = useState({ width: cardWidth, height: cardWidth * 1.4 });
   const [actualSizeWithMenu, setActualSizeWithMenu] = useState({ width: cardWidth, height: cardWidth * 1.4 });
 
+  // Image editor state
+  const [showImageEditor, setShowImageEditor] = useState(false);
+  const [availableImageUrls, setAvailableImageUrls] = useState<GenerateImageResponse[]>(
+    card.cardFaces[0].alternativeImageUrls?.map(url => ({ imageUrl: url, temporaryUrl: url })) || []
+  );
+  const [cardData, setCardData] = useState(card);
+
   //const convertedCard = convertMagicCardToNewFormat(card);
   const scale = currentWidth * 1.7 / cardWidth;
+  const cardIsTutorialCard = cardData.databaseId === "-1";
+  const imageEditorWidth = isMobileDevice() ? currentWidth : currentWidth - 100;
 
   // For this card renderer, a CSS transform is used to scale the size, but CSS transform does not impact the size of the container objects, 
   // so we update manually to adjust for the transformed size.
   useEffect(() => {
     const measureActualSize = () => {
-      const cardElement = document.getElementById(`mtgcardrender-${card.id}`);
-      const cardMenu = document.getElementById(`mtgcardrender-menu-${card.id}`);
+      const cardElement = document.getElementById(`mtgcardrender-${cardData.id}`);
+      const cardMenu = document.getElementById(`mtgcardrender-menu-${cardData.id}`);
 
       if (cardElement && cardMenu) {
         const cardRect = cardElement.getBoundingClientRect();
@@ -55,7 +67,7 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
     // Measure after a short delay to ensure rendering is complete.
     const timeoutId = setTimeout(measureActualSize, 0);
     return () => clearTimeout(timeoutId);
-  }, [currentWidth, card.id]);
+  }, [currentWidth, cardData.id]);
 
   // Initialize size toggles.
   useEffect(() => {
@@ -85,10 +97,21 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
   };
 
   const handleArtDownload = () => {
-    const img = card.cardFaces[0].temporaryImageUrl ? card.cardFaces[0].temporaryImageUrl : card.cardFaces[0].imageUrl;
+    const img = cardData.cardFaces[0].temporaryImageUrl ? cardData.cardFaces[0].temporaryImageUrl : cardData.cardFaces[0].imageUrl;
     if (img) {
       window.open(img, '_blank');
     }
+  };
+
+  const toggleShowImageEditor = () => {
+    setShowImageEditor(!showImageEditor);
+  };
+
+  const updateImageUrl = (imageUrls: GenerateImageResponse) => {
+    const updatedCard = MagicCard.clone(cardData, true);
+    updatedCard.cardFaces[0].imageUrl = imageUrls.imageUrl;
+    updatedCard.cardFaces[0].temporaryImageUrl = imageUrls.temporaryUrl;
+    setCardData(updatedCard);
   };
 
   const downloadCard = async () => {
@@ -135,51 +158,64 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
   const showSizeAdjustmentButtons = !isMobileDevice() || Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0) > 900;
 
   return (
-    <div 
-      style={{
-        paddingTop: 20,
-        width: actualSize.width,
-        height: actualSizeWithMenu.height,
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
+    <div style={{display:"flex", flexWrap:"wrap"}}>
       <div 
-        style={{ 
+        style={{
+          paddingTop: 20,
           width: actualSize.width,
-          height: actualSize.height,
+          height: actualSizeWithMenu.height,
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
-        <div id={`mtgcardrender-${card.id}`} style={{ 
-          width: 'fit-content', 
-          transform: `scale(${scale})`, 
-          transformOrigin: 'top left' 
-        }}>
-          <TKCardCardRendererWrapper 
-            key={`${card.id}-${currentWidth}`} 
-            card={card} 
-            scale={1} 
-            renderMargin={1} 
-          />
+        <div 
+          style={{ 
+            width: actualSize.width,
+            height: actualSize.height,
+          }}
+        >
+          <div id={`mtgcardrender-${cardData.id}`} style={{ 
+            width: 'fit-content', 
+            transform: `scale(${scale})`, 
+            transformOrigin: 'top left' 
+          }}>
+            <TKCardCardRendererWrapper 
+              key={`${cardData.id}-${currentWidth}`} 
+              card={cardData} 
+              scale={1} 
+              renderMargin={1} 
+            />
+          </div>
         </div>
+          
+        {showCardMenu && (
+          <CardMenu
+            card={cardData}
+            showCardMenu={showCardMenu}
+            showSizeAdjustmentButtons={showSizeAdjustmentButtons}
+            cardMenuIconFontSize={cardMenuIconFontSize}
+            increaseSizeAllowed={increaseSizeAllowed}
+            decreaseSizeAllowed={decreaseSizeAllowed}
+            onIncreaseSize={increaseCardSize}
+            onDecreaseSize={decreaseCardSize}
+            sizeAdjustmentIncrement={60}
+            onDownloadCard={downloadCard}
+            onDownloadArt={handleArtDownload}
+            menuId={`mtgcardrender-menu-${cardData.id}`}
+            allowImageUpdate={allowImageUpdate && !cardIsTutorialCard}
+            onToggleImageEditor={toggleShowImageEditor}
+          />
+        )}
       </div>
-        
-      {showCardMenu && (
-        <CardMenu
-          card={card}
-          showCardMenu={showCardMenu}
-          showSizeAdjustmentButtons={showSizeAdjustmentButtons}
-          cardMenuIconFontSize={cardMenuIconFontSize}
-          increaseSizeAllowed={increaseSizeAllowed}
-          decreaseSizeAllowed={decreaseSizeAllowed}
-          onIncreaseSize={increaseCardSize}
-          onDecreaseSize={decreaseCardSize}
-          sizeAdjustmentIncrement={60}
-          onDownloadCard={downloadCard}
-          onDownloadArt={handleArtDownload}
-          menuId={`mtgcardrender-menu-${card.id}`}
-        />
-      )}
+      <ImageEditor
+        card={cardData}
+        isVisible={allowImageUpdate && showImageEditor && !cardIsTutorialCard}
+        onClose={() => setShowImageEditor(false)}
+        onImageUpdate={updateImageUrl}
+        width={imageEditorWidth}
+        availableImageUrls={availableImageUrls}
+        onAvailableImageUrlsUpdate={setAvailableImageUrls}
+      />
     </div>
   );
 };

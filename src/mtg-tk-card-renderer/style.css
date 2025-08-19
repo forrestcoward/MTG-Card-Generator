@@ -461,10 +461,8 @@
 }
 .type-line {
   font-size: calc(8pt + (100/53.8)vw);
-  /*/max-font-size: 10pt;*/
   flex-grow: 1;
   white-space: nowrap;
-  /*margin-top: -0.2mm;*/
   min-width: 0;
 }
 .set-icon-container {
@@ -502,7 +500,7 @@
   width: 53.8mm;
   height: 26mm;
   margin: auto;
-  padding: 1.5mm 1mm 1.5mm 1mm;
+  padding: 1.3mm .8mm 1.3mm .8mm;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;

@@ -49,14 +49,26 @@ export class MagicCard {
   }
 
   constructor(card: BasicCard) {
+    // Parse power and toughness from pt field if individual fields are not provided
+    let power = card.power;
+    let toughness = card.toughness;
+    
+    if (card.pt && (power === undefined || toughness === undefined)) {
+      const ptMatch = card.pt.match(/^(\d+)\/(\d+)$/);
+      if (ptMatch) {
+        power = parseInt(ptMatch[1], 10);
+        toughness = parseInt(ptMatch[2], 10);
+      }
+    }
+
     this.cardFaces = [
       {
         name: card.name,
         manaCost: card.manaCost,
         type: card.type,
         typeLine: card.typeLine,
-        power: card.power,
-        toughness: card.toughness,
+        power: power,
+        toughness: toughness,
         pt: card.pt,
         oracleText: card.oracleText,
         flavorText: card.flavorText,
