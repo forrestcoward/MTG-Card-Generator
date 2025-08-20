@@ -5,7 +5,7 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, './dist'),
     filename: 'bundle.js',
-    assetModuleFilename: 'images/[hash][ext][query]',
+    assetModuleFilename: 'assets/[hash][ext][query]',
     publicPath: '/', // Required for react router.
   },
   devServer: {
@@ -45,6 +45,13 @@ module.exports = {
       {
         test: /\.jpg/,
         type: 'asset/resource'
+      },
+      {
+        test: /\.(woff|woff2|eot|ttf|otf)$/,
+        type: 'asset/resource',
+        generator: {
+          filename: 'fonts/[name][ext]'
+        }
       }
     ],
   },

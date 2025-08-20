@@ -291,7 +291,7 @@ export function MTGCardGenerator() {
           }
           <p>Generate a Magic: The Gathering card...</p>
           <label>
-            <input type='text' className='userInputPrompt' placeholder={defaultPrompt} onChange={(event) => {setPrompt(event.target.value)}} value={prompt} />
+            <input id='userInputPrompt' className='userInputPrompt' type='text' placeholder={defaultPrompt} onChange={(event) => {setPrompt(event.target.value)}} value={prompt} />
           </label>
           <p></p>
           <table>
@@ -310,7 +310,7 @@ export function MTGCardGenerator() {
             </tbody>
           </table>
           <h2 style={{ color: 'red' }}>{currentError}</h2>
-          <textarea value={response} readOnly={true} rows={30} cols={120} hidden={true} />
+          <textarea id='resonseTextArea' value={response} readOnly={true} rows={30} cols={120} hidden={true} />
         </div>
         <div className='cardsContainer'>
         {
