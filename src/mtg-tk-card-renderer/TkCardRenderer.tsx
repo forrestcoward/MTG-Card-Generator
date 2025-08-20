@@ -72,6 +72,11 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
     return () => clearTimeout(timeoutId);
   }, [currentWidth, cardData.id, showFlavorText]);
 
+  // Listen for create image events from the card HTML
+  const handleCreateImage = () => {
+    setShowImageEditor(true);
+  };
+
   // Initialize size toggles.
   useEffect(() => {
     updateSizeToggles(currentWidth);
@@ -201,7 +206,7 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
           <div id={`mtgcardrender-${cardData.id}`} style={{ 
             width: 'fit-content', 
             transform: `scale(${scale})`, 
-            transformOrigin: 'top left' 
+            transformOrigin: 'top left'
           }}>
             <TKCardCardRendererWrapper 
               key={`${cardData.id}-${currentWidth}`} 
@@ -209,6 +214,8 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
               scale={1} 
               renderMargin={1}
               showFlavorText={showFlavorText}
+              onCreateImageClick={handleCreateImage}
+              isImageEditorOpen={showImageEditor}
             />
           </div>
         </div>

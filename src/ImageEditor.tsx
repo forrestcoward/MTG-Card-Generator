@@ -102,9 +102,9 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
         <tbody>
           <tr>
             <td style={{display: "flex", position: "relative"}}>
-              {/* Invisible spacer to maintain center alignment */}
+              {/* Invisible spacer to maintain center alignment. */}
               <div style={{visibility: 'hidden', flex: 1}} />
-              {/* Centered content */}
+              {/* Centered content. */}
               <p style={{
                 color: "white", 
                 margin: 0, 
@@ -116,7 +116,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
               }}>
                 Image Prompt
               </p>
-              {/* Right-aligned button */}
+              {/* Right-aligned button. */}
               <div style={{flex: 1, display: 'flex', justifyContent: 'flex-end', margin: 8}}>
                 <Button 
                   size="small" 
@@ -129,7 +129,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
           </tr>
         </tbody>
       </table>
-      {/* Image prompt text area */}
+      {/* Image prompt text area. */}
       <table style={{marginLeft: 10, marginRight: 10, width: "-webkit-fill-available"}}>
         <tbody>
           <tr>
@@ -147,7 +147,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
           </tr>
         </tbody>
       </table>
-      {/* Generate buttons and loading icon */}
+      {/* Generate buttons and loading icon. */}
       <table>
         <tbody>
           <tr>
@@ -190,7 +190,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
           <h3 style={{ color: 'red' }}>{imageEditorError}</h3>
         </div>
       )}
-      {/* Card image gallery */}
+      {/* Card image gallery. */}
       <div>
         <div style={{margin: 10, display: "flex", flexWrap: "wrap", justifyContent: "center"}}>
           {availableImageUrls.map((imageUrl, index) => (

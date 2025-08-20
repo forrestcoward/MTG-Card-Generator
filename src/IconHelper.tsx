@@ -1,4 +1,5 @@
-import { MagicCard } from "../models/MagicCard";
+import { MagicCard } from "./models/MagicCard";
+import { setIcons } from "./SetIcons";
 
 export const IconsHelper = (() => {
   const mana_symbols: Record<string, { svg_uri: string }> = {
@@ -107,97 +108,120 @@ export const IconsHelper = (() => {
 })();
 
 export class Sets {
-  setsWithIcons: string[];
+  private setIconMap: Map<string, Map<string, string>>; // setCode -> rarity -> fileExtension
+  private availableSets: string[];
+
   constructor() {
-    this.setsWithIcons = [
-      "med", "m3c", "mb2", "9ed", "cmd", "m11", "vma", "8ed", "mkc", "ddp", "m12",
-      "ons", "c18", "eld", "zen", "rvr", "evg", "bro", "bbd", "anb", "mm2", "ha4",
-      "uma", "dds", "dom", "m13", "scg", "otj", "dst", "dsc", "und", "c15", "ddm",
-      "gnt", "big", "mkm", "c19", "m19", "mat", "v14", "tpr", "con", "c17", "exp",
-      "m14", "woe", "mid", "w17", "wwk", "ema", "avr", "iko", "mh1", "afr", "thb",
-      "blc", "tsb", "ddd", "v13", "m21", "ha5", "dsk", "ncc", "ktk", "c16", "khm",
-      "nph", "som", "ddt", "jou", "mb1", "mm3", "mom", "pip", "5dn", "fdc", "fut",
-      "moc", "afc", "ddu", "ltc", "stx", "ths", "mma", "spg", "j22", "ddn", "unh",
-      "xln", "wot", "grn", "lgn", "rix", "dmu", "m15", "clu", "cns", "cc1", "h09",
-      "v09", "v12", "cn2", "ddo", "e02", "v17", "sis", "pd2", "bng", "bot", "otc",
-      "gn3", "cma", "vow", "me2", "lcc", "40k", "dis", "m10", "sta", "2xm", "ha3",
-      "chk", "me3", "mic", "soi", "dka", "v15", "gn2", "war", "j21", "voc", "ddj",
-      "jud", "znr", "ust", "acr", "c13", "ltr", "ddi", "g18", "plc", "rex", "rtr",
-      "w16", "ddc", "ala", "hou", "ori", "fdn", "10e", "c21", "j25", "dd2", "roe",
-      "sir", "ha2", "aer", "cm2", "snc", "ss2", "znc", "ddl", "gpt", "jmp", "v16",
-      "m20", "drb", "v11", "md1", "cmm", "lrw", "bok", "mor", "tsp", "mh2", "ima",
-      "nec", "eve", "dgm", "dde", "dmc", "tor", "brr", "2x2", "neo", "ha1", "rna",
-      "zne", "cmr", "ss1", "bfz", "dtk", "sch", "gtc", "c14", "mh3", "ddg", "mrd",
-      "csp", "a25", "frf", "c20", "ddk", "kld", "akr", "blb", "lci", "v10", "isd",
-      "akh", "sld", "sok", "cm1", "khc", "mul", "who", "ddq", "tsr", "woc", "clb",
-      "dmr", "me4", "klr", "pd3", "one", "onc", "ddf", "hop", "otp", "emn", "gs1",
-      "gdy", "ddh", "arb", "arc", "shm", "e01", "ddr", "pc2", "pca", "brc", "hbg",
-      "ogw", "rav", "mbs"
-    ];
+    this.setIconMap = new Map();
+    this.availableSets = [];
+    this.initializeSetIconMap();
   }
 
-  hasIcon(setCode?: string) {
+  private initializeSetIconMap() {
+    // Parse the setIcons array to create a map of set codes to available rarities with their file extensions.
+    setIcons.forEach(iconFileName => {
+      if (iconFileName.endsWith('.webp') || iconFileName.endsWith('.png')) {
+        const extension = iconFileName.endsWith('.webp') ? '.webp' : '.png';
+        const nameWithoutExtension = iconFileName.replace(extension, '');
+        const parts = nameWithoutExtension.split('_');
+        
+        if (parts.length >= 2) {
+          const setCode = parts.slice(0, -1).join('_'); // Handle set codes with underscores.
+          const rarity = parts[parts.length - 1];
+          
+          if (!this.setIconMap.has(setCode)) {
+            this.setIconMap.set(setCode, new Map());
+            this.availableSets.push(setCode);
+          }
+          
+          // Store the file extension for this set and rarity combination
+          this.setIconMap.get(setCode)!.set(rarity, extension);
+        }
+      }
+    });
+  }
+
+  hasIcon(setCode?: string, rarity?: string): boolean {
     if (!setCode) return false;
-    return this.setsWithIcons.includes(setCode);
+    
+    const setRarities = this.setIconMap.get(setCode);
+    if (!setRarities) return false;
+    
+    if (rarity) {
+      return setRarities.has(rarity);
+    }
+    
+    // If no rarity specified, return true if any rarity exists for this set.
+    return setRarities.size > 0;
   }
 
-  getRandomSetIcon(card: MagicCard) {
-    let attempts = 0;
-    while (attempts < 20) {
-      const randomSet = this.setsWithIcons[Math.floor(Math.random() * this.setsWithIcons.length)];
-      const iconPath = `assets/img/set_icons/${randomSet}_${card.rarity || "common"}.webp`;
+  getRandomSetIconInfo(rarity: string): { setCode: string; iconUrl: string } {
+    // Filter sets that have the requested rarity
+    const setsWithRarity = this.availableSets.filter(setCode => 
+      this.setIconMap.get(setCode)?.has(rarity)
+    );
+    
+    if (setsWithRarity.length === 0) {
+      // Fallback to common if the requested rarity isn't available
+      const setsWithCommon = this.availableSets.filter(setCode => 
+        this.setIconMap.get(setCode)?.has('common')
+      );
       
-      if (this.iconExists(iconPath)) {
-        return iconPath;
+      if (setsWithCommon.length === 0) {
+        return { setCode: "", iconUrl: "" };
       }
       
-      attempts++;
+      const randomSet = setsWithCommon[Math.floor(Math.random() * setsWithCommon.length)];
+      const extension = this.setIconMap.get(randomSet)?.get('common') || '.webp';
+      return {
+        setCode: randomSet,
+        iconUrl: `assets/img/set_icons/${randomSet}_common${extension}`
+      };
+    }
+    
+    const randomSet = setsWithRarity[Math.floor(Math.random() * setsWithRarity.length)];
+    const extension = this.setIconMap.get(randomSet)?.get(rarity) || '.webp';
+    return {
+      setCode: randomSet,
+      iconUrl: `assets/img/set_icons/${randomSet}_${rarity}${extension}`
+    };
+  }
+
+  getSetIconUri(card: MagicCard): string {
+    if (card?.setIcon) {
+      return card.setIcon;
+    } 
+    
+    if (card?.set) {
+      const rarity = card.rarity || "common";
+      
+      // Check if we have the exact icon for this set and rarity
+      if (this.hasIcon(card.set, rarity)) {
+        const extension = this.setIconMap.get(card.set)?.get(rarity) || '.webp';
+        return `assets/img/set_icons/${card.set}_${rarity}${extension}`;
+      }
+      
+      // Fallback to common if the specific rarity isn't available
+      if (this.hasIcon(card.set, "common")) {
+        const extension = this.setIconMap.get(card.set)?.get('common') || '.webp';
+        return `assets/img/set_icons/${card.set}_common${extension}`;
+      }
     }
     
     return "";
   }
 
-  getRandomSetIconInfo(rarity: string): { setCode: string; iconUrl: string } {
-    let attempts = 0;
-    while (attempts < 20) {
-      const randomSet = this.setsWithIcons[Math.floor(Math.random() * this.setsWithIcons.length)];
-      const iconPath = `assets/img/set_icons/${randomSet}_${rarity || "common"}.webp`;
-      
-      if (this.iconExists(iconPath)) {
-        return {
-          setCode: randomSet,
-          iconUrl: iconPath
-        };
-      }
-      
-      attempts++;
-    }
-    
-    return {
-      setCode: "",
-      iconUrl: ""
-    };
+  getAvailableRarities(setCode: string): string[] {
+    const rarities = this.setIconMap.get(setCode);
+    return rarities ? Array.from(rarities.keys()) : [];
   }
 
-  private iconExists(path: string): boolean {
-    try {
-      const request = new XMLHttpRequest();
-      request.open('HEAD', path, false);
-      request.send();
-      return request.status === 200;
-    } catch {
-      return false;
-    }
+  getIconExtension(setCode: string, rarity: string): string {
+    return this.setIconMap.get(setCode)?.get(rarity) || '.webp';
   }
 
-  getSetIconUri(card: MagicCard) {
-    if (card && card.setIcon) {
-      return card.setIcon;
-    } else if (card && this.hasIcon(card.set)) {
-      return `assets/img/set_icons/${card.set}_${card.rarity || "common"}.webp`;
-    } else {
-      return "";
-    }
+  getAllAvailableSets(): string[] {
+    return [...this.availableSets];
   }
 }
 

@@ -9,6 +9,8 @@ interface TKCardCardRendererWrapperProps {
   renderMargin?: number;
   className?: string;
   showFlavorText?: boolean;
+  onCreateImageClick?: () => void;
+  isImageEditorOpen?: boolean;
 }
 
 /**
@@ -16,7 +18,15 @@ interface TKCardCardRendererWrapperProps {
  * It mounts the produced HTMLElement into a container div so the original
  * HTML/CSS/JS behavior is preserved while providing a React component API.
  */
-export const TKCardCardRendererWrapper : React.FC<TKCardCardRendererWrapperProps> = ({ card, scale = 1, renderMargin = 1, className, showFlavorText = true }) => {
+export const TKCardCardRendererWrapper : React.FC<TKCardCardRendererWrapperProps> = ({ 
+  card, 
+  scale = 1, 
+  renderMargin = 1, 
+  className, 
+  showFlavorText = true, 
+  onCreateImageClick,
+  isImageEditorOpen = false
+}) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -31,7 +41,7 @@ export const TKCardCardRendererWrapper : React.FC<TKCardCardRendererWrapperProps
     // Store the showFlavorText state in a temporary property that RenderCard can access
     (modifiedCard.cardFaces[0] as any).tempShowFlavorText = showFlavorText;
 
-    const el = RenderCard(modifiedCard, scale, renderMargin);
+    const el = RenderCard(modifiedCard, scale, renderMargin, onCreateImageClick, isImageEditorOpen);
     if (el instanceof HTMLElement) {
       // Ensure the top-level wrapper keeps any caller-provided className
       if (className) el.classList.add(className);
@@ -43,9 +53,8 @@ export const TKCardCardRendererWrapper : React.FC<TKCardCardRendererWrapperProps
       container.appendChild(err);
     }
 
-
     // No cleanup necessary; the DOM node is replaced on next render via innerHTML = ''.
-  }, [card, scale, renderMargin, className, showFlavorText]);
+  }, [card, scale, renderMargin, className, showFlavorText, onCreateImageClick, isImageEditorOpen]);
 
   return <div ref={containerRef} />;
 };

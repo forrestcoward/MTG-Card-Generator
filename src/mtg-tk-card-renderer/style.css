@@ -229,7 +229,7 @@
   left: 31.8mm;
   outline-offset: 0;
   overflow: hidden;
-  background-color: yellow;
+  background-color: black;
   background-size: auto 100% !important;
   background-position: center !important;
 }
@@ -437,11 +437,49 @@
   height: 39.9mm;
   margin: auto;
   background-image: var(--illustration-image);
-  background-color: yellow;
+  background-color: black;
   background-size: calc(var(--illustration-scale, 1) * 100%);
   background-position: var(--illustration-position-x, 0) var(--illustration-position-y, 0);
   background-repeat: no-repeat;
   cursor: grab;
+}
+
+/* Create Image overlay and button styles */
+.create-image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: black;
+  color: white;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 5px;
+  z-index: 10001;
+}
+
+.create-image-button {
+  background: #1890ff;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: inherit;
+}
+
+.create-image-button:hover {
+  background: #40a9ff;
+}
+
+.create-image-button:active {
+  background: #096dd9;
 }
 
 /* ======================== MID LINE & OTHERS ======================== */

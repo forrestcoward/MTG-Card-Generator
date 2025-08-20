@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Image } from 'antd';
-import { IconsHelper, setsHelper } from './Helpers';
+import { IconsHelper, setsHelper } from '../IconHelper';
 import { CardFace } from '../models/CardFace';
 import { MagicCard } from '../models/MagicCard';
 
@@ -82,6 +82,7 @@ interface CardProps {
   };
   set_icon_uri: string;
   archive_frame_colors: ArchiveFrameColors;
+  has_image: boolean;
 }
 
 /* =======================================================
@@ -564,6 +565,7 @@ function computeCardProps(card: MagicCard, currentFace: number = 0): CardProps {
   const artCard = props.card_face;
 
   const artUrl = props.card_face.imageUrl;
+  const hasImage = !!(artUrl && artUrl.trim() !== "");
   /*
   let artUrl = "";
   if (artCard.image_uris && artCard.image_uris.art_crop && artCard.image_uris.art_crop.trim() !== "") {
@@ -573,7 +575,7 @@ function computeCardProps(card: MagicCard, currentFace: number = 0): CardProps {
   }
   */
 
-  props.illustration = `url("${artUrl}")`;
+  props.illustration = hasImage ? `url("${artUrl}")` : 'none';
   props.illustration_scale = artCard.illustration_scale || 1;
   if (artCard.illustration_position) {
     props.illustration_position = {
@@ -586,6 +588,9 @@ function computeCardProps(card: MagicCard, currentFace: number = 0): CardProps {
 
   // Set icon URI (using the pre-selected setIconUrl from the card).
   props.set_icon_uri = card.setIconUrl || "";
+
+  // Store whether the card has an image
+  props.has_image = hasImage;
 
   // Archive frame colors (simplified).
   const archiveColor = (props.card_face.color_identity && props.card_face.color_identity[0]) ? props.card_face.color_identity[0] : "Gold";
@@ -638,7 +643,15 @@ function setCardStyles(cardEl: HTMLElement, props: CardProps, scale: number, ren
 function buildPlaneswalkerCardHTML(props: CardProps, card: MagicCard): string {
   return `
     <div class="inner-background"></div>
-    <div class="illustration behind-textbox"></div>
+    <div class="illustration behind-textbox">
+      ${!props.has_image ? `
+        <div class="create-image-overlay">
+          <button class="create-image-button" data-card-id="${card.id}">
+            ▶ Create Image
+          </button>
+        </div>
+      ` : ''}
+    </div>
     <div class="planeswalker-oracle-bg"></div>
     <div class="inner-frame"></div>
     <div class="legendary-crown" style="display: none;"></div>
@@ -709,7 +722,15 @@ function buildSagaCardHTML(props: CardProps, card: MagicCard): string {
 
   return `
     <div class="inner-background"></div>
-    <div class="illustration"></div>
+    <div class="illustration">
+      ${!props.has_image ? `
+        <div class="create-image-overlay">
+          <button class="create-image-button" data-card-id="${card.id}">
+            ▶ Create Image
+          </button>
+        </div>
+      ` : ''}
+    </div>
     <div class="inner-frame"></div>
     <div class="legendary-crown" style="${props.has_legendary_crown ? '' : 'display: none;'}"></div>
     <div class="top-line">
@@ -763,10 +784,12 @@ function buildSagaCardHTML(props: CardProps, card: MagicCard): string {
 interface DefaultCardProps {
   cardProps: CardProps;
   card: MagicCard;
+  onCreateImageClick?: () => void;
+  isImageEditorOpen?: boolean;
 }
 
 /**
- * Custom hook for text resizing functionality
+ * Custom hook for text resizing functionality.
  */
 function useTextResizing(cardProps: CardProps) {
   const cardNameRef = useRef<HTMLSpanElement>(null);
@@ -881,7 +904,7 @@ function useTextResizing(cardProps: CardProps) {
   return { cardNameRef, typeLineRef, oracleRef };
 }
 
-function DefaultCard({ cardProps, card }: DefaultCardProps): React.ReactElement {
+function DefaultCard({ cardProps, card, onCreateImageClick, isImageEditorOpen = false }: DefaultCardProps): React.ReactElement {
   const { cardNameRef, typeLineRef, oracleRef } = useTextResizing(cardProps);
 
   // Extract the URL from the CSS url() string
@@ -914,7 +937,19 @@ function DefaultCard({ cardProps, card }: DefaultCardProps): React.ReactElement 
         )}
       </div>
       <div className='illustration'>
-        <Image preview={true} loading="lazy" height={"100%"} width={"100%"} src={getImageUrl(cardProps.illustration)} />
+        {cardProps.illustration && cardProps.illustration !== 'none' && cardProps.illustration !== 'url("")' && (
+          <Image preview={true} loading="lazy" height={"100%"} width={"100%"} src={getImageUrl(cardProps.illustration)} />
+        )}
+        {!cardProps.has_image && !isImageEditorOpen && (
+          <div className="create-image-overlay">
+            <button 
+              className="create-image-button" 
+              onClick={onCreateImageClick}
+            >
+              ▶ Create Image
+            </button>
+          </div>
+        )}
       </div>
       <div ref={oracleRef} className="oracle normal-oracle">
         {cardProps.oracle_lines.map((line, index) => (
@@ -956,7 +991,7 @@ function DefaultCard({ cardProps, card }: DefaultCardProps): React.ReactElement 
   );
 }
 
-function RenderCard(card: MagicCard, scale: number = 1, renderMargin: number = 1): HTMLElement {
+function RenderCard(card: MagicCard, scale: number = 1, renderMargin: number = 1, onCreateImageClick?: () => void, isImageEditorOpen: boolean = false): HTMLElement {
   const currentFace = 0;
   const props = computeCardProps(card, currentFace);
   const cardEl = document.createElement("div");
@@ -983,30 +1018,35 @@ function RenderCard(card: MagicCard, scale: number = 1, renderMargin: number = 1
     cardEl.innerHTML = buildPlaneswalkerCardHTML(props, card);
     // Set up text resizing for planeswalker cards
     setupTextResizing(cardEl, props);
+    // Set up click handler for the create image button
+    setupCreateImageHandler(cardEl, onCreateImageClick);
   } else if (props.is_saga) {
     cardEl.innerHTML = buildSagaCardHTML(props, card);
     // Set up text resizing for saga cards
     setupTextResizing(cardEl, props);
+    // Set up click handler for the create image button
+    setupCreateImageHandler(cardEl, onCreateImageClick);
   } else {
     // Use React component for default cards
     const reactContainer = document.createElement('div');
     cardEl.appendChild(reactContainer);
     const root = createRoot(reactContainer);
-    root.render(React.createElement(DefaultCard, { cardProps: props, card: card }));
+    root.render(React.createElement(DefaultCard, { cardProps: props, card: card, onCreateImageClick: onCreateImageClick, isImageEditorOpen: isImageEditorOpen }));
   }
-
-  // Set illustration background
-  /*
-  const illustrationDiv = cardEl.querySelector(".illustration, .illustration.behind-textbox") as HTMLElement;
-  if (illustrationDiv) {
-    illustrationDiv.style.backgroundImage = props.illustration;
-    illustrationDiv.style.backgroundSize = `calc(${props.illustration_scale} * 100%)`;
-    illustrationDiv.style.backgroundPosition = `${props.illustration_position.x} ${props.illustration_position.y}`;
-    illustrationDiv.style.backgroundRepeat = "no-repeat";
-  }
-  */
 
   return cardEl;
+}
+
+/**
+ * Sets up click handler for create image buttons in HTML-generated cards
+ */
+function setupCreateImageHandler(cardEl: HTMLElement, onCreateImageClick?: () => void): void {
+  if (!onCreateImageClick) return;
+  
+  const createImageButton = cardEl.querySelector('.create-image-button') as HTMLButtonElement;
+  if (createImageButton) {
+    createImageButton.addEventListener('click', onCreateImageClick);
+  }
 }
 
 export { RenderCard, DefaultCard };

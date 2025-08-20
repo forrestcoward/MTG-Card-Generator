@@ -2,7 +2,7 @@ import { getBaseUrl, getRandomInt } from "../Utility"
 import { BasicCard } from "./BasicCard"
 import { CardFace } from "./CardFace";
 import { ColorIdentity } from "./ColorIdentity"
-import { setsHelper } from "../mtg-tk-card-renderer/Helpers"
+import { setsHelper } from "../IconHelper"
 
 export class MagicCard {
   cardFaces: CardFace[];
@@ -43,12 +43,12 @@ export class MagicCard {
       userPrompt: this.userPrompt,
       explanation: this.explanation,
       funnyExplanation: this.funnyExplanation,
-      alternativeImageUrls: [],
+      alternativeImageUrls: this.cardFaces[0].alternativeImageUrls,
       url: this.url
     };
   }
 
-  constructor(card: BasicCard) {
+  constructor(card: BasicCard, selectSetIcon: boolean = true) {
     // Parse power and toughness from pt field if individual fields are not provided.
     let power = card.power;
     let toughness = card.toughness;
@@ -59,6 +59,15 @@ export class MagicCard {
         power = parseInt(ptMatch[1], 10);
         toughness = parseInt(ptMatch[2], 10);
       }
+    }
+
+    // Add the current image to the list of alternative images so it can be selected if newer images are generated.
+    var alternativeImageUrls = []
+    alternativeImageUrls.push(...card.alternativeImageUrls)
+    if (card.imageUrl) {
+      alternativeImageUrls.push(card.imageUrl);
+    } else if (card.temporaryImageUrl) {
+      alternativeImageUrls.push(card.temporaryImageUrl);
     }
 
     this.cardFaces = [
@@ -74,7 +83,7 @@ export class MagicCard {
         flavorText: card.flavorText,
         imageUrl: card.imageUrl,
         temporaryImageUrl: card.temporaryImageUrl,
-        alternativeImageUrls: card.alternativeImageUrls
+        alternativeImageUrls: alternativeImageUrls
       }
     ];
 
@@ -97,9 +106,11 @@ export class MagicCard {
     this.frameEffects = ['']
     this.copyright = ''
 
-    const setIconInfo = setsHelper.getRandomSetIconInfo(this.rarity);
-    this.setIcon = setIconInfo.setCode;
-    this.setIconUrl = setIconInfo.iconUrl;
+    if (selectSetIcon) {
+      const setIconInfo = setsHelper.getRandomSetIconInfo(this.rarity);
+      this.setIcon = setIconInfo.setCode;
+      this.setIconUrl = setIconInfo.iconUrl;
+    }
 
     this.set = 'GEN'
     this.artist = 'AI Generated'
@@ -108,7 +119,8 @@ export class MagicCard {
 
   static clone(card: MagicCard, sameId: boolean): MagicCard {
     let basicCard: BasicCard = card.toBasicCard()
-    let newCard = new MagicCard(basicCard)
+    const selectSetIcon = false
+    let newCard = new MagicCard(basicCard, selectSetIcon)
     newCard.collectorNumber = card.collectorNumber
     newCard.setIcon = card.setIcon
     newCard.setIconUrl = card.setIconUrl
