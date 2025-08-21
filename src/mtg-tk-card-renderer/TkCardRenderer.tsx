@@ -1,8 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { isMobileDevice } from '../Utility';
-import './style.css';
+import './tk-card-renderer-style.css';
 import '../mtg-card.css';
-import TKCardCardRendererWrapper from './TkCardRendererWrapper';
+import { MTGCard } from './RenderCard';
 import { MagicCard } from '../models/MagicCard';
 import { CardMenu } from '../CardMenu';
 import { GenerateImageResponse } from '../CallAPI';
@@ -117,25 +117,6 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
 
   const toggleFlavorText = () => {
     setShowFlavorText(!showFlavorText);
-    // Trigger remeasurement after state change
-    //setTimeout(() => {
-    /*
-      const cardElement = document.getElementById(`mtgcardrender-${cardData.id}`);
-      const cardMenu = document.getElementById(`mtgcardrender-menu-${cardData.id}`);
-
-      if (cardElement && cardMenu) {
-        const cardRect = cardElement.getBoundingClientRect();
-        const menuRect = cardMenu.getBoundingClientRect();
-        const newHeight = cardRect.height + menuRect.height;
-        setActualSize({ width: cardRect.width, height: cardRect.height });
-        setActualSizeWithMenu({ width: cardRect.width, height: newHeight });
-      } else if (cardElement) {
-        const cardRect = cardElement.getBoundingClientRect();
-        setActualSize({ width: cardRect.width, height: cardRect.height });
-        setActualSizeWithMenu({ width: cardRect.width, height: cardRect.height });
-      }
-        */
-    //}, 0);
   };
 
   const updateImageUrl = (imageUrls: GenerateImageResponse) => {
@@ -210,7 +191,7 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
             transform: `scale(${scale})`, 
             transformOrigin: 'top left'
           }}>
-            <TKCardCardRendererWrapper 
+            <MTGCard 
               key={`${cardData.id}-${currentWidth}`} 
               card={cardData} 
               scale={1} 

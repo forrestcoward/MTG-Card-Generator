@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Image } from 'antd';
-import { IconsHelper, setsHelper } from '../IconHelper';
+import { IconsHelper, baseAssetUrl } from '../IconHelper';
 import { CardFace } from '../models/CardFace';
 import { MagicCard } from '../models/MagicCard';
 
@@ -85,11 +85,6 @@ interface CardProps {
   has_image: boolean;
 }
 
-/* =======================================================
- * Utility Functions
- * =======================================================
- */
-
 /**
  * Replaces mana symbols in the oracle text with <img> tags
  * and wraps text in parentheses with a span.
@@ -115,175 +110,6 @@ function contains(str: string | undefined, search: string | string[]): boolean {
   if (Array.isArray(search))
     return search.some(s => str.toLowerCase().includes(s.toLowerCase()));
   return str.toLowerCase().includes(search.toLowerCase());
-}
-
-/* =======================================================
- * Text Resizing Functions
- * =======================================================
- */
-
-/**
- * Resizes oracle text to fit within its container.
- */
-function resizeOracleText(oracle: HTMLElement, cardEl: HTMLElement, needsSpace: boolean): void {
-  // Start with a reasonable font size
-  let fontSize = 1.0;
-  oracle.style.fontSize = `${fontSize}em`;
-
-  // Get container dimensions
-  const boxHeight = oracle.clientHeight;
-  const boxWidth = oracle.clientWidth;
-
-  // Reduce font size until content fits
-  while ((oracle.scrollHeight > boxHeight || oracle.scrollWidth > boxWidth) && fontSize > 0.5) {
-    fontSize -= 0.05;
-    oracle.style.fontSize = `${fontSize}em`;
-  }
-
-  // If we need space for P/T box, reduce slightly more
-  if (needsSpace && oracle.scrollHeight > boxHeight * 0.9) {
-    fontSize *= 0.95;
-    oracle.style.fontSize = `${fontSize}em`;
-  }
-}
-
-/**
- * Creates and sets up observers for text resizing.
- * This version ensures proper initial sizing and subsequent updates.
- */
-function setupTextResizing(cardEl: HTMLElement, props: CardProps): void {
-  // Create a function to handle initial setup once the DOM is ready
-  const setupElements = (): void => {
-    // Resize card name
-    const nameEl = cardEl.querySelector('.card-name') as HTMLElement;
-    if (nameEl) {
-      const nameResizeObserver = new ResizeObserver(() => {
-        resizeTextHorizontally(nameEl);
-      });
-      nameResizeObserver.observe(nameEl);
-      // Initial resize
-      resizeTextHorizontally(nameEl);
-
-      // Also observe for content changes
-      const nameObserver = new MutationObserver(() => resizeTextHorizontally(nameEl));
-      nameObserver.observe(nameEl, { childList: true, subtree: true, characterData: true });
-    }
-
-    // Resize type line
-    const typeLineEl = cardEl.querySelector('.type-line') as HTMLElement;
-    if (typeLineEl) {
-      const typeLineResizeObserver = new ResizeObserver(() => {
-        resizeTextHorizontally(typeLineEl);
-      });
-      typeLineResizeObserver.observe(typeLineEl);
-      // Initial resize
-      resizeTextHorizontally(typeLineEl);
-
-      // Also observe for content changes
-      const typeLineObserver = new MutationObserver(() => resizeTextHorizontally(typeLineEl));
-      typeLineObserver.observe(typeLineEl, { childList: true, subtree: true, characterData: true });
-    }
-
-    // Handle oracle text
-    if (!props.is_planeswalker && !props.is_saga) {
-      const oracle = cardEl.querySelector('.oracle') as HTMLElement;
-      if (oracle) {
-        // Check if card needs bottom space
-        const needsSpace = props.card_face.power !== undefined &&
-            props.card_face.toughness !== undefined;
-
-        const oracleResizeObserver = new ResizeObserver(() => {
-          resizeOracleText(oracle, cardEl, needsSpace);
-        });
-        oracleResizeObserver.observe(oracle);
-        // Initial resize
-        resizeOracleText(oracle, cardEl, needsSpace);
-
-        // Also observe for content changes
-        const oracleObserver = new MutationObserver(() =>
-            resizeOracleText(oracle, cardEl, needsSpace)
-        );
-        oracleObserver.observe(oracle, {
-          childList: true,
-          subtree: true,
-          characterData: true
-        });
-      }
-    } else if (props.is_saga) {
-      // For saga cards, handle saga oracle text resizing
-      const sagaReminderEl = cardEl.querySelector('.saga-reminder') as HTMLElement;
-      if (sagaReminderEl) {
-        const reminderResizeObserver = new ResizeObserver(() => {
-          let fontSize = 7.3;
-          sagaReminderEl.style.fontSize = `${fontSize}pt`;
-          while (sagaReminderEl.scrollWidth > sagaReminderEl.clientWidth && fontSize > 5) {
-            fontSize -= 0.2;
-            sagaReminderEl.style.fontSize = `${fontSize}pt`;
-          }
-        });
-        reminderResizeObserver.observe(sagaReminderEl);
-        // Initial resize
-        let fontSize = 7.3;
-        sagaReminderEl.style.fontSize = `${fontSize}pt`;
-        //setTimeout(() => {
-          while (sagaReminderEl.scrollWidth > sagaReminderEl.clientWidth && fontSize > 5) {
-            fontSize -= 0.2;
-            sagaReminderEl.style.fontSize = `${fontSize}pt`;
-          }
-        //}, 0);
-      }
-
-      const sagaStepsEl = cardEl.querySelector('.saga-steps') as HTMLElement;
-      if (sagaStepsEl) {
-        const stepsResizeObserver = new ResizeObserver(() => {
-          let fontSize = 6.48;
-          sagaStepsEl.style.fontSize = `${fontSize}pt`;
-          while (sagaStepsEl.scrollHeight > sagaStepsEl.clientHeight && fontSize > 4.5) {
-            fontSize -= 0.2;
-            sagaStepsEl.style.fontSize = `${fontSize}pt`;
-          }
-        });
-        stepsResizeObserver.observe(sagaStepsEl);
-        // Initial resize
-        let fontSize = 6.48;
-        sagaStepsEl.style.fontSize = `${fontSize}pt`;
-        //setTimeout(() => {
-          while (sagaStepsEl.scrollHeight > sagaStepsEl.clientHeight && fontSize > 4.5) {
-            fontSize -= 0.2;
-            sagaStepsEl.style.fontSize = `${fontSize}pt`;
-          }
-        //}, 0);
-      }
-    }
-  };
-
-  // Ensure elements are in DOM before setting up observers
-  if (document.readyState === 'complete') {
-    setupElements();
-  } else {
-    // Wait for DOM to be ready
-    window.addEventListener('load', setupElements);
-  }
-}
-
-/**
- * Resizes text horizontally until it fits within its container.
- */
-function resizeTextHorizontally(el: HTMLElement): void {
-  // Force a reflow to ensure we have correct dimensions
-  void el.offsetHeight;
-
-  const computedStyle = window.getComputedStyle(el);
-  let fontSize = parseFloat(computedStyle.fontSize);
-  el.style.fontSize = fontSize + "px";
-
-  // Add a small delay to ensure styles are applied
-  //setTimeout(() => {
-    while (el.scrollWidth > el.clientWidth && fontSize > 4) {
-      fontSize -= 0.5;
-      el.style.fontSize = fontSize + "px";
-    }
-  //}, 0);
 }
 
 /* =======================================================
@@ -414,8 +240,7 @@ function computeCardProps(card: MagicCard, currentFace: number = 0): CardProps {
   }
 
   // Copyright.
-  props.copyright =
-      card.copyright || `™ & © ${new Date().getFullYear()} MTG Card Generator`;
+  props.copyright = card.copyright || `™ & © ${new Date().getFullYear()} MTG Card Generator`;
 
   // Compute colors.
   function computeColors(face: CardFace): string {
@@ -486,7 +311,7 @@ function computeCardProps(card: MagicCard, currentFace: number = 0): CardProps {
   else if (card.frameEffects && card.frameEffects.includes("compasslanddfc") && currentFace === 1)
     folder = "ixalan_bg";
   else folder = "bg";
-  props.background = `url(https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/${folder}/${props.is_vehicle ? "Vehicle" : props.boxes_colors}.webp)`;
+  props.background = `url(${baseAssetUrl}img/${folder}/${props.is_vehicle ? "Vehicle" : props.boxes_colors}.webp)`;
 
   // Choose frame image folder.
   if (props.is_adventure) folder = "adventure_frames";
@@ -500,7 +325,7 @@ function computeCardProps(card: MagicCard, currentFace: number = 0): CardProps {
   const frameColor = (props.colors === "Artifact" && props.card_face.colors && props.card_face.colors.length === 1)
       ? props.card_face.colors[0]
       : props.colors;
-  props.frame = `url(https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/${folder}/${frameColor}.webp)`;
+  props.frame = `url(${baseAssetUrl}img/${folder}/${frameColor}.webp)`;
 
   // Boxes and mid_boxes images.
   folder = props.is_planeswalker
@@ -510,31 +335,31 @@ function computeCardProps(card: MagicCard, currentFace: number = 0): CardProps {
           : props.extended_art && !props.is_class
               ? "extended_boxes"
               : "boxes";
-  props.boxes = `url(https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/${folder}/${props.boxes_colors}.webp)`;
+  props.boxes = `url(${baseAssetUrl}img/${folder}/${props.boxes_colors}.webp)`;
   props.mid_boxes = props.extended_art && !props.is_planeswalker && !props.is_class
-      ? `url(https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/extended_boxes/${props.boxes_colors}.webp)`
+      ? `url(${baseAssetUrl}img/extended_boxes/${props.boxes_colors}.webp)`
       : props.boxes;
 
   // Legendary crown.
   const crownFolder = props.extended_art ? "extended_legendary_crowns" : "legendary_crowns";
-  props.legendary_crown = `url(https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/${crownFolder}/${props.boxes_colors}.webp)`;
+  props.legendary_crown = `url(${baseAssetUrl}img/${crownFolder}/${props.boxes_colors}.webp)`;
 
   // Power/Toughness box.
   const ptFolder = (props.is_mdfc || props.is_transform) && currentFace === 1 ? "transform_back_pt_boxes" : "pt_boxes";
-  props.pt_box = `url(https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/${ptFolder}/${props.is_vehicle ? "Vehicle" : props.boxes_colors}.webp)`;
+  props.pt_box = `url(${baseAssetUrl}img/${ptFolder}/${props.is_vehicle ? "Vehicle" : props.boxes_colors}.webp)`;
 
   // Saga text box.
-  props.saga_text_box = `url(https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/saga_textboxes/${props.boxes_colors}.webp)`;
+  props.saga_text_box = `url(${baseAssetUrl}img/saga_textboxes/${props.boxes_colors}.webp)`;
 
   // MDFC icon and hint.
-  props.mdfc_icon = `url(https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/mdfc${currentFace === 0 ? "" : "_back"}_icons/${props.boxes_colors === "Land" ? props.colors : props.boxes_colors}.webp)`;
+  props.mdfc_icon = `url(${baseAssetUrl}img/mdfc${currentFace === 0 ? "" : "_back"}_icons/${props.boxes_colors === "Land" ? props.colors : props.boxes_colors}.webp)`;
   let hintColors = props.colors;
   if (hintColors.length > 1 && hintColors.length < 5) hintColors = "Gold";
-  props.mdfc_hint = `url(https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/mdfc${currentFace === 0 ? "" : "_back"}_hints/${hintColors}.webp)`;
+  props.mdfc_hint = `url(${baseAssetUrl}img/mdfc${currentFace === 0 ? "" : "_back"}_hints/${hintColors}.webp)`;
   props.mdfc_hint_color = currentFace === 0 ? "white" : "black";
 
   // Transform icon.
-  props.transform_icon = `url(https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/transform${currentFace === 0 ? "" : "_back"}_icons/${(card.frameEffects && card.frameEffects[0]) ? card.frameEffects[0] : "sunmoondfc"}.webp)`;
+  props.transform_icon = `url(${baseAssetUrl}img/transform${currentFace === 0 ? "" : "_back"}_icons/${(card.frameEffects && card.frameEffects[0]) ? card.frameEffects[0] : "sunmoondfc"}.webp)`;
 
   // Determine power/toughness box color and top/mid line colors.
   props.pt_box_color = props.is_vehicle || (props.is_transform && currentFace === 1) ? "white" : "black";
@@ -555,7 +380,7 @@ function computeCardProps(card: MagicCard, currentFace: number = 0): CardProps {
     const sorted = Array.from(props.card_face.color_indicator)
         .sort((a, b) => "WUBRG".indexOf(a) - "WUBRG".indexOf(b))
         .join("");
-    props.color_indicator = `https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/color_indicators/${sorted}.webp`;
+    props.color_indicator = `${baseAssetUrl}img/color_indicators/${sorted}.webp`;
   } else {
     props.color_indicator = "";
   }
@@ -571,7 +396,7 @@ function computeCardProps(card: MagicCard, currentFace: number = 0): CardProps {
   if (artCard.image_uris && artCard.image_uris.art_crop && artCard.image_uris.art_crop.trim() !== "") {
     artUrl = artCard.image_uris.art_crop;
   } else {
-    artUrl = "assets/img/placeholder-art.webp";
+    artUrl = `${baseAssetUrl}img/placeholder-art.webp`;
   }
   */
 
@@ -611,179 +436,12 @@ function computeCardProps(card: MagicCard, currentFace: number = 0): CardProps {
  */
 
 /**
- * Sets CSS custom properties on the card element based on computed props.
+ * React component props for rendering any type of MTG card component.
  */
-function setCardStyles(cardEl: HTMLElement, props: CardProps, scale: number, renderMargin: number): void {
-  cardEl.style.setProperty("--bg-image", props.background);
-  cardEl.style.setProperty("--frame-image", props.frame);
-  cardEl.style.setProperty("--boxes-image", props.boxes);
-  cardEl.style.setProperty("--mid-boxes-image", props.mid_boxes);
-  cardEl.style.setProperty("--top-line-color", props.top_line_color);
-  cardEl.style.setProperty("--mid-line-color", props.mid_line_color);
-  cardEl.style.setProperty("--pt-box-image", props.pt_box);
-  cardEl.style.setProperty("--pt-box-color", props.pt_box_color);
-  cardEl.style.setProperty("--saga-text-box-image", props.saga_text_box);
-  cardEl.style.setProperty("--mdfc-icon-image", props.mdfc_icon);
-  cardEl.style.setProperty("--mdfc-hint-image", props.mdfc_hint);
-  cardEl.style.setProperty("--mdfc-hint-color", props.mdfc_hint_color);
-  cardEl.style.setProperty("--transform-icon-image", props.transform_icon);
-  cardEl.style.setProperty("--renderMargin", renderMargin.toString());
-  cardEl.style.setProperty("--scale", scale.toString());
-  cardEl.style.setProperty("--frame-colors-left", props.archive_frame_colors.left.primary);
-  cardEl.style.setProperty("--frame-colors-right", props.archive_frame_colors.right.primary);
-  cardEl.style.setProperty("--illustration-image", props.illustration);
-  cardEl.style.setProperty("--illustration-position-x", props.illustration_position.x);
-  cardEl.style.setProperty("--illustration-position-y", props.illustration_position.y);
-  cardEl.style.setProperty("--illustration-scale", props.illustration_scale.toString());
-}
-
-/**
- * Returns inner HTML for a planeswalker card.
- */
-function buildPlaneswalkerCardHTML(props: CardProps, card: MagicCard): string {
-  return `
-    <div class="inner-background"></div>
-    <div class="illustration behind-textbox">
-      ${!props.has_image ? `
-        <div class="create-image-overlay">
-          <button class="create-image-button" data-card-id="${card.id}">
-            ▶ Create Image
-          </button>
-        </div>
-      ` : ''}
-    </div>
-    <div class="planeswalker-oracle-bg"></div>
-    <div class="inner-frame"></div>
-    <div class="legendary-crown" style="display: none;"></div>
-    <div class="top-line">
-      <span class="card-name">${props.card_face.name}</span>
-      <div class="mana-cost">
-        ${props.mana_cost.map(uri => `<img src="${uri}" class="card-ms">`).join("")}
-      </div>
-    </div>
-    <div class="mid-line">
-      ${props.card_face.color_indicator ? `<img class="color-indicator" src="${props.color_indicator}">` : ""}
-      <div class="type-line">${props.card_face.typeLine}</div>
-      ${props.set_icon_uri ? `<div class="set-icon-container"><img class="set-icon" src="${props.set_icon_uri}"></div>` : ""}
-    </div>
-    <div class="oracle planeswalker-oracle" style="font-size: 6.48pt;">
-      ${props.planeswalker_abilities ? props.planeswalker_abilities.map(ability => {
-    if (ability.cost !== null) {
-      return `<div class="planeswalker-ability planeswalker-ability-with-cost">
-                    <div class="planeswalker-ability-cost ${ability.cost > 0 ? "planeswalker-ability-cost-plus" : "planeswalker-ability-cost-minus"}">
-                      ${ability.cost > 0 ? "+" + ability.cost : ability.cost}
-                    </div>
-                    <div class="planeswalker-ability-text">${ability.html}</div>
-                  </div>`;
-    } else {
-      return `<div class="planeswalker-ability">
-                    <div class="planeswalker-ability-text">${ability.html}</div>
-                  </div>`;
-    }
-  }).join("") : ""}
-    </div>
-    <div class="loyalty">${props.card_face.loyalty}</div>
-    <div class="footer">
-      <div class="footer-left">
-        <div class="collector-number">${card.collectorNumber}</div>
-        <div>
-          ${card.set ? `<span class="set">${card.set.toUpperCase()}</span>` : ""}
-          ${card.set && card.lang ? "&nbsp;•&nbsp;" : ""}
-          ${card.lang ? `<span class="language">${card.lang.toUpperCase()}</span>` : ""}
-          ${card.artist ? '<span class="artist-icon"> a </span>' : ""}
-          ${card.artist ? `<span class="artist-name">${card.artist}</span>` : ""}
-        </div>
-      </div>
-      <div class="footer-right">
-        <div>&nbsp;</div>
-        <div class="copyright">${card.copyright || `™ & © ${new Date().getFullYear()} MTG Card Generator`}</div>
-      </div>
-    </div>
-  `;
-}
-
-/**
- * Returns inner HTML for a saga card.
- */
-function buildSagaCardHTML(props: CardProps, card: MagicCard): string {
-  // Extract saga steps based on oracle text format "I — Text", "II — Text", etc.
-  const sagaSteps: { number: string; text: string }[] = [];
-  if (props.card_face.oracleText) {
-    const lines = props.card_face.oracleText.split('\n');
-    for (const line of lines) {
-      const match = line.match(/^([IVX]+) — (.+)$/);
-      if (match) {
-        const stepNumber = match[1].trim();
-        const stepText = parseOracle(match[2].trim());
-        sagaSteps.push({ number: stepNumber, text: stepText });
-      }
-    }
-  }
-
-  return `
-    <div class="inner-background"></div>
-    <div class="illustration">
-      ${!props.has_image ? `
-        <div class="create-image-overlay">
-          <button class="create-image-button" data-card-id="${card.id}">
-            ▶ Create Image
-          </button>
-        </div>
-      ` : ''}
-    </div>
-    <div class="inner-frame"></div>
-    <div class="legendary-crown" style="${props.has_legendary_crown ? '' : 'display: none;'}"></div>
-    <div class="top-line">
-      <span class="card-name">${props.card_face.name}</span>
-      <div class="mana-cost">
-        ${props.mana_cost.map(uri => `<img src="${uri}" class="card-ms">`).join("")}
-      </div>
-    </div>
-    <div class="oracle saga-oracle">
-      <div class="saga-reminder"><i>
-(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)</i></div>
-      <div class="saga-frame"></div>
-      <div class="saga-steps">
-        ${sagaSteps.map(step => `
-          <div class="saga-step">
-            <div class="saga-step-number">
-              <img src="assets/img/saga/${step.number}.webp">
-            </div>
-            <div>${step.text}</div>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-    <div class="mid-line">
-      ${props.card_face.color_indicator ? `<img class="color-indicator" src="${props.color_indicator}">` : ""}
-      <div class="type-line">${props.card_face.typeLine}</div>
-      ${props.set_icon_uri ? `<div class="set-icon-container"><img class="set-icon" src="${props.set_icon_uri}"></div>` : ""}
-    </div>
-    <div class="footer">
-      <div class="footer-left">
-        <div class="collector-number">${card.collectorNumber}</div>
-        <div>
-          ${card.set ? `<span class="set">${card.set.toUpperCase()}</span>` : ""}
-          ${card.set && card.lang ? "&nbsp;•&nbsp;" : ""}
-          ${card.lang ? `<span class="language">${card.lang.toUpperCase()}</span>` : ""}
-          ${card.artist ? '<span class="artist-icon"> a </span>' : ""}
-          ${card.artist ? `<span class="artist-name">${card.artist}</span>` : ""}
-        </div>
-      </div>
-      <div class="footer-right">
-        <div>&nbsp;</div>
-        <div class="copyright">${card.copyright || `™ & © ${new Date().getFullYear()} MTG Card Generator`}</div>
-      </div>
-    </div>
-  `;
-}
-
-/**
- * React component for rendering a default (non-planeswalker) card.
- */
-interface DefaultCardProps {
+interface CardComponentProps {
   cardProps: CardProps;
   card: MagicCard;
+  showFlavorText?: boolean;
   onCreateImageClick?: () => void;
   isImageEditorOpen?: boolean;
 }
@@ -904,7 +562,208 @@ function useTextResizing(cardProps: CardProps) {
   return { cardNameRef, typeLineRef, oracleRef };
 }
 
-function DefaultCard({ cardProps, card, onCreateImageClick, isImageEditorOpen = false }: DefaultCardProps): React.ReactElement {
+function PlaneswalkerCard({ cardProps, card, showFlavorText = true, onCreateImageClick, isImageEditorOpen = false }: CardComponentProps): React.ReactElement {
+  const { cardNameRef, typeLineRef } = useTextResizing(cardProps);
+
+  // Extract the URL from the CSS url() string
+  const getImageUrl = (cssUrl: string): string => {
+    const match = cssUrl.match(/url\(["']?([^"']*)["']?\)/);
+    return match ? match[1] : cssUrl;
+  };
+
+  return (
+    <>
+      <div className="inner-background"></div>
+      <div className="illustration behind-textbox">
+        {cardProps.illustration && cardProps.illustration !== 'none' && cardProps.illustration !== 'url("")' && (
+          <Image preview={true} loading="lazy" height={"100%"} width={"100%"} src={getImageUrl(cardProps.illustration)} />
+        )}
+        {!cardProps.has_image && !isImageEditorOpen && (
+          <div className="create-image-overlay">
+            <button 
+              className="create-image-button" 
+              onClick={onCreateImageClick}
+            >
+              ▶ Create Image
+            </button>
+          </div>
+        )}
+      </div>
+      <div className="planeswalker-oracle-bg"></div>
+      <div className="inner-frame"></div>
+      <div className="legendary-crown" style={{ display: 'none' }}></div>
+      <div className="top-line">
+        <span ref={cardNameRef} className="card-name">{cardProps.card_face.name}</span>
+        <div className="mana-cost">
+          {cardProps.mana_cost.map((uri: string, index: number) => (
+            <img key={index} src={uri} className="card-ms" />
+          ))}
+        </div>
+      </div>
+      <div className="mid-line">
+        {cardProps.card_face.color_indicator && (
+          <img className="color-indicator" src={cardProps.color_indicator} />
+        )}
+        <div ref={typeLineRef} className="type-line">{cardProps.card_face.typeLine}</div>
+        {cardProps.set_icon_uri && (
+          <div className="set-icon-container">
+            <img className="set-icon" src={cardProps.set_icon_uri} />
+          </div>
+        )}
+      </div>
+      <div className="oracle planeswalker-oracle" style={{ fontSize: '6.48pt' }}>
+        {cardProps.planeswalker_abilities && cardProps.planeswalker_abilities.map((ability: PlaneswalkerAbility, index: number) => (
+          <div key={index} className={ability.cost !== null ? "planeswalker-ability planeswalker-ability-with-cost" : "planeswalker-ability"}>
+            {ability.cost !== null && (
+              <div className={`planeswalker-ability-cost ${ability.cost > 0 ? "planeswalker-ability-cost-plus" : "planeswalker-ability-cost-minus"}`}>
+                {ability.cost > 0 ? "+" + ability.cost : ability.cost}
+              </div>
+            )}
+            <div className="planeswalker-ability-text" dangerouslySetInnerHTML={{ __html: ability.html }} />
+          </div>
+        ))}
+        {showFlavorText && cardProps.card_face.flavorText && (
+          <div className="oracle-flavor">
+            <hr />
+            {cardProps.card_face.flavorText}
+          </div>
+        )}
+      </div>
+      <div className="loyalty">{cardProps.card_face.loyalty}</div>
+      <div className="footer">
+        <div className="footer-left">
+          <div className="collector-number">
+            {card.collectorNumber}
+          </div>
+          <div>
+            {card.set && <span className="set">{card.set.toUpperCase()}</span>}
+            {card.set && card.lang && <span>&nbsp;•&nbsp;</span>}
+            {card.lang && <span className="language">{card.lang.toUpperCase()}</span>}
+            {card.artist && <span className="artist-icon"> a </span>}
+            {card.artist && <span className="artist-name">{card.artist}</span>}
+          </div>
+        </div>
+        <div className="footer-right">
+          <div>&nbsp;</div>
+          <div className="copyright">
+            {card.copyright || `™ & © ${new Date().getFullYear()} MTG Card Generator`}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function SagaCard({ cardProps, card, showFlavorText = true, onCreateImageClick, isImageEditorOpen = false }: CardComponentProps): React.ReactElement {
+  const { cardNameRef, typeLineRef } = useTextResizing(cardProps);
+
+  // Extract the URL from the CSS url() string
+  const getImageUrl = (cssUrl: string): string => {
+    const match = cssUrl.match(/url\(["']?([^"']*)["']?\)/);
+    return match ? match[1] : cssUrl;
+  };
+
+  // Extract saga steps based on oracle text format "I — Text", "II — Text", etc.
+  const sagaSteps: { number: string; text: string }[] = [];
+  if (cardProps.card_face.oracleText) {
+    const lines = cardProps.card_face.oracleText.split('\n');
+    for (const line of lines) {
+      const match = line.match(/^([IVX]+)\s*—\s*(.+)$/);
+      if (match) {
+        sagaSteps.push({
+          number: match[1],
+          text: parseOracle(match[2])
+        });
+      }
+    }
+  }
+
+  return (
+    <>
+      <div className="inner-background"></div>
+      <div className="illustration">
+        {cardProps.illustration && cardProps.illustration !== 'none' && cardProps.illustration !== 'url("")' && (
+          <Image preview={true} loading="lazy" height={"100%"} width={"100%"} src={getImageUrl(cardProps.illustration)} />
+        )}
+        {!cardProps.has_image && !isImageEditorOpen && (
+          <div className="create-image-overlay">
+            <button 
+              className="create-image-button" 
+              onClick={onCreateImageClick}
+            >
+              ▶ Create Image
+            </button>
+          </div>
+        )}
+      </div>
+      <div className="inner-frame"></div>
+      <div className="legendary-crown" style={{ display: cardProps.has_legendary_crown ? 'block' : 'none' }}></div>
+      <div className="top-line">
+        <span ref={cardNameRef} className="card-name">{cardProps.card_face.name}</span>
+        <div className="mana-cost">
+          {cardProps.mana_cost.map((uri: string, index: number) => (
+            <img key={index} src={uri} className="card-ms" />
+          ))}
+        </div>
+      </div>
+      <div className="oracle saga-oracle">
+        <div className="saga-reminder">
+          <i>(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)</i>
+        </div>
+        <div className="saga-frame"></div>
+        <div className="saga-steps">
+          {sagaSteps.map((step, index) => (
+            <div key={index} className="saga-step">
+              <div className="saga-step-number">
+                <img src={`${baseAssetUrl}img/saga/${step.number}.webp`} alt={step.number} />
+              </div>
+              <div dangerouslySetInnerHTML={{ __html: step.text }} />
+            </div>
+          ))}
+        </div>
+        {showFlavorText && cardProps.card_face.flavorText && (
+          <div className="oracle-flavor">
+            <hr />
+            {cardProps.card_face.flavorText}
+          </div>
+        )}
+      </div>
+      <div className="mid-line">
+        {cardProps.card_face.color_indicator && (
+          <img className="color-indicator" src={cardProps.color_indicator} />
+        )}
+        <div ref={typeLineRef} className="type-line">{cardProps.card_face.typeLine}</div>
+        {cardProps.set_icon_uri && (
+          <div className="set-icon-container">
+            <img className="set-icon" src={cardProps.set_icon_uri} />
+          </div>
+        )}
+      </div>
+      <div className="footer">
+        <div className="footer-left">
+          <div className="collector-number">
+            {card.collectorNumber}
+          </div>
+          <div>
+            {card.set && <span className="set">{card.set.toUpperCase()}</span>}
+            {card.set && card.lang && <span>&nbsp;•&nbsp;</span>}
+            {card.lang && <span className="language">{card.lang.toUpperCase()}</span>}
+            {card.artist && <span className="artist-icon"> a </span>}
+            {card.artist && <span className="artist-name">{card.artist}</span>}
+          </div>
+        </div>
+        <div className="footer-right">
+          <div>&nbsp;</div>
+          <div className="copyright">
+            {card.copyright || `™ & © ${new Date().getFullYear()} MTG Card Generator`}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function DefaultCard({ cardProps, card, showFlavorText = true, onCreateImageClick, isImageEditorOpen = false }: CardComponentProps): React.ReactElement {
   const { cardNameRef, typeLineRef, oracleRef } = useTextResizing(cardProps);
 
   // Extract the URL from the CSS url() string
@@ -920,7 +779,7 @@ function DefaultCard({ cardProps, card, onCreateImageClick, isImageEditorOpen = 
       <div className="top-line">
         <span ref={cardNameRef} className="card-name">{cardProps.card_face.name}</span>
         <div className="mana-cost">
-          {cardProps.mana_cost.map((uri, index) => (
+          {cardProps.mana_cost.map((uri: string, index: number) => (
             <img key={index} src={uri} className="card-ms" />
           ))}
         </div>
@@ -952,10 +811,10 @@ function DefaultCard({ cardProps, card, onCreateImageClick, isImageEditorOpen = 
         )}
       </div>
       <div ref={oracleRef} className="oracle normal-oracle">
-        {cardProps.oracle_lines.map((line, index) => (
+        {cardProps.oracle_lines.map((line: string, index: number) => (
           <div key={index} className="oracle-inner" dangerouslySetInnerHTML={{ __html: line }} />
         ))}
-        {(cardProps.card_face as any).tempShowFlavorText && cardProps.card_face.flavorText && (
+        {showFlavorText && cardProps.card_face.flavorText && (
           <div className="oracle-flavor">
             <hr />
             {cardProps.card_face.flavorText}
@@ -991,64 +850,110 @@ function DefaultCard({ cardProps, card, onCreateImageClick, isImageEditorOpen = 
   );
 }
 
-function RenderCard(card: MagicCard, scale: number = 1, renderMargin: number = 1, onCreateImageClick?: () => void, isImageEditorOpen: boolean = false): HTMLElement {
+interface MTGCardProps {
+  card: MagicCard;
+  scale?: number;
+  renderMargin?: number;
+  className?: string;
+  showFlavorText?: boolean;
+  onCreateImageClick?: () => void;
+  isImageEditorOpen?: boolean;
+}
+
+function MTGCard({ 
+  card, 
+  scale = 1, 
+  renderMargin = 1, 
+  className, 
+  showFlavorText = true, 
+  onCreateImageClick,
+  isImageEditorOpen = false
+}: MTGCardProps): React.ReactElement {
   const currentFace = 0;
   const props = computeCardProps(card, currentFace);
-  const cardEl = document.createElement("div");
-  cardEl.className = "mtg-card";
 
-  // Add special classes for planeswalker, saga, and legendary cards.
+  const cardClasses = ["mtg-card"];
+  if (className) cardClasses.push(className);
   if (props.is_planeswalker) {
-    cardEl.classList.add("planeswalker");
+    cardClasses.push("planeswalker");
     if (props.is_large_planeswalker) {
-      cardEl.classList.add("planeswalker-large");
+      cardClasses.push("planeswalker-large");
     }
   }
-  if (props.is_saga) {
-    cardEl.classList.add("saga");
-  }
-  if (props.is_legendary) {
-    cardEl.classList.add("legendary");
-  }
+  if (props.is_saga) cardClasses.push("saga");
+  if (props.is_legendary) cardClasses.push("legendary");
 
-  setCardStyles(cardEl, props, scale, renderMargin);
+  const cardStyle: React.CSSProperties = {
+    '--bg-image': props.background,
+    '--frame-image': props.frame,
+    '--boxes-image': props.boxes,
+    '--mid-boxes-image': props.mid_boxes,
+    '--top-line-color': props.top_line_color,
+    '--mid-line-color': props.mid_line_color,
+    '--pt-box-image': props.pt_box,
+    '--pt-box-color': props.pt_box_color,
+    '--saga-text-box-image': props.saga_text_box,
+    '--mdfc-icon-image': props.mdfc_icon,
+    '--mdfc-hint-image': props.mdfc_hint,
+    '--mdfc-hint-color': props.mdfc_hint_color,
+    '--transform-icon-image': props.transform_icon,
+    '--renderMargin': renderMargin.toString(),
+    '--scale': scale.toString(),
+    '--frame-colors-left': props.archive_frame_colors.left.primary,
+    '--frame-colors-right': props.archive_frame_colors.right.primary,
+    '--illustration-image': props.illustration,
+    '--illustration-position-x': props.illustration_position.x,
+    '--illustration-position-y': props.illustration_position.y,
+    '--illustration-scale': props.illustration_scale.toString(),
+  } as React.CSSProperties;
 
-  // Build inner HTML based on card type
-  if (props.is_planeswalker) {
-    cardEl.innerHTML = buildPlaneswalkerCardHTML(props, card);
-    // Set up text resizing for planeswalker cards
-    //setupTextResizing(cardEl, props);
-    // Set up click handler for the create image button
-    //setupCreateImageHandler(cardEl, onCreateImageClick);
-  } else if (props.is_saga) {
-    cardEl.innerHTML = buildSagaCardHTML(props, card);
-    // Set up text resizing for saga cards
-    //setupTextResizing(cardEl, props);
-    // Set up click handler for the create image button
-    //setupCreateImageHandler(cardEl, onCreateImageClick);
-  } else {
-    // Use React component for default cards
-    const reactContainer = document.createElement('div');
-    cardEl.appendChild(reactContainer);
-    const root = createRoot(reactContainer);
-    root.render(React.createElement(DefaultCard, { cardProps: props, card: card, onCreateImageClick: onCreateImageClick, isImageEditorOpen: isImageEditorOpen }));
-  }
-
-  return cardEl;
+  return (
+    <div className={cardClasses.join(' ')} style={cardStyle}>
+      {props.is_planeswalker ? (
+        <PlaneswalkerCard 
+          cardProps={props} 
+          card={card} 
+          showFlavorText={showFlavorText}
+          onCreateImageClick={onCreateImageClick} 
+          isImageEditorOpen={isImageEditorOpen} 
+        />
+      ) : props.is_saga ? (
+        <SagaCard 
+          cardProps={props} 
+          card={card} 
+          showFlavorText={showFlavorText}
+          onCreateImageClick={onCreateImageClick} 
+          isImageEditorOpen={isImageEditorOpen} 
+        />
+      ) : (
+        <DefaultCard 
+          cardProps={props} 
+          card={card} 
+          showFlavorText={showFlavorText}
+          onCreateImageClick={onCreateImageClick} 
+          isImageEditorOpen={isImageEditorOpen} 
+        />
+      )}
+    </div>
+  );
 }
 
-/**
- * Sets up click handler for create image buttons in HTML-generated cards
- */
-function setupCreateImageHandler(cardEl: HTMLElement, onCreateImageClick?: () => void): void {
-  if (!onCreateImageClick) return;
+function RenderCard(card: MagicCard, scale: number = 1, renderMargin: number = 1, onCreateImageClick?: () => void, isImageEditorOpen: boolean = false, showFlavorText: boolean = true): HTMLElement {
+  const container = document.createElement('div');
+  const root = createRoot(container);
   
-  const createImageButton = cardEl.querySelector('.create-image-button') as HTMLButtonElement;
-  if (createImageButton) {
-    createImageButton.addEventListener('click', onCreateImageClick);
-  }
+  root.render(React.createElement(MTGCard, { 
+    card, 
+    scale, 
+    renderMargin, 
+    showFlavorText,
+    onCreateImageClick, 
+    isImageEditorOpen 
+  }));
+  
+  return container.firstElementChild as HTMLElement;
 }
 
-export { RenderCard, DefaultCard };
-export type { CardProps, DefaultCardProps };
-export default RenderCard;
+export { RenderCard, MTGCard, DefaultCard, PlaneswalkerCard, SagaCard };
+export type { CardProps, MTGCardProps, CardComponentProps };
+export default MTGCard;
