@@ -373,6 +373,7 @@
   letter-spacing: 0.036mm;
   width: 100%;
   box-sizing: border-box;
+  line-height: 0;
 }
 .original-name-container {
   position: absolute;
@@ -492,6 +493,7 @@
   gap: 0.6mm;
   color: var(--mid-line-color, black);
   background-image: var(--mid-boxes-image, var(--boxes-image));
+  line-height: 0;
 }
 .color-indicator {
   width: 2.8mm;
@@ -519,7 +521,8 @@
 
 /* ======================== ORACLE TEXT ======================== */
 .oracle {
-  font-family: "MPlantin";
+  /*font-family: "MPlantin";*/
+  font-family: ui-serif;
   font-size: 8pt;
   line-height: 1em;
   pointer-events: initial;
@@ -543,7 +546,7 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  gap: 0.1mm;
+  gap: 0.25mm;
 }
 .oracle > div {
   overflow-wrap: break-word;
@@ -619,7 +622,8 @@
   display: flex;
   justify-content: space-between;
   color: white;
-  font-family: "Relay Wide Medium";
+  /*font-family: "Relay Wide Medium";*/
+  font-family: ui-serif;
   font-size: 3.9pt;
   z-index: 3;
 }
@@ -631,7 +635,8 @@
   letter-spacing: 0.2mm;
 }
 .copyright {
-  font-family: "MPlantin";
+  /*font-family: "MPlantin";*/
+  font-family: ui-serif;
   margin-top: 0.2mm;
   font-size: 4pt;
 }
@@ -645,7 +650,8 @@
   font-family: NDPMTG;
 }
 .artist-name {
-  font-family: "Beleren Small Caps";
+  /*font-family: "Beleren Small Caps";*/
+  font-family: ui-serif;
   font-size: 4.5pt;
 }
 
