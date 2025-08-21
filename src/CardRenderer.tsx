@@ -1,9 +1,8 @@
 import React from "react";
 import { UserContext } from './UserContext';
-import { Image, Dropdown, Tooltip, Button } from 'antd';
-import { BulbOutlined, CaretDownFilled, CaretRightOutlined, CloseOutlined, CloudDownloadOutlined, CopyOutlined, EditOutlined, 
-  FileImageOutlined, InfoCircleOutlined, QuestionCircleOutlined, RightCircleOutlined, SaveFilled, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons';
-import { adjustTextHeightBasedOnChildrenClientOffsetHeight, adjustTextHeightBasedOnClientHeight, copyTextToClipboard, getChildrenClientOffsetHeight, isMobileDevice } from "./Utility";
+import { Image, Button } from 'antd';
+import { RightCircleOutlined } from '@ant-design/icons';
+import { adjustTextHeightBasedOnChildrenClientOffsetHeight, adjustTextHeightBasedOnClientHeight, getChildrenClientOffsetHeight, isMobileDevice } from "./Utility";
 import { saveAs } from 'file-saver';
 import { CardMenu } from './CardMenu';
 
