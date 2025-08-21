@@ -464,12 +464,12 @@ function useTextResizing(cardProps: CardProps) {
     el.style.fontSize = fontSize + "px";
 
     // Add a small delay to ensure styles are applied
-    //setTimeout(() => {
+    setTimeout(() => {
       while (el.scrollWidth > el.clientWidth && fontSize > 4) {
         fontSize -= 0.5;
         el.style.fontSize = fontSize + "px";
       }
-    //}, 0);
+    }, 10);
   };
 
   const resizeOracleText = (oracle: HTMLElement, needsSpace: boolean) => {

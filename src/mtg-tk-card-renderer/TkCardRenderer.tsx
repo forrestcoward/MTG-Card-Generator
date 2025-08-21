@@ -7,6 +7,8 @@ import { MagicCard } from '../models/MagicCard';
 import { CardMenu } from '../CardMenu';
 import { GenerateImageResponse } from '../CallAPI';
 import { ImageEditor } from '../ImageEditor';
+import { toBlob } from 'html-to-image';
+import { saveAs } from 'file-saver';
 
 interface TkCardRendererProps {
   card: MagicCard;
@@ -25,7 +27,6 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
   allowImagePreview = false,
   allowEdits = false
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
   const [currentWidth, setCurrentWidth] = useState(cardWidth);
   const [increaseSizeAllowed, setIncreaseSizeAllowed] = useState(true);
   const [decreaseSizeAllowed, setDecreaseSizeAllowed] = useState(true);
@@ -127,41 +128,31 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
   };
 
   const downloadCard = async () => {
-    const cardElement = containerRef.current?.querySelector('.mtg-card') as HTMLElement;
-    if (!cardElement) return;
-
-    // Load html-to-image if not already loaded
-    if (!(window as any).htmlToImage) {
-      try {
-        await new Promise<void>((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.js';
-          script.onload = () => resolve();
-          script.onerror = () => reject(new Error('Failed to load html-to-image'));
-          document.head.appendChild(script);
-        });
-      } catch (error) {
-        console.error('Failed to load html-to-image library:', error);
-        alert('Failed to load image export library');
-        return;
-      }
+    const cardElement = document.getElementById(`mtgcardrender-${cardData.id}`)?.querySelector('.mtg-card') as HTMLElement;
+    if (!cardElement) {
+      console.error('Card element not found for download');
+      return;
     }
 
-    const htmlToImage = (window as any).htmlToImage;
     try {
-      const dataUrl = await htmlToImage.toPng(cardElement, {
-        quality: 1.0,
-        pixelRatio: 2,
-        backgroundColor: 'white'
+      const downloadScale = scale * 1.5
+      const blob = await toBlob(cardElement, { 
+        cacheBust: true,
+        // Account for the CSS scale transform.
+        pixelRatio: downloadScale,
+        style: { 
+          marginTop: '0px',
+          boxShadow: 'none',
+          transform: 'none',
+          transformOrigin: 'unset',
+        },
       });
       
-      const link = document.createElement('a');
-      link.download = `${card.cardFaces[0].name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`;
-      link.href = dataUrl;
-      link.click();
+      if (blob) {
+        saveAs(blob, `${cardData.cardFaces[0].name}.png`);
+      }
     } catch (error) {
-      console.error('Error generating PNG:', error);
-      alert('Error generating PNG. Please try again.');
+      console.error('Error downloading card as image:', error);
     }
   };
 
