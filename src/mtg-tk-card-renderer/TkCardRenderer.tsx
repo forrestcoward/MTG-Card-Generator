@@ -50,7 +50,7 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
   // For this card renderer, a CSS transform is used to scale the size, but CSS transform does not impact the size of the container objects, 
   // so we update manually to adjust for the transformed size.
   useEffect(() => {
-    const measureActualSize = () => {
+    //const measureActualSize = () => {
       const cardElement = document.getElementById(`mtgcardrender-${cardData.id}`);
       const cardMenu = document.getElementById(`mtgcardrender-menu-${cardData.id}`);
 
@@ -65,11 +65,11 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
         setActualSize({ width: cardRect.width, height: cardRect.height });
         setActualSizeWithMenu({ width: cardRect.width, height: cardRect.height });
       }
-    };
+    //};
 
     // Measure after a short delay to ensure rendering is complete.
-    const timeoutId = setTimeout(measureActualSize, 0);
-    return () => clearTimeout(timeoutId);
+    //const timeoutId = setTimeout(measureActualSize, 0);
+    //return () => clearTimeout(timeoutId);
   }, [currentWidth, cardData.id, showFlavorText]);
 
   // Listen for create image events from the card HTML
@@ -118,7 +118,8 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
   const toggleFlavorText = () => {
     setShowFlavorText(!showFlavorText);
     // Trigger remeasurement after state change
-    setTimeout(() => {
+    //setTimeout(() => {
+    /*
       const cardElement = document.getElementById(`mtgcardrender-${cardData.id}`);
       const cardMenu = document.getElementById(`mtgcardrender-menu-${cardData.id}`);
 
@@ -133,7 +134,8 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
         setActualSize({ width: cardRect.width, height: cardRect.height });
         setActualSizeWithMenu({ width: cardRect.width, height: cardRect.height });
       }
-    }, 0);
+        */
+    //}, 0);
   };
 
   const updateImageUrl = (imageUrls: GenerateImageResponse) => {

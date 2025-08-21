@@ -1,92 +1,94 @@
 import { MagicCard } from "./models/MagicCard";
 import { setIcons } from "./SetIcons";
 
+export const baseAssetUrl = "https://mtgcardgenstoragedev.blob.core.windows.net/assets/";
+
 export const IconsHelper = (() => {
   const mana_symbols: Record<string, { svg_uri: string }> = {
-    "{0}": { svg_uri: "assets/img/symbols/0.svg" },
-    "{1}": { svg_uri: "assets/img/symbols/1.svg" },
-    "{2}": { svg_uri: "assets/img/symbols/2.svg" },
-    "{2B}": { svg_uri: "assets/img/symbols/2B.svg" },
-    "{2G}": { svg_uri: "assets/img/symbols/2G.svg" },
-    "{2R}": { svg_uri: "assets/img/symbols/2R.svg" },
-    "{2U}": { svg_uri: "assets/img/symbols/2U.svg" },
-    "{2W}": { svg_uri: "assets/img/symbols/2W.svg" },
-    "{3}": { svg_uri: "assets/img/symbols/3.svg" },
-    "{4}": { svg_uri: "assets/img/symbols/4.svg" },
-    "{5}": { svg_uri: "assets/img/symbols/5.svg" },
-    "{6}": { svg_uri: "assets/img/symbols/6.svg" },
-    "{7}": { svg_uri: "assets/img/symbols/7.svg" },
-    "{8}": { svg_uri: "assets/img/symbols/8.svg" },
-    "{9}": { svg_uri: "assets/img/symbols/9.svg" },
-    "{10}": { svg_uri: "assets/img/symbols/10.svg" },
-    "{11}": { svg_uri: "assets/img/symbols/11.svg" },
-    "{12}": { svg_uri: "assets/img/symbols/12.svg" },
-    "{13}": { svg_uri: "assets/img/symbols/13.svg" },
-    "{14}": { svg_uri: "assets/img/symbols/14.svg" },
-    "{15}": { svg_uri: "assets/img/symbols/15.svg" },
-    "{16}": { svg_uri: "assets/img/symbols/16.svg" },
-    "{17}": { svg_uri: "assets/img/symbols/17.svg" },
-    "{18}": { svg_uri: "assets/img/symbols/18.svg" },
-    "{19}": { svg_uri: "assets/img/symbols/19.svg" },
-    "{20}": { svg_uri: "assets/img/symbols/20.svg" },
-    "{100}": { svg_uri: "assets/img/symbols/100.svg" },
-    "{1000000}": { svg_uri: "assets/img/symbols/1000000.svg" },
-    "{A}": { svg_uri: "assets/img/symbols/A.svg" },
-    "{B}": { svg_uri: "assets/img/symbols/B.svg" },
-    "{BG}": { svg_uri: "assets/img/symbols/BG.svg" },
-    "{BGP}": { svg_uri: "assets/img/symbols/BGP.svg" },
-    "{BR}": { svg_uri: "assets/img/symbols/BR.svg" },
-    "{BRP}": { svg_uri: "assets/img/symbols/BRP.svg" },
-    "{C}": { svg_uri: "assets/img/symbols/C.svg" },
-    "{CB}": { svg_uri: "assets/img/symbols/CB.svg" },
-    "{CG}": { svg_uri: "assets/img/symbols/CG.svg" },
-    "{CHAOS}": { svg_uri: "assets/img/symbols/CHAOS.svg" },
-    "{CP}": { svg_uri: "assets/img/symbols/CP.svg" },
-    "{CR}": { svg_uri: "assets/img/symbols/CR.svg" },
-    "{CU}": { svg_uri: "assets/img/symbols/CU.svg" },
-    "{CW}": { svg_uri: "assets/img/symbols/CW.svg" },
-    "{D}": { svg_uri: "assets/img/symbols/D.svg" },
-    "{E}": { svg_uri: "assets/img/symbols/E.svg" },
-    "{G}": { svg_uri: "assets/img/symbols/G.svg" },
-    "{GU}": { svg_uri: "assets/img/symbols/GU.svg" },
-    "{G/U}": { svg_uri: "assets/img/symbols/GU.svg" },
-    "{GUP}": { svg_uri: "assets/img/symbols/GUP.svg" },
-    "{GW}": { svg_uri: "assets/img/symbols/GW.svg" },
-    "{GWP}": { svg_uri: "assets/img/symbols/GWP.svg" },
-    "{H}": { svg_uri: "assets/img/symbols/H.svg" },
-    "{HALF}": { svg_uri: "assets/img/symbols/HALF.svg" },
-    "{HR}": { svg_uri: "assets/img/symbols/HR.svg" },
-    "{HW}": { svg_uri: "assets/img/symbols/HW.svg" },
-    "{INFINITY}": { svg_uri: "assets/img/symbols/INFINITY.svg" },
-    "{L}": { svg_uri: "assets/img/symbols/L.svg" },
-    "{P}": { svg_uri: "assets/img/symbols/P.svg" },
-    "{PW}": { svg_uri: "assets/img/symbols/PW.svg" },
-    "{Q}": { svg_uri: "assets/img/symbols/Q.svg" },
-    "{R}": { svg_uri: "assets/img/symbols/R.svg" },
-    "{RG}": { svg_uri: "assets/img/symbols/RG.svg" },
-    "{RGP}": { svg_uri: "assets/img/symbols/RGP.svg" },
-    "{RP}": { svg_uri: "assets/img/symbols/RP.svg" },
-    "{R/P}": { svg_uri: "assets/img/symbols/RP.svg" },
-    "{RW}": { svg_uri: "assets/img/symbols/RW.svg" },
-    "{RWP}": { svg_uri: "assets/img/symbols/RWP.svg" },
-    "{S}": { svg_uri: "assets/img/symbols/S.svg" },
-    "{T}": { svg_uri: "assets/img/symbols/T.svg" },
-    "{TK}": { svg_uri: "assets/img/symbols/TK.svg" },
-    "{U}": { svg_uri: "assets/img/symbols/U.svg" },
-    "{UB}": { svg_uri: "assets/img/symbols/UB.svg" },
-    "{UBP}": { svg_uri: "assets/img/symbols/UBP.svg" },
-    "{UP}": { svg_uri: "assets/img/symbols/UP.svg" },
-    "{UR}": { svg_uri: "assets/img/symbols/UR.svg" },
-    "{URP}": { svg_uri: "assets/img/symbols/URP.svg" },
-    "{W}": { svg_uri: "assets/img/symbols/W.svg" },
-    "{WB}": { svg_uri: "assets/img/symbols/WB.svg" },
-    "{WBP}": { svg_uri: "assets/img/symbols/WBP.svg" },
-    "{WP}": { svg_uri: "assets/img/symbols/WP.svg" },
-    "{WU}": { svg_uri: "assets/img/symbols/WU.svg" },
-    "{WUP}": { svg_uri: "assets/img/symbols/WUP.svg" },
-    "{X}": { svg_uri: "assets/img/symbols/X.svg" },
-    "{Y}": { svg_uri: "assets/img/symbols/Y.svg" },
-    "{Z}": { svg_uri: "assets/img/symbols/Z.svg" }
+    "{0}": { svg_uri: `${baseAssetUrl}img/symbols/0.svg` },
+    "{1}": { svg_uri: `${baseAssetUrl}img/symbols/1.svg` },
+    "{2}": { svg_uri: `${baseAssetUrl}img/symbols/2.svg` },
+    "{2B}": { svg_uri: `${baseAssetUrl}img/symbols/2B.svg` },
+    "{2G}": { svg_uri: `${baseAssetUrl}img/symbols/2G.svg` },
+    "{2R}": { svg_uri: `${baseAssetUrl}img/symbols/2R.svg` },
+    "{2U}": { svg_uri: `${baseAssetUrl}img/symbols/2U.svg` },
+    "{2W}": { svg_uri: `${baseAssetUrl}img/symbols/2W.svg` },
+    "{3}": { svg_uri: `${baseAssetUrl}img/symbols/3.svg` },
+    "{4}": { svg_uri: `${baseAssetUrl}img/symbols/4.svg` },
+    "{5}": { svg_uri: `${baseAssetUrl}img/symbols/5.svg` },
+    "{6}": { svg_uri: `${baseAssetUrl}img/symbols/6.svg` },
+    "{7}": { svg_uri: `${baseAssetUrl}img/symbols/7.svg` },
+    "{8}": { svg_uri: `${baseAssetUrl}img/symbols/8.svg` },
+    "{9}": { svg_uri: `${baseAssetUrl}img/symbols/9.svg` },
+    "{10}": { svg_uri: `${baseAssetUrl}img/symbols/10.svg` },
+    "{11}": { svg_uri: `${baseAssetUrl}img/symbols/11.svg` },
+    "{12}": { svg_uri: `${baseAssetUrl}img/symbols/12.svg` },
+    "{13}": { svg_uri: `${baseAssetUrl}img/symbols/13.svg` },
+    "{14}": { svg_uri: `${baseAssetUrl}img/symbols/14.svg` },
+    "{15}": { svg_uri: `${baseAssetUrl}img/symbols/15.svg` },
+    "{16}": { svg_uri: `${baseAssetUrl}img/symbols/16.svg` },
+    "{17}": { svg_uri: `${baseAssetUrl}img/symbols/17.svg` },
+    "{18}": { svg_uri: `${baseAssetUrl}img/symbols/18.svg` },
+    "{19}": { svg_uri: `${baseAssetUrl}img/symbols/19.svg` },
+    "{20}": { svg_uri: `${baseAssetUrl}img/symbols/20.svg` },
+    "{100}": { svg_uri: `${baseAssetUrl}img/symbols/100.svg` },
+    "{1000000}": { svg_uri: `${baseAssetUrl}img/symbols/1000000.svg` },
+    "{A}": { svg_uri: `${baseAssetUrl}img/symbols/A.svg` },
+    "{B}": { svg_uri: `${baseAssetUrl}img/symbols/B.svg` },
+    "{BG}": { svg_uri: `${baseAssetUrl}img/symbols/BG.svg` },
+    "{BGP}": { svg_uri: `${baseAssetUrl}img/symbols/BGP.svg` },
+    "{BR}": { svg_uri: `${baseAssetUrl}img/symbols/BR.svg` },
+    "{BRP}": { svg_uri: `${baseAssetUrl}img/symbols/BRP.svg` },
+    "{C}": { svg_uri: `${baseAssetUrl}img/symbols/C.svg` },
+    "{CB}": { svg_uri: `${baseAssetUrl}img/symbols/CB.svg` },
+    "{CG}": { svg_uri: `${baseAssetUrl}img/symbols/CG.svg` },
+    "{CHAOS}": { svg_uri: `${baseAssetUrl}img/symbols/CHAOS.svg` },
+    "{CP}": { svg_uri: `${baseAssetUrl}img/symbols/CP.svg` },
+    "{CR}": { svg_uri: `${baseAssetUrl}img/symbols/CR.svg` },
+    "{CU}": { svg_uri: `${baseAssetUrl}img/symbols/CU.svg` },
+    "{CW}": { svg_uri: `${baseAssetUrl}img/symbols/CW.svg` },
+    "{D}": { svg_uri: `${baseAssetUrl}img/symbols/D.svg` },
+    "{E}": { svg_uri: `${baseAssetUrl}img/symbols/E.svg` },
+    "{G}": { svg_uri: `${baseAssetUrl}img/symbols/G.svg` },
+    "{GU}": { svg_uri: `${baseAssetUrl}img/symbols/GU.svg` },
+    "{G/U}": { svg_uri: `${baseAssetUrl}img/symbols/GU.svg` },
+    "{GUP}": { svg_uri: `${baseAssetUrl}img/symbols/GUP.svg` },
+    "{GW}": { svg_uri: `${baseAssetUrl}img/symbols/GW.svg` },
+    "{GWP}": { svg_uri: `${baseAssetUrl}img/symbols/GWP.svg` },
+    "{H}": { svg_uri: `${baseAssetUrl}img/symbols/H.svg` },
+    "{HALF}": { svg_uri: `${baseAssetUrl}img/symbols/HALF.svg` },
+    "{HR}": { svg_uri: `${baseAssetUrl}img/symbols/HR.svg` },
+    "{HW}": { svg_uri: `${baseAssetUrl}img/symbols/HW.svg` },
+    "{INFINITY}": { svg_uri: `${baseAssetUrl}img/symbols/INFINITY.svg` },
+    "{L}": { svg_uri: `${baseAssetUrl}img/symbols/L.svg` },
+    "{P}": { svg_uri: `${baseAssetUrl}img/symbols/P.svg` },
+    "{PW}": { svg_uri: `${baseAssetUrl}img/symbols/PW.svg` },
+    "{Q}": { svg_uri: `${baseAssetUrl}img/symbols/Q.svg` },
+    "{R}": { svg_uri: `${baseAssetUrl}img/symbols/R.svg` },
+    "{RG}": { svg_uri: `${baseAssetUrl}img/symbols/RG.svg` },
+    "{RGP}": { svg_uri: `${baseAssetUrl}img/symbols/RGP.svg` },
+    "{RP}": { svg_uri: `${baseAssetUrl}img/symbols/RP.svg` },
+    "{R/P}": { svg_uri: `${baseAssetUrl}img/symbols/RP.svg` },
+    "{RW}": { svg_uri: `${baseAssetUrl}img/symbols/RW.svg` },
+    "{RWP}": { svg_uri: `${baseAssetUrl}img/symbols/RWP.svg` },
+    "{S}": { svg_uri: `${baseAssetUrl}img/symbols/S.svg` },
+    "{T}": { svg_uri: `${baseAssetUrl}img/symbols/T.svg` },
+    "{TK}": { svg_uri: `${baseAssetUrl}img/symbols/TK.svg` },
+    "{U}": { svg_uri: `${baseAssetUrl}img/symbols/U.svg` },
+    "{UB}": { svg_uri: `${baseAssetUrl}img/symbols/UB.svg` },
+    "{UBP}": { svg_uri: `${baseAssetUrl}img/symbols/UBP.svg` },
+    "{UP}": { svg_uri: `${baseAssetUrl}img/symbols/UP.svg` },
+    "{UR}": { svg_uri: `${baseAssetUrl}img/symbols/UR.svg` },
+    "{URP}": { svg_uri: `${baseAssetUrl}img/symbols/URP.svg` },
+    "{W}": { svg_uri: `${baseAssetUrl}img/symbols/W.svg` },
+    "{WB}": { svg_uri: `${baseAssetUrl}img/symbols/WB.svg` },
+    "{WBP}": { svg_uri: `${baseAssetUrl}img/symbols/WBP.svg` },
+    "{WP}": { svg_uri: `${baseAssetUrl}img/symbols/WP.svg` },
+    "{WU}": { svg_uri: `${baseAssetUrl}img/symbols/WU.svg` },
+    "{WUP}": { svg_uri: `${baseAssetUrl}img/symbols/WUP.svg` },
+    "{X}": { svg_uri: `${baseAssetUrl}img/symbols/X.svg` },
+    "{Y}": { svg_uri: `${baseAssetUrl}img/symbols/Y.svg` },
+    "{Z}": { svg_uri: `${baseAssetUrl}img/symbols/Z.svg` }
   };
 
   function getManaIcon(symbol: string) {
@@ -175,7 +177,7 @@ export class Sets {
       const extension = this.setIconMap.get(randomSet)?.get('common') || '.webp';
       return {
         setCode: randomSet,
-        iconUrl: `assets/img/set_icons/${randomSet}_common${extension}`
+        iconUrl: `${baseAssetUrl}img/set_icons/${randomSet}_common${extension}`
       };
     }
     
@@ -183,7 +185,7 @@ export class Sets {
     const extension = this.setIconMap.get(randomSet)?.get(rarity) || '.webp';
     return {
       setCode: randomSet,
-      iconUrl: `assets/img/set_icons/${randomSet}_${rarity}${extension}`
+      iconUrl: `${baseAssetUrl}img/set_icons/${randomSet}_${rarity}${extension}`
     };
   }
 
@@ -198,13 +200,13 @@ export class Sets {
       // Check if we have the exact icon for this set and rarity
       if (this.hasIcon(card.set, rarity)) {
         const extension = this.setIconMap.get(card.set)?.get(rarity) || '.webp';
-        return `assets/img/set_icons/${card.set}_${rarity}${extension}`;
+        return `${baseAssetUrl}img/set_icons/${card.set}_${rarity}${extension}`;
       }
       
       // Fallback to common if the specific rarity isn't available
       if (this.hasIcon(card.set, "common")) {
         const extension = this.setIconMap.get(card.set)?.get('common') || '.webp';
-        return `assets/img/set_icons/${card.set}_common${extension}`;
+        return `${baseAssetUrl}img/set_icons/${card.set}_common${extension}`;
       }
     }
     

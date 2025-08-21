@@ -1,32 +1,32 @@
 /* ======================== FONT DEFINITIONS ======================== */
 @font-face {
   font-family: "Beleren";
-  src: url("assets/fonts/beleren-bold_P1.01.ttf") format("truetype");
+  src: url("https://mtgcardgenstoragedev.blob.core.windows.net/assets/fonts/beleren-bold_P1.01.ttf") format("truetype");
 }
 @font-face {
   font-family: "Beleren Small Caps";
-  src: url("assets/fonts/belerensmallcaps-bold.ttf") format("truetype");
+  src: url("https://mtgcardgenstoragedev.blob.core.windows.net/assets/fonts/belerensmallcaps-bold.ttf") format("truetype");
 }
 @font-face {
   font-family: "MPlantin";
-  src: url("assets/fonts/mplantin.ttf") format("truetype");
+  src: url("https://mtgcardgenstoragedev.blob.core.windows.net/assets/fonts/mplantin.ttf") format("truetype");
 }
 @font-face {
   font-family: "MPlantin-Italic";
-  src: url("assets/fonts/MPLANTI3.ttf") format("truetype");
+  src: url("https://mtgcardgenstoragedev.blob.core.windows.net/assets/fonts/MPLANTI3.ttf") format("truetype");
   font-style: italic;
 }
 @font-face {
   font-family: "Relay Medium";
-  src: url("assets/fonts/relay-medium.ttf") format("truetype");
+  src: url("https://mtgcardgenstoragedev.blob.core.windows.net/assets/fonts/relay-medium.ttf") format("truetype");
 }
 @font-face {
   font-family: "Relay Wide Medium";
-  src: url("assets/fonts/relaywide-medium.ttf") format("truetype");
+  src: url("https://mtgcardgenstoragedev.blob.core.windows.net/assets/fonts/relaywide-medium.ttf") format("truetype");
 }
 @font-face {
   font-family: "NDPMTG";
-  src: url("assets/fonts/NDPMTG.ttf") format("truetype");
+  src: url("https://mtgcardgenstoragedev.blob.core.windows.net/assets/fonts/NDPMTG.ttf") format("truetype");
 }
 
 /* ======================== CARD CONTAINER ======================== */
@@ -155,17 +155,17 @@
   font-family: Beleren;
 }
 .planeswalker-ability-cost-plus {
-  background-image: url(assets/img/planeswalker/LoyaltyPlus.webp);
+  background-image: url(https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/planeswalker/LoyaltyPlus.webp);
   height: 4.7mm;
   line-height: 5mm;
 }
 .planeswalker-ability-cost-zero {
-  background-image: url(assets/img/planeswalker/LoyaltyZero.webp);
+  background-image: url(https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/planeswalker/LoyaltyZero.webp);
   height: 4.2mm;
   line-height: 3.8mm;
 }
 .planeswalker-ability-cost-minus {
-  background-image: url(assets/img/planeswalker/LoyaltyMinus.webp);
+  background-image: url(https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/planeswalker/LoyaltyMinus.webp);
   height: 4.7mm;
   line-height: 3.8mm;
 }
@@ -592,7 +592,7 @@
   bottom: 5mm;
   width: 9.8mm;
   height: 5.8mm;
-  background-image: url("assets/img/planeswalker/Loyalty.webp");
+  background-image: url("https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/planeswalker/Loyalty.webp");
   background-size: 100% 100%;
   background-repeat: no-repeat;
   text-align: center;

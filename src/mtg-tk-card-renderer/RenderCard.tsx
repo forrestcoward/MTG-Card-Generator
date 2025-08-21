@@ -225,12 +225,12 @@ function setupTextResizing(cardEl: HTMLElement, props: CardProps): void {
         // Initial resize
         let fontSize = 7.3;
         sagaReminderEl.style.fontSize = `${fontSize}pt`;
-        setTimeout(() => {
+        //setTimeout(() => {
           while (sagaReminderEl.scrollWidth > sagaReminderEl.clientWidth && fontSize > 5) {
             fontSize -= 0.2;
             sagaReminderEl.style.fontSize = `${fontSize}pt`;
           }
-        }, 0);
+        //}, 0);
       }
 
       const sagaStepsEl = cardEl.querySelector('.saga-steps') as HTMLElement;
@@ -247,12 +247,12 @@ function setupTextResizing(cardEl: HTMLElement, props: CardProps): void {
         // Initial resize
         let fontSize = 6.48;
         sagaStepsEl.style.fontSize = `${fontSize}pt`;
-        setTimeout(() => {
+        //setTimeout(() => {
           while (sagaStepsEl.scrollHeight > sagaStepsEl.clientHeight && fontSize > 4.5) {
             fontSize -= 0.2;
             sagaStepsEl.style.fontSize = `${fontSize}pt`;
           }
-        }, 0);
+        //}, 0);
       }
     }
   };
@@ -278,12 +278,12 @@ function resizeTextHorizontally(el: HTMLElement): void {
   el.style.fontSize = fontSize + "px";
 
   // Add a small delay to ensure styles are applied
-  setTimeout(() => {
+  //setTimeout(() => {
     while (el.scrollWidth > el.clientWidth && fontSize > 4) {
       fontSize -= 0.5;
       el.style.fontSize = fontSize + "px";
     }
-  }, 0);
+  //}, 0);
 }
 
 /* =======================================================
@@ -486,7 +486,7 @@ function computeCardProps(card: MagicCard, currentFace: number = 0): CardProps {
   else if (card.frameEffects && card.frameEffects.includes("compasslanddfc") && currentFace === 1)
     folder = "ixalan_bg";
   else folder = "bg";
-  props.background = `url(assets/img/${folder}/${props.is_vehicle ? "Vehicle" : props.boxes_colors}.webp)`;
+  props.background = `url(https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/${folder}/${props.is_vehicle ? "Vehicle" : props.boxes_colors}.webp)`;
 
   // Choose frame image folder.
   if (props.is_adventure) folder = "adventure_frames";
@@ -500,7 +500,7 @@ function computeCardProps(card: MagicCard, currentFace: number = 0): CardProps {
   const frameColor = (props.colors === "Artifact" && props.card_face.colors && props.card_face.colors.length === 1)
       ? props.card_face.colors[0]
       : props.colors;
-  props.frame = `url(assets/img/${folder}/${frameColor}.webp)`;
+  props.frame = `url(https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/${folder}/${frameColor}.webp)`;
 
   // Boxes and mid_boxes images.
   folder = props.is_planeswalker
@@ -510,31 +510,31 @@ function computeCardProps(card: MagicCard, currentFace: number = 0): CardProps {
           : props.extended_art && !props.is_class
               ? "extended_boxes"
               : "boxes";
-  props.boxes = `url(assets/img/${folder}/${props.boxes_colors}.webp)`;
+  props.boxes = `url(https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/${folder}/${props.boxes_colors}.webp)`;
   props.mid_boxes = props.extended_art && !props.is_planeswalker && !props.is_class
-      ? `url(assets/img/extended_boxes/${props.boxes_colors}.webp)`
+      ? `url(https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/extended_boxes/${props.boxes_colors}.webp)`
       : props.boxes;
 
   // Legendary crown.
   const crownFolder = props.extended_art ? "extended_legendary_crowns" : "legendary_crowns";
-  props.legendary_crown = `url(assets/img/${crownFolder}/${props.boxes_colors}.webp)`;
+  props.legendary_crown = `url(https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/${crownFolder}/${props.boxes_colors}.webp)`;
 
   // Power/Toughness box.
   const ptFolder = (props.is_mdfc || props.is_transform) && currentFace === 1 ? "transform_back_pt_boxes" : "pt_boxes";
-  props.pt_box = `url(assets/img/${ptFolder}/${props.is_vehicle ? "Vehicle" : props.boxes_colors}.webp)`;
+  props.pt_box = `url(https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/${ptFolder}/${props.is_vehicle ? "Vehicle" : props.boxes_colors}.webp)`;
 
   // Saga text box.
-  props.saga_text_box = `url(assets/img/saga_textboxes/${props.boxes_colors}.webp)`;
+  props.saga_text_box = `url(https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/saga_textboxes/${props.boxes_colors}.webp)`;
 
   // MDFC icon and hint.
-  props.mdfc_icon = `url(assets/img/mdfc${currentFace === 0 ? "" : "_back"}_icons/${props.boxes_colors === "Land" ? props.colors : props.boxes_colors}.webp)`;
+  props.mdfc_icon = `url(https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/mdfc${currentFace === 0 ? "" : "_back"}_icons/${props.boxes_colors === "Land" ? props.colors : props.boxes_colors}.webp)`;
   let hintColors = props.colors;
   if (hintColors.length > 1 && hintColors.length < 5) hintColors = "Gold";
-  props.mdfc_hint = `url(assets/img/mdfc${currentFace === 0 ? "" : "_back"}_hints/${hintColors}.webp)`;
+  props.mdfc_hint = `url(https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/mdfc${currentFace === 0 ? "" : "_back"}_hints/${hintColors}.webp)`;
   props.mdfc_hint_color = currentFace === 0 ? "white" : "black";
 
   // Transform icon.
-  props.transform_icon = `url(assets/img/transform${currentFace === 0 ? "" : "_back"}_icons/${(card.frameEffects && card.frameEffects[0]) ? card.frameEffects[0] : "sunmoondfc"}.webp)`;
+  props.transform_icon = `url(https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/transform${currentFace === 0 ? "" : "_back"}_icons/${(card.frameEffects && card.frameEffects[0]) ? card.frameEffects[0] : "sunmoondfc"}.webp)`;
 
   // Determine power/toughness box color and top/mid line colors.
   props.pt_box_color = props.is_vehicle || (props.is_transform && currentFace === 1) ? "white" : "black";
@@ -555,7 +555,7 @@ function computeCardProps(card: MagicCard, currentFace: number = 0): CardProps {
     const sorted = Array.from(props.card_face.color_indicator)
         .sort((a, b) => "WUBRG".indexOf(a) - "WUBRG".indexOf(b))
         .join("");
-    props.color_indicator = `assets/img/color_indicators/${sorted}.webp`;
+    props.color_indicator = `https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/color_indicators/${sorted}.webp`;
   } else {
     props.color_indicator = "";
   }
@@ -806,12 +806,12 @@ function useTextResizing(cardProps: CardProps) {
     el.style.fontSize = fontSize + "px";
 
     // Add a small delay to ensure styles are applied
-    setTimeout(() => {
+    //setTimeout(() => {
       while (el.scrollWidth > el.clientWidth && fontSize > 4) {
         fontSize -= 0.5;
         el.style.fontSize = fontSize + "px";
       }
-    }, 0);
+    //}, 0);
   };
 
   const resizeOracleText = (oracle: HTMLElement, needsSpace: boolean) => {
@@ -1017,15 +1017,15 @@ function RenderCard(card: MagicCard, scale: number = 1, renderMargin: number = 1
   if (props.is_planeswalker) {
     cardEl.innerHTML = buildPlaneswalkerCardHTML(props, card);
     // Set up text resizing for planeswalker cards
-    setupTextResizing(cardEl, props);
+    //setupTextResizing(cardEl, props);
     // Set up click handler for the create image button
-    setupCreateImageHandler(cardEl, onCreateImageClick);
+    //setupCreateImageHandler(cardEl, onCreateImageClick);
   } else if (props.is_saga) {
     cardEl.innerHTML = buildSagaCardHTML(props, card);
     // Set up text resizing for saga cards
-    setupTextResizing(cardEl, props);
+    //setupTextResizing(cardEl, props);
     // Set up click handler for the create image button
-    setupCreateImageHandler(cardEl, onCreateImageClick);
+    //setupCreateImageHandler(cardEl, onCreateImageClick);
   } else {
     // Use React component for default cards
     const reactContainer = document.createElement('div');
