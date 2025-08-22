@@ -225,6 +225,12 @@ export class Sets {
   getAllAvailableSets(): string[] {
     return [...this.availableSets];
   }
+
+  getSetIconUrl(setCode: string, rarity: string = 'common'): string {
+    // Get the file extension for this set and rarity, defaulting to .webp
+    const extension = this.setIconMap.get(setCode)?.get(rarity) || '.webp';
+    return `${baseAssetUrl}img/set_icons/${setCode}_${rarity}${extension}`;
+  }
 }
 
 export const setsHelper = new Sets();

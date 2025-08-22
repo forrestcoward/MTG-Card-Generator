@@ -8,6 +8,7 @@ export interface BasicCard {
   power?: number,
   toughness?: number,
   pt?: string,
+  loyalty?: number,
   flavorText?: string,
   rarity: string,
   imageUrl: string,

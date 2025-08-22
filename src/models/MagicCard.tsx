@@ -35,6 +35,7 @@ export class MagicCard {
       text: this.cardFaces[0].oracleText,
       rarity: this.rarity,
       pt: this.cardFaces[0].pt,
+      loyalty: this.cardFaces[0].loyalty,
       oracleText: this.cardFaces[0].oracleText,
       flavorText: this.cardFaces[0].flavorText,
       imageUrl: this.cardFaces[0].imageUrl,
@@ -49,15 +50,45 @@ export class MagicCard {
   }
 
   constructor(card: BasicCard, selectSetIcon: boolean = true) {
-    // Parse power and toughness from pt field if individual fields are not provided.
+    // Parse power, toughness, and loyalty.
     let power = card.power;
     let toughness = card.toughness;
+    let loyalty = card.loyalty;
     
-    if (card.pt && (power === undefined || toughness === undefined)) {
-      const ptMatch = card.pt.match(/^(\d+)\/(\d+)$/);
-      if (ptMatch) {
-        power = parseInt(ptMatch[1], 10);
-        toughness = parseInt(ptMatch[2], 10);
+    // Parse from pt field if individual fields are not provided.
+    if (card.pt) {
+      // Check for loyalty format: "Loyalty: 4" or just "4" for planeswalkers.
+      const loyaltyMatch = card.pt.match(/^(?:Loyalty:\s*)?(\d+)$/i);
+      if (loyaltyMatch && (power === undefined || toughness === undefined)) {
+        // If we don't have power/toughness but have a single number, it is likely loyalty.
+        loyalty = parseInt(loyaltyMatch[1], 10);
+      } else {
+        // Standard power/toughness format: "2/3"
+        const ptMatch = card.pt.match(/^(\d+)\/(\d+)$/);
+        if (ptMatch) {
+          power = parseInt(ptMatch[1], 10);
+          toughness = parseInt(ptMatch[2], 10);
+        }
+      }
+    }
+    
+    // Parse loyalty from oracle text if not found elsewhere.
+    let oracleText = card.oracleText;
+    if (loyalty === undefined && card.oracleText) {
+      // Check for "Starting Loyalty: X" format.
+      const startingLoyaltyMatch = card.oracleText.match(/^Starting Loyalty:\s*(\d+)/i);
+      if (startingLoyaltyMatch) {
+        loyalty = parseInt(startingLoyaltyMatch[1], 10);
+        // Remove the starting loyalty line from oracle text.
+        oracleText = card.oracleText.replace(/^Starting Loyalty:\s*\d+\s*\n?/i, '').trim();
+      } else {
+        // Check for "Loyalty: X" format (and remove it from oracle text).
+        const loyaltyMatch = card.oracleText.match(/^Loyalty:\s*(\d+)\s*\n?/i);
+        if (loyaltyMatch) {
+          loyalty = parseInt(loyaltyMatch[1], 10);
+          // Remove the loyalty line from oracle text.
+          oracleText = card.oracleText.replace(/^Loyalty:\s*\d+\s*\n?/i, '').trim();
+        }
       }
     }
 
@@ -78,8 +109,9 @@ export class MagicCard {
         typeLine: card.typeLine,
         power: power,
         toughness: toughness,
+        loyalty: loyalty,
         pt: card.pt,
-        oracleText: card.oracleText,
+        oracleText: oracleText,
         flavorText: card.flavorText,
         imageUrl: card.imageUrl,
         temporaryImageUrl: card.temporaryImageUrl,
@@ -107,9 +139,12 @@ export class MagicCard {
     this.copyright = ''
 
     if (selectSetIcon) {
-      const setIconInfo = setsHelper.getRandomSetIconInfo(this.rarity);
-      this.setIcon = setIconInfo.setCode;
-      this.setIconUrl = setIconInfo.iconUrl;
+      // For random icons:
+      // const setIconInfo = setsHelper.getRandomSetIconInfo(this.rarity);
+      // this.setIcon = setIconInfo.setCode;
+      // this.setIconUrl = setIconInfo.iconUrl;
+      this.setIcon = "spg";
+      this.setIconUrl = setsHelper.getSetIconUrl(this.setIcon, this.rarity);
     }
 
     this.set = 'GEN'
@@ -144,6 +179,10 @@ export class MagicCard {
 
   get cardUrl(): string {
     return getBaseUrl() + "/Card?id=" + this.databaseId
+  }
+
+  get loyalty(): number | undefined {
+    return this.cardFaces[0].loyalty;
   }
 
   get colorIdentity(): ColorIdentity {
