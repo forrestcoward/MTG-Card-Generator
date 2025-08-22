@@ -154,7 +154,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
             <td>
               <Button 
                 className={isImageLoading ? "custom-disabled-btn" : ""} 
-                size="small" 
+                size="middle"
                 type="primary" 
                 disabled={isImageLoading} 
                 style={{ marginTop: 3}} 
@@ -165,7 +165,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
               </Button>
               <Button 
                 className={isImageLoading ? "custom-disabled-btn" : ""} 
-                size="small" 
+                size="middle" 
                 type="primary" 
                 disabled={isImageLoading} 
                 style={{marginLeft: 10, marginTop: 10}} 

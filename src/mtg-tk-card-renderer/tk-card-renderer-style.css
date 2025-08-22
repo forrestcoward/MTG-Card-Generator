@@ -70,22 +70,12 @@
 
 /* Restore and adjust the illustration (art) container for planeswalkers */
 .mtg-card.planeswalker .illustration {
-  position: absolute;
-  left: 4mm;
-  top: 8.2mm;
-  width: 55mm;
-  height: 39mm;
-  /* Ensure the art still comes from the CSS variable */
-  background-image: var(--illustration-image);
-  background-size: calc(var(--illustration-scale, 1) * 100%);
-  background-position: var(--illustration-position-x, 0) var(--illustration-position-y, 0);
-  background-repeat: no-repeat;
+  top: 9mm;
 }
 
 .mtg-card.planeswalker .illustration.behind-textbox {
   background-color: #fff;
-  height: 73mm;
-  z-index: -1;
+  z-index: 0;
 }
 
 /* Planeswalker oracle background */
@@ -112,7 +102,7 @@
   top: 55.7mm;
   display: flex;
   flex-direction: column;
-  gap: 0.4mm;
+  gap: 0.2mm;
   width: 49.5mm;
   height: 24mm;
   padding: 0.5mm 0.5mm 1mm 5.5mm;
@@ -402,7 +392,7 @@
   color: #fff;
   font-size: 2.1mm;
   letter-spacing: 0.1mm;
-  font-family: "MPlantin-Italic";
+  font-family: serif;
   font-style: italic;
   line-height: 3.1mm;
   text-align: center;
@@ -558,11 +548,11 @@
   margin-bottom: 0;
 }
 .oracle-flavor {
-  font-family: "MPlantin-Italic", serif;
+  font-family: serif;
   font-style: italic;
 }
 .oracle-reminder {
-  font-family: "MPlantin-Italic", serif;
+  font-family: serif;
   font-style: italic;
 }
 

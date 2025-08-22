@@ -474,7 +474,7 @@ function useTextResizing(cardProps: CardProps) {
 
   const resizeOracleText = (oracle: HTMLElement, needsSpace: boolean) => {
     if (!oracle) return;
-    // Start with a reasonable font size
+    // Start with a reasonable font size.
     let fontSize = 1.0;
     oracle.style.fontSize = `${fontSize}em`;
 
@@ -482,13 +482,13 @@ function useTextResizing(cardProps: CardProps) {
     const boxHeight = oracle.clientHeight;
     const boxWidth = oracle.clientWidth;
 
-    // Reduce font size until content fits
+    // Reduce font size until content fits.
     while ((oracle.scrollHeight > boxHeight || oracle.scrollWidth > boxWidth) && fontSize > 0.5) {
       fontSize -= 0.05;
       oracle.style.fontSize = `${fontSize}em`;
     }
 
-    // If we need space for P/T box, reduce slightly more
+    // If we need space for P/T box, reduce slightly more.
     if (needsSpace && oracle.scrollHeight > boxHeight * 0.9) {
       fontSize *= 0.95;
       oracle.style.fontSize = `${fontSize}em`;
@@ -496,10 +496,10 @@ function useTextResizing(cardProps: CardProps) {
   };
 
   useEffect(() => {
-    // Setup resize observers and initial resizing
+    // Setup resize observers and initial resizing.
     const observers: (ResizeObserver | MutationObserver)[] = [];
 
-    // Resize card name
+    // Resize card name.
     if (cardNameRef.current) {
       const nameEl = cardNameRef.current;
       const nameResizeObserver = new ResizeObserver(() => {
@@ -514,7 +514,7 @@ function useTextResizing(cardProps: CardProps) {
       observers.push(nameObserver);
     }
 
-    // Resize type line
+    // Resize type line.
     if (typeLineRef.current) {
       const typeLineEl = typeLineRef.current;
       const typeLineResizeObserver = new ResizeObserver(() => {
@@ -529,7 +529,7 @@ function useTextResizing(cardProps: CardProps) {
       observers.push(typeLineObserver);
     }
 
-    // Handle oracle text resizing
+    // Handle oracle text resizing.
     if (oracleRef.current && !cardProps.is_planeswalker && !cardProps.is_saga) {
       const oracle = oracleRef.current;
       const needsSpace = cardProps.card_face.power !== undefined &&
@@ -553,7 +553,7 @@ function useTextResizing(cardProps: CardProps) {
       observers.push(oracleObserver);
     }
 
-    // Cleanup function
+    // Cleanup function.
     return () => {
       observers.forEach(observer => observer.disconnect());
     };
@@ -562,7 +562,7 @@ function useTextResizing(cardProps: CardProps) {
   return { cardNameRef, typeLineRef, oracleRef };
 }
 
-function PlaneswalkerCard({ cardProps, card, showFlavorText = true, onCreateImageClick, isImageEditorOpen = false }: CardComponentProps): React.ReactElement {
+function PlaneswalkerCard({ cardProps, card, onCreateImageClick, isImageEditorOpen = false }: CardComponentProps): React.ReactElement {
   const { cardNameRef, typeLineRef } = useTextResizing(cardProps);
 
   // Extract the URL from the CSS url() string
@@ -611,7 +611,7 @@ function PlaneswalkerCard({ cardProps, card, showFlavorText = true, onCreateImag
           </div>
         )}
       </div>
-      <div className="oracle planeswalker-oracle" style={{ fontSize: '6.48pt' }}>
+      <div className="oracle planeswalker-oracle" style={{ fontSize: '6pt' }}>
         {cardProps.planeswalker_abilities && cardProps.planeswalker_abilities.map((ability: PlaneswalkerAbility, index: number) => (
           <div key={index} className={ability.cost !== null ? "planeswalker-ability planeswalker-ability-with-cost" : "planeswalker-ability"}>
             {ability.cost !== null && (
@@ -622,12 +622,6 @@ function PlaneswalkerCard({ cardProps, card, showFlavorText = true, onCreateImag
             <div className="planeswalker-ability-text" dangerouslySetInnerHTML={{ __html: ability.html }} />
           </div>
         ))}
-        {showFlavorText && cardProps.card_face.flavorText && (
-          <div className="oracle-flavor">
-            <hr />
-            {cardProps.card_face.flavorText}
-          </div>
-        )}
       </div>
       <div className="loyalty">{cardProps.card_face.loyalty}</div>
       <div className="footer">
@@ -654,7 +648,7 @@ function PlaneswalkerCard({ cardProps, card, showFlavorText = true, onCreateImag
   );
 }
 
-function SagaCard({ cardProps, card, showFlavorText = true, onCreateImageClick, isImageEditorOpen = false }: CardComponentProps): React.ReactElement {
+function SagaCard({ cardProps, card, onCreateImageClick, isImageEditorOpen = false }: CardComponentProps): React.ReactElement {
   const { cardNameRef, typeLineRef } = useTextResizing(cardProps);
 
   // Extract the URL from the CSS url() string
@@ -721,12 +715,6 @@ function SagaCard({ cardProps, card, showFlavorText = true, onCreateImageClick, 
             </div>
           ))}
         </div>
-        {showFlavorText && cardProps.card_face.flavorText && (
-          <div className="oracle-flavor">
-            <hr />
-            {cardProps.card_face.flavorText}
-          </div>
-        )}
       </div>
       <div className="mid-line">
         {cardProps.card_face.color_indicator && (
@@ -913,7 +901,6 @@ function MTGCard({
         <PlaneswalkerCard 
           cardProps={props} 
           card={card} 
-          showFlavorText={showFlavorText}
           onCreateImageClick={onCreateImageClick} 
           isImageEditorOpen={isImageEditorOpen} 
         />
@@ -921,7 +908,6 @@ function MTGCard({
         <SagaCard 
           cardProps={props} 
           card={card} 
-          showFlavorText={showFlavorText}
           onCreateImageClick={onCreateImageClick} 
           isImageEditorOpen={isImageEditorOpen} 
         />

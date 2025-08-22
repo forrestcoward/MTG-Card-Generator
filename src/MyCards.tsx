@@ -15,8 +15,8 @@ import { MagicCard } from "./models/MagicCard";
 import { SettingGroup, Setting } from "./MTGCardGenerator";
 
 const cardDisplaySettings = [
-  { name: 'Default', id: 'legacy-renderer', value: true, description: '', group: 'display-settings' },
-  { name: 'MTGRender.TK', id: 'new-renderer', value: false, description: 'Render cards using the layout seen at https://www.mtgrender.tk', group: 'display-settings' },
+  { name: 'Default', id: 'new-renderer', value: true, description: '', group: 'display-settings' },
+  { name: 'Legacy', id: 'legacy-renderer', value: false, description: '', group: 'display-settings' },
 ]
 
 const cardDisplaySettingsGroup : SettingGroup = {

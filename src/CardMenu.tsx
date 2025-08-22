@@ -161,7 +161,13 @@ export const CardMenu: React.FC<CardMenuProps> = ({
     menuItems.push(updateImageItem);
   }
 
-  if (card.cardFaces[0].flavorText && onToggleFlavorText) {
+  // Check if card is planeswalker or saga (these shouldn't show flavor text options)
+  const isPlaneswalker = !!(card.cardFaces[0].typeLine &&
+    card.cardFaces[0].typeLine.toLowerCase().includes("planeswalker"));
+  const isSaga = !!(card.cardFaces[0].layout === "saga" ||
+    (card.cardFaces[0].typeLine && card.cardFaces[0].typeLine.includes("Saga")));
+
+  if (card.cardFaces[0].flavorText && onToggleFlavorText && !isPlaneswalker && !isSaga) {
     const flavorTextItem = {
       key: '6',
       label: (
