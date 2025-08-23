@@ -135,10 +135,10 @@ body* > {
   align-self: center;
 }
 
-#set-icon {
-    width: 6%;
+.set-icon-v1 {
+    width: 7%;
     overflow: hidden;
-    margin-right: 10px;
+    margin-right: 7px;
     align-self: center;
 }
 
@@ -198,6 +198,11 @@ body* > {
 /* Two color backgrounds. */
 .card-background-uw {
   background-image: url(./card-backgrounds/uw.png);
+}
+
+/* TODO: Fix up and use just wu, not uw. */
+.card-background-wu {
+  background-image: url(./card-backgrounds/wu.png);
 }
 
 .card-background-ub {

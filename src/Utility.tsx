@@ -103,16 +103,27 @@ export function adjustTextHeightBasedOnChildrenClientOffsetHeight(container: HTM
   }
 
   while (getChildrenClientOffsetHeight(innerContainer, vertical) / container.clientHeight < fit) {
-    fontSizeFloat++
-    innerContainer.style.fontSize = fontSizeFloat + "px"
+    if (innerContainer.id.startsWith("set-")) {
+      break // TODO: improve this logic. Nothing to do for set icon.
+    } else {
+      fontSizeFloat++
+      innerContainer.style.fontSize = fontSizeFloat + "px"
+    }
   }
 
   while (getChildrenClientOffsetHeight(innerContainer, vertical) / container.clientHeight > fit) {
     fontSizeFloat--
     innerContainer.style.fontSize = fontSizeFloat + "px"
+    
+    if (innerContainer.id.startsWith("set-")) {
+      break // TODO: improve this logic. Nothing to do for set icon.
+    } else {
+      fontSizeFloat--
+      innerContainer.style.fontSize = fontSizeFloat + "px"
 
-    if (fontSizeFloat <= minFontSize) {
-      break
+      if (fontSizeFloat <= minFontSize) {
+        break
+      }
     }
   }
 }

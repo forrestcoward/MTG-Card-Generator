@@ -85,10 +85,7 @@ interface CardProps {
   has_image: boolean;
 }
 
-/**
- * Replaces mana symbols in the oracle text with <img> tags
- * and wraps text in parentheses with a span.
- */
+// Replaces mana symbols in the oracle text with <img> tag and wraps text in parentheses with a span.
 function parseOracle(str: string): string {
   const manaRegex = /{([^}]+)}/g;
   str = str.replace(manaRegex, (match: string, group: string) => {
@@ -101,10 +98,6 @@ function parseOracle(str: string): string {
   return str;
 }
 
-/**
- * Helper function that returns true if the given string contains
- * any of the search terms (case insensitive).
- */
 function contains(str: string | undefined, search: string | string[]): boolean {
   if (!str || !search) return false;
   if (Array.isArray(search))
@@ -112,11 +105,6 @@ function contains(str: string | undefined, search: string | string[]): boolean {
   return str.toLowerCase().includes(search.toLowerCase());
 }
 
-/* =======================================================
- * Card Computation Functions
- * Computes and returns an object with properties derived from the card JSON.
- * =======================================================
- */
 function computeCardProps(card: MagicCard, currentFace: number = 0): CardProps {
   const props = {} as CardProps;
 
@@ -183,15 +171,9 @@ function computeCardProps(card: MagicCard, currentFace: number = 0): CardProps {
   props.extended_art = ["extended", "full", "full-footer"].includes(props.card_face.artVariant || "");
 
   // Oracle text and flavor text.
-  props.oracle_lines = props.card_face.oracleText
-      ? props.card_face.oracleText.split("\n").map(parseOracle)
-      : [];
-  props.adventure_oracle_lines = (card.cardFaces && card.cardFaces[1] && card.cardFaces[1].oracleText)
-      ? card.cardFaces[1].oracleText.split("\n").map(parseOracle)
-      : [];
-  props.saga_reminder = props.card_face.oracleText
-      ? parseOracle(props.card_face.oracleText.split("\n")[0])
-      : "";
+  props.oracle_lines = props.card_face.oracleText ? props.card_face.oracleText.split("\n").map(parseOracle) : [];
+  props.adventure_oracle_lines = (card.cardFaces && card.cardFaces[1] && card.cardFaces[1].oracleText) ? card.cardFaces[1].oracleText.split("\n").map(parseOracle) : [];
+  props.saga_reminder = props.card_face.oracleText ? parseOracle(props.card_face.oracleText.split("\n")[0]) : "";
   props.class_reminder = props.saga_reminder;
   if (props.card_face.oracleText) {
     const steps = props.card_face.oracleText.split("\n").filter(s => s.match(/^([IVX]+) — /));
@@ -268,9 +250,9 @@ function computeCardProps(card: MagicCard, currentFace: number = 0): CardProps {
     let colorString = sorted_colors.join("");
 
     // Special cases
-    if (contains(face.typeLine, ["Artifact", "Artefact", "Artéfact"])) {
-      return "Artifact";
-    }
+    // if (contains(face.typeLine, ["Artifact", "Artefact", "Artéfact"])) {
+    //  return "Artifact";
+    //}
 
     if (colorString.length === 0) {
       return "Colourless";
@@ -295,11 +277,17 @@ function computeCardProps(card: MagicCard, currentFace: number = 0): CardProps {
   props.colors = computeColors(props.card_face);
 
   // Determine boxes colors.
-  if (props.is_vehicle) props.boxes_colors = "Artifact";
-  else if (props.is_land)
+  // if (props.is_vehicle) props.boxes_colors = "Artifact";
+  if (props.is_land) {
     props.boxes_colors = props.colors.length > 2 && props.colors.length < 5 ? "Gold" : "Land";
-  else
+  } else {
     props.boxes_colors = props.colors.length > 1 && props.colors.length < 5 ? "Gold" : props.colors;
+  }
+
+  var backgroundImage = props.boxes_colors
+  if (props.is_planeswalker) {
+    backgroundImage = props.colors.length > 3 ? "Gold" : props.colors;
+  }
 
   // Choose background – select folder based on type.
   let folder: string;
@@ -311,7 +299,16 @@ function computeCardProps(card: MagicCard, currentFace: number = 0): CardProps {
   else if (card.frameEffects && card.frameEffects.includes("compasslanddfc") && currentFace === 1)
     folder = "ixalan_bg";
   else folder = "bg";
-  props.background = `url(${baseAssetUrl}img/${folder}/${props.is_vehicle ? "Vehicle" : props.boxes_colors}.webp)`;
+  
+  if (props.is_saga) {
+    props.background = `url(${baseAssetUrl}img/${folder}/${props.is_vehicle ? "Vehicle" : backgroundImage}.png)`;
+  } else {
+    var color = props.colors
+    if (color == "Gold" || color == "gold") {
+      color = "mc"
+    }
+    props.background = `url(assets/${color}.png)`;
+  }
 
   // Choose frame image folder.
   if (props.is_adventure) folder = "adventure_frames";
@@ -335,7 +332,7 @@ function computeCardProps(card: MagicCard, currentFace: number = 0): CardProps {
           : props.extended_art && !props.is_class
               ? "extended_boxes"
               : "boxes";
-  props.boxes = `url(${baseAssetUrl}img/${folder}/${props.boxes_colors}.webp)`;
+  props.boxes = `url(${baseAssetUrl}img/${folder}/${props.boxes_colors}.png)`;
   props.mid_boxes = props.extended_art && !props.is_planeswalker && !props.is_class
       ? `url(${baseAssetUrl}img/extended_boxes/${props.boxes_colors}.webp)`
       : props.boxes;
@@ -430,14 +427,6 @@ function computeCardProps(card: MagicCard, currentFace: number = 0): CardProps {
   return props;
 }
 
-/* =======================================================
- * Card Rendering Functions
- * =======================================================
- */
-
-/**
- * React component props for rendering any type of MTG card component.
- */
 interface CardComponentProps {
   cardProps: CardProps;
   card: MagicCard;
@@ -446,9 +435,7 @@ interface CardComponentProps {
   isImageEditorOpen?: boolean;
 }
 
-/**
- * Custom hook for text resizing functionality.
- */
+// Custom hook for text resizing functionality.
 function useTextResizing(cardProps: CardProps) {
   const cardNameRef = useRef<HTMLSpanElement>(null);
   const typeLineRef = useRef<HTMLDivElement>(null);

@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { UserContext } from './UserContext';
 import { CardRenderer  } from './CardRenderer';
-import { TkCardRenderer } from './mtg-tk-card-renderer/TkCardRenderer';
+import { CardRendererV2 } from './card-renderer-v2/CardRendererV2';
 import { GenerateMagicCardRequest } from './CallAPI';
 import { isMobileDevice, setCardContainerSize } from './Utility';
 import { TutorialCard } from './TutorialCard';
@@ -149,8 +149,8 @@ const cardGenerationSettingsGroup : SettingGroup = {
 }
 
 const cardDisplaySettings = [
-  { name: 'Default', id: 'new-renderer', value: true, description: '', group: 'display-settings' },
-  { name: 'Legacy', id: 'legacy-renderer', value: false, description: '', group: 'display-settings' },
+  { name: 'Default', id: 'default-renderer', value: true, description: '', group: 'display-settings' },
+  { name: 'V2 (WIP)', id: 'v2-renderer', value: false, description: 'V2 renderer (work in progress). Aims to display planeswalker, sagas, and dual sided cards more effectively.', group: 'display-settings' },
 ]
 
 const cardDisplaySettingsGroup : SettingGroup = {
@@ -165,7 +165,7 @@ export function MTGCardGenerator() {
   const [response, setResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [settings, setSettings] = useState([modelSettingsGroup, imageSettingsGroup, cardGenerationSettingsGroup, cardDisplaySettingsGroup]);
+  const [settings, setSettings] = useState([modelSettingsGroup, imageSettingsGroup, cardGenerationSettingsGroup, ...(isMobileDevice() ? [] : [cardDisplaySettingsGroup])]);
   const [cards, setCards] = useState([TutorialCard]);
   const [currentError, setCurrentError] = useState('');
   const [defaultCardWidth, setDefaultCardWidth] = useState(setCardContainerSize());
@@ -226,9 +226,9 @@ export function MTGCardGenerator() {
     return setting?.id ?? defaultImageModel
   }
 
-  function useNewRenderer(): boolean {
+  function useDefaultRenderer(): boolean {
     let setting = allSettings().find(setting => setting.value == true && setting?.group == 'display-settings')
-    return setting?.id === 'new-renderer'
+    return !setting || setting?.id === 'default-renderer'
   }
 
   function handleSettingUpdate(updatedSetting: string, newValue: boolean) {
@@ -316,16 +316,7 @@ export function MTGCardGenerator() {
         {
           cards.map(card => (
             <div className='cardContainer' key={`card-container-${card.id}`}>
-              {useNewRenderer() ? (
-                <TkCardRenderer 
-                  key={`mtgrender-card-display-${card.id}`} 
-                  card={card} 
-                  showCardMenu={true} 
-                  cardWidth={defaultCardWidth} 
-                  allowImagePreview={true} 
-                  allowEdits={true} 
-                  allowImageUpdate={true} />
-              ) : (
+              {useDefaultRenderer() ? (
                 <CardRenderer 
                   key={`card-display-${card.id}`} 
                   card={card} 
@@ -334,6 +325,16 @@ export function MTGCardGenerator() {
                   allowImagePreview={true} 
                   allowEdits={true} 
                   allowImageUpdate={true} />
+              ) : (
+                <CardRendererV2 
+                  key={`card-display-v2-${card.id}`} 
+                  card={card} 
+                  showCardMenu={true} 
+                  cardWidth={defaultCardWidth} 
+                  allowImagePreview={true} 
+                  allowEdits={true} 
+                  allowImageUpdate={true} />
+
               )}
             </div>
           ))

@@ -315,17 +315,7 @@ export function CardRenderer(props: CardRendererProps) {
     adjustFrameBottomSize();
     adjustCardTextSize();
   }
-
-  function increaseSize(increase: number = 40) {
-    const container : HTMLElement | null = document.getElementById(`card-${state.card.id}`)
-    adjustCardSize(container!.clientWidth + increase)
-  }
-
-  function decreaseSize(decrease: number = 40) {
-    const container : HTMLElement | null = document.getElementById(`card-${state.card.id}`)
-    adjustCardSize(container!.clientWidth - decrease)
-  }
-
+  
   function adjustCardSize(width: number = 440) {
     const container : HTMLElement | null = document.getElementById(`card-${state.card.id}`)
     if (container == null) {
@@ -352,7 +342,7 @@ export function CardRenderer(props: CardRendererProps) {
     adjustTextHeightBasedOnClientHeight(container, nameContainer, ratio)
     adjustTextHeightBasedOnChildrenClientOffsetHeight(container, manaContainer, ratio, 4, false)
 
-    const calculateWidth = function() { return nameContainer.scrollWidth + manaContainer.scrollWidth }
+    const calculateWidth = function() { return nameContainer.scrollWidth + manaContainer.scrollWidth + 30 }
     let prevWidth = 0;
     let fontSize = parseFloat(window.getComputedStyle(nameContainer, null).getPropertyValue('font-size'));
 
@@ -506,7 +496,7 @@ export function CardRenderer(props: CardRendererProps) {
                     <Button style={{position:"absolute", bottom:0, right:0, margin:5, display: (state.showImageEditor || !props.allowImageUpdate || !state.useTemporaryImage) ? 'none' : 'inline-block' }} 
                     type="primary" 
                     icon={<RightCircleOutlined />} 
-                    size="small" 
+                    size="middle" 
                     onClick={() => {setState(prev => ({ ...prev, showImageEditor: true }))}}>
                       Create Image
                     </Button>
@@ -521,9 +511,7 @@ export function CardRenderer(props: CardRendererProps) {
                     <h1 id={`type-${card.id}`} className="type name-type-size">{card.face.typeLine}</h1> :
                     <input className="card-edit-type" type="text" value={state.typeUpdate} onChange={handleCardTypeUpdate} />
                   }
-                <div id={`set-${card.id}`} className="mana-symbols">
-                  <i className="ms ms-dfc-ignite" id="mana-icon"></i>
-                </div>
+                  <img id={`set-${card.id}`} className="set-icon-v1" src={card.setIconUrl} />
               </div>
               <div className={cardFrameTextBoxClassName()}>
                 <div className={cardFrameContentClassName()}>

@@ -5,7 +5,7 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, './dist'),
     filename: 'bundle.js',
-    assetModuleFilename: 'assets/[hash][ext][query]',
+    assetModuleFilename: 'assets/[name][ext][query]',
     publicPath: '/', // Required for react router.
   },
   devServer: {

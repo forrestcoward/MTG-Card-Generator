@@ -1,8 +1,8 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { isMobileDevice } from '../Utility';
-import './tk-card-renderer-style.css';
+import './card-render-v2.css';
 import '../mtg-card.css';
-import { MTGCard } from './RenderCard';
+import { MTGCard } from './RenderCardV2';
 import { MagicCard } from '../models/MagicCard';
 import { CardMenu } from '../CardMenu';
 import { GenerateImageResponse } from '../CallAPI';
@@ -10,7 +10,7 @@ import { ImageEditor } from '../ImageEditor';
 import { toBlob } from 'html-to-image';
 import { saveAs } from 'file-saver';
 
-interface TkCardRendererProps {
+interface CardRendererV2Props {
   card: MagicCard;
   cardWidth: number;
   showCardMenu?: boolean;
@@ -19,7 +19,7 @@ interface TkCardRendererProps {
   allowEdits?: boolean;
 }
 
-export const TkCardRenderer : React.FC<TkCardRendererProps> = ({ 
+export const CardRendererV2 : React.FC<CardRendererV2Props> = ({ 
   card, 
   cardWidth, 
   showCardMenu = true,
@@ -43,7 +43,6 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
   // Flavor text visibility state
   const [showFlavorText, setShowFlavorText] = useState(true);
 
-  //const convertedCard = convertMagicCardToNewFormat(card);
   const scale = currentWidth * 1.9 / cardWidth;
   const cardIsTutorialCard = cardData.databaseId === "-1";
   const imageEditorWidth = isMobileDevice() ? currentWidth : currentWidth - 100;
@@ -51,29 +50,22 @@ export const TkCardRenderer : React.FC<TkCardRendererProps> = ({
   // For this card renderer, a CSS transform is used to scale the size, but CSS transform does not impact the size of the container objects, 
   // so we update manually to adjust for the transformed size.
   useEffect(() => {
-    //const measureActualSize = () => {
-      const cardElement = document.getElementById(`mtgcardrender-${cardData.id}`);
-      const cardMenu = document.getElementById(`mtgcardrender-menu-${cardData.id}`);
-
-      if (cardElement && cardMenu) {
-        const cardRect = cardElement.getBoundingClientRect();
-        const menuRect = cardMenu.getBoundingClientRect();
-        const newHeight = cardRect.height + menuRect.height;
-        setActualSize({ width: cardRect.width, height: cardRect.height });
-        setActualSizeWithMenu({ width: cardRect.width, height: newHeight });
-      } else if (cardElement) {
-        const cardRect = cardElement.getBoundingClientRect();
-        setActualSize({ width: cardRect.width, height: cardRect.height });
-        setActualSizeWithMenu({ width: cardRect.width, height: cardRect.height });
-      }
-    //};
-
-    // Measure after a short delay to ensure rendering is complete.
-    //const timeoutId = setTimeout(measureActualSize, 0);
-    //return () => clearTimeout(timeoutId);
+    const cardElement = document.getElementById(`mtgcardrender-${cardData.id}`);
+    const cardMenu = document.getElementById(`mtgcardrender-menu-${cardData.id}`);
+    if (cardElement && cardMenu) {
+      const cardRect = cardElement.getBoundingClientRect();
+      const menuRect = cardMenu.getBoundingClientRect();
+      const newHeight = cardRect.height + menuRect.height;
+      setActualSize({ width: cardRect.width, height: cardRect.height });
+      setActualSizeWithMenu({ width: cardRect.width, height: newHeight });
+    } else if (cardElement) {
+      const cardRect = cardElement.getBoundingClientRect();
+      setActualSize({ width: cardRect.width, height: cardRect.height });
+      setActualSizeWithMenu({ width: cardRect.width, height: cardRect.height });
+    }
   }, [currentWidth, cardData.id, showFlavorText]);
 
-  // Listen for create image events from the card HTML
+  // Listen for create image events from the inner card.
   const handleCreateImage = () => {
     setShowImageEditor(true);
   };
