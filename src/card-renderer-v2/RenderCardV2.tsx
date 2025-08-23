@@ -307,7 +307,7 @@ function computeCardProps(card: MagicCard, currentFace: number = 0): CardProps {
     if (color == "Gold" || color == "gold") {
       color = "mc"
     }
-    props.background = `url(assets/${color}.png)`;
+    props.background = `url(${baseAssetUrl}img/bgv1/${color.toLowerCase()}.png)`
   }
 
   // Choose frame image folder.
