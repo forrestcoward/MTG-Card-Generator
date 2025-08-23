@@ -1,8 +1,10 @@
 import React, { useEffect } from 'react';
-import { CardDisplay, CardGenerationRecord, MagicCard } from './Card';
+import { CardRenderer } from './CardRenderer';
 import { GetCard } from './CallAPI';
 import { setCardContainerSize } from './Utility';
 import { useMsal } from '@azure/msal-react';
+import { CardGenerationRecord } from './models/CardRating';
+import { MagicCard } from './models/MagicCard';
 
 export function ViewCard() {
   const [card, setCard] = React.useState<CardGenerationRecord | null>(null);
@@ -28,7 +30,7 @@ export function ViewCard() {
     <div>
       { card &&
         <div className="cardsContainer">
-          <CardDisplay 
+          <CardRenderer 
             card={new MagicCard(card.card)} 
             allowEdits={true} 
             allowImagePreview={true} 

@@ -1,0 +1,236 @@
+import { MagicCard } from "./models/MagicCard";
+import { setIcons } from "./SetIcons";
+
+export const baseAssetUrl = "https://mtgcardgenstoragedev.blob.core.windows.net/assets/";
+
+export const IconsHelper = (() => {
+  const mana_symbols: Record<string, { svg_uri: string }> = {
+    "{0}": { svg_uri: `${baseAssetUrl}img/symbols/0.svg` },
+    "{1}": { svg_uri: `${baseAssetUrl}img/symbols/1.svg` },
+    "{2}": { svg_uri: `${baseAssetUrl}img/symbols/2.svg` },
+    "{2B}": { svg_uri: `${baseAssetUrl}img/symbols/2B.svg` },
+    "{2G}": { svg_uri: `${baseAssetUrl}img/symbols/2G.svg` },
+    "{2R}": { svg_uri: `${baseAssetUrl}img/symbols/2R.svg` },
+    "{2U}": { svg_uri: `${baseAssetUrl}img/symbols/2U.svg` },
+    "{2W}": { svg_uri: `${baseAssetUrl}img/symbols/2W.svg` },
+    "{3}": { svg_uri: `${baseAssetUrl}img/symbols/3.svg` },
+    "{4}": { svg_uri: `${baseAssetUrl}img/symbols/4.svg` },
+    "{5}": { svg_uri: `${baseAssetUrl}img/symbols/5.svg` },
+    "{6}": { svg_uri: `${baseAssetUrl}img/symbols/6.svg` },
+    "{7}": { svg_uri: `${baseAssetUrl}img/symbols/7.svg` },
+    "{8}": { svg_uri: `${baseAssetUrl}img/symbols/8.svg` },
+    "{9}": { svg_uri: `${baseAssetUrl}img/symbols/9.svg` },
+    "{10}": { svg_uri: `${baseAssetUrl}img/symbols/10.svg` },
+    "{11}": { svg_uri: `${baseAssetUrl}img/symbols/11.svg` },
+    "{12}": { svg_uri: `${baseAssetUrl}img/symbols/12.svg` },
+    "{13}": { svg_uri: `${baseAssetUrl}img/symbols/13.svg` },
+    "{14}": { svg_uri: `${baseAssetUrl}img/symbols/14.svg` },
+    "{15}": { svg_uri: `${baseAssetUrl}img/symbols/15.svg` },
+    "{16}": { svg_uri: `${baseAssetUrl}img/symbols/16.svg` },
+    "{17}": { svg_uri: `${baseAssetUrl}img/symbols/17.svg` },
+    "{18}": { svg_uri: `${baseAssetUrl}img/symbols/18.svg` },
+    "{19}": { svg_uri: `${baseAssetUrl}img/symbols/19.svg` },
+    "{20}": { svg_uri: `${baseAssetUrl}img/symbols/20.svg` },
+    "{100}": { svg_uri: `${baseAssetUrl}img/symbols/100.svg` },
+    "{1000000}": { svg_uri: `${baseAssetUrl}img/symbols/1000000.svg` },
+    "{A}": { svg_uri: `${baseAssetUrl}img/symbols/A.svg` },
+    "{B}": { svg_uri: `${baseAssetUrl}img/symbols/B.svg` },
+    "{BG}": { svg_uri: `${baseAssetUrl}img/symbols/BG.svg` },
+    "{BGP}": { svg_uri: `${baseAssetUrl}img/symbols/BGP.svg` },
+    "{BR}": { svg_uri: `${baseAssetUrl}img/symbols/BR.svg` },
+    "{BRP}": { svg_uri: `${baseAssetUrl}img/symbols/BRP.svg` },
+    "{C}": { svg_uri: `${baseAssetUrl}img/symbols/C.svg` },
+    "{CB}": { svg_uri: `${baseAssetUrl}img/symbols/CB.svg` },
+    "{CG}": { svg_uri: `${baseAssetUrl}img/symbols/CG.svg` },
+    "{CHAOS}": { svg_uri: `${baseAssetUrl}img/symbols/CHAOS.svg` },
+    "{CP}": { svg_uri: `${baseAssetUrl}img/symbols/CP.svg` },
+    "{CR}": { svg_uri: `${baseAssetUrl}img/symbols/CR.svg` },
+    "{CU}": { svg_uri: `${baseAssetUrl}img/symbols/CU.svg` },
+    "{CW}": { svg_uri: `${baseAssetUrl}img/symbols/CW.svg` },
+    "{D}": { svg_uri: `${baseAssetUrl}img/symbols/D.svg` },
+    "{E}": { svg_uri: `${baseAssetUrl}img/symbols/E.svg` },
+    "{G}": { svg_uri: `${baseAssetUrl}img/symbols/G.svg` },
+    "{GU}": { svg_uri: `${baseAssetUrl}img/symbols/GU.svg` },
+    "{G/U}": { svg_uri: `${baseAssetUrl}img/symbols/GU.svg` },
+    "{GUP}": { svg_uri: `${baseAssetUrl}img/symbols/GUP.svg` },
+    "{GW}": { svg_uri: `${baseAssetUrl}img/symbols/GW.svg` },
+    "{GWP}": { svg_uri: `${baseAssetUrl}img/symbols/GWP.svg` },
+    "{H}": { svg_uri: `${baseAssetUrl}img/symbols/H.svg` },
+    "{HALF}": { svg_uri: `${baseAssetUrl}img/symbols/HALF.svg` },
+    "{HR}": { svg_uri: `${baseAssetUrl}img/symbols/HR.svg` },
+    "{HW}": { svg_uri: `${baseAssetUrl}img/symbols/HW.svg` },
+    "{INFINITY}": { svg_uri: `${baseAssetUrl}img/symbols/INFINITY.svg` },
+    "{L}": { svg_uri: `${baseAssetUrl}img/symbols/L.svg` },
+    "{P}": { svg_uri: `${baseAssetUrl}img/symbols/P.svg` },
+    "{PW}": { svg_uri: `${baseAssetUrl}img/symbols/PW.svg` },
+    "{Q}": { svg_uri: `${baseAssetUrl}img/symbols/Q.svg` },
+    "{R}": { svg_uri: `${baseAssetUrl}img/symbols/R.svg` },
+    "{RG}": { svg_uri: `${baseAssetUrl}img/symbols/RG.svg` },
+    "{RGP}": { svg_uri: `${baseAssetUrl}img/symbols/RGP.svg` },
+    "{RP}": { svg_uri: `${baseAssetUrl}img/symbols/RP.svg` },
+    "{R/P}": { svg_uri: `${baseAssetUrl}img/symbols/RP.svg` },
+    "{RW}": { svg_uri: `${baseAssetUrl}img/symbols/RW.svg` },
+    "{RWP}": { svg_uri: `${baseAssetUrl}img/symbols/RWP.svg` },
+    "{S}": { svg_uri: `${baseAssetUrl}img/symbols/S.svg` },
+    "{T}": { svg_uri: `${baseAssetUrl}img/symbols/T.svg` },
+    "{TK}": { svg_uri: `${baseAssetUrl}img/symbols/TK.svg` },
+    "{U}": { svg_uri: `${baseAssetUrl}img/symbols/U.svg` },
+    "{UB}": { svg_uri: `${baseAssetUrl}img/symbols/UB.svg` },
+    "{UBP}": { svg_uri: `${baseAssetUrl}img/symbols/UBP.svg` },
+    "{UP}": { svg_uri: `${baseAssetUrl}img/symbols/UP.svg` },
+    "{UR}": { svg_uri: `${baseAssetUrl}img/symbols/UR.svg` },
+    "{URP}": { svg_uri: `${baseAssetUrl}img/symbols/URP.svg` },
+    "{W}": { svg_uri: `${baseAssetUrl}img/symbols/W.svg` },
+    "{WB}": { svg_uri: `${baseAssetUrl}img/symbols/WB.svg` },
+    "{WBP}": { svg_uri: `${baseAssetUrl}img/symbols/WBP.svg` },
+    "{WP}": { svg_uri: `${baseAssetUrl}img/symbols/WP.svg` },
+    "{WU}": { svg_uri: `${baseAssetUrl}img/symbols/WU.svg` },
+    "{WUP}": { svg_uri: `${baseAssetUrl}img/symbols/WUP.svg` },
+    "{X}": { svg_uri: `${baseAssetUrl}img/symbols/X.svg` },
+    "{Y}": { svg_uri: `${baseAssetUrl}img/symbols/Y.svg` },
+    "{Z}": { svg_uri: `${baseAssetUrl}img/symbols/Z.svg` }
+  };
+
+  function getManaIcon(symbol: string) {
+    const normalizedSymbol = symbol.replace("/", "");
+    return mana_symbols[normalizedSymbol] ? mana_symbols[normalizedSymbol].svg_uri : "";
+  }
+
+  function parseManaCost(manaCostString: string) {
+    const manaRegex = /{([^}]+)}/g;
+    const icons: string[] = [];
+    let match: RegExpExecArray | null;
+    while ((match = manaRegex.exec(manaCostString)) !== null) {
+      icons.push(getManaIcon(`{${match[1]}}`));
+    }
+    return icons;
+  }
+
+  return { getManaIcon, parseManaCost, mana_symbols };
+})();
+
+export class Sets {
+  private setIconMap: Map<string, Map<string, string>>; // setCode -> rarity -> fileExtension
+  private availableSets: string[];
+
+  constructor() {
+    this.setIconMap = new Map();
+    this.availableSets = [];
+    this.initializeSetIconMap();
+  }
+
+  private initializeSetIconMap() {
+    // Parse the setIcons array to create a map of set codes to available rarities with their file extensions.
+    setIcons.forEach(iconFileName => {
+      if (iconFileName.endsWith('.webp') || iconFileName.endsWith('.png')) {
+        const extension = iconFileName.endsWith('.webp') ? '.webp' : '.png';
+        const nameWithoutExtension = iconFileName.replace(extension, '');
+        const parts = nameWithoutExtension.split('_');
+        
+        if (parts.length >= 2) {
+          const setCode = parts.slice(0, -1).join('_'); // Handle set codes with underscores.
+          const rarity = parts[parts.length - 1];
+          
+          if (!this.setIconMap.has(setCode)) {
+            this.setIconMap.set(setCode, new Map());
+            this.availableSets.push(setCode);
+          }
+          
+          // Store the file extension for this set and rarity combination
+          this.setIconMap.get(setCode)!.set(rarity, extension);
+        }
+      }
+    });
+  }
+
+  hasIcon(setCode?: string, rarity?: string): boolean {
+    if (!setCode) return false;
+    
+    const setRarities = this.setIconMap.get(setCode);
+    if (!setRarities) return false;
+    
+    if (rarity) {
+      return setRarities.has(rarity);
+    }
+    
+    // If no rarity specified, return true if any rarity exists for this set.
+    return setRarities.size > 0;
+  }
+
+  getRandomSetIconInfo(rarity: string): { setCode: string; iconUrl: string } {
+    // Filter sets that have the requested rarity
+    const setsWithRarity = this.availableSets.filter(setCode => 
+      this.setIconMap.get(setCode)?.has(rarity)
+    );
+    
+    if (setsWithRarity.length === 0) {
+      // Fallback to common if the requested rarity isn't available
+      const setsWithCommon = this.availableSets.filter(setCode => 
+        this.setIconMap.get(setCode)?.has('common')
+      );
+      
+      if (setsWithCommon.length === 0) {
+        return { setCode: "", iconUrl: "" };
+      }
+      
+      const randomSet = setsWithCommon[Math.floor(Math.random() * setsWithCommon.length)];
+      const extension = this.setIconMap.get(randomSet)?.get('common') || '.webp';
+      return {
+        setCode: randomSet,
+        iconUrl: `${baseAssetUrl}img/set_icons/${randomSet}_common${extension}`
+      };
+    }
+    
+    const randomSet = setsWithRarity[Math.floor(Math.random() * setsWithRarity.length)];
+    const extension = this.setIconMap.get(randomSet)?.get(rarity) || '.webp';
+    return {
+      setCode: randomSet,
+      iconUrl: `${baseAssetUrl}img/set_icons/${randomSet}_${rarity}${extension}`
+    };
+  }
+
+  getSetIconUri(card: MagicCard): string {
+    if (card?.setIcon) {
+      return card.setIcon;
+    } 
+    
+    if (card?.set) {
+      const rarity = card.rarity || "common";
+      
+      // Check if we have the exact icon for this set and rarity
+      if (this.hasIcon(card.set, rarity)) {
+        const extension = this.setIconMap.get(card.set)?.get(rarity) || '.webp';
+        return `${baseAssetUrl}img/set_icons/${card.set}_${rarity}${extension}`;
+      }
+      
+      // Fallback to common if the specific rarity isn't available
+      if (this.hasIcon(card.set, "common")) {
+        const extension = this.setIconMap.get(card.set)?.get('common') || '.webp';
+        return `${baseAssetUrl}img/set_icons/${card.set}_common${extension}`;
+      }
+    }
+    
+    return "";
+  }
+
+  getAvailableRarities(setCode: string): string[] {
+    const rarities = this.setIconMap.get(setCode);
+    return rarities ? Array.from(rarities.keys()) : [];
+  }
+
+  getIconExtension(setCode: string, rarity: string): string {
+    return this.setIconMap.get(setCode)?.get(rarity) || '.webp';
+  }
+
+  getAllAvailableSets(): string[] {
+    return [...this.availableSets];
+  }
+
+  getSetIconUrl(setCode: string, rarity: string = 'common'): string {
+    // Get the file extension for this set and rarity, defaulting to .webp
+    const extension = this.setIconMap.get(setCode)?.get(rarity) || '.webp';
+    return `${baseAssetUrl}img/set_icons/${setCode}_${rarity}${extension}`;
+  }
+}
+
+export const setsHelper = new Sets();

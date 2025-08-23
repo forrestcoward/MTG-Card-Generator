@@ -1,10 +1,11 @@
-import { BasicCard, MagicCard } from "./Card";
 // @ts-ignore
 import tutorialCardWizardImage from './card-backgrounds/wizard.png'
+import { BasicCard } from './models/BasicCard';
+import { MagicCard } from './models/MagicCard';
 
 const _tutorialCard:BasicCard = {
   name: "The M.T.G. Card Creator",
-  manaCost: "{6}",
+  manaCost: "{6}{G}",
   typeLine: "Legendary Creature — Wizard",
   type: "Artifact",
   oracleText: "{T}: Enter a prompt above and hit \"Generate!\" to generate a unique Magic: The Gathering card into my spell book.",
@@ -22,6 +23,7 @@ const _tutorialCard:BasicCard = {
   funnyExplanation: "",
   id: "-1",
   alternativeImageUrls: [],
+  url: ''
 }
 
 export const TutorialCard:MagicCard = new MagicCard(_tutorialCard);

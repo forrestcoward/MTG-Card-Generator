@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
-import { CardDisplay, MagicCard } from "./Card";
+import { CardRenderer, manaTokenToCssCharacter } from "./CardRenderer";
 import Tooltip from "antd/es/tooltip";
 import { adjustTextHeightBasedOnChildrenClientOffsetHeight, adjustTextHeightBasedOnClientHeight } from "./Utility";
+import { MagicCard } from "./models/MagicCard";
 
 interface CardPreviewProps {
   card: MagicCard;
@@ -46,6 +47,14 @@ export function CardPreview(props: CardPreviewProps) {
     }
   }
 
+  function getManaClassNameForTitle(manaToken: string) {
+    return `ms ms-${manaTokenToCssCharacter[manaToken]} ms-padding-title`
+  }
+
+  function cardFrameHeaderClassName() {
+    return `frame-header frame-${props.card.colorIdentity} frame-header-${props.card.colorIdentity}`
+  }
+
   const sameId = false;
   const tooltipCard = MagicCard.clone(props.card, sameId);
   return (
@@ -57,14 +66,14 @@ export function CardPreview(props: CardPreviewProps) {
         mouseLeaveDelay={0} 
         overlayClassName="antd-no-style-tooltip" 
         overlayInnerStyle={{width: `${props.cardWidth-20}px`, marginLeft:20}} 
-        title={<CardDisplay card={tooltipCard} cardWidth={props.cardWidth-20} showCardMenu={false} allowImagePreview={false} allowEdits={false} allowImageUpdate={false} />}>
-        <div id={`title-container-${props.card.id}`} className={props.card.cardFrameHeaderClassName} style={{padding:0, marginTop:0, height:28}} >
+        title={<CardRenderer card={tooltipCard} cardWidth={props.cardWidth-20} showCardMenu={false} allowImagePreview={false} allowEdits={false} allowImageUpdate={false} />}>
+        <div id={`title-container-${props.card.id}`} className={cardFrameHeaderClassName()} style={{padding:0, marginTop:0, height:28}} >
           <div id={`name-${props.card.id}`} style={{alignSelf:"center"}} className="name name-type-size">
-            <div>{props.card.name}</div>
+            <div>{props.card.face.name}</div>
           </div>
           <div id={`mana-${props.card.id}`} className="mana-symbols">
             {props.card.manaCostTokens.map((manaCostToken, i) => (
-              <i key={props.card.id + "-manaToken-"+ i} className={MagicCard.getManaClassNameForTitle(manaCostToken) + " manaCost " + `manaCost-${props.card.id}`} id="mana-icon"></i>
+              <i key={props.card.id + "-manaToken-"+ i} className={getManaClassNameForTitle(manaCostToken) + " manaCost " + `manaCost-${props.card.id}`} id="mana-icon"></i>
             ))}
           </div>
         </div>

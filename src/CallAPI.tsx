@@ -1,6 +1,7 @@
-import { BasicCard, CardGenerationRecord, CardRating, MagicCard } from "./Card";
 import { AuthenticationResult, IPublicClientApplication, InteractionRequiredAuthError, PublicClientApplication } from "@azure/msal-browser";
 import { User } from "./User";
+import { CardGenerationRecord, CardRating } from "./models/CardRating";
+import { MagicCard } from "./models/MagicCard";
 
 export async function RetrieveMsalToken(msal: IPublicClientApplication, scopes: string[]): Promise<AuthenticationResult | undefined> {
   await msal.initialize();

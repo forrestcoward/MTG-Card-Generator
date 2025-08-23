@@ -1,0 +1,756 @@
+/* ======================== FONT DEFINITIONS ======================== */
+@font-face {
+  font-family: "Beleren";
+  src: url("https://mtgcardgenstoragedev.blob.core.windows.net/assets/fonts/beleren-bold_P1.01.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Beleren Small Caps";
+  src: url("https://mtgcardgenstoragedev.blob.core.windows.net/assets/fonts/belerensmallcaps-bold.ttf") format("truetype");
+}
+@font-face {
+  font-family: "MPlantin";
+  src: url("https://mtgcardgenstoragedev.blob.core.windows.net/assets/fonts/mplantin.ttf") format("truetype");
+}
+@font-face {
+  font-family: "MPlantin-Italic";
+  src: url("https://mtgcardgenstoragedev.blob.core.windows.net/assets/fonts/MPLANTI3.ttf") format("truetype");
+  font-style: italic;
+}
+@font-face {
+  font-family: "Relay Medium";
+  src: url("https://mtgcardgenstoragedev.blob.core.windows.net/assets/fonts/relay-medium.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Relay Wide Medium";
+  src: url("https://mtgcardgenstoragedev.blob.core.windows.net/assets/fonts/relaywide-medium.ttf") format("truetype");
+}
+@font-face {
+  font-family: "NDPMTG";
+  src: url("https://mtgcardgenstoragedev.blob.core.windows.net/assets/fonts/NDPMTG.ttf") format("truetype");
+}
+
+/* ======================== CARD CONTAINER ======================== */
+.mtg-card {
+  position: relative;
+  width: 63.5mm;
+  height: 88.9mm;
+  border-radius: 3mm;
+  padding: 2.25mm;
+  background-color: black;
+  font-family: Beleren;
+  font-size: 3mm;
+  text-rendering: geometricPrecision;
+  box-sizing: border-box;
+}
+
+/* -------------------- Planeswalker Specific Styles -------------------- */
+
+/* Adjust inner frame positioning for planeswalkers */
+.mtg-card.planeswalker .inner-frame {
+  top: 2.36mm;
+  left: 3mm;
+  width: calc(58mm - 2px);
+  height: 80mm;
+}
+
+/* Adjust top/mid lines for planeswalkers */
+.mtg-card.planeswalker .top-line,
+.mtg-card.planeswalker .mid-line {
+  width: 53.75mm;
+}
+.mtg-card.planeswalker .top-line {
+  top: 3mm;
+}
+.mtg-card.planeswalker .mid-line {
+  top: 49.6mm;
+}
+.mtg-card.planeswalker-large .mid-line {
+  top: 43.6mm;
+}
+
+/* Restore and adjust the illustration (art) container for planeswalkers */
+.mtg-card.planeswalker .illustration {
+  top: 9mm;
+}
+
+.mtg-card.planeswalker .illustration.behind-textbox {
+  background-color: #fff;
+  z-index: 0;
+}
+
+/* Planeswalker oracle background */
+.planeswalker-oracle-bg {
+  position: absolute;
+  left: 7.4mm;
+  top: 55.6mm;
+  width: 51.2mm;
+  height: 25.35mm;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 0.9mm 0.9mm 8mm 8mm;
+  box-shadow: inset -0.2mm -0.2mm 0.2mm rgba(0, 0, 0, 0.5),
+              inset 0.2mm 0.2mm 0.2mm rgba(0, 0, 0, 0.5);
+}
+.mtg-card.planeswalker-large .planeswalker-oracle-bg {
+  top: 49.5mm;
+  height: 31.45mm;
+}
+
+/* Planeswalker oracle container for abilities */
+.oracle.planeswalker-oracle {
+  position: absolute;
+  left: 2.8mm;
+  top: 55.7mm;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2mm;
+  width: 49.5mm;
+  height: 24mm;
+  padding: 0.5mm 0.5mm 1mm 5.5mm;
+  /* Force text color to black so fields aren't black-on-black */
+  color: #000;
+}
+.mtg-card.planeswalker-large .oracle.planeswalker-oracle {
+  top: 49mm;
+  height: 31.04mm;
+}
+
+/* Ability styling */
+.planeswalker-ability {
+  position: relative;
+  flex-shrink: 0;
+  padding: 0.4mm 0.4em;
+  z-index: 0;
+}
+.planeswalker-ability-with-cost {
+  margin-left: 2.5mm;
+  min-height: 4.8mm;
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  padding: 0.4mm 0;
+}
+
+/* Cost display for abilities */
+.planeswalker-ability-cost {
+  position: absolute;
+  left: -8.5mm;
+  top: 50%;
+  transform: translateY(-50%);
+  background-size: cover;
+  background-repeat: no-repeat;
+  width: 7mm;
+  color: #fff;
+  font-size: 7pt;
+  text-align: center;
+  font-family: Beleren;
+}
+.planeswalker-ability-cost-plus {
+  background-image: url(https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/planeswalker/LoyaltyPlus.webp);
+  height: 4.7mm;
+  line-height: 5mm;
+}
+.planeswalker-ability-cost-zero {
+  background-image: url(https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/planeswalker/LoyaltyZero.webp);
+  height: 4.2mm;
+  line-height: 3.8mm;
+}
+.planeswalker-ability-cost-minus {
+  background-image: url(https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/planeswalker/LoyaltyMinus.webp);
+  height: 4.7mm;
+  line-height: 3.8mm;
+}
+/* Append a colon after the cost */
+.planeswalker-ability-cost:after {
+  content: ":";
+  position: absolute;
+  right: -0.7mm;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #000;
+  font-family: MPlantin;
+  font-size: 8pt;
+}
+.planeswalker-ability-cost-minus:after,
+.planeswalker-ability-cost-zero:after {
+  top: 1.7mm;
+}
+
+/* Ensure the ability text itself is black */
+.planeswalker-ability-text {
+  color: #000;
+  flex-grow: 1;
+}
+
+/* Adjust the footer position for planeswalkers */
+.mtg-card.planeswalker .footer {
+  top: 83mm;
+}
+
+/* -------------------- Saga Specific Styles -------------------- */
+
+/* Saga specific adjustments to base elements */
+.mtg-card.saga .inner-background {
+  top: 2.5mm;
+  height: 83.5mm;
+}
+
+.mtg-card.saga .inner-frame {
+  top: 3.66mm;
+  width: 58.5mm;
+  margin: 0 0 0 -1mm;
+}
+
+.mtg-card.saga .mid-line,
+.mtg-card.saga .top-line {
+  top: 4.2mm;
+  left: 0.1mm;
+}
+
+.mtg-card.saga .mid-line {
+  top: 75.2mm;
+}
+
+/* Illustration positioning for saga cards */
+.mtg-card.saga .illustration {
+  position: absolute;
+  width: 27.3mm;
+  height: 64.3mm;
+  top: 10mm;
+  left: 31.8mm;
+  outline-offset: 0;
+  overflow: hidden;
+  background-color: black;
+  background-size: auto 100% !important;
+  background-position: center !important;
+}
+
+/* Saga oracle structure */
+.saga-oracle {
+  position: absolute;
+  left: 4.9mm;
+  top: 9.95mm;
+  width: 26.6mm;
+  height: 64.3mm;
+  background-size: cover;
+  background-image: var(--saga-text-box-image);
+  background-repeat: no-repeat;
+  font-family: "MPlantin";
+  color: black;
+}
+
+.saga-frame {
+  position: absolute;
+  top: 0;
+  left: -2.8mm;
+  width: 10mm;
+  height: 100%;
+  background-size: 58.5mm;
+  background-position: 0 -6.3mm;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.saga-reminder {
+  height: 13.3mm;
+  font-size: 7.3pt;
+  line-height: 7.3pt;
+  padding: 0.5mm 0.7mm 2.4mm;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.saga-steps {
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  flex-direction: column;
+  gap: 0.8mm;
+  padding-left: 2.15mm;
+  height: 47.5mm;
+  box-sizing: border-box;
+}
+
+.saga-step {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  box-shadow: 0 -0.35mm 0.5mm rgba(0, 0, 0, 0.12);
+  padding: 1.35mm;
+  flex-grow: 1;
+  line-height: 1em;
+}
+
+.saga-step-number {
+  position: absolute;
+  width: 5mm;
+  top: 50%;
+  transform: translateY(-50%);
+  left: -4.65mm;
+  z-index: 4;
+}
+
+.saga-step-number img {
+  width: 5mm;
+}
+
+/* ======================== BACKGROUND & FRAME ======================== */
+.inner-background {
+  position: absolute;
+  left: calc((63.5mm - 58.5mm) / 2);
+  width: 58.5mm;
+  height: 78mm;
+  margin: auto;
+  border-radius: 0.75mm 0.75mm 4mm 4mm;
+  overflow-y: visible;
+  background-image: var(--bg-image);
+  background-size: 100%;
+  padding-top: 1.1mm;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  user-select: none;
+}
+.inner-frame {
+  position: absolute;
+  margin: auto;
+  width: calc(58.5mm * 0.98);
+  top: 3.5mm;
+  left: calc((63.5mm - 58.5mm * 0.98) / 2);
+  height: 79mm;
+  filter: drop-shadow(-0.25mm 0.25mm 0.15mm black)
+          drop-shadow(0.1mm -0.2mm 0.1mm #ffffffa0);
+  background-image: var(--frame-image);
+  background-size: 100%;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ======================== TOP & MID LINES ======================== */
+.top-line,
+.mid-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 5.1mm;
+  width: 53.8mm;
+  margin: auto;
+  padding: 0 1mm 0 1.5mm;
+  background-image: var(--boxes-image);
+  background-size: 100%;
+  pointer-events: initial;
+  user-select: initial;
+}
+.top-line {
+  position: absolute;
+  top: 4mm;
+  left: 0;
+  right: 0;
+  color: var(--top-line-color, black);
+  gap: 1.5mm;
+}
+
+/* ======================== NAME & ORIGINAL NAME ======================== */
+.card-name {
+  font-size: calc(9.454pt + (100/53.8)vw);
+  /*max-font-size: 12pt;*/
+  flex-shrink: 1;
+  min-width: 0;
+  white-space: nowrap;
+  letter-spacing: 0.036mm;
+  width: 100%;
+  box-sizing: border-box;
+  line-height: 0;
+}
+.original-name-container {
+  position: absolute;
+  bottom: -0.05mm;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 54mm;
+}
+.original-name-bg {
+  position: absolute;
+}
+.original-name-bg-path {
+  stroke: #000000;
+  stroke-width: 0.01;
+  fill: url(#gradient);
+}
+.original-name-left {
+  stop-color: var(--frame-colors-left, #0e3d95);
+}
+.original-name-right {
+  stop-color: var(--frame-colors-right, #0e3d95);
+}
+.original-name {
+  position: absolute;
+  width: 100%;
+  color: #fff;
+  font-size: 2.1mm;
+  letter-spacing: 0.1mm;
+  font-family: serif;
+  font-style: italic;
+  line-height: 3.1mm;
+  text-align: center;
+}
+
+/* ======================== MANA COST ======================== */
+.mana-cost {
+  font-size: 7pt;
+  display: flex;
+  gap: 0.24mm;
+  margin-top: -0.4mm;
+  white-space: nowrap;
+}
+.mana-cost .card-ms,
+.adventure-mana-cost .card-ms {
+  width: 1.35em;
+  height: 1.35em;
+  border-radius: 50%;
+  box-shadow: -0.2mm 0.2mm 0 rgba(0, 0, 0, 0.85);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ======================== ILLUSTRATION (ART) ======================== */
+.illustration {
+  z-index: 1000;
+  position: absolute;
+  top: 9.55mm;
+  left: 4.4mm;
+  width: 54.7mm;
+  height: 39.9mm;
+  margin: auto;
+  background-image: var(--illustration-image);
+  background-color: black;
+  background-size: calc(var(--illustration-scale, 1) * 100%);
+  background-position: var(--illustration-position-x, 0) var(--illustration-position-y, 0);
+  background-repeat: no-repeat;
+  cursor: grab;
+}
+
+/* Create Image overlay and button styles */
+.create-image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: black;
+  color: white;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 5px;
+  z-index: 10001;
+}
+
+.create-image-button {
+  background: #1890ff;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: inherit;
+}
+
+.create-image-button:hover {
+  background: #40a9ff;
+}
+
+.create-image-button:active {
+  background: #096dd9;
+}
+
+/* ======================== MID LINE & OTHERS ======================== */
+.mid-line {
+  position: absolute;
+  top: 49.9mm;
+  left: 0;
+  right: 0;
+  background-position: 0 bottom;
+  gap: 0.6mm;
+  color: var(--mid-line-color, black);
+  background-image: var(--mid-boxes-image, var(--boxes-image));
+  line-height: 0;
+}
+.color-indicator {
+  width: 2.8mm;
+  margin-left: -0.5mm;
+}
+.type-line {
+  font-size: calc(8pt + (100/53.8)vw);
+  flex-grow: 1;
+  white-space: nowrap;
+  min-width: 0;
+}
+.set-icon-container {
+  height: 3.9mm;
+  width: 7mm;
+  margin-right: 0.3mm;
+  display: flex;
+  justify-content: right;
+  align-items: center;
+  margin-top: -0.2mm;
+}
+.set-icon {
+  max-height: 90%;
+  max-width: 100%;
+}
+
+/* ======================== ORACLE TEXT ======================== */
+.oracle {
+  /*font-family: "MPlantin";*/
+  font-family: ui-serif;
+  font-size: 8pt;
+  line-height: 1em;
+  pointer-events: initial;
+  user-select: initial;
+}
+.oracle .card-ms {
+  width: 0.8em;
+  margin: 0 0.07em;
+  vertical-align: baseline;
+}
+.normal-oracle {
+  position: absolute;
+  top: 55.6mm;
+  left: 0;
+  right: 0;
+  width: 53.8mm;
+  height: 26mm;
+  margin: auto;
+  padding: 1.3mm .8mm 1.3mm .8mm;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 0.25mm;
+}
+.oracle > div {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+  margin-bottom: 0.5mm;
+}
+.oracle > div:last-child {
+  margin-bottom: 0;
+}
+.oracle-flavor {
+  font-family: serif;
+  font-style: italic;
+}
+.oracle-reminder {
+  font-family: serif;
+  font-style: italic;
+}
+
+/* ======================== PT-BOX & LOYALTY ======================== */
+.pt-box {
+  position: absolute;
+  right: 3mm;
+  bottom: 3.8mm;
+  width: 11.58mm;
+  height: 6.2mm;
+  background-image: var(--pt-box-image);
+  background-size: 100%;
+  background-repeat: no-repeat;
+  text-align: center;
+  line-height: 5.5mm;
+  font-family: Beleren;
+  font-size: 9.6pt;
+  color: var(--pt-box-color, black);
+  pointer-events: initial;
+  user-select: initial;
+  z-index: 3;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow-wrap: break-word;
+}
+.loyalty {
+  position: absolute;
+  right: 3mm;
+  bottom: 5mm;
+  width: 9.8mm;
+  height: 5.8mm;
+  background-image: url("https://mtgcardgenstoragedev.blob.core.windows.net/assets/img/planeswalker/Loyalty.webp");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  text-align: center;
+  line-height: 6.4mm;
+  font-size: 9.5pt;
+  color: white;
+  pointer-events: initial;
+  user-select: initial;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-wrap: break-word;
+}
+
+/* ======================== FOOTER ======================== */
+.footer {
+  position: absolute;
+  top: 82.91mm;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 55mm;
+  margin: auto;
+  display: flex;
+  justify-content: space-between;
+  color: white;
+  /*font-family: "Relay Wide Medium";*/
+  font-family: ui-serif;
+  font-size: 3.9pt;
+  z-index: 3;
+}
+.footer-left > div,
+.footer-right > div {
+  height: 1.35mm;
+}
+.collector-number {
+  letter-spacing: 0.2mm;
+}
+.copyright {
+  /*font-family: "MPlantin";*/
+  font-family: ui-serif;
+  margin-top: 0.2mm;
+  font-size: 4pt;
+}
+.set {
+  letter-spacing: 0.23mm;
+}
+.language {
+  letter-spacing: 0.15mm;
+}
+.artist-icon {
+  font-family: NDPMTG;
+}
+.artist-name {
+  /*font-family: "Beleren Small Caps";*/
+  font-family: ui-serif;
+  font-size: 4.5pt;
+}
+
+/* ======================== ICONS (FLIP, MDFC, TRANSFORM) ======================== */
+.flip-icon {
+  position: absolute;
+  bottom: -12mm;
+  left: 50%;
+  font-size: 10mm;
+  user-select: none;
+  cursor: pointer;
+  transform: translateX(-50%) rotateX(60deg);
+}
+.mdfc-icon {
+  position: absolute;
+  top: 4.1mm;
+  left: 2.5mm;
+  width: 5.8mm;
+  aspect-ratio: 294 / 238;
+  background-image: var(--mdfc-icon-image);
+  background-size: 100%;
+  z-index: 3;
+}
+.mdfc-hint {
+  position: absolute;
+  bottom: 6.2mm;
+  left: 1.6mm;
+  width: 28mm;
+  height: 3.9mm;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 5pt;
+  color: var(--mdfc-hint-color);
+  background-image: var(--mdfc-hint-image);
+  background-size: 100%;
+  padding: 0 2.6mm;
+  padding-top: 0.1mm;
+  box-sizing: border-box;
+  z-index: 3;
+}
+.transform-icon {
+  position: absolute;
+  top: 4mm;
+  left: 3.5mm;
+  width: 5.4mm;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 0.02mm solid black;
+  box-sizing: border-box;
+  background-color: white;
+  background-image: var(--transform-icon-image);
+  background-size: 4.7mm;
+  background-position: center center;
+  background-repeat: no-repeat;
+  z-index: 3;
+}
+
+/* ------------------------ Extended Art Rendering ------------------------ */
+.rendering.extended-art .illustration {
+  width: calc(100% + 2mm * var(--renderMargin, 1) * var(--scale, 1));
+  background-size: calc(var(--illustration-scale, 1) * (100% - 2mm * var(--renderMargin, 1) * var(--scale, 1)));
+  background-position: calc(var(--illustration-position-x, 0) + 1mm * var(--renderMargin, 1) * var(--scale, 1)) calc(var(--illustration-position-y, 0));
+  left: calc(-1mm * var(--renderMargin, 1) * var(--scale, 1));
+  right: calc(-1mm * var(--renderMargin, 1) * var(--scale, 1));
+}
+.rendering.full-art:not(.full-footer):not(.japanese-archive) .illustration {
+  width: calc(100% + 2mm * var(--renderMargin, 1) * var(--scale, 1));
+  height: calc(100% + 2mm * var(--renderMargin, 1) * var(--scale, 1));
+  background-size: calc(var(--illustration-scale, 1) * (100% - 2mm * var(--renderMargin, 1) * var(--scale, 1)));
+  background-position: calc(var(--illustration-position-x, 0) + 1mm * var(--renderMargin, 1) * var(--scale, 1))
+                      calc(var(--illustration-position-y, 0) + 1mm * var(--renderMargin, 1) * var(--scale, 1));
+  top: calc(-1mm * var(--renderMargin, 1) * var(--scale, 1));
+  bottom: calc(-1mm * var(--renderMargin, 1) * var(--scale, 1));
+  left: calc(-1mm * var(--renderMargin, 1) * var(--scale, 1));
+  right: calc(-1mm * var(--renderMargin, 1) * var(--scale, 1));
+}
+
+/* ------------------------ Debug ------------------------ */
+.debug-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 4;
+  width: 63.5mm;
+  height: 100%;
+  opacity: var(--debug-opacity, 0);
+}
+.debug-overlay:hover {
+  opacity: 1;
+}
+.debug-overlay > div {
+  overflow: hidden;
+  position: relative;
+  pointer-events: none;
+}
+.debug-overlay > div:after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0.5px;
+  height: 100%;
+  background-color: #0008;
+}
+.debug-overlay > div > img {
+  width: 63.5mm;
+}
+.debug-controls {
+  position: absolute;
+  bottom: -4em;
+}

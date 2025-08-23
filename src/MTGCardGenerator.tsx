@@ -1,7 +1,8 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { UserContext } from './UserContext';
-import { CardDisplay  } from './Card';
-import { GenerateMagicCardRequest, GetUserInfo } from './CallAPI';
+import { CardRenderer  } from './CardRenderer';
+import { CardRendererV2 } from './card-renderer-v2/CardRendererV2';
+import { GenerateMagicCardRequest } from './CallAPI';
 import { isMobileDevice, setCardContainerSize } from './Utility';
 import { TutorialCard } from './TutorialCard';
 import PopOutSettingsMenu from './PopOutSettingsMenu';
@@ -12,7 +13,6 @@ import './mana.min.css';
 import './mtg-card.css';
 import './app.css';
 import { LoadingSpinner } from './LoadingSpinner';
-import { User } from './User';
 
 export interface SettingGroup {
   name: string;
@@ -148,12 +148,24 @@ const cardGenerationSettingsGroup : SettingGroup = {
   settings: cardGenerationSettings,
 }
 
+const cardDisplaySettings = [
+  { name: 'Default', id: 'default-renderer', value: true, description: '', group: 'display-settings' },
+  { name: 'V2 (WIP)', id: 'v2-renderer', value: false, description: 'V2 renderer (work in progress). Aims to display planeswalker, sagas, and dual sided cards more effectively.', group: 'display-settings' },
+]
+
+const cardDisplaySettingsGroup : SettingGroup = {
+  name: 'Card Display',
+  description: 'Choose how cards are rendered on the page.',
+  type: 'radio',
+  settings: cardDisplaySettings,
+}
+
 export function MTGCardGenerator() {
   const [prompt, setPrompt] = useState('');
   const [response, setResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [settings, setSettings] = useState([modelSettingsGroup, imageSettingsGroup, cardGenerationSettingsGroup]);
+  const [settings, setSettings] = useState([modelSettingsGroup, imageSettingsGroup, cardGenerationSettingsGroup, ...(isMobileDevice() ? [] : [cardDisplaySettingsGroup])]);
   const [cards, setCards] = useState([TutorialCard]);
   const [currentError, setCurrentError] = useState('');
   const [defaultCardWidth, setDefaultCardWidth] = useState(setCardContainerSize());
@@ -212,6 +224,11 @@ export function MTGCardGenerator() {
   function getImageSetting(): string {
     let setting = allSettings().find(setting => setting.value == true && setting?.group == 'image-settings')
     return setting?.id ?? defaultImageModel
+  }
+
+  function useDefaultRenderer(): boolean {
+    let setting = allSettings().find(setting => setting.value == true && setting?.group == 'display-settings')
+    return !setting || setting?.id === 'default-renderer'
   }
 
   function handleSettingUpdate(updatedSetting: string, newValue: boolean) {
@@ -274,7 +291,7 @@ export function MTGCardGenerator() {
           }
           <p>Generate a Magic: The Gathering card...</p>
           <label>
-            <input type='text' className='userInputPrompt' placeholder={defaultPrompt} onChange={(event) => {setPrompt(event.target.value)}} value={prompt} />
+            <input id='userInputPrompt' className='userInputPrompt' type='text' placeholder={defaultPrompt} onChange={(event) => {setPrompt(event.target.value)}} value={prompt} />
           </label>
           <p></p>
           <table>
@@ -293,20 +310,32 @@ export function MTGCardGenerator() {
             </tbody>
           </table>
           <h2 style={{ color: 'red' }}>{currentError}</h2>
-          <textarea value={response} readOnly={true} rows={30} cols={120} hidden={true} />
+          <textarea id='resonseTextArea' value={response} readOnly={true} rows={30} cols={120} hidden={true} />
         </div>
         <div className='cardsContainer'>
         {
           cards.map(card => (
             <div className='cardContainer' key={`card-container-${card.id}`}>
-              <CardDisplay 
-                key={`card-display-${card.id}`} 
-                card={card} 
-                showCardMenu={true} 
-                cardWidth={defaultCardWidth} 
-                allowImagePreview={true} 
-                allowEdits={true} 
-                allowImageUpdate={true} />
+              {useDefaultRenderer() ? (
+                <CardRenderer 
+                  key={`card-display-${card.id}`} 
+                  card={card} 
+                  showCardMenu={true} 
+                  cardWidth={defaultCardWidth} 
+                  allowImagePreview={true} 
+                  allowEdits={true} 
+                  allowImageUpdate={true} />
+              ) : (
+                <CardRendererV2 
+                  key={`card-display-v2-${card.id}`} 
+                  card={card} 
+                  showCardMenu={true} 
+                  cardWidth={defaultCardWidth} 
+                  allowImagePreview={true} 
+                  allowEdits={true} 
+                  allowImageUpdate={true} />
+
+              )}
             </div>
           ))
         }

@@ -13,7 +13,7 @@
   <ItemGroup>
     <PackageReference Include="Azure.Search.Documents" Version="11.6.0" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.24.0" />
-    <PackageReference Include="Betalgo.Ranul.OpenAI" Version="9.0.3" />
+    <PackageReference Include="Betalgo.Ranul.OpenAI" Version="9.1.0" />
     <PackageReference Include="DarkLoop.Azure.Functions.Authorization.Isolated" Version="4.2.0" />
     <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="14.8.0" />
     <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.23.0" />

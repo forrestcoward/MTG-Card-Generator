@@ -5,7 +5,7 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, './dist'),
     filename: 'bundle.js',
-    assetModuleFilename: 'images/[hash][ext][query]',
+    assetModuleFilename: 'assets/[name][ext][query]',
     publicPath: '/', // Required for react router.
   },
   devServer: {
@@ -19,7 +19,7 @@ module.exports = {
     new CopyWebpackPlugin({
       patterns: [
         { from: './openapi.yaml', to: '.well-known/openapi.yaml' },
-        { from: './privacy-policy.txt', to: '.well-known/privacy-policy.txt'}
+        { from: './privacy-policy.txt', to: '.well-known/privacy-policy.txt'},
       ]
     })
   ],
@@ -44,6 +44,13 @@ module.exports = {
       {
         test: /\.jpg/,
         type: 'asset/resource'
+      },
+      {
+        test: /\.(woff|woff2|eot|ttf|otf)$/,
+        type: 'asset/resource',
+        generator: {
+          filename: 'fonts/[name][ext]'
+        }
       }
     ],
   },
