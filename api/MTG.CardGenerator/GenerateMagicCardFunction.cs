@@ -482,7 +482,7 @@ namespace MTG.CardGenerator
 
                 var updatedUser = await usersCosmosClient.UserGeneratedCardOperation(user, request.Metadata.UserSubject, cardCount, cost);
                 log.LogInformation($"Updated user record for user '{request.Metadata.UserSubject}' in database.");
-                return user;
+                return updatedUser.Resource;
             }
             catch (Exception ex)
             {

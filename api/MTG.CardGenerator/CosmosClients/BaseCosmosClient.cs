@@ -137,9 +137,14 @@ namespace MTG.CardGenerator.CosmosClients
             }
         }
 
-        internal async Task<ItemResponse<T>> PatchDocument<T>(string id, string partitionkey, List<PatchOperation> patches)
+        internal async Task<ItemResponse<T>> PatchDocument<T>(string id, string partitionkey, List<PatchOperation> patches, string etag = "")
         {
-            return await container.PatchItemAsync<T>(id, new PartitionKey(partitionkey), patches);
+            var requestOptions = new PatchItemRequestOptions();
+            if (!string.IsNullOrWhiteSpace(etag))
+            {
+                requestOptions.IfMatchEtag = etag;
+            }
+            return await container.PatchItemAsync<T>(id, new PartitionKey(partitionkey), patches, requestOptions);
         }
 
         internal async Task<List<T>> QueryCosmosDB<T>(QueryDefinition query, int batchNumber = 0, bool throwIfNoResults = false, string queryName = "", bool verbose = false, ILogger log = null)

@@ -33,6 +33,8 @@ namespace MTG.CardGenerator.Models
         public int NumberOfFreeCardsGeneratedToday { get; set; } = 0;
         [JsonProperty("allowedFreeCardGenerationsPerDay")]
         public int AllowedFreeCardGenerationsPerDay { get; set; } = -1;
+        [JsonProperty("_etag")]
+        public string ETag { get; set; }
     }
 
     /// <summary>
