@@ -172,11 +172,11 @@ namespace MTG.CardGenerator
 
             // If a user brings their own OpenAI API key but no replicate one, we need to check if they are using a valid OpenAI image model (or none).
             // If both keys are supplied, any model is implicitly valid since the user is paying for everything.
-            if (!string.IsNullOrWhiteSpace(userSuppliedOpenAIAPIKey) && string.IsNullOrWhiteSpace(userSuppliedReplicateKey) && !ImageModels.IsOpenAIImageModel(imageModel))
+            if (!string.IsNullOrWhiteSpace(userSuppliedOpenAIAPIKey) && string.IsNullOrWhiteSpace(userSuppliedReplicateKey) && (!ImageModels.IsOpenAIImageModel(imageModel) && !imageModel.Equals(ImageModels.None, StringComparison.OrdinalIgnoreCase)))
             {
                 return await req.CreateJsonResponse(HttpStatusCode.BadRequest, new
                 {
-                    error = "Please select an OpenAI image model (dalle-2 or dalle-3) when bringing your own OpenAI API key."
+                    error = "Please select an OpenAI image model (dalle-2 or dalle-3) or no image (none) when bringing your own OpenAI API key."
                 });
             }
 
