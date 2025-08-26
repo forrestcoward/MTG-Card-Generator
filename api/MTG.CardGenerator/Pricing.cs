@@ -55,6 +55,7 @@ namespace MTG.CardGenerator
                 CostToWebsiteApiKeys += cost;
             }
 
+            logger.LogInformation($"Op '{operationName}' ({result.Model}) had cost {cost}. Server cost: {!wasUserCharged}.");
             Charges.Add(new Charge()
             {
                 Cost = cost,
@@ -64,7 +65,7 @@ namespace MTG.CardGenerator
             });
         }
 
-        public void AddImageCost(string imageSize, string imageModel, bool wasUserCharged, string operationName)
+        public void AddImageCost(string imageSize, string imageModel, bool wasUserCharged, string operationName, Microsoft.Extensions.Logging.ILogger logger)
         {
             Contract.Assert(CostToUserApiKeys + CostToWebsiteApiKeys == TotalCost, "TotalCost should be the sum of User and Website costs.");
             var cost = Pricing.GetImageCost(imageSize, imageModel);
@@ -79,6 +80,7 @@ namespace MTG.CardGenerator
                 CostToWebsiteApiKeys += cost;
             }
 
+            logger.LogInformation($"Op '{operationName}' ({imageModel}) had cost {cost}. Server cost {!wasUserCharged}.");
             Charges.Add(new Charge()
             {
                 Cost = cost,

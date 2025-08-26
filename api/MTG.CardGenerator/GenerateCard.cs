@@ -20,7 +20,7 @@ namespace MTG.CardGenerator
         public bool ExtraCreative { get; set; }
         public string Source { get; set; }
         public int NumCards { get; set; }
-        public CardRequestMetadata Metadata { get; set; }
+        public CardRequestMetadata Details { get; set; }
     }
 
     public class CardResult
@@ -156,7 +156,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                 {
                     attemptsToGenerateCard++;
 
-                    var response = await GenerateOpenAICardResponse(openAIService, "Generate Initial Card", systemPrompt, userPromptToSubmit, gptModel, cost, !string.IsNullOrWhiteSpace(request.Metadata.UserSuppliedApiKey), log);
+                    var response = await GenerateOpenAICardResponse(openAIService, "Generate Initial Card", systemPrompt, userPromptToSubmit, gptModel, cost, !string.IsNullOrWhiteSpace(request.Details.UserSuppliedOpenAIAPIKey), log);
                     openAICards = response.Item1;
                     openAIResponse = response.Item2;
                     cardIterations.AddRange(openAICards);
@@ -180,13 +180,14 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
                         You should return the card JSON with the updated 'oracleText' field.
                         Do not explain the cards or explain your reasoning. Only return the JSON with the updated `oracleText` that incorporates the new mechanics.";
 
-                        response = await GenerateOpenAICardResponse(openAIService, "Add Mechanics To Card", extraCreativeSystemPrompt, userPrompt, gptModel, cost, !string.IsNullOrWhiteSpace(request.Metadata.UserSuppliedApiKey), log);
+                        response = await GenerateOpenAICardResponse(openAIService, "Add Mechanics To Card", extraCreativeSystemPrompt, userPrompt, gptModel, cost, !string.IsNullOrWhiteSpace(request.Details.UserSuppliedOpenAIAPIKey), log);
                         openAICards = response.Item1;
                         openAIResponse = response.Item2;
                         cardIterations.AddRange(openAICards);
                     }
 
-                    var checkConsistency = true;
+                    // Turn off for now until it is better evaluated.
+                    var checkConsistency = false;
                     if (checkConsistency)
                     {
                         var userPrompt = $"The card you are updating is the following: {openAIResponse} ";
@@ -213,7 +214,7 @@ Do not explain the cards or explain your reasoning. Only return the JSON of card
 
                         **Think step-by-step**.";
 
-                        response = await GenerateOpenAICardResponse(openAIService, "Verify Card Consistency", checkConsistencySystemPrompt, userPrompt, gptModel, cost, !string.IsNullOrWhiteSpace(request.Metadata.UserSuppliedApiKey), log);
+                        response = await GenerateOpenAICardResponse(openAIService, "Verify Card Consistency", checkConsistencySystemPrompt, userPrompt, gptModel, cost, !string.IsNullOrWhiteSpace(request.Details.UserSuppliedOpenAIAPIKey), log);
                         openAICards = response.Item1;
                         openAIResponse = response.Item2;
                         cardIterations.AddRange(openAICards);

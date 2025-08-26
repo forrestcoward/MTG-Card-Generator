@@ -69,16 +69,12 @@ namespace MTG.CardGenerator
         }
 
         // Helper to check if user has exceeded daily spend limit and return a 429 response if so.
-        public static async Task<HttpResponseData> CheckAndEnforceDailySpendLimit(User user, string userSuppliedApiKey, HttpRequestData req, ILogger log, double defaultDailySpendLimit)
+        public static async Task<HttpResponseData> CheckAndEnforceDailySpendLimit(User user, HttpRequestData req, ILogger log, double defaultDailySpendLimit)
         {
             // Do not enforce spend limit for admins or if user has supplied their own API key.
             if (user.IsAdmin)
             {
-                return null;
-            }
-
-            if (!string.IsNullOrWhiteSpace(userSuppliedApiKey))
-            {
+                log.LogInformation("User is admin, not enforcing daily spend limit.");
                 return null;
             }
 

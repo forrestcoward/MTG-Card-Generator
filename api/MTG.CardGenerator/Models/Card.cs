@@ -204,4 +204,93 @@ namespace MTG.CardGenerator.Models
             this.OracleText = MagicCardParser.AddNewlineToActivatedAbilities(this.OracleText);
         }
     }
+
+    // Represents a CardFace in the UI.
+    public class UICardFace
+    {
+        [JsonProperty("name")]
+        public string Name { get; set; }
+
+        [JsonProperty("manaCost")]
+        public string ManaCost { get; set; }
+
+        [JsonProperty("type")]
+        public string Type { get; set; }
+
+        [JsonProperty("typeLine")]
+        public string TypeLine { get; set; }
+
+        [JsonProperty("pt")]
+        public string PowerAndToughness { get; set; }
+
+        [JsonProperty("oracleText")]
+        public string OracleText { get; set; }
+
+        [JsonProperty("flavorText")]
+        public string FlavorText { get; set; }
+
+        [JsonProperty("imageUrl")]
+        public string ImageUrl { get; set; }
+
+        [JsonProperty("temporaryImageUrl")]
+        public string TemporaryImageUrl { get; set; }
+
+        [JsonProperty("alternativeImageUrls")]
+        public string[] AlternativeImageUrls { get; set; }
+    }
+
+    // Represents a Cardin the UI.
+    public class UICard
+    {
+        [JsonProperty("cardFaces")]
+        public UICardFace[] CardFaces { get; set; }
+
+        [JsonProperty("id")]
+        public string Id { get; set; }
+
+        [JsonProperty("databaseId")]
+        public string DatabaseId { get; set; }
+
+        [JsonProperty("userPrompt")]
+        public string UserPrompt { get; set; }
+
+        [JsonProperty("explanation")]
+        public string Explanation { get; set; }
+
+        [JsonProperty("funnyExplanation")]
+        public string FunnyExplanation { get; set; }
+
+        [JsonProperty("url")]
+        public string Url { get; set; }
+
+        [JsonProperty("rarity")]
+        public string Rarity { get; set; }
+
+        [JsonProperty("collectorNumber")]
+        public string CollectorNumber { get; set; }
+
+        [JsonProperty("layout")]
+        public string Layout { get; set; }
+
+        [JsonProperty("frameEffects")]
+        public string[] FrameEffects { get; set; }
+
+        [JsonProperty("copyright")]
+        public string Copyright { get; set; }
+
+        [JsonProperty("setIcon")]
+        public string SetIcon { get; set; }
+
+        [JsonProperty("setIconUrl")]
+        public string SetIconUrl { get; set; }
+
+        [JsonProperty("set")]
+        public string Set { get; set; }
+
+        [JsonProperty("artist")]
+        public string Artist { get; set; }
+
+        [JsonProperty("lang")]
+        public string Lang { get; set; }
+    }
 }

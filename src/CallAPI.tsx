@@ -147,9 +147,13 @@ export async function GenerateNewCardImage(imagePrompt: string, cardId: string, 
 
   const params: Record<string, string> = {
     prompt: imagePrompt,
-    cardId: cardId,
-    openAIApiKey: openAIApiKey
+    cardId: cardId
    };
+
+  const headers: Record<string, string> = {};
+  if (openAIApiKey) {
+    headers['x-openai-api-key'] = openAIApiKey;
+  }
 
   let response:GenerateImageResponse = 
   {
@@ -157,7 +161,7 @@ export async function GenerateNewCardImage(imagePrompt: string, cardId: string, 
     "temporaryUrl": ""
   }
 
-  await HttpGet(url, token, params)
+  await HttpGet(url, token, params, headers)
     .then(imageUrls => {
       response = JSON.parse(imageUrls);
     })
@@ -177,7 +181,7 @@ export async function GetImagePrompt(card: MagicCard, msal:PublicClientApplicati
   const params: Record<string, string> = { };
 
   let prompt = '';
-  await MakeHttpCall("POST", url, body, params, token)
+  await MakeHttpCall("POST", url, body, params, token, undefined)
     .then(response => {
       prompt = JSON.parse(response).suggestedPrompt;
     })
@@ -242,19 +246,20 @@ export async function GenerateMagicCardRequest(
     source: "MTGCardGeneratorWebsite"
   };
 
+  const headers: Record<string, string> = {};
   if (openAIApiKey) {
-    params.openAIApiKey = openAIApiKey;
+    headers['x-openai-api-key'] = openAIApiKey;
   }
 
   try {
     // First request to start the orchestration
-    const initialResponse = await HttpGet(url, token, params);
+    const initialResponse = await HttpGet(url, token, params, headers);
     let responseData = JSON.parse(initialResponse);
 
     // Check if we got an ID for querying the status
     if (responseData.id) {
       // Use the ID to poll the status until completion
-      return await pollDurableFunctionStatus(responseData.id, token);
+      return await pollDurableFunctionStatus(responseData.id, token, headers);
     } else {
       throw new Error("Unexpected response format from card generation API");
     }
@@ -265,14 +270,14 @@ export async function GenerateMagicCardRequest(
 }
 
 // New function to poll durable function status
-async function pollDurableFunctionStatus(instanceId: string, token: AuthenticationResult | undefined): Promise<CardGenerationResult> {
+async function pollDurableFunctionStatus(instanceId: string, token: AuthenticationResult | undefined, additionalHeaders?: Record<string, string>): Promise<CardGenerationResult> {
   const maxAttempts = 120; // Maximum polling attempts (4 minutes with 3-second intervals)
   const pollIntervalMs = 4000; // Polling interval in milliseconds
   const statusUrl = getApiUrl(`GetMagicCardGenerationStatus?instanceId=${instanceId}`);
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
-      const statusResponse = await MakeHttpCall("GET", statusUrl, undefined, {}, token);
+      const statusResponse = await MakeHttpCall("GET", statusUrl, undefined, {}, token, additionalHeaders);
       const status = JSON.parse(statusResponse);
 
       // Check if the orchestration has completed.
@@ -317,17 +322,17 @@ async function pollDurableFunctionStatus(instanceId: string, token: Authenticati
   throw new Error("Timed out waiting for card generation to complete");
 }
 
-async function HttpPost(url: string, blob: Blob, msalResult: AuthenticationResult | undefined, params?: Record<string, string>): Promise<any> {
+async function HttpPost(url: string, blob: Blob, msalResult: AuthenticationResult | undefined, params?: Record<string, string>, additionalHeaders?: Record<string, string>): Promise<any> {
   const formData = new FormData();
   formData.append('file', blob);
-  return MakeHttpCall("POST", url, formData, params, msalResult)
+  return MakeHttpCall("POST", url, formData, params, msalResult, additionalHeaders)
 }
 
-async function HttpGet(url: string, msalResult: AuthenticationResult | undefined, params?: Record<string, string>): Promise<any> {
-  return MakeHttpCall("GET", url, undefined, params, msalResult)
+async function HttpGet(url: string, msalResult: AuthenticationResult | undefined, params?: Record<string, string>, additionalHeaders?: Record<string, string>): Promise<any> {
+  return MakeHttpCall("GET", url, undefined, params, msalResult, additionalHeaders)
 }
 
-async function MakeHttpCall(method:string, url:string, body?:any, params?:Record<string, string>, msalResult?:AuthenticationResult): Promise<any> {
+async function MakeHttpCall(method:string, url:string, body?:any, params?:Record<string, string>, msalResult?:AuthenticationResult, additionalHeaders?:Record<string, string>): Promise<any> {
   const encodedParams:Record<string,string> = {};
   if (params) {
     Object.keys(params).forEach((key) => {
@@ -351,6 +356,10 @@ async function MakeHttpCall(method:string, url:string, body?:any, params?:Record
     if (token) {
       headers['Authorization'] = 'Bearer ' + token
     }
+  }
+
+  if (additionalHeaders) {
+    Object.assign(headers, additionalHeaders);
   }
 
   try {

@@ -37,6 +37,34 @@
             public const string GoogleImagen4FastModelName = "imagen-4-fast";
             public const string StableDiffusion35MediumModelName = "stable-diffusion-3.5-medium";
             public const string BlackForestLabsFluxSchnell = "black-forest-labs-flux-schnell";
+
+            public static bool IsValidImageModel(string imageModel)
+            {
+                return
+                    imageModel.Equals(None, StringComparison.OrdinalIgnoreCase) ||
+                    imageModel.Equals(Dalle2ModelName, StringComparison.OrdinalIgnoreCase) ||
+                    imageModel.Equals(Dalle3ModelName, StringComparison.OrdinalIgnoreCase) ||
+                    imageModel.Equals(StableDiffusion35MediumModelName, StringComparison.OrdinalIgnoreCase) ||
+                    imageModel.Equals(GoogleImagen3FastModelName, StringComparison.OrdinalIgnoreCase) ||
+                    imageModel.Equals(GoogleImagen4FastModelName, StringComparison.OrdinalIgnoreCase) ||
+                    imageModel.Equals(BlackForestLabsFluxSchnell, StringComparison.OrdinalIgnoreCase);
+            }
+
+            public static bool IsOpenAIImageModel(string imageModel)
+            {
+                return
+                    imageModel.Equals(Constants.ImageModels.Dalle2ModelName, StringComparison.OrdinalIgnoreCase) ||
+                    imageModel.Equals(Constants.ImageModels.Dalle3ModelName, StringComparison.OrdinalIgnoreCase);
+            }
+
+            public static bool IsReplicateImageModel(string imageModel)
+            {
+                return
+                    imageModel.Equals(Constants.ImageModels.StableDiffusion35MediumModelName, StringComparison.OrdinalIgnoreCase) ||
+                    imageModel.Equals(Constants.ImageModels.GoogleImagen3FastModelName, StringComparison.OrdinalIgnoreCase) ||
+                    imageModel.Equals(Constants.ImageModels.GoogleImagen4FastModelName, StringComparison.OrdinalIgnoreCase) ||
+                    imageModel.Equals(Constants.ImageModels.BlackForestLabsFluxSchnell, StringComparison.OrdinalIgnoreCase);
+            }
         }
     }
 }

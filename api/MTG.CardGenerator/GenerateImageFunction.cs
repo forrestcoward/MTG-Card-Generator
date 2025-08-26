@@ -35,8 +35,12 @@ namespace MTG.CardGenerator
             }
 
             var prompt = req.GetQueryParam("prompt");
-            var openAIApiKey = req.GetQueryParam("openAIApiKey");
             var cardId = req.GetQueryParam("cardId");
+
+            // Extract OpenAI API key from header instead of query parameter for security
+            var userSuppliedOpenAIAPIKey = req.Headers.TryGetValues("x-openai-api-key", out var apiKeyValues)
+                ? apiKeyValues.FirstOrDefault()
+                : req.GetQueryParam("openAIApiKey"); // Fallback to query param for backward compatibility.
 
             if (string.IsNullOrWhiteSpace(prompt))
             {
@@ -61,28 +65,30 @@ namespace MTG.CardGenerator
             var user = await usersCosmosClient.GetUserRecord(userSubject);
             var cardRecord = await cardsClient.GetMagicCardRecord(cardId);
             var cardHasAnImage = !string.IsNullOrWhiteSpace(cardRecord.Card.ImageUrl);
-            var userSuppliedOpenAIApiKey = true;
+
+            // If user doesn't provide their own OpenAI API key, charge the server and use a replicate model.
+            // If the user provides their own OpenAI API key, use that with DALL-E 3. Server incurs no cost.
+            var userSuppliedOpenAIApiKey = false;
+            var openAIApiKey = string.Empty;
+            var imageModel = Constants.ImageModels.GoogleImagen4FastModelName;
+
+            if (!string.IsNullOrWhiteSpace(userSuppliedOpenAIAPIKey))
+            {
+                userSuppliedOpenAIApiKey = true;
+                openAIApiKey = userSuppliedOpenAIAPIKey;
+                imageModel = Constants.ImageModels.Dalle3ModelName;
+            }
 
             // Enforce daily spend limit for logged-in users without their own API key.
-            var spendLimitResponse = await Extensions.CheckAndEnforceDailySpendLimit(user, openAIApiKey, req, log, GenerateMagicCardFunction.DefaultDailySpendLimit);
-            if (spendLimitResponse != null)
+            if (!userSuppliedOpenAIApiKey)
             {
-                return spendLimitResponse;
+                var spendLimitResponse = await Extensions.CheckAndEnforceDailySpendLimit(user, req, log, GenerateMagicCardFunction.DefaultDailySpendLimit);
+                if (spendLimitResponse != null)
+                {
+                    return spendLimitResponse;
+                }
             }
 
-            // If no key is provided, use the one from the environment if the card has not had an image generated before (or the user is an admin).
-            if (string.IsNullOrEmpty(openAIApiKey))
-            {
-                openAIApiKey = Environment.GetEnvironmentVariable(Constants.OpenAIApiKey);
-                userSuppliedOpenAIApiKey = false;
-            }
-
-            if (string.IsNullOrWhiteSpace(openAIApiKey))
-            {
-                return await req.CreateErrorResponse(HttpStatusCode.BadRequest, "No OpenAI API key was found.");
-            }
-
-            var imageModel = Constants.ImageModels.Dalle3ModelName;
             var imageSize = StaticValues.ImageStatics.Size.Size1024;
             var incurredCost = new Cost();
 
@@ -100,7 +106,7 @@ namespace MTG.CardGenerator
                 IsUserSupplied = false
             };
 
-            var url = await ImageGenerator.GenerateImage(prompt, imageModel, imageSize, openAIAPIKey, replicateAPIKey, incurredCost, log);
+            var url = await ImageGenerator.GenerateImage(prompt, imageModel, StaticValues.ImageStatics.Size.Size1024, openAIAPIKey, replicateAPIKey, incurredCost, log);
 
             var blobStorageName = Extensions.GetSettingOrThrow(Constants.BlobStorageName);
             var blobStorageEndpoint = Extensions.GetSettingOrThrow(Constants.BlobStorageEndpoint);
@@ -151,10 +157,10 @@ namespace MTG.CardGenerator
                 requestBody = await streamReader.ReadToEndAsync();
             }
 
-            MagicCard card;
+            UICard card;
             try
             {
-                card = JsonConvert.DeserializeObject<MagicCard>(requestBody);
+                card = JsonConvert.DeserializeObject<UICard>(requestBody);
             }
             catch (JsonException)
             {

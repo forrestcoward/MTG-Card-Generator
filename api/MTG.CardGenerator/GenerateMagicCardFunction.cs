@@ -13,6 +13,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using System.Net;
+using static MTG.CardGenerator.Constants;
 
 namespace MTG.CardGenerator
 {
@@ -75,7 +76,8 @@ namespace MTG.CardGenerator
         {
             public string UserName { get; set; }
             public string UserSubject { get; set; }
-            public string UserSuppliedApiKey { get; set; }
+            public string UserSuppliedOpenAIAPIKey { get; set; }
+            public string UserSuppliedReplicateAPIKey { get; set; }
             public bool IsOpenAIGpt { get; set; }
             public bool UserLoggedIn { get; set; }
             public string Host { get; set; }
@@ -97,11 +99,20 @@ namespace MTG.CardGenerator
             log.LogInformation($"User prompt: {rawUserPrompt?.Replace("\n", string.Empty)}");
 
             var model = req.GetQueryParam("model");
-            var imageModel = req.GetQueryParam("imageModel") ?? Constants.ImageModels.Dalle2ModelName;
+            var imageModel = req.GetQueryParam("imageModel") ?? Constants.ImageModels.None;
             var includeExplanation = bool.TryParse(req.GetQueryParam("includeExplanation"), out bool result) && result;
             var generateImagePrompt = bool.TryParse(req.GetQueryParam("generateImagePrompt"), out bool hd) && hd;
             var extraCreative = bool.TryParse(req.GetQueryParam("extraCreative"), out bool ec) && ec;
-            var userSuppliedApiKey = req.GetQueryParam("openAIApiKey");
+
+            // Extract OpenAI API key from header instead of query parameter for security
+            var userSuppliedOpenAIAPIKey = req.Headers.TryGetValues("x-openai-api-key", out var apiKeyValues)
+                ? apiKeyValues.FirstOrDefault()
+                : req.GetQueryParam("openAIApiKey"); // Fallback to query param for backward compatibility.
+
+            var userSuppliedReplicateKey = req.Headers.TryGetValues("x-replicate-api-key", out var replicateKeyValues)
+                ? replicateKeyValues.FirstOrDefault()
+                : req.GetQueryParam("replicateApiKey"); // Fallback to query param for backward compatibility.
+
             var source = req.GetQueryParam("source");
 
             var numCards = 1;
@@ -135,11 +146,33 @@ namespace MTG.CardGenerator
                 userLoggedIn = !userSubject.Equals("Anonymous", StringComparison.OrdinalIgnoreCase);
             }
 
-            // If a user brings their own OpenAI API key, we need to check if they are using a valid OpenAI image model.
-            if (!string.IsNullOrWhiteSpace(userSuppliedApiKey) &&
-                (!imageModel.Equals(Constants.ImageModels.None, StringComparison.OrdinalIgnoreCase) &&
-                !imageModel.Equals(Constants.ImageModels.Dalle2ModelName, StringComparison.OrdinalIgnoreCase) &&
-                !imageModel.Equals(Constants.ImageModels.Dalle3ModelName, StringComparison.OrdinalIgnoreCase)))
+            log.LogInformation($"User name: {userName}");
+            log.LogInformation($"User subject: {userSubject}");
+            log.LogInformation($"User logged in: {userLoggedIn}");
+            log.LogInformation($"User supplied OpenAI API key: {!string.IsNullOrWhiteSpace(userSuppliedOpenAIAPIKey)}");
+            log.LogInformation($"User supplied Replicate API key: {!string.IsNullOrWhiteSpace(userSuppliedReplicateKey)}");
+
+            if (!ImageModels.IsValidImageModel(imageModel))
+            {
+                return await req.CreateJsonResponse(HttpStatusCode.BadRequest, new
+                {
+                    error = $"The image model '{imageModel}' is not valid."
+                });
+            }
+
+            // Do not allow supplying a Replicate API key without also supplying an OpenAI API key.
+            // Users either supply no keys, an OpenAI key only, or both keys.
+            if (!string.IsNullOrWhiteSpace(userSuppliedReplicateKey) && string.IsNullOrWhiteSpace(userSuppliedOpenAIAPIKey))
+            {
+                return await req.CreateJsonResponse(HttpStatusCode.BadRequest, new
+                {
+                    error = "Please provide an OpenAI API key when providing a Replicate API key so the entire cost is paid for by your keys."
+                });
+            }
+
+            // If a user brings their own OpenAI API key but no replicate one, we need to check if they are using a valid OpenAI image model (or none).
+            // If both keys are supplied, any model is implicitly valid since the user is paying for everything.
+            if (!string.IsNullOrWhiteSpace(userSuppliedOpenAIAPIKey) && string.IsNullOrWhiteSpace(userSuppliedReplicateKey) && ImageModels.IsOpenAIImageModel(imageModel))
             {
                 return await req.CreateJsonResponse(HttpStatusCode.BadRequest, new
                 {
@@ -147,13 +180,19 @@ namespace MTG.CardGenerator
                 });
             }
 
-            // Enforce daily spend limit for logged-in users without their own API key.
+            var willServerBeCharged =
+                string.IsNullOrWhiteSpace(userSuppliedOpenAIAPIKey) || // No OpenAI key supplied: charged no matter what.
+                (ImageModels.IsReplicateImageModel(imageModel) && string.IsNullOrWhiteSpace(userSuppliedReplicateKey)); // Replicate image model but no Replicate key supplied: charged.
+
+            log.LogInformation($"Request will incur cost to server: {willServerBeCharged}");
+
+            // Enforce daily spend limit for users that will incur costs to the server.
             var usersCosmosClient = new UsersClient(log);
             var user = await usersCosmosClient.GetUserRecord(userSubject);
 
-            if (!isOpenAIGpt)
+            if (!isOpenAIGpt && willServerBeCharged)
             {
-                var spendLimitResponse = await Extensions.CheckAndEnforceDailySpendLimit(user, userSuppliedApiKey, req, log, GenerateMagicCardFunction.DefaultDailySpendLimit);
+                var spendLimitResponse = await Extensions.CheckAndEnforceDailySpendLimit(user, req, log, GenerateMagicCardFunction.DefaultDailySpendLimit);
                 if (spendLimitResponse != null)
                 {
                     return spendLimitResponse;
@@ -164,7 +203,8 @@ namespace MTG.CardGenerator
             {
                 UserName = userName,
                 UserSubject = userSubject,
-                UserSuppliedApiKey = userSuppliedApiKey,
+                UserSuppliedOpenAIAPIKey = userSuppliedOpenAIAPIKey,
+                UserSuppliedReplicateAPIKey = userSuppliedReplicateKey,
                 UserLoggedIn = userLoggedIn,
                 IsOpenAIGpt = isOpenAIGpt,
                 Host = req.Url.Host,
@@ -181,7 +221,7 @@ namespace MTG.CardGenerator
                 ExtraCreative = extraCreative,
                 Source = source,
                 NumCards = numCards,
-                Metadata = requestMetadata,
+                Details = requestMetadata,
             };
 
             var instanceId = await client.ScheduleNewOrchestrationInstanceAsync("GenerateMagicCardOrchestrator", request);
@@ -258,7 +298,7 @@ namespace MTG.CardGenerator
                 await context.CallActivityAsync(nameof(StoreCardRecords), new StoreCardRecordsInput() { CardResult = cardResult, Request = request });
 
                 // 5. Update user record.
-                if (request.Metadata.UserLoggedIn)
+                if (request.Details.UserLoggedIn)
                 {
                     var user = await context.CallActivityAsync<User>(nameof(UpdateUserRecord), new UpdateUserRecordInput() { Request = request, NumberOfCardsGenerated = cardResult.Cards.Length, Cost = cardResult.Cost });
                     var dailySpendLimit = user.DailySpendLimit > 0 ? user.DailySpendLimit : DefaultDailySpendLimit;
@@ -293,7 +333,7 @@ namespace MTG.CardGenerator
             catch (Exception ex)
             {
                 // Set the orchestration's customStatus to "error" when an exception occurs.
-                var errorMessage = FormatErrorMessage(ex, request.RawUserPrompt, request.Metadata.UserSuppliedApiKey != null, request.Metadata.UserLoggedIn);
+                var errorMessage = FormatErrorMessage(ex, request.RawUserPrompt, request.Details.UserSuppliedOpenAIAPIKey != null, request.Details.UserLoggedIn);
                 log.LogError(ex, errorMessage);
                 context.SetCustomStatus("error");
                 return errorMessage;
@@ -303,7 +343,7 @@ namespace MTG.CardGenerator
         [Function("ValidateAndGetOpenAIAPIKey")]
         public static APIKey ValidateAndGetOpenAIAPIKey([ActivityTrigger] CardGenerationRequest request, ILogger log)
         {
-            var userSuppliedKey = request.Metadata.UserSuppliedApiKey;
+            var userSuppliedKey = request.Details.UserSuppliedOpenAIAPIKey;
 
             if (!string.IsNullOrWhiteSpace(userSuppliedKey))
             {
@@ -315,11 +355,9 @@ namespace MTG.CardGenerator
                 };
             }
 
-            var apiKeyToUse = Environment.GetEnvironmentVariable(Constants.OpenAIApiKey);
-
             return new APIKey()
             {
-                Key = apiKeyToUse,
+                Key = Environment.GetEnvironmentVariable(Constants.OpenAIApiKey),
                 IsUserSupplied = false,
                 Name = "Open AI API Key"
             };
@@ -328,6 +366,18 @@ namespace MTG.CardGenerator
         [Function("ValidateAndGetReplicateAPIKey")]
         public static APIKey ValidateAndGetReplicateAPIKey([ActivityTrigger] CardGenerationRequest request, ILogger log)
         {
+            var userSuppliedKey = request.Details.UserSuppliedReplicateAPIKey;
+
+            if (!string.IsNullOrWhiteSpace(userSuppliedKey))
+            {
+                return new APIKey()
+                {
+                    Key = userSuppliedKey,
+                    IsUserSupplied = true,
+                    Name = "Replicate API Key"
+                };
+            }
+
             return new APIKey()
             {
                 Key = Environment.GetEnvironmentVariable(Constants.ReplicateApiKey),
@@ -434,16 +484,16 @@ namespace MTG.CardGenerator
                             OpenAIResponse = cardResult.OpenAIResponse,
                             IncludeExplanation = request.IncludeExplanation,
                             ExtraCreative = request.ExtraCreative,
-                            UserSupplied = !string.IsNullOrWhiteSpace(request.Metadata.UserSuppliedApiKey),
+                            UserSupplied = !string.IsNullOrWhiteSpace(request.Details.UserSuppliedOpenAIAPIKey),
                             EstimatedCost = cardResult.Cost.TotalCost,
                             Timestamp = DateTime.Now.ToUniversalTime(),
-                            Host = request.Metadata.Host,
-                            Origin = request.Metadata.Origin
+                            Host = request.Details.Host,
+                            Origin = request.Details.Origin
                         },
                         User = new CardUserMetadata()
                         {
-                            UserName = request.Metadata.UserName,
-                            UserSubject = request.Metadata.UserSubject,
+                            UserName = request.Details.UserName,
+                            UserSubject = request.Details.UserSubject,
                         },
                         Card = card,
                     };
@@ -469,19 +519,19 @@ namespace MTG.CardGenerator
             try
             {
                 var usersCosmosClient = new UsersClient(log);
-                var user = await usersCosmosClient.GetUserRecord(request.Metadata.UserSubject);
+                var user = await usersCosmosClient.GetUserRecord(request.Details.UserSubject);
 
                 if (user == null)
                 {
                     user = await usersCosmosClient.AddItemToContainerAsync(new User()
                     {
-                        UserName = request.Metadata.UserName,
-                        UserSubject = request.Metadata.UserSubject,
+                        UserName = request.Details.UserName,
+                        UserSubject = request.Details.UserSubject,
                     });
                 }
 
-                var updatedUser = await usersCosmosClient.UserGeneratedCardOperation(user, request.Metadata.UserSubject, cardCount, cost);
-                log.LogInformation($"Updated user record for user '{request.Metadata.UserSubject}' in database.");
+                var updatedUser = await usersCosmosClient.UserGeneratedCardOperation(user, request.Details.UserSubject, cardCount, cost);
+                log.LogInformation($"Updated user record for user '{request.Details.UserSubject}' in database.");
                 return updatedUser.Resource;
             }
             catch (Exception ex)
@@ -525,11 +575,11 @@ namespace MTG.CardGenerator
                         { "extraCreative", responseData.Request.ExtraCreative.ToString() },
                         { "model", responseData.CardResult.ActualGPTModelUsed },
                         { "systemPrompt", responseData.CardResult.SystemPrompt },
-                        { "userSubject", responseData.Request.Metadata.UserSubject },
+                        { "userSubject", responseData.Request.Details.UserSubject },
                         { "userPrompt", userPromptToSubmit },
-                        { "userSuppliedKey", !string.IsNullOrWhiteSpace(responseData.Request.Metadata.UserSuppliedApiKey) },
+                        { "userSuppliedKey", !string.IsNullOrWhiteSpace(responseData.Request.Details.UserSuppliedOpenAIAPIKey) },
                         { "source", responseData.Request.Source },
-                        { "isOpenAIGpt", responseData.Request.Metadata.IsOpenAIGpt }
+                        { "isOpenAIGpt", responseData.Request.Details.IsOpenAIGpt }
                     });
             }
             catch (Exception ex)

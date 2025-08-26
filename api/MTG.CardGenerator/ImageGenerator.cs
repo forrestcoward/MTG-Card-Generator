@@ -40,6 +40,20 @@ namespace MTG.CardGenerator
             "Salvador Dali, surrealism, fantasy style",
         ];
 
+        public static ImageGenerationOptions GetImageOptionsForCard(UICard card, string imageModel)
+        {
+            var artistStyle = Artists[new Random().Next(Artists.Length)];
+            var prompt = $"An image of {card.CardFaces[0].Name}, a {card.CardFaces[0].TypeLine}: {card.CardFaces[0].FlavorText}. In {artistStyle}";
+
+            return new ImageGenerationOptions()
+            {
+                Prompt = prompt,
+                Style = artistStyle,
+                Model = imageModel,
+                Size = StaticValues.ImageStatics.Size.Size1024,
+            };
+        }
+
         public static ImageGenerationOptions GetImageOptionsForCard(MagicCard card, string imageModel)
         {
             var prompt = $"{card.Name}: {card.FlavorText}";
@@ -104,7 +118,7 @@ namespace MTG.CardGenerator
                     go_fast = true
                 };
                 var outputUrl = await replicateClient.ExecuteRelicateAPI(prompt, "black-forest-labs/flux-schnell", input);
-                cost.AddImageCost(size, model, wasUserCharged: replicateApiKey.IsUserSupplied, operationName: operationName);
+                cost.AddImageCost(size, model, wasUserCharged: replicateApiKey.IsUserSupplied, operationName: operationName, log);
                 return outputUrl;
             }
 
@@ -122,7 +136,7 @@ namespace MTG.CardGenerator
                     output_quality = 90
                 };
                 var outputUrl = await replicateClient.ExecuteRelicateAPI(prompt, "stability-ai/stable-diffusion-3.5-medium", input);
-                cost.AddImageCost(size, model, wasUserCharged: replicateApiKey.IsUserSupplied, operationName: operationName);
+                cost.AddImageCost(size, model, wasUserCharged: replicateApiKey.IsUserSupplied, operationName: operationName, log);
                 return outputUrl;
             }
 
@@ -142,7 +156,7 @@ namespace MTG.CardGenerator
                 };
 
                 var outputUrl = await replicateClient.ExecuteRelicateAPI(prompt, model == Constants.ImageModels.GoogleImagen3FastModelName ? "google/imagen-3-fast" : "google/imagen-4-fast", input);
-                cost.AddImageCost(size, model, wasUserCharged: replicateApiKey.IsUserSupplied, operationName: operationName);
+                cost.AddImageCost(size, model, wasUserCharged: replicateApiKey.IsUserSupplied, operationName: operationName, log);
                 return outputUrl;
             }
 
@@ -175,7 +189,7 @@ namespace MTG.CardGenerator
                 ResponseFormat = StaticValues.ImageStatics.ResponseFormat.Url
             });
 
-            cost.AddImageCost(size, model, wasUserCharged: openAIApiKey.IsUserSupplied, operationName: operationName);
+            cost.AddImageCost(size, model, wasUserCharged: openAIApiKey.IsUserSupplied, operationName: operationName, log);
 
             if (!imageResult.Successful && !string.IsNullOrWhiteSpace(imageResult.Error?.Message))
             {

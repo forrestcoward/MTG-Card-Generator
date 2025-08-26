@@ -38,21 +38,22 @@ The API is located at https://mtgcardgenerator.azurewebsites.net/api/GenerateMag
 
 ### Parameters
 
-| Name | Type | Description |
-|---|---|---|
-| userPrompt | string | The prompt to use to generate the card. |
-| model | string | The OpenAI language model to use. Allowed values: `gpt-41`, `gpt-40`, `gpt-o3` |
-| imageModel | string | The OpenAI model to use for generating the card image. <br/>Allowed values: `imagen-4-fast`, `imagen-3-fast`, `black-forest-labs-flux-schnell`, `stable-diffusion-3.5-medium`, `dall-e-3`,`dall-e-2`, `none` |
-| includeExplanation | bool | Whether to include the AI's reasoning in the card text. If `true`, `explanation` and `funnyExplanation` will be included in the response. |
-| extraCreative | bool | If `true`, uses a different prompt and higher temperature to generate more creative cards with more interesting usage of keywords and mechanics. |
-| generateImagePrompt | bool | If `true`, use an intelligently generated image prompt to produce more unique and interesting art. |
-| openAIApiKey | string | Your OpenAI API key. The API will **never** store your key. An API key must be provided when the user's daily spend runs out. |
+| Name | Pass As | Type | Description |
+|---|---|---|---|
+| `userPrompt` | query param | string | The prompt to use to generate the card. |
+| `model` | query param | string | The OpenAI language model to use. Allowed values: `gpt-41`, `gpt-40`, `gpt-o3` |
+| `imageModel` | query param | string | The OpenAI model to use for generating the card image. <br/>Allowed values: `imagen-4-fast`, `imagen-3-fast`, `black-forest-labs-flux-schnell`, `stable-diffusion-3.5-medium`, `dall-e-3`,`dall-e-2`, `none` |
+| `includeExplanation` | query param | bool | Whether to include the AI's reasoning in the card text. If `true`, `explanation` and `funnyExplanation` will be included in the response. |
+| `extraCreative` | query param | bool | If `true`, uses a different prompt and higher temperature to generate more creative cards with more interesting usage of keywords and mechanics. |
+| `generateImagePrompt` | query param | bool | If `true`, use an intelligently generated image prompt to produce more unique and interesting art. |
+| `x-openai-api-key` | header | string | Your [OpenAI API key](https://platform.openai.com/api-keys). The API will **never** store your key. An API key must be provided when the user's daily spend runs out.<br><br> The Open AI API key is used to generate card text and when generating card images using a Dall-e image model. |
+| `x-replicate-api-key` | header | string | Your [Replicate](https://replicate.com/) API key. The API will **never** store your key. An API key must be provided when the user's daily spend runs out.<br> <br> The Replicate API key is used to generate card image using non Dall-e models.|
 
 ### Sample Response
 
 The response from https://mtgcardgenerator.azurewebsites.net/api/GenerateMagicCard will return an `id` you can use to track the request.
 
-```
+```json
 { 
   "id": "75f60a63dc874f2999bf0316f5c5a0d4" 
 }
@@ -60,7 +61,7 @@ The response from https://mtgcardgenerator.azurewebsites.net/api/GenerateMagicCa
 
 Poll the `GetMagicCardGenerationStatus` endpoint e.g. https://mtgcardgenerator.azurewebsites.net/api/GetMagicCardGenerationStatus?instanceId={id} to get the status and eventual outcome of the request. The `runtimeStatus` will be `Completed` when the card is ready.
 
-```
+```json
 {
   {
     "id": "75f60a63dc874f2999bf0316f5c5a0d4",
@@ -87,7 +88,13 @@ Poll the `GetMagicCardGenerationStatus` endpoint e.g. https://mtgcardgenerator.a
           "temporaryImageUrl": "<link>",
           "url":"https://www.mtgcardgenerator.com/Card?id=969f10c2-66f4-40e4-be96-8dd0341fd0c4"
         }
-      ]
+      ],
+      "costs": {
+        "userRemainingDailySpendLimit": 0.2767,
+        "cost": 0.023136,
+        "userIncurredCost": 0.003136,
+        "serverIncurredCost": 0.02
+      }
     }
   }
 }
@@ -121,6 +128,23 @@ Include the access token in the `Authorization` header for authenticated request
 Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6...
 ```
 
+## Daily Spend
+
+Each user is given a daily free spend limit for generating cards and images on the website and through the API. This limit resets each day at midnight UTC. If a user exceeds their daily free spend, they can provide their own [OpenAI](https://platform.openai.com/api-keys) and/or [Replicate](https://replicate.com/explore) API keys in the request headers to continue generating card text and images. **The website and API will never store your API keys, but obviously, you can use at your own risk and check the source code yourself! :)**
+
+A user who exceeds their daily free spend will receive a 429 response from the API. The *GetMagicCardGenerationStatus* API provides a breakdown of the costs incurred and the user's remaining daily free spend limit.
+
+```json
+"costs": {
+  "userRemainingDailySpendLimit": 0.2767,
+  "cost": 0.023136,
+  "userIncurredCost": 0.003136,
+  "serverIncurredCost": 0.02
+}
+```
+
+Generating card images is the most expensive operation. If you are only generating card text and want to avoid the limit, just provide an OpenAI API key.
+
 # Development Guide
 
 This section gives an overview for how to contribute to this project. 
@@ -140,7 +164,7 @@ There are two components to this project:
 
 2. Add a `local.settings.json` inside the `MTG.CardGenerator` project:
 
-```
+```json
 {
   "IsEncrypted": false,
   "Host": {
