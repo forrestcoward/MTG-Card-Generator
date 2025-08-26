@@ -34,7 +34,7 @@ Users can enter a prompt describing the type of Magic card they would like to ge
 
 A public API is available to generate cards.
 
-The API is located at https://mtgcardgenerator.azurewebsites.net/api/GenerateMagicCard.
+**Endpoint:** `GET https://mtgcardgenerator.azurewebsites.net/api/GenerateMagicCard.`
 
 ### Parameters
 
@@ -60,6 +60,8 @@ The response from https://mtgcardgenerator.azurewebsites.net/api/GenerateMagicCa
 ```
 
 Poll the `GetMagicCardGenerationStatus` endpoint e.g. https://mtgcardgenerator.azurewebsites.net/api/GetMagicCardGenerationStatus?instanceId={id} to get the status and eventual outcome of the request. The `runtimeStatus` will be `Completed` when the card is ready.
+
+**Endpoint:** `GET https://mtgcardgenerator.azurewebsites.net/api/GetMagicCardGenerationStatus`
 
 ```json
 {
@@ -143,7 +145,7 @@ A user who exceeds their daily free spend will receive a 429 response from the A
 }
 ```
 
-Generating card images is the most expensive operation. If you are only generating card text and want to avoid the limit, just provide an OpenAI API key.
+Generating card images is the most expensive operation. If you are only generating card text and want to avoid the limit, just provide an OpenAI API key and set `imageModel=none` in the request.
 
 # Development Guide
 
