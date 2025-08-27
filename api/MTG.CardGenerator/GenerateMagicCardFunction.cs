@@ -176,7 +176,7 @@ namespace MTG.CardGenerator
             {
                 return await req.CreateJsonResponse(HttpStatusCode.BadRequest, new
                 {
-                    error = "Please select an OpenAI image model (dalle-2 or dalle-3) or no image (none) when bringing your own OpenAI API key."
+                    error = "Please select an OpenAI image model (dalle-2 or dalle-3) or no image (none) when bringing your own OpenAI API key (or supply a Replicate key with x-replicate-api-key header)."
                 });
             }
 
