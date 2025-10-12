@@ -426,7 +426,10 @@ export function CardRenderer(props: CardRendererProps) {
     while (getChildrenClientOffsetHeight(innerContainer) < (container.clientHeight - heightOffset)) {
       fontSize += .5
       textContainer.style.fontSize = fontSize + 'px'
-      flavorTextContainer.style.fontSize = fontSize + 'px'
+
+      if (flavorTextContainer) {
+        flavorTextContainer.style.fontSize = fontSize + 'px'
+      }
 
       if (ptContainer != null) {
         ptContainer.style.fontSize = (fontSize + 4) + 'px'
@@ -443,7 +446,9 @@ export function CardRenderer(props: CardRendererProps) {
     while (getChildrenClientOffsetHeight(innerContainer) > (container.clientHeight - heightOffset)) {
       fontSize -= .5
       textContainer.style.fontSize = fontSize + 'px'
-      flavorTextContainer.style.fontSize = fontSize + 'px'
+      if (flavorTextContainer) {
+        flavorTextContainer.style.fontSize = fontSize + 'px'
+      }
       manaTokens.forEach(manaToken => {(manaToken as HTMLElement).style.fontSize = (fontSize-2) + 'px'})
 
       if (ptContainer != null) {
